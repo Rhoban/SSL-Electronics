@@ -1,0 +1,71 @@
+Partlist exported from /home/gregwar/SSL/electronics/brushless.sch at 23/10/17 14:44
+
+Assembly variant: 
+
+Part    Value                  Device                    Package                    Description                    
+BUT     KMR211GLFS             BUTTON-KMR241GLFS         PUSHBUTTON-KMR241GLFS                                     
+C1      10µF                   0.33UF/330NF-0805-50V-10% 0805                       0.33µF/330nF ceramic capacitors
+C2      10µF                   0.33UF/330NF-0805-50V-10% 0805                       0.33µF/330nF ceramic capacitors
+C3      10µF                   0.33UF/330NF-0805-50V-10% 0805                       0.33µF/330nF ceramic capacitors
+C7      1uF                    CAP0805                   0805@1                     Capacitor                      
+C12     1uF                    CAP0805                   0805@1                     Capacitor                      
+C17     15pF                   C_EU_22PF                 C0603                      non polarised condo            
+C18     15pF                   C_EU_22PF                 C0603                      non polarised condo            
+C20     18pF                   CAP0805                   0805@1                     Capacitor                      
+C21     18pF                   CAP0805                   0805@1                     Capacitor                      
+D1                             ZETEX_VAR2SOT23           ZETEX_SOT-23               DIODE                          
+D2                             ZETEX_VAR2SOT23           ZETEX_SOT-23               DIODE                          
+D3                             ZETEX_VAR2SOT23           ZETEX_SOT-23               DIODE                          
+D4      Blue                   LED1206                   LED-1206                   LEDs                           
+ENC1    LS7366RSO14            LS7366RSO14               SO14                                                      
+GND     CONNEC_1X03            CONNEC_1X03               CONNEC_1X03                                               
+J1      USB_MINI-B_SMT         USB_MINI-B_SMT            USB-MINIB                  USB type Mini-B Connector      
+OSC     8MHz                   CRYSTAL5X3                CRYSTAL-SMD-5X3            Crystals                       
+OSC1    40Mhz                  CRYSTAL5X3                CRYSTAL-SMD-5X3            Crystals                       
+PROGRAM CONNEC_1X066PADS       CONNEC_1X066PADS          6PADS                                                     
+Q1      BUK7Y12-40E            BUK7Y12-40E               SOT669                                                    
+Q2      BUK7Y12-40E            BUK7Y12-40E               SOT669                                                    
+Q3      BUK7Y12-40E            BUK7Y12-40E               SOT669                                                    
+Q4      BUK7Y12-40E            BUK7Y12-40E               SOT669                                                    
+Q5      BUK7Y12-40E            BUK7Y12-40E               SOT669                                                    
+Q6      BUK7Y12-40E            BUK7Y12-40E               SOT669                                                    
+R1      1K                     RESISTOR0805              0805                       Generic Resistor Package       
+R2      1K                     RESISTOR0805              0805                       Generic Resistor Package       
+R3      1K                     RESISTOR0805              0805                       Generic Resistor Package       
+R4      1K                     RESISTOR0805              0805                       Generic Resistor Package       
+R5      1K                     RESISTOR0805              0805                       Generic Resistor Package       
+R6      1K                     RESISTOR0805              0805                       Generic Resistor Package       
+R7      10K                    RESISTOR0805              0805                       Generic Resistor Package       
+R8      10K                    RESISTOR0805              0805                       Generic Resistor Package       
+R9      10K                    RESISTOR0805              0805                       Generic Resistor Package       
+R10     10K                    RESISTOR0805              0805                       Generic Resistor Package       
+R11     10K                    RESISTOR0805              0805                       Generic Resistor Package       
+R12     10K                    RESISTOR0805              0805                       Generic Resistor Package       
+R13     0Ohm                   RESISTANCE-R0805          R0805                      RESISTOR, European symbol      
+R14     10K                    RESISTOR0805              0805                       Generic Resistor Package       
+R15     10K                    RESISTOR0805              0805                       Generic Resistor Package       
+R16     10K                    RESISTOR0805              0805                       Generic Resistor Package       
+R17     10K                    RESISTOR0805              0805                       Generic Resistor Package       
+R18     10K                    RESISTOR0805              0805                       Generic Resistor Package       
+R19     10K                    RESISTOR0805              0805                       Generic Resistor Package       
+R23     10K                    RESISTOR0805              0805                       Generic Resistor Package       
+R24     10K                    RESISTOR0805              0805                       Generic Resistor Package       
+R25     10K                    RESISTOR0805              0805                       Generic Resistor Package       
+R28     1.5K                   RESISTOR0805              0805                       Generic Resistor Package       
+R29     22                     RESISTOR0805              0805                       Generic Resistor Package       
+R35     22                     RESISTOR0805              0805                       Generic Resistor Package       
+R36     1K                     RESISTOR0805              0805                       Generic Resistor Package       
+R39     1K                     RESISTOR0805              0805                       Generic Resistor Package       
+R40     10K                    RESISTOR0805              0805                       Generic Resistor Package       
+R48     10K                    RESISTOR0805              0805                       Generic Resistor Package       
+R49     1K                     RESISTOR0805              0805                       Generic Resistor Package       
+R50     10K                    RESISTOR0805              0805                       Generic Resistor Package       
+RESET   KMR211GLFS             BUTTON-KMR241GLFS         PUSHBUTTON-KMR241GLFS                                     
+U$1     OPEN-BLDC_IR2101       OPEN-BLDC_IR2101          OPEN-BLDC_SO-8                                            
+U$2     OPEN-BLDC_IR2101       OPEN-BLDC_IR2101          OPEN-BLDC_SO-8                                            
+U$3     OPEN-BLDC_IR2101       OPEN-BLDC_IR2101          OPEN-BLDC_SO-8                                            
+U$4     TS2940CW-3.3RP         TS2940CW-3.3RP            SOT223                                                    
+U$5     CONNEC_1X08            CONNEC_1X08               CONNEC_1X08                                               
+UC1     STM32F103CBT6          STM32F103CB               LQFP48                                                    
+V+      CONNEC_1X03            CONNEC_1X03               CONNEC_1X03                                               
+X1      JST-XH-10-PIN-LONG-PAD JST-XH-10-PIN-LONG-PAD    JST-XH-10-PACKAGE-LONG-PAD JST XH Connector 2 Pin         

@@ -1,0 +1,24 @@
+#usage "<b>List the global attributes<\b>\n"
+
+string FileName;
+
+if (schematic) {
+    schematic(SCH) {
+	FileName = filesetext(SCH.name, ".csv");
+	output(FileName) {
+            printf("\"Farnell\",\"Name\",\"Value\",\"Device\",\"Package\"\n");
+	    SCH.parts(P) {
+		if (P.populate && P.device.package) {
+		    string Farnell = "";
+		    P.attributes(A) {
+			if (A.name == "FARNELL") {
+			    Farnell = A.value;
+			}
+		    }
+		    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n", 
+			    Farnell, P.name, P.value, P.device.name, P.device.package.name);
+		}
+	    }   
+	}
+    }
+}
