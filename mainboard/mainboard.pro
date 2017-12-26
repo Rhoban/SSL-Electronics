@@ -1,25 +1,25 @@
 EAGLE AutoRouter Statistics:
 
-Job           : /home/gregwar/SSL/electronics/mainboard.brd
+Job           : /home/gregwar/SSL-Electronics/mainboard/mainboard.brd
 
-Start at      : 16:48:51 (28/09/17)
-End at        : 16:49:11 (28/09/17)
-Elapsed time  : 00:00:20
+Start at      : 21:35:21 (26/12/17)
+End at        : 21:35:29 (26/12/17)
+Elapsed time  : 00:00:08
 
-Signals       :   120   RoutingGrid: 15 mil  Layers: 2
-Connections   :   320   predefined:  0 ( 5 Vias )
+Signals       :    56   RoutingGrid: 19.685 mil  Layers: 2
+Connections   :   180   predefined:  9 ( 0 Vias )
 
-Router memory :   1051480
+Router memory :   612720
 
 Passname          :    Busses     Route Optimize1 Optimize2 Optimize3 Optimize4
 
-Time per pass     :  00:00:00  00:00:04  00:00:04  00:00:04  00:00:04  00:00:04
-Number of Ripups  :         0         2         0         0         0         0
+Time per pass     :  00:00:00  00:00:02  00:00:02  00:00:01  00:00:02  00:00:01
+Number of Ripups  :         0         1         0         0         0         0
 max. Level        :         0         1         0         0         0         0
-max. Total        :         0        25         0         0         0         0
+max. Total        :         0         1         0         0         0         0
 
-Routed            :        27       320       320       320       320       320
-Vias              :         0       333       155       119       110       108
-Resolution        :     8.4 %   100.0 %   100.0 %   100.0 %   100.0 %   100.0 %
+Routed            :        20       169       169       169       169       169
+Vias              :         0       224        93        72        66        64
+Resolution        :    16.1 %    98.9 %    98.9 %    98.9 %    98.9 %    98.9 %
 
-Final             : 100.0% finished
+Final             : 98.9% finished
