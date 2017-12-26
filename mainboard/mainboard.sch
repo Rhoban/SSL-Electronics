@@ -1090,10 +1090,10 @@ grid 3.5 mm, diameter 8 mm</description>
 <rectangle x1="24.216" y1="43.839" x2="24.724" y2="44.347" layer="21" rot="R180"/>
 <rectangle x1="26.756" y1="43.839" x2="27.264" y2="44.347" layer="21" rot="R180"/>
 <text x="24.47" y="42.442" size="0.4064" layer="25" ratio="10" rot="R180">V+</text>
-<wire x1="-0.08" y1="-1.968" x2="29.92" y2="-1.968" width="0" layer="20"/>
-<wire x1="29.92" y1="-1.968" x2="29.92" y2="46" width="0" layer="20"/>
-<wire x1="29.92" y1="46" x2="-0.08" y2="46" width="0" layer="20"/>
-<wire x1="-0.08" y1="46" x2="-0.08" y2="-1.968" width="0" layer="20"/>
+<wire x1="-0.08" y1="-1.968" x2="29.92" y2="-1.968" width="0" layer="21"/>
+<wire x1="29.92" y1="-1.968" x2="29.92" y2="46" width="0" layer="21"/>
+<wire x1="29.92" y1="46" x2="-0.08" y2="46" width="0" layer="21"/>
+<wire x1="-0.08" y1="46" x2="-0.08" y2="-1.968" width="0" layer="21"/>
 </package>
 </packages>
 <symbols>
@@ -6481,6 +6481,13 @@ Standard 0603 ceramic capacitor, and 0.1" leaded capacitor.</description>
 <label x="-22.86" y="101.6" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
+<net name="COM_CE" class="0">
+<segment>
+<pinref part="MAPLE" gate="G$1" pin="13"/>
+<wire x1="-27.94" y1="114.3" x2="-22.86" y2="114.3" width="0.1524" layer="91"/>
+<label x="-22.86" y="114.3" size="1.27" layer="95" xref="yes"/>
+</segment>
+</net>
 </nets>
 </sheet>
 <sheet>
@@ -6559,29 +6566,14 @@ Standard 0603 ceramic capacitor, and 0.1" leaded capacitor.</description>
 <nets>
 <net name="3.3" class="0">
 <segment>
-<pinref part="COM1" gate="G$1" pin="CE"/>
-<wire x1="20.32" y1="20.32" x2="22.86" y2="20.32" width="0.1524" layer="91"/>
-<label x="22.86" y="20.32" size="1.27" layer="95" xref="yes"/>
-</segment>
-<segment>
 <pinref part="COM1" gate="G$1" pin="VCC"/>
 <wire x1="-15.24" y1="33.02" x2="-20.32" y2="33.02" width="0.1524" layer="91"/>
 <label x="-20.32" y="33.02" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 <segment>
-<pinref part="COM2" gate="G$1" pin="CE"/>
-<wire x1="20.32" y1="-7.62" x2="22.86" y2="-7.62" width="0.1524" layer="91"/>
-<label x="22.86" y="-7.62" size="1.27" layer="95" xref="yes"/>
-</segment>
-<segment>
 <pinref part="COM2" gate="G$1" pin="VCC"/>
 <wire x1="-15.24" y1="5.08" x2="-20.32" y2="5.08" width="0.1524" layer="91"/>
 <label x="-20.32" y="5.08" size="1.27" layer="95" rot="R180" xref="yes"/>
-</segment>
-<segment>
-<pinref part="COM3" gate="G$1" pin="CE"/>
-<wire x1="20.32" y1="-35.56" x2="22.86" y2="-35.56" width="0.1524" layer="91"/>
-<label x="22.86" y="-35.56" size="1.27" layer="95" xref="yes"/>
 </segment>
 <segment>
 <pinref part="COM3" gate="G$1" pin="VCC"/>
@@ -6697,6 +6689,23 @@ Standard 0603 ceramic capacitor, and 0.1" leaded capacitor.</description>
 <pinref part="COM2" gate="G$1" pin="IRQ"/>
 <wire x1="20.32" y1="2.54" x2="22.86" y2="2.54" width="0.1524" layer="91"/>
 <label x="22.86" y="2.54" size="1.27" layer="95" xref="yes"/>
+</segment>
+</net>
+<net name="COM_CE" class="0">
+<segment>
+<pinref part="COM1" gate="G$1" pin="CE"/>
+<wire x1="20.32" y1="20.32" x2="22.86" y2="20.32" width="0.1524" layer="91"/>
+<label x="22.86" y="20.32" size="1.27" layer="95" xref="yes"/>
+</segment>
+<segment>
+<pinref part="COM2" gate="G$1" pin="CE"/>
+<wire x1="20.32" y1="-7.62" x2="22.86" y2="-7.62" width="0.1524" layer="91"/>
+<label x="22.86" y="-7.62" size="1.27" layer="95" xref="yes"/>
+</segment>
+<segment>
+<pinref part="COM3" gate="G$1" pin="CE"/>
+<wire x1="20.32" y1="-35.56" x2="22.86" y2="-35.56" width="0.1524" layer="91"/>
+<label x="22.86" y="-35.56" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
 </nets>
@@ -6826,7 +6835,7 @@ Standard 0603 ceramic capacitor, and 0.1" leaded capacitor.</description>
 <label x="-48.26" y="25.4" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
-<net name="VBOOST" class="2">
+<net name="VBOOST" class="0">
 <segment>
 <pinref part="U$5" gate="G$1" pin="OUT+"/>
 <wire x1="-30.48" y1="-25.4" x2="-25.4" y2="-25.4" width="0.1524" layer="91"/>
@@ -7208,6 +7217,11 @@ Standard 0603 ceramic capacitor, and 0.1" leaded capacitor.</description>
 <wire x1="50.8" y1="-20.32" x2="50.8" y2="-17.78" width="0.1524" layer="91"/>
 <label x="50.8" y="-17.78" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
+<segment>
+<pinref part="R10" gate="G$1" pin="2"/>
+<wire x1="-22.86" y1="33.02" x2="-22.86" y2="35.56" width="0.1524" layer="91"/>
+<label x="-22.86" y="35.56" size="1.27" layer="95" rot="R90" xref="yes"/>
+</segment>
 </net>
 <net name="N$2" class="2">
 <segment>
@@ -7216,7 +7230,7 @@ Standard 0603 ceramic capacitor, and 0.1" leaded capacitor.</description>
 <wire x1="12.7" y1="-7.62" x2="7.62" y2="-15.24" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="VBOOST" class="2">
+<net name="VBOOST" class="0">
 <segment>
 <pinref part="SOLENOID1" gate="G$1" pin="1"/>
 <wire x1="12.7" y1="-5.08" x2="5.08" y2="-5.08" width="0.1524" layer="91"/>
@@ -7242,16 +7256,6 @@ Standard 0603 ceramic capacitor, and 0.1" leaded capacitor.</description>
 <pinref part="R34" gate="G$1" pin="2"/>
 <wire x1="-48.26" y1="33.02" x2="-48.26" y2="35.56" width="0.1524" layer="91"/>
 <label x="-48.26" y="35.56" size="1.27" layer="95" rot="R90" xref="yes"/>
-</segment>
-<segment>
-<pinref part="R7" gate="G$1" pin="2"/>
-<wire x1="-35.56" y1="33.02" x2="-35.56" y2="35.56" width="0.1524" layer="91"/>
-<label x="-35.56" y="35.56" size="1.27" layer="95" rot="R90" xref="yes"/>
-</segment>
-<segment>
-<pinref part="R10" gate="G$1" pin="2"/>
-<wire x1="-22.86" y1="33.02" x2="-22.86" y2="35.56" width="0.1524" layer="91"/>
-<label x="-22.86" y="35.56" size="1.27" layer="95" rot="R90" xref="yes"/>
 </segment>
 </net>
 <net name="N$17" class="0">
@@ -7329,6 +7333,13 @@ Standard 0603 ceramic capacitor, and 0.1" leaded capacitor.</description>
 <pinref part="R11" gate="G$1" pin="2"/>
 <wire x1="-22.86" y1="22.86" x2="-22.86" y2="17.78" width="0.1524" layer="91"/>
 <label x="-22.86" y="20.32" size="1.27" layer="95" xref="yes"/>
+</segment>
+</net>
+<net name="VMID" class="2">
+<segment>
+<pinref part="R7" gate="G$1" pin="2"/>
+<wire x1="-35.56" y1="33.02" x2="-35.56" y2="35.56" width="0.1524" layer="91"/>
+<label x="-35.56" y="35.56" size="1.27" layer="95" rot="R90" xref="yes"/>
 </segment>
 </net>
 </nets>
