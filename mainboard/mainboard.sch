@@ -6077,7 +6077,7 @@ Standard 0603 ceramic capacitor, and 0.1" leaded capacitor.</description>
 </classes>
 <parts>
 <part name="MAPLE" library="rhoban" deviceset="MAPLE_MINI" device="">
-<attribute name="FARNELL" value="-"/>
+<attribute name="FARNELL" value="1593469,1593469"/>
 </part>
 <part name="U$12" library="rhoban" deviceset="NPN" device="_BC817,215">
 <attribute name="FARNELL" value="1081223"/>
@@ -6154,7 +6154,7 @@ Standard 0603 ceramic capacitor, and 0.1" leaded capacitor.</description>
 <attribute name="FARNELL" value="2446965"/>
 </part>
 <part name="U$1" library="to-247_n-channel_igbt" deviceset="TO-247" device="A">
-<attribute name="FARNELL" value="1298480"/>
+<attribute name="FARNELL" value="1095012"/>
 </part>
 <part name="SOLENOID1" library="rhoban" deviceset="CONNEC_1X02" device="BIG">
 <attribute name="FARNELL" value="-"/>
@@ -6178,7 +6178,7 @@ Standard 0603 ceramic capacitor, and 0.1" leaded capacitor.</description>
 <attribute name="FARNELL" value="2446965"/>
 </part>
 <part name="U$11" library="to-247_n-channel_igbt" deviceset="TO-247" device="A">
-<attribute name="FARNELL" value="1298480"/>
+<attribute name="FARNELL" value="1095012"/>
 </part>
 <part name="SOLENOID2" library="rhoban" deviceset="CONNEC_1X02" device="BIG">
 <attribute name="FARNELL" value="-"/>

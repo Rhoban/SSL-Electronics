@@ -2464,7 +2464,7 @@ design rules under a new name.</description>
 </autorouter>
 <elements>
 <element name="MAPLE" library="rhoban" package="CONNEC_2X20" value="MAPLE_MINI" x="57.12" y="58.63" rot="R270">
-<attribute name="FARNELL" value="-" x="57.12" y="58.63" size="1.778" layer="27" rot="R270" display="off"/>
+<attribute name="FARNELL" value="1593469,1593469" x="57.12" y="58.63" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
 <element name="U$14" library="SparkFun-Hardware" package="STAND-OFF" value="" x="-59.69" y="43.815"/>
 <element name="U$16" library="SparkFun-Hardware" package="STAND-OFF" value="" x="66.24" y="43.815"/>
@@ -2543,7 +2543,7 @@ design rules under a new name.</description>
 <attribute name="FARNELL" value="2446965" x="18.415" y="12.065" size="1.778" layer="27" display="off"/>
 </element>
 <element name="U$1" library="to-247_n-channel_igbt" package="TO-247" value="TO-247A" x="-13.875" y="17.22" rot="R270">
-<attribute name="FARNELL" value="1298480" x="-13.875" y="17.22" size="1.778" layer="27" rot="R270" display="off"/>
+<attribute name="FARNELL" value="1095012" x="-13.875" y="17.22" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
 <element name="SOLENOID1" library="rhoban" package="CONNEC_1X02_BIG" value="CONNEC_1X02BIG" x="-6.75" y="33.275" rot="R270">
 <attribute name="FARNELL" value="-" x="-6.75" y="33.275" size="1.778" layer="27" rot="R270" display="off"/>
@@ -2567,7 +2567,7 @@ design rules under a new name.</description>
 <attribute name="FARNELL" value="2446965" x="24.13" y="12.065" size="1.778" layer="27" display="off"/>
 </element>
 <element name="U$11" library="to-247_n-channel_igbt" package="TO-247" value="TO-247A" x="3.29" y="17.22" rot="R270">
-<attribute name="FARNELL" value="1298480" x="3.29" y="17.22" size="1.778" layer="27" rot="R270" display="off"/>
+<attribute name="FARNELL" value="1095012" x="3.29" y="17.22" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
 <element name="SOLENOID2" library="rhoban" package="CONNEC_1X02_BIG" value="CONNEC_1X02BIG" x="-0.515" y="33.275" rot="R270">
 <attribute name="FARNELL" value="-" x="-0.515" y="33.275" size="1.778" layer="27" rot="R270" display="off"/>
