@@ -112,6 +112,7 @@ void servo_set(bool enable, float target)
     if (!servo_enable) {
         servo_pwm = 0;
         servo_acc = 0;
+        servo_last_error = 0;
         motor_set(0);
     }
 }
