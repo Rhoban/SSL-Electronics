@@ -113,18 +113,15 @@ void motor_init()
 
 TERMINAL_COMMAND(hall, "Test the hall sensors")
 {
-    while (!SerialUSB.available()) {
-        terminal_io()->print(digitalRead(HALLU_PIN));
-        terminal_io()->print(" ");
-        terminal_io()->print(digitalRead(HALLV_PIN));
-        terminal_io()->print(" ");
-        terminal_io()->print(digitalRead(HALLW_PIN));
-        terminal_io()->println();
-        delay(10);
-    }
+    terminal_io()->print(digitalRead(HALLU_PIN));
+    terminal_io()->print(" ");
+    terminal_io()->print(digitalRead(HALLV_PIN));
+    terminal_io()->print(" ");
+    terminal_io()->print(digitalRead(HALLW_PIN));
+    terminal_io()->println();
 }
 
-void motor_set(uint32_t value)
+void motor_set(int value)
 {
     if (value < -3000) value = -3000;
     if (value > 3000) value = 3000;

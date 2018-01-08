@@ -10,6 +10,8 @@
 #define ENCODER_SELECT_PIN  31
 #define ENCODER_INDEX_PIN   12
 
+#define ENCODER_CPR     1024
+
 // Current sensing
 #define CURRENT_PIN     4
 
@@ -30,5 +32,13 @@
 
 // Board LED pin
 #define LED_PIN     22
+
+// Servo configuration
+#define SPEED_DT    50
+#define SERVO_DT    1
+
+// Current protection
+#define CURRENT_LIMIT       1.5
+#define CURRENT_DURATION    500
 
 #endif

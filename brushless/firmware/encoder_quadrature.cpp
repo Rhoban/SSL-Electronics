@@ -1,3 +1,5 @@
+#include "hardware.h"
+#ifdef ENCODER_QUADRATURE
 #include <stdlib.h>
 #include <wirish/wirish.h>
 #include <terminal.h>
@@ -95,9 +97,7 @@ uint32_t encoder_value()
 
 TERMINAL_COMMAND(cnt, "Cnt debug")
 {
-    while (!SerialUSB.available()) {
-        encoder_read();
-        terminal_io()->println(encoder_value());
-        delay(10);
-    }
+    encoder_read();
+    terminal_io()->println(encoder_value());
 }
+#endif

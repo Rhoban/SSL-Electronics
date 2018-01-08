@@ -1,7 +1,8 @@
 # Project targets
 # Defines here your cpp source files
 # Ex : main.cpp test.cpp ...
-SRC_FILES = main.cpp encoder.cpp current.cpp motor.cpp com.cpp
+SRC_FILES = main.cpp current.cpp motor.cpp com.cpp servo.cpp \
+encoder_quadrature.cpp
 
 ifeq ($(ENABLE_RHOCK),yes)
 SRC_FILES += rhock-functions.cpp rhock-stream.cpp

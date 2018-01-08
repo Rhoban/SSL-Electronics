@@ -30,7 +30,6 @@ void __irq_spi1()
 
 static void slave_irq()
 {
-    digitalWrite(LED_PIN, digitalRead(SLAVE_PIN));
     int is_slave = digitalRead(SLAVE_PIN) == LOW;
 
     if (is_slave) {

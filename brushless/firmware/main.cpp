@@ -9,6 +9,7 @@
 #include "current.h"
 #include "motor.h"
 #include "com.h"
+#include "servo.h"
 
 /**
  * Setup function
@@ -26,6 +27,9 @@ void setup()
 
     // Initalizing motor
     motor_init();
+
+    // Initializing servo
+    servo_init();
 
     // Starting the watchdog
     watchdog_start(WATCHDOG_14MS);
@@ -50,4 +54,7 @@ void loop()
 
     // Ticking the terminal
     terminal_tick();
+
+    // Ticking servo
+    servo_tick();
 }

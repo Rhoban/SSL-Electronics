@@ -3,6 +3,7 @@
 #include <terminal.h>
 #include "hardware.h"
 #include "current.h"
+#include "motor.h"
 
 // Current sensing
 static float current = 0.0;
@@ -17,6 +18,7 @@ void current_tick()
 {
     static int samples = 0;
     static int last_update = millis();
+    static int last_limit = 0;
 
     if ((millis() - last_update) > 10) {
         last_update += 10;
@@ -35,6 +37,21 @@ void current_tick()
             // XXX: We should re-estimate the reference sometime, when we know
             // that the motor is off for instance
             current_ref = current;
+            last_limit = millis();
+        }
+
+        if (samples > 100) {
+            float amps = current_amps();
+            if (amps > CURRENT_LIMIT) {
+                if (millis() - last_limit > CURRENT_DURATION) {
+                    while (true) {
+                        motor_set(0);
+                        motor_tick();
+                    }
+                }
+            } else {
+                last_limit = millis();
+            }
         }
     }
 }
