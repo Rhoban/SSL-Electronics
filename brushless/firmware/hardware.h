@@ -24,4 +24,11 @@
 #define HALLV_PIN   6
 #define HALLW_PIN   5
 
+// SPI slave pin
+#define SLAVE_SPI   1
+#define SLAVE_PIN           20
+
+// Board LED pin
+#define LED_PIN     22
+
 #endif
