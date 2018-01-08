@@ -6,12 +6,16 @@
 #include <series/gpio.h>
 #include <watchdog.h>
 #include "drivers.h"
+#include "com.h"
 
 /**
  * Setup function
  */
 void setup()
 {
+    // Initalizng com
+    com_init();
+
     // Initalizing drivers
     drivers_init();
 
@@ -28,6 +32,9 @@ void loop()
 {
     // Feeding watchdog
     watchdog_feed();
+
+    // Com
+    com_tick();
 
     // Ticking the terminal
     terminal_tick();
