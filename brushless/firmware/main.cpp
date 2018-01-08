@@ -57,4 +57,7 @@ void loop()
 
     // Ticking servo
     servo_tick();
+
+    // Ticking com
+    com_tick();
 }

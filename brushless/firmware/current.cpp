@@ -42,7 +42,7 @@ void current_tick()
 
         if (samples > 100) {
             float amps = current_amps();
-            if (amps > CURRENT_LIMIT) {
+            if (fabs(amps) > CURRENT_LIMIT) {
                 if (millis() - last_limit > CURRENT_DURATION) {
                     while (true) {
                         motor_set(0);
