@@ -1,6 +1,8 @@
-#include "current.h"
-#include "hardware.h"
+#include <stdlib.h>
 #include <wirish/wirish.h>
+#include <terminal.h>
+#include "hardware.h"
+#include "current.h"
 
 // Current sensing
 static float current = 0.0;
@@ -40,4 +42,10 @@ void current_tick()
 float current_amps()
 {
     return -20.0*((current - current_ref)/current_ref);
+}
+
+TERMINAL_COMMAND(amps, "Current")
+{
+    terminal_io()->print(current_amps());
+    terminal_io()->println(" A");
 }
