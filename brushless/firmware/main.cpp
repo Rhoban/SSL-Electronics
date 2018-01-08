@@ -6,6 +6,8 @@
 #include <libmaple/rcc.h>
 #include <series/rcc.h>
 #include <series/gpio.h>
+#include "encoder.h"
+#include "current.h"
 
 HardwareSPI slave(1);
 #define SLAVE_PIN           20
@@ -22,11 +24,6 @@ static void _init_timer(int number)
     timer.resume();
 }
 
-// Current sensing
-#define CURRENT_PIN     4
-float current = 0.0;
-float current_ref = 0.0;
-
 // Motors pins
 #define U_LOW_PIN        10
 #define U_HIGH_PIN       11
@@ -35,149 +32,11 @@ float current_ref = 0.0;
 #define W_LOW_PIN        33
 #define W_HIGH_PIN       3
 
-
-HardwareSPI decoder(2);
-#define DECODER_SELECT_PIN  31
-#define DECODER_INDEX_PIN   12
-
-// Instruction
-#define DECODER_CLR     (0<<6)
-#define DECODER_RD      (1<<6)
-#define DECODER_WR      (2<<6)
-#define DECODER_LOAD    (3<<6)
-
-// Register
-#define DECODER_NONE    (0<<3)
-#define DECODER_MDR0    (1<<3)
-#define DECODER_MDR1    (2<<3)
-#define DECODER_DTR     (3<<3)
-#define DECODER_CNTR    (4<<3)
-#define DECODER_OTR     (5<<3)
-#define DECODER_STR     (6<<3)
-
 #define LED_PIN     22
 
 #define HALLU_PIN   7
 #define HALLV_PIN   6
 #define HALLW_PIN   5
-
-void decoder_write(uint8_t reg, uint8_t value)
-{
-    digitalWrite(DECODER_SELECT_PIN, LOW);
-    delay_us(1);
-    decoder.send(DECODER_WR|reg);
-    decoder.wait();
-    decoder.send(value);
-    decoder.wait();
-    delay_us(10);
-    digitalWrite(DECODER_SELECT_PIN, HIGH);
-}
-
-uint8_t decoder_read(uint8_t reg)
-{
-    uint8_t result;
-    digitalWrite(DECODER_SELECT_PIN, LOW);
-    delay_us(1);
-    decoder.send(DECODER_RD|reg);
-    decoder.wait();
-    result = decoder.send(0x00);
-    decoder.wait();
-    delay_us(1);
-    digitalWrite(DECODER_SELECT_PIN, HIGH);
-
-    return result;
-}
-
-uint32_t decoder_read4(uint8_t reg)
-{
-    uint32_t result;
-    digitalWrite(DECODER_SELECT_PIN, LOW);
-    delay_us(1);
-    decoder.send(DECODER_RD|reg);
-    decoder.wait();
-    result = decoder.send(0x00)<<24;
-    decoder.wait();
-    result |= decoder.send(0x00)<<16;
-    decoder.wait();
-    result |= decoder.send(0x00)<<8;
-    decoder.wait();
-    result |= decoder.send(0x00)<<0;
-    decoder.wait();
-    delay_us(1);
-    digitalWrite(DECODER_SELECT_PIN, HIGH);
-
-    return result;
-}
-
-TERMINAL_COMMAND(dec, "Tests decoder")
-{
-    uint8_t r;
-
-    while (!SerialUSB.available()) {
-        terminal_io()->println("Reading MDR0");
-        r = decoder_read(DECODER_MDR0);
-        terminal_io()->println(r);
-        delay(1000);
-
-        terminal_io()->println("Writing 1 to MDR0");
-        decoder_write(DECODER_MDR0, 0b00000011);
-        delay(10);
-    }
-}
-
-TERMINAL_COMMAND(cnt, "Cnt debug")
-{
-    while (!SerialUSB.available()) {
-        uint32_t c = decoder_read4(DECODER_CNTR);
-        terminal_io()->println(c);
-        delay(10);
-    }
-}
-
-TERMINAL_COMMAND(rd, "Read")
-{
-    uint8_t r;
-
-    terminal_io()->println("Reading STR");
-    r = decoder_read(DECODER_STR);
-    terminal_io()->println(r);
-
-    terminal_io()->println("Reading MDR0");
-    r = decoder_read(DECODER_MDR0);
-    terminal_io()->println(r);
-
-    terminal_io()->println("Reading MDR1");
-    r = decoder_read(DECODER_MDR1);
-    terminal_io()->println(r);
-
-    terminal_io()->println("Reading CNTR");
-    uint32_t c = decoder_read4(DECODER_CNTR);
-    terminal_io()->println(c);
-}
-
-TERMINAL_COMMAND(rd2, "Read")
-{
-    uint8_t r;
-
-    terminal_io()->println("Reading STR");
-    r = decoder_read(DECODER_STR);
-    terminal_io()->println(r);
-}
-
-TERMINAL_COMMAND(rd3, "Read")
-{
-    uint8_t r;
-
-    terminal_io()->println("Reading MDR0");
-    r = decoder_read(DECODER_MDR0);
-    terminal_io()->println(r);
-}
-
-TERMINAL_COMMAND(wr, "Write")
-{
-    terminal_io()->println("Writing 0b11 to MDR0");
-    decoder_write(DECODER_MDR0, 0b11);
-}
 
 TERMINAL_COMMAND(hall, "Test the hall sensors")
 {
@@ -250,16 +109,11 @@ void setup()
     pinMode(HALLV_PIN, INPUT);
     pinMode(HALLW_PIN, INPUT);
 
-    // Current sensor
-    pinMode(CURRENT_PIN, INPUT);
+    // Initializng current  sensor
+    current_init();
 
-    // Initalizing SPI
-    digitalWrite(DECODER_SELECT_PIN, HIGH);
-    decoder.begin(SPI_9MHZ, MSBFIRST, 0);
-    pinMode(DECODER_SELECT_PIN, OUTPUT);
-    decoder_read(DECODER_STR);
-    // digitalWrite(DECODER_INDEX_PIN, LOW);
-    // pinMode(DECODER_INDEX_PIN, OUTPUT);
+    // Initalizing encoder
+    encoder_init();
 
     digitalWrite(U_LOW_PIN, LOW);
     digitalWrite(U_HIGH_PIN, LOW);
@@ -291,31 +145,6 @@ void setup()
     pwmWrite(W_HIGH_PIN, 0);
 
     terminal_init(&SerialUSB);
-}
-
-void current_tick()
-{
-    static int samples = 0;
-    static int last_update = millis();
-
-    if ((millis() - last_update) > 10) {
-        last_update += 10;
-        samples++;
-
-        float voltage = (5.0/3.0)*analogRead(CURRENT_PIN)*3300.0/4096.0;
-
-        if (samples == 1) current = voltage;
-        else current = current*0.95 + voltage*0.05;
-
-        if (samples == 200) {
-            current_ref = current;
-        }
-    }
-}
-
-float current_amps()
-{
-    return -20.0*((current - current_ref)/current_ref);
 }
 
 int hall_value()
