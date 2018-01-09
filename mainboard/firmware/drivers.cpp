@@ -15,7 +15,7 @@ static int drivers_pins[5] = {
 };
 
 
-static int drivers_ping(int index)
+int drivers_ping(int index)
 {
     digitalWrite(drivers_pins[index], LOW);
     delay_us(25);
@@ -134,9 +134,35 @@ TERMINAL_COMMAND(blink, "Blink the drivers")
     }
 }
 
-TERMINAL_COMMAND(em, "Emergency")
+bool drivers_is_all_ok()
 {
     for (int k=0; k<5; k++) {
-        drivers_set(k, false, 0.0);
+        if (!drivers_ping(k)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void drivers_diagnostic()
+{
+    for (int k=0; k<5; k++) {
+        terminal_io()->print("* Driver #");
+        terminal_io()->print(k);
+        if (!drivers_ping(k)) {
+            terminal_io()->println(" MISSING");
+        } else {
+            terminal_io()->println(" OK");
+        }
+    }
+}
+
+TERMINAL_COMMAND(err, "Error")
+{
+    if (drivers_is_error) {
+        terminal_io()->println("Drivers are in error mode");
+    } else {
+        terminal_io()->println("Drivers are OK");
     }
 }

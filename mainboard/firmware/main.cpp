@@ -24,7 +24,12 @@ void setup()
     watchdog_start(WATCHDOG_14MS);
 
     buzzer_init();
-    buzzer_play(MELODY_BOOT);
+
+    if (com_is_all_ok() && drivers_is_all_ok()) {
+        buzzer_play(MELODY_BOOT);
+    } else {
+        buzzer_play(MELODY_WARNING);
+    }
 
     terminal_init(&SerialUSB);
 }
@@ -34,6 +39,9 @@ void setup()
  */
 void loop()
 {
+    digitalWrite(BOARD_LED_PIN, LOW);
+    pinMode(BOARD_LED_PIN, OUTPUT);
+
     // Feeding watchdog
     watchdog_feed();
 
@@ -43,6 +51,15 @@ void loop()
     // Buzzer
     buzzer_tick();
 
+    // Drivers
+    drivers_tick();
+
     // Ticking the terminal
     terminal_tick();
+}
+
+TERMINAL_COMMAND(diag, "Diagnostic")
+{
+    drivers_diagnostic();
+    com_diagnostic();
 }

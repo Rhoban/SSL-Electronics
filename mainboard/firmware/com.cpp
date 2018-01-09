@@ -3,10 +3,25 @@
 #include <terminal.h>
 #include <watchdog.h>
 #include "hardware.h"
+#include "drivers.h"
 #include "com.h"
 
 // Channels
 static int com_channels[3] = {0, 50, 100};
+
+// Only for master board
+static bool com_master = false;
+static struct packet_master com_robots[6];
+static struct packet_robot com_statuses[6];
+static int com_robot_reception[6];
+static int com_master_pos = 0;
+
+// Only for robot
+static int com_master_reception = 0;
+static int com_master_packets = 0;
+static bool com_master_new = false;
+static bool com_master_controlling = false;
+static struct packet_master com_master_packet;
 
 HardwareSPI com(COM_SPI);
 
@@ -126,6 +141,20 @@ void com_read_reg5(int index, uint8_t reg, uint8_t result[5])
     }
 }
 
+static void com_mode(int index, bool power, bool rx)
+{
+    uint8_t value = (1<<3); // Enable CRC
+
+    if (power) {
+        value |= (1<<1);
+    }
+    if (rx) {
+        value |= (1);
+    }
+
+    com_set_reg(index, REG_CONFIG, value);
+}
+
 static void com_tx(int index, uint8_t *payload, size_t n)
 {
     uint8_t packet[n+1];
@@ -155,8 +184,27 @@ void com_irq(int index)
     int status = com_read_reg(index, REG_STATUS);
 
     if (status & 0x40) { // RX
+        irqed++;
         com_available[index] = true;
-        com_rx(index, com_data[index], PAYLOAD_SIZE);
+
+        if (com_master) {
+            struct packet_robot packet;
+            com_rx(index, (uint8_t*)&packet, sizeof(struct packet_robot));
+
+            if (packet.id < 6) {
+                com_statuses[packet.id] = packet;
+                com_robot_reception[packet.id] = millis();
+            }
+        } else {
+            // Reading master packet!
+            com_master_reception = millis();
+            com_master_new = true;
+            com_master_packets++;
+            com_rx(index, (uint8_t*)&com_master_packet, sizeof(struct packet_master));
+        }
+    }
+    if (status & 0x20) {
+        com_mode(index, true, true);
     }
 
     // Resetting flags
@@ -165,12 +213,12 @@ void com_irq(int index)
 
 void com_irq1()
 {
-    //com_irq(0);
+    com_irq(0);
 }
 
 void com_irq2()
 {
-    //com_irq(1);
+    com_irq(1);
 }
 
 void com_irq3()
@@ -203,18 +251,20 @@ static void com_ce_pulse()
     com_ce_disable();
 }
 
-static void com_mode(int index, bool power, bool rx)
+bool com_is_ok(int index)
 {
-    uint8_t value = (1<<3); // Enable CRC
+    uint8_t myAddr[5] = COM_ADDR;
+    uint8_t addr[5];
+    com_read_reg5(index, REG_RX_ADDR_P0, addr);
 
-    if (power) {
-        value |= (1<<1);
-    }
-    if (rx) {
-        value |= (1);
+    // Checking only address prefix
+    for (int k=0; k<4; k++) {
+        if (addr[k] != myAddr[k]) {
+            return false;
+        }
     }
 
-    com_set_reg(index, REG_CONFIG, value);
+    return true;
 }
 
 void com_init()
@@ -243,54 +293,128 @@ void com_init()
 
         // Setting the address
         uint8_t addr[5] = COM_ADDR;
+        if (com_master) {
+            addr[4] = COM_MASTER;
+        }
         com_set_reg5(k, REG_RX_ADDR_P0, addr);
 
         // Enabling only the pipe 1
         com_set_reg(k, REG_EN_RXADDR, 1);
 
         // Setting payload in rx p0 to 1
-        com_set_reg(k, REG_RX_PW_P0, 5);
+        if (com_master) {
+            com_set_reg(k, REG_RX_PW_P0, sizeof(struct packet_robot));
+        } else {
+            com_set_reg(k, REG_RX_PW_P0, sizeof(struct packet_master));
+        }
 
         // Power up
         com_mode(k, true, true);
+
+        // If I am not the master, I will talk only to the master
+        if (!com_master) {
+            com_set_tx_addr(2, COM_MASTER);
+        }
     }
 
     // Listening
     com_ce_enable();
 
     // Initializing IRQ pins
-    pinMode(COM_IRQ1, INPUT);
-    pinMode(COM_IRQ2, INPUT);
-    pinMode(COM_IRQ3, INPUT);
-    attachInterrupt(COM_IRQ1, com_irq1, FALLING);
-    attachInterrupt(COM_IRQ2, com_irq2, FALLING);
-    attachInterrupt(COM_IRQ3, com_irq3, FALLING);
+    detachInterrupt(COM_IRQ1);
+    if (com_is_ok(0)) {
+        pinMode(COM_IRQ1, INPUT);
+        attachInterrupt(COM_IRQ1, com_irq1, FALLING);
+    }
+    detachInterrupt(COM_IRQ2);
+    if (com_is_ok(1)) {
+        pinMode(COM_IRQ2, INPUT);
+        attachInterrupt(COM_IRQ2, com_irq2, FALLING);
+    }
+    detachInterrupt(COM_IRQ3);
+    if (com_is_ok(2)) {
+        pinMode(COM_IRQ3, INPUT);
+        attachInterrupt(COM_IRQ3, com_irq3, FALLING);
+    }
+
+    // Disable everything in robot commands
+    if (com_master) {
+        for (int k=0; k<6; k++) {
+            com_robots[k].actions = 0;
+            com_robots[k].wheel1 = 0;
+            com_robots[k].wheel2 = 0;
+            com_robots[k].wheel3 = 0;
+            com_robots[k].wheel4 = 0;
+            com_robot_reception[k] = 0;
+        }
+    }
+    com_master_packets = 0;
+    com_master_pos = 0;
 }
 
 void com_tick()
 {
     static int last = millis();
 
-#if 0
-    if (millis() - last > 1000) {
+    // Sending a packet to a robot
+    if (com_master && (millis() - last) > 1) {
         last = millis();
 
-        // Disabling CE, going to TX mode
         com_ce_disable();
-        com_mode(2, true, false);
+        for (int k=0; k<3; k++) {
+            com_mode(k, true, false);
+            com_set_tx_addr(k, com_master_pos);
+            com_tx(k, (uint8_t*)&com_robots[com_master_pos], sizeof(struct packet_master));
+        }
+        com_ce_enable();
 
-        // Setting TX address
-        com_set_tx_addr(2, 0);
-        com_set_reg(2, REG_STATUS, 0x70);
-
-        // Sending payload
-        uint8_t packet[] = "hello";
-        com_tx(2, packet, 5);
-
-        // Sending
-        com_ce_pulse();
+        com_master_pos++;
+        if (com_master_pos >= 6) {
+            com_master_pos = 0;
+        }
     }
-#endif
+
+    if (!com_master && com_master_new) {
+        com_master_controlling = true;
+        com_master_new = false;
+
+        if (com_master_packet.actions & ACTION_ON) {
+            drivers_set_safe(0, true, com_master_packet.wheel1);
+            drivers_set_safe(1, true, com_master_packet.wheel2);
+            drivers_set_safe(2, true, com_master_packet.wheel3);
+            drivers_set_safe(3, true, com_master_packet.wheel4);
+            drivers_set_safe(4, false, 0);
+        } else {
+            drivers_set(0, false, 0);
+            drivers_set(1, false, 0);
+            drivers_set(2, false, 0);
+            drivers_set(3, false, 0);
+            drivers_set(4, false, 0);
+        }
+
+        struct packet_robot packet;
+        packet.id = 0; // XXX: Configure id per robot
+        packet.status = STATUS_OK;
+        // XXX: Complete the status packet
+
+        com_ce_disable();
+        for (int k=0; k<3; k++) {
+            com_mode(k, true, false);
+            com_tx(k, (uint8_t*)&packet, sizeof(struct packet_robot));
+        }
+        com_ce_enable();
+    }
+
+    if ((millis() - com_master_reception) < 100) {
+        digitalWrite(BOARD_LED_PIN, HIGH);
+    } else {
+        digitalWrite(BOARD_LED_PIN, LOW);
+    }
+}
+
+TERMINAL_COMMAND(mp, "Master packets")
+{
+    terminal_io()->println(com_master_packets);
 }
 
 TERMINAL_COMMAND(ct, "Com tx")
@@ -332,4 +456,77 @@ TERMINAL_COMMAND(st, "St")
     com_read_reg5(2, REG_TX_ADDR, value);
     for (int k=0; k<5; k++)
     terminal_io()->println((int)value[k]);
+}
+
+bool com_is_all_ok()
+{
+    for (int k=0; k<3; k++) {
+        if (!com_is_ok(k)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void com_diagnostic()
+{
+    com_init();
+
+    for (int k=0; k<3; k++) {
+        terminal_io()->print("* Com module #");
+        terminal_io()->print(k);
+        if (com_is_ok(k)) {
+            terminal_io()->println(" OK");
+        } else {
+            terminal_io()->println(" MISSING");
+        }
+    }
+}
+
+TERMINAL_COMMAND(master, "Enable master mode")
+{
+    com_master = true;
+    com_init();
+}
+
+TERMINAL_COMMAND(ms, "Master status")
+{
+    for (int k=0; k<6; k++) {
+        if (millis() - com_robot_reception[k] < 100) {
+            terminal_io()->print("Robot #");
+            terminal_io()->print(k);
+            terminal_io()->println(" is alive.");
+        }
+    }
+}
+
+TERMINAL_COMMAND(m, "Master set")
+{
+    if (argc == 4) {
+        com_robots[0].actions = ACTION_ON;
+        com_robots[0].wheel1 = atof(argv[0]);
+        com_robots[0].wheel2 = atof(argv[1]);
+        com_robots[0].wheel3 = atof(argv[2]);
+        com_robots[0].wheel4 = atof(argv[3]);
+    }
+}
+
+
+
+TERMINAL_COMMAND(em, "Emergency")
+{
+    if (com_master) {
+        for (int k=0; k<6; k++) {
+            com_robots[k].actions = 0;
+            com_robots[k].wheel1 = 0;
+            com_robots[k].wheel2 = 0;
+            com_robots[k].wheel3 = 0;
+            com_robots[k].wheel4 = 0;
+        }
+    } else {
+        for (int k=0; k<5; k++) {
+            drivers_set(k, false, 0.0);
+        }
+    }
 }
