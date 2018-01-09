@@ -10,10 +10,9 @@ HardwareSPI drivers(DRIVERS_SPI);
 static bool drivers_is_error = false;
 
 static int drivers_pins[5] = {
-    DRIVERS_CS1, DRIVERS_CS2, DRIVERS_CS3,
-    DRIVERS_CS4, DRIVERS_CS5
+    DRIVERS_CS1, DRIVERS_CS4, DRIVERS_CS3,
+    DRIVERS_CS2, DRIVERS_CS5
 };
-
 
 int drivers_ping(int index)
 {

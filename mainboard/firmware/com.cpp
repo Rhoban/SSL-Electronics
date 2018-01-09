@@ -9,6 +9,8 @@
 // Channels
 static int com_channels[3] = {0, 50, 100};
 
+static int debug_send_begin, debug_send_end, debug_send_dur;
+
 // Only for master board
 static bool com_master = false;
 static struct packet_master com_robots[6];
@@ -74,12 +76,10 @@ TERMINAL_PARAMETER_INT(irqed, "", 0);
 void com_send(int index, uint8_t *packet, size_t n)
 {
     digitalWrite(com_pins[index], LOW);
-    delay_us(10);
     for (size_t k=0; k<n; k++) {
         uint8_t reply = com.send(packet[k]);
         packet[k] = reply;
     }
-    delay_us(10);
     digitalWrite(com_pins[index], HIGH);
 }
 
@@ -184,7 +184,6 @@ void com_irq(int index)
     int status = com_read_reg(index, REG_STATUS);
 
     if (status & 0x40) { // RX
-        irqed++;
         com_available[index] = true;
 
         if (com_master) {
@@ -204,11 +203,18 @@ void com_irq(int index)
         }
     }
     if (status & 0x20) {
+        irqed++;
+        debug_send_dur = micros() - debug_send_begin;
         com_mode(index, true, true);
     }
 
     // Resetting flags
     com_set_reg(index, REG_STATUS, 0x70);
+}
+
+TERMINAL_COMMAND(dt, "Debug time")
+{
+    terminal_io()->println(debug_send_dur);
 }
 
 void com_irq1()
@@ -244,13 +250,6 @@ static void com_ce_disable()
     digitalWrite(COM_CE, LOW);
 }
 
-static void com_ce_pulse()
-{
-    com_ce_enable();
-    delay_us(10);
-    com_ce_disable();
-}
-
 bool com_is_ok(int index)
 {
     uint8_t myAddr[5] = COM_ADDR;
@@ -270,7 +269,7 @@ bool com_is_ok(int index)
 void com_init()
 {
     // Initializing SPI
-    com.begin(SPI_9MHZ, MSBFIRST, 0);
+    com.begin(SPI_18MHZ, MSBFIRST, 0);
 
     // Initializing CS pins
     for (int k=0; k<5; k++) {
@@ -323,16 +322,26 @@ void com_init()
     // Initializing IRQ pins
     detachInterrupt(COM_IRQ1);
     if (com_is_ok(0)) {
+        if (com_read_reg(0, REG_STATUS) & 0xf0) {
+            com_irq(0);
+        }
         pinMode(COM_IRQ1, INPUT);
         attachInterrupt(COM_IRQ1, com_irq1, FALLING);
+        int status = com_read_reg(0, REG_STATUS);
     }
     detachInterrupt(COM_IRQ2);
     if (com_is_ok(1)) {
+        if (com_read_reg(1, REG_STATUS) & 0xf0) {
+            com_irq(1);
+        }
         pinMode(COM_IRQ2, INPUT);
         attachInterrupt(COM_IRQ2, com_irq2, FALLING);
     }
     detachInterrupt(COM_IRQ3);
     if (com_is_ok(2)) {
+        if (com_read_reg(2, REG_STATUS) & 0xf0) {
+            com_irq(2);
+        }
         pinMode(COM_IRQ3, INPUT);
         attachInterrupt(COM_IRQ3, com_irq3, FALLING);
     }
@@ -354,15 +363,18 @@ void com_init()
 
 void com_tick()
 {
-    static int last = millis();
+    static int last = micros();
 
     // Sending a packet to a robot
-    if (com_master && (millis() - last) > 1) {
-        last = millis();
+    if (com_master && (micros() - last) > 1600) {
+        last = micros();
+
+        debug_send_begin = micros();
 
         com_ce_disable();
         for (int k=0; k<3; k++) {
             com_mode(k, true, false);
+            com_set_reg(k, REG_STATUS, 0x70);
             com_set_tx_addr(k, com_master_pos);
             com_tx(k, (uint8_t*)&com_robots[com_master_pos], sizeof(struct packet_master));
         }
@@ -400,6 +412,7 @@ void com_tick()
         com_ce_disable();
         for (int k=0; k<3; k++) {
             com_mode(k, true, false);
+            com_set_reg(k, REG_STATUS, 0x70);
             com_tx(k, (uint8_t*)&packet, sizeof(struct packet_robot));
         }
         com_ce_enable();
