@@ -4,6 +4,7 @@
 #include "hardware.h"
 #include "current.h"
 #include "motor.h"
+#include "security.h"
 
 // Current sensing
 static float current = 0.0;
@@ -14,9 +15,17 @@ void current_init()
     pinMode(CURRENT_PIN, INPUT);
 }
 
+static int samples = 0;
+
+void current_resample()
+{
+    samples = 0;
+    current = 0.0;
+    current_ref = 0.0;
+}
+
 void current_tick()
 {
-    static int samples = 0;
     static int last_update = millis();
     static int last_limit = 0;
 
@@ -40,17 +49,22 @@ void current_tick()
             last_limit = millis();
         }
 
+        // Security
         if (samples > 100) {
-            float amps = current_amps();
-            if (fabs(amps) > CURRENT_LIMIT) {
+            float amps = fabs(current_amps());
+
+            if (amps > CURRENT_LIMIT) {
+                // We are over CURRENT_LIMIT for more than CURRENT_DURATION ms
                 if (millis() - last_limit > CURRENT_DURATION) {
-                    while (true) {
-                        motor_set(0);
-                        motor_tick();
-                    }
+                    security_set_error(SECURITY_CURRENT_MAX);
                 }
             } else {
                 last_limit = millis();
+            }
+
+            // We are over CURRENT_MAX
+            if (amps > CURRENT_MAX) {
+                security_set_error(SECURITY_CURRENT_LIMIT);
             }
         }
     }

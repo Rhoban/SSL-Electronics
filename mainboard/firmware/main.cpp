@@ -7,6 +7,7 @@
 #include <watchdog.h>
 #include "drivers.h"
 #include "com.h"
+#include "buzzer.h"
 
 /**
  * Setup function
@@ -22,6 +23,9 @@ void setup()
     // Starting the watchdog
     watchdog_start(WATCHDOG_14MS);
 
+    buzzer_init();
+    buzzer_play(MELODY_BOOT);
+
     terminal_init(&SerialUSB);
 }
 
@@ -35,6 +39,9 @@ void loop()
 
     // Com
     com_tick();
+
+    // Buzzer
+    buzzer_tick();
 
     // Ticking the terminal
     terminal_tick();

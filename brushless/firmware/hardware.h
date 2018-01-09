@@ -40,5 +40,6 @@
 // Current protection
 #define CURRENT_LIMIT       1.5
 #define CURRENT_DURATION    500
+#define CURRENT_MAX         8
 
 #endif

@@ -4,6 +4,7 @@
 #include "hardware.h"
 #include "com.h"
 #include "servo.h"
+#include "security.h"
 
 HardwareSPI slave(SLAVE_SPI);
 
@@ -52,7 +53,11 @@ static void slave_irq()
         frame_pos = 0;
         slave.beginSlave(MSBFIRST, 0);
         spi_irq_enable(slave.c_dev(), SPI_RXNE_INTERRUPT);
-        spi_tx_reg(SPI1, 0xaa);
+        if (security_get_error() == SECURITY_NO_ERROR) {
+            spi_tx_reg(SPI1, 0xaa);
+        } else {
+            spi_tx_reg(SPI1, 0x50|security_get_error());
+        }
     } else {
         slave.end();
         pinMode(slave.misoPin(), INPUT_FLOATING);

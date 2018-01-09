@@ -291,16 +291,6 @@ void com_tick()
         com_ce_pulse();
     }
 #endif
-
-    if (com_available[2]) {
-        com_available[2] = false;
-        terminal_io()->print(millis());
-        terminal_io()->print("\t");
-        for (int k=0; k<PAYLOAD_SIZE; k++) {
-            terminal_io()->print((char)com_data[2][k]);
-        }
-        terminal_io()->println();
-    }
 }
 
 TERMINAL_COMMAND(ct, "Com tx")

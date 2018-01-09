@@ -1,6 +1,8 @@
 #ifndef _CURRENT_H
 #define _CURRENT_H
 
+void current_resample();
+
 /**
  * Initializes the current sensing device
  */

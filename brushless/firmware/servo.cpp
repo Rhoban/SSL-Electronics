@@ -3,8 +3,10 @@
 #include <terminal.h>
 #include "hardware.h"
 #include "motor.h"
+#include "current.h"
 #include "servo.h"
 #include "encoder.h"
+#include "security.h"
 
 // Interrupt flag
 static bool servo_flag = false;
@@ -58,38 +60,42 @@ TERMINAL_PARAMETER_INT(kd, "PID D", 1);
 
 void servo_tick()
 {
-    if (servo_flag) {
-        servo_flag = false;
+    if (security_get_error() != SECURITY_NO_ERROR) {
+        motor_set(0);
+    } else {
+        if (servo_flag) {
+            servo_flag = false;
 
-        // Storing current value
-        int current_value = encoder_value();
-        encoder_rb[encoder_pos] = current_value;
-        encoder_pos++;
-        if (encoder_pos >= SPEED_RB) {
-            encoder_pos = 0;
-        }
-        int past_value = encoder_rb[encoder_pos];
+            // Storing current value
+            int current_value = encoder_value();
+            encoder_rb[encoder_pos] = current_value;
+            encoder_pos++;
+            if (encoder_pos >= SPEED_RB) {
+                encoder_pos = 0;
+            }
+            int past_value = encoder_rb[encoder_pos];
 
-        // Updating current speed estimation [pulse per SPEED_DT]
-        int speed_pulse = current_value - past_value;
+            // Updating current speed estimation [pulse per SPEED_DT]
+            int speed_pulse = current_value - past_value;
 
-        // Converting this into a speed [turn/s]
-        servo_speed = (1000/(float)SPEED_DT)*speed_pulse/(float)ENCODER_CPR;
+            // Converting this into a speed [turn/s]
+            servo_speed = (1000/(float)SPEED_DT)*speed_pulse/(float)ENCODER_CPR;
 
-        if (servo_enable) {
-            float error = (servo_speed-servo_target);
+            if (servo_enable) {
+                float error = (servo_speed-servo_target);
 
-            servo_pwm = kp * error + servo_acc + (error - servo_last_error) * kd;
+                servo_pwm = kp * error + servo_acc + (error - servo_last_error) * kd;
 
-            servo_acc += ki * error;
-            servo_last_error = error;
+                servo_acc += ki * error;
+                servo_last_error = error;
 
-            if (servo_pwm < -3000) servo_pwm = -3000;
-            if (servo_pwm > 3000) servo_pwm = 3000;
-            if (servo_acc < -3000) servo_acc = -3000;
-            if (servo_acc > 3000) servo_acc = 3000;
+                if (servo_pwm < -3000) servo_pwm = -3000;
+                if (servo_pwm > 3000) servo_pwm = 3000;
+                if (servo_acc < -3000) servo_acc = -3000;
+                if (servo_acc > 3000) servo_acc = 3000;
 
-            motor_set(servo_pwm);
+                motor_set(servo_pwm);
+            }
         }
     }
 }
@@ -113,7 +119,9 @@ void servo_set(bool enable, float target)
         servo_pwm = 0;
         servo_acc = 0;
         servo_last_error = 0;
+        current_resample();
         motor_set(0);
+        security_set_error(SECURITY_NO_ERROR);
     }
 }
 

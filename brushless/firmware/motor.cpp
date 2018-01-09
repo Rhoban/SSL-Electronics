@@ -3,6 +3,7 @@
 #include <terminal.h>
 #include "hardware.h"
 #include "motor.h"
+#include "security.h"
 
 // Motor pins
 static int motor_pins[6] = {
@@ -13,6 +14,10 @@ static int motor_pins[6] = {
 
 // Target PWM speed [0-3000]
 static int motor_pwm = 0;
+
+// Hall current phase
+static int hall_current_phase = 0;
+static int hall_last_change = 0;
 
 // Consecutive phases
 static int motor_phases[6][3] = {
@@ -145,6 +150,17 @@ void motor_tick()
         // XXX: This is not a normal state, not sure what should be done
         // in this situation
         set_phases(0, 0, 0);
+    }
+
+    if (phase != hall_current_phase) {
+        hall_last_change = millis();
+    }
+    hall_current_phase = phase;
+
+    if ((millis() - hall_last_change) > 50 && abs(motor_pwm) > 2800) {
+        // Stop everything
+        // Will trigger watchdog and reset
+        security_set_error(SECURITY_HALL_FREEZE);
     }
 }
 

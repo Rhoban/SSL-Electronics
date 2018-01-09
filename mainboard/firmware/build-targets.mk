@@ -1,7 +1,7 @@
 # Project targets
 # Defines here your cpp source files
 # Ex : main.cpp test.cpp ...
-SRC_FILES = main.cpp drivers.cpp com.cpp
+SRC_FILES = main.cpp drivers.cpp com.cpp buzzer.cpp
 
 ifeq ($(ENABLE_RHOCK),yes)
 SRC_FILES += rhock-functions.cpp rhock-stream.cpp
