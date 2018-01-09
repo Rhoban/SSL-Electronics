@@ -366,6 +366,7 @@ void com_tick()
     static int last = micros();
 
     // Sending a packet to a robot
+    // XXX: Using micros() in unsafe because it sometime overflow, to fix!
     if (com_master && (micros() - last) > 1600) {
         last = micros();
 
