@@ -17,6 +17,7 @@ static struct packet_master com_robots[6];
 static struct packet_robot com_statuses[6];
 static int com_robot_reception[6];
 static int com_master_pos = 0;
+static int com_usb_reception = 0;
 
 // Only for robot
 static int com_master_reception = 0;
@@ -361,62 +362,145 @@ void com_init()
     com_master_pos = 0;
 }
 
+static void com_usb_tick()
+{
+    static int state = 0;
+    static uint8_t temp[sizeof(com_robots)];
+    static int pos = 0;
+
+    while (SerialUSB.available()) {
+        watchdog_feed();
+        uint8_t c = SerialUSB.read();
+        if (state == 0) {
+            if (c == 0xaa) {
+                state++;
+            }
+        } else if (state == 1) {
+            if (c == 0x55) {
+                state++;
+                pos = 0;
+            } else {
+                state = 0;
+            }
+        } else if (pos < sizeof(com_robots)) {
+            temp[pos++] = c;
+        } else {
+            digitalWrite(BOARD_LED_PIN, HIGH);
+            if (c == 0xff) {
+                // Received message from USB
+                uint8_t *target = (uint8_t *)com_robots;
+                for (int k = 0; k < sizeof(com_robots); k++) {
+                    target[k] = temp[k];
+                }
+                com_usb_reception = millis();
+
+                // Updating robot statuses
+                for (int k = 0; k < 6; k++) {
+                    if ((millis() - com_robot_reception[k]) >= 100) {
+                        com_statuses[k].status = 0;
+                    }
+                }
+
+                // Sending back robot status
+                uint8_t statuses[sizeof(com_statuses)+3];
+                statuses[0] = 0xaa;
+                statuses[1] = 0x55;
+                statuses[sizeof(com_statuses)+2] = 0xff;
+                uint8_t *source = (uint8_t *)com_statuses;
+                for (int k = 0; k < sizeof(com_statuses); k++) {
+                    statuses[k+2] = source[k];
+                }
+                SerialUSB.write(statuses, sizeof(statuses));
+            }
+            state = 0;
+        }
+    }
+}
+
 void com_tick()
 {
     static int last = micros();
 
-    // Sending a packet to a robot
-    // XXX: Using micros() in unsafe because it sometime overflow, to fix!
-    if (com_master && (micros() - last) > 1600) {
-        last = micros();
+#define BINARY
 
-        debug_send_begin = micros();
+    // Entering master infinite loop
+    while (com_master) {
+        // Feed the watchdog
+        watchdog_feed();
 
-        com_ce_disable();
-        for (int k=0; k<3; k++) {
-            com_mode(k, true, false);
-            com_set_reg(k, REG_STATUS, 0x70);
-            com_set_tx_addr(k, com_master_pos);
-            com_tx(k, (uint8_t*)&com_robots[com_master_pos], sizeof(struct packet_master));
+        // Tick the communication with USB master
+        #ifdef BINARY
+        com_usb_tick();
+        #else
+        terminal_tick();
+        #endif
+
+        // Feed the watchdog
+        watchdog_feed();
+
+        // Sending a packet to a robot
+        // XXX: Using micros() in unsafe because it sometime overflow, to fix!
+        #ifdef BINARY
+        if ((millis() - com_usb_reception) < 100 && com_master && (micros() - last) > 1600) {
+        #else
+        if (com_master && (micros() - last) > 1600) {
+        #endif
+            last = micros();
+
+            debug_send_begin = micros();
+
+            com_ce_disable();
+            for (int k=0; k<3; k++) {
+                com_mode(k, true, false);
+                com_set_reg(k, REG_STATUS, 0x70);
+                com_set_tx_addr(k, com_master_pos);
+                com_tx(k, (uint8_t*)&com_robots[com_master_pos], sizeof(struct packet_master));
+            }
+            com_ce_enable();
+
+            com_master_pos++;
+            if (com_master_pos >= 6) {
+                com_master_pos = 0;
+            }
         }
-        com_ce_enable();
 
-        com_master_pos++;
-        if (com_master_pos >= 6) {
-            com_master_pos = 0;
+        if (!com_master && com_master_new) {
+            com_master_controlling = true;
+            com_master_new = false;
+
+            if (com_master_packet.actions & ACTION_ON) {
+                drivers_set_safe(0, true, com_master_packet.wheel1);
+                drivers_set_safe(1, true, com_master_packet.wheel2);
+                drivers_set_safe(2, true, com_master_packet.wheel3);
+                drivers_set_safe(3, true, com_master_packet.wheel4);
+                drivers_set_safe(4, false, 0);
+            } else {
+                drivers_set(0, false, 0);
+                drivers_set(1, false, 0);
+                drivers_set(2, false, 0);
+                drivers_set(3, false, 0);
+                drivers_set(4, false, 0);
+            }
+
+            struct packet_robot packet;
+            packet.id = 0; // XXX: Configure id per robot
+            packet.status = STATUS_OK;
+            // XXX: Complete the status packet
+
+            com_ce_disable();
+            for (int k=0; k<3; k++) {
+                com_mode(k, true, false);
+                com_set_reg(k, REG_STATUS, 0x70);
+                com_tx(k, (uint8_t*)&packet, sizeof(struct packet_robot));
+            }
+            com_ce_enable();
         }
-    }
 
-    if (!com_master && com_master_new) {
-        com_master_controlling = true;
-        com_master_new = false;
-
-        if (com_master_packet.actions & ACTION_ON) {
-            drivers_set_safe(0, true, com_master_packet.wheel1);
-            drivers_set_safe(1, true, com_master_packet.wheel2);
-            drivers_set_safe(2, true, com_master_packet.wheel3);
-            drivers_set_safe(3, true, com_master_packet.wheel4);
-            drivers_set_safe(4, false, 0);
+        if ((millis() - com_usb_reception) < 100) {
+            digitalWrite(BOARD_LED_PIN, HIGH);
         } else {
-            drivers_set(0, false, 0);
-            drivers_set(1, false, 0);
-            drivers_set(2, false, 0);
-            drivers_set(3, false, 0);
-            drivers_set(4, false, 0);
+            digitalWrite(BOARD_LED_PIN, LOW);
         }
-
-        struct packet_robot packet;
-        packet.id = 0; // XXX: Configure id per robot
-        packet.status = STATUS_OK;
-        // XXX: Complete the status packet
-
-        com_ce_disable();
-        for (int k=0; k<3; k++) {
-            com_mode(k, true, false);
-            com_set_reg(k, REG_STATUS, 0x70);
-            com_tx(k, (uint8_t*)&packet, sizeof(struct packet_robot));
-        }
-        com_ce_enable();
     }
 
     if ((millis() - com_master_reception) < 100) {
