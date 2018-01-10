@@ -26,4 +26,27 @@
 #define COM_ADDR {0x22, 0x87, 0xe8, 0xf9, 0x00}
 #define COM_MASTER 0xff
 
+// Buzzer
+#define BUZZER_PIN      11
+#define BUZZER_TIMER    2
+
+// Booster
+#define BOOSTER_PIN     27
+#define BOOSTER_TIMER   1
+#define CAP_PIN         3
+#define CAP_R1          2000000.0
+#define CAP_R2          10000.0
+
+// Kicker
+#define KICKER1_PIN     0
+#define KICKER_TIMER    4
+
+// Voltage
+#define BAT1_PIN        8
+#define BAT2_PIN        9
+#define BAT1_R1         10000
+#define BAT1_R2         1000
+#define BAT2_R1         10000
+#define BAT2_R2         1000
+
 #endif

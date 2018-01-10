@@ -1,8 +1,6 @@
 #ifndef _BUZZER_H
 #define _BUZZER_H
 
-#define BUZZER_PIN      11
-
 // When the robot starts
 #define MELODY_BOOT       0
 // When the battery is low

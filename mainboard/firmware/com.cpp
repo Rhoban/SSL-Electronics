@@ -2,14 +2,15 @@
 #include <wirish/wirish.h>
 #include <terminal.h>
 #include <watchdog.h>
+#include "kicker.h"
 #include "hardware.h"
 #include "drivers.h"
+#include "voltage.h"
+#include "kicker.h"
 #include "com.h"
 
 // Channels
 static int com_channels[3] = {0, 50, 100};
-
-static int debug_send_begin, debug_send_end, debug_send_dur;
 
 // Only for master board
 static bool com_master = false;
@@ -203,19 +204,12 @@ void com_irq(int index)
             com_rx(index, (uint8_t*)&com_master_packet, sizeof(struct packet_master));
         }
     }
-    if (status & 0x20) {
-        irqed++;
-        debug_send_dur = micros() - debug_send_begin;
+    if (status & 0x20) { // TX
         com_mode(index, true, true);
     }
 
     // Resetting flags
     com_set_reg(index, REG_STATUS, 0x70);
-}
-
-TERMINAL_COMMAND(dt, "Debug time")
-{
-    terminal_io()->println(debug_send_dur);
 }
 
 void com_irq1()
@@ -419,9 +413,10 @@ static void com_usb_tick()
 
 void com_tick()
 {
+    static int actions = 0;
     static int last = micros();
 
-#define BINARY
+// #define BINARY
 
     // Entering master infinite loop
     while (com_master) {
@@ -440,14 +435,13 @@ void com_tick()
 
         // Sending a packet to a robot
         // XXX: Using micros() in unsafe because it sometime overflow, to fix!
+        // XXX: If the robot answered, we can ask the next quicker?
         #ifdef BINARY
-        if ((millis() - com_usb_reception) < 100 && com_master && (micros() - last) > 1600) {
+        if ((millis() - com_usb_reception) < 100 && com_master && (micros() - last) > 1650) {
         #else
-        if (com_master && (micros() - last) > 1600) {
+        if (com_master && (micros() - last) > 1650) {
         #endif
             last = micros();
-
-            debug_send_begin = micros();
 
             com_ce_disable();
             for (int k=0; k<3; k++) {
@@ -464,38 +458,6 @@ void com_tick()
             }
         }
 
-        if (!com_master && com_master_new) {
-            com_master_controlling = true;
-            com_master_new = false;
-
-            if (com_master_packet.actions & ACTION_ON) {
-                drivers_set_safe(0, true, com_master_packet.wheel1);
-                drivers_set_safe(1, true, com_master_packet.wheel2);
-                drivers_set_safe(2, true, com_master_packet.wheel3);
-                drivers_set_safe(3, true, com_master_packet.wheel4);
-                drivers_set_safe(4, false, 0);
-            } else {
-                drivers_set(0, false, 0);
-                drivers_set(1, false, 0);
-                drivers_set(2, false, 0);
-                drivers_set(3, false, 0);
-                drivers_set(4, false, 0);
-            }
-
-            struct packet_robot packet;
-            packet.id = 0; // XXX: Configure id per robot
-            packet.status = STATUS_OK;
-            // XXX: Complete the status packet
-
-            com_ce_disable();
-            for (int k=0; k<3; k++) {
-                com_mode(k, true, false);
-                com_set_reg(k, REG_STATUS, 0x70);
-                com_tx(k, (uint8_t*)&packet, sizeof(struct packet_robot));
-            }
-            com_ce_enable();
-        }
-
         if ((millis() - com_usb_reception) < 100) {
             digitalWrite(BOARD_LED_PIN, HIGH);
         } else {
@@ -503,9 +465,65 @@ void com_tick()
         }
     }
 
+    if (!com_master && com_master_new) {
+        com_master_controlling = true;
+        com_master_new = false;
+
+        struct packet_robot packet;
+        // XXX: Configure id per robot
+        packet.id = 0;
+        // XXX: Complete the status
+        packet.status = STATUS_OK;
+        packet.cap_volt = kicker_cap_voltage()*10.0;
+        packet.bat1_volt = voltage_bat1()*10.0;
+        packet.bat2_volt = voltage_bat2()*10.0;
+
+        com_ce_disable();
+        for (int k=0; k<3; k++) {
+            com_mode(k, true, false);
+            com_set_reg(k, REG_STATUS, 0x70);
+            com_tx(k, (uint8_t *)&packet, sizeof(struct packet_robot));
+        }
+        com_ce_enable();
+
+        // Driving wheels
+        if (com_master_packet.actions & ACTION_ON) {
+            drivers_set_safe(0, true, com_master_packet.wheel1);
+            drivers_set_safe(1, true, com_master_packet.wheel2);
+            drivers_set_safe(2, true, com_master_packet.wheel3);
+            drivers_set_safe(3, true, com_master_packet.wheel4);
+            drivers_set_safe(4, false, 0);
+
+            // Charging
+            if (com_master_packet.actions & ACTION_CHARGE) {
+                kicker_boost_enable(true);
+            } else {
+                kicker_boost_enable(false);
+            }
+
+            // Kicking
+            if ((com_master_packet.actions & ACTION_KICK1) &&
+                !(actions & ACTION_KICK1)) {
+                kicker_kick(com_master_packet.kickPower);
+            }
+            // XXX: Handle KICK2
+
+            actions = com_master_packet.actions;
+        } else {
+            drivers_set(0, false, 0);
+            drivers_set(1, false, 0);
+            drivers_set(2, false, 0);
+            drivers_set(3, false, 0);
+            drivers_set(4, false, 0);
+            actions = 0;
+            kicker_boost_enable(false);
+        }
+    }
+
     if ((millis() - com_master_reception) < 100) {
         digitalWrite(BOARD_LED_PIN, HIGH);
     } else {
+        actions = 0;
         digitalWrite(BOARD_LED_PIN, LOW);
     }
 }
@@ -610,7 +628,26 @@ TERMINAL_COMMAND(m, "Master set")
     }
 }
 
+TERMINAL_COMMAND(rc, "Remote charge test")
+{
+    if (atoi(argv[0])) {
+        com_robots[0].actions |= ACTION_ON;
+        com_robots[0].actions |= ACTION_CHARGE;
+    } else {
+        com_robots[0].actions &= ~ACTION_CHARGE;
+    }
+}
 
+TERMINAL_COMMAND(rk, "Remote kick test")
+{
+    if (atoi(argv[0])) {
+        com_robots[0].kickPower = atoi(argv[0]);
+        com_robots[0].actions |= ACTION_KICK1;
+    } else {
+        com_robots[0].kickPower = 0;
+        com_robots[0].actions &= ~ACTION_KICK1;
+    }
+}
 
 TERMINAL_COMMAND(em, "Emergency")
 {

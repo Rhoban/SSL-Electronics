@@ -9,6 +9,8 @@
 HardwareSPI drivers(DRIVERS_SPI);
 static bool drivers_is_error = false;
 
+static bool drivers_present[5] = {false};
+
 static int drivers_pins[5] = {
     DRIVERS_CS1, DRIVERS_CS4, DRIVERS_CS3,
     DRIVERS_CS2, DRIVERS_CS5
@@ -48,7 +50,7 @@ uint8_t drivers_set(int index, bool enable, float target)
 
 void drivers_set_safe(int index, bool enable, float target)
 {
-    if (!drivers_is_error) {
+    if (!drivers_is_error && drivers_present[index]) {
         uint8_t answer = drivers_set(index, enable, target);
 
         if ((answer&0xf0) == 0x50) {
@@ -85,6 +87,10 @@ void drivers_init()
         digitalWrite(drivers_pins[k], HIGH);
         pinMode(drivers_pins[k], OUTPUT);
         digitalWrite(drivers_pins[k], HIGH);
+    }
+
+    for (int k=0; k<5; k++) {
+        drivers_present[k] = drivers_ping(k);
     }
 }
 
@@ -136,7 +142,7 @@ TERMINAL_COMMAND(blink, "Blink the drivers")
 bool drivers_is_all_ok()
 {
     for (int k=0; k<5; k++) {
-        if (!drivers_ping(k)) {
+        if (!drivers_present[k]) {
             return false;
         }
     }
@@ -149,7 +155,7 @@ void drivers_diagnostic()
     for (int k=0; k<5; k++) {
         terminal_io()->print("* Driver #");
         terminal_io()->print(k);
-        if (!drivers_ping(k)) {
+        if (!drivers_present[k]) {
             terminal_io()->println(" MISSING");
         } else {
             terminal_io()->println(" OK");

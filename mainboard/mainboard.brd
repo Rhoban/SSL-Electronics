@@ -307,6 +307,11 @@
 <dimension x1="-59.75" y1="43.75" x2="66.25" y2="43.75" x3="3.25" y3="91.75" layer="51"/>
 <dimension x1="-59.75" y1="43.75" x2="-59.75" y2="-38.25" x3="-107.75" y3="2.75" layer="51"/>
 <dimension x1="2" y1="82.5" x2="2" y2="-77.5" x3="113.60093125" y3="2.800603125" layer="51"/>
+<text x="-14.5" y="-42.5" size="10" layer="112">1</text>
+<text x="40.75" y="-36.5" size="10" layer="112">2</text>
+<text x="-43.75" y="16.25" size="10" layer="112">5</text>
+<text x="-40.25" y="-35.5" size="10" layer="112">3</text>
+<text x="-14" y="-12.25" size="10" layer="112">4</text>
 </plain>
 <libraries>
 <library name="rhoban">

@@ -1,10 +1,11 @@
 #include <stdlib.h>
 #include <wirish/wirish.h>
 #include <terminal.h>
+#include "hardware.h"
 #include "buzzer.h"
 
 // Config
-HardwareTimer           timer(2);
+HardwareTimer           timer(BUZZER_TIMER);
 
 // Partitions
 struct buzzer_note {
