@@ -128,8 +128,8 @@ TERMINAL_COMMAND(hall, "Test the hall sensors")
 
 void motor_set(int value)
 {
-    if (value < -3000) value = -3000;
-    if (value > 3000) value = 3000;
+    if (value < -PWM_MAX) value = -PWM_MAX;
+    if (value > PWM_MAX) value = PWM_MAX;
     motor_pwm = value;
 }
 
@@ -157,7 +157,7 @@ void motor_tick()
     }
     hall_current_phase = phase;
 
-    if ((millis() - hall_last_change) > 50 && abs(motor_pwm) > 2800) {
+    if ((millis() - hall_last_change) > 50 && abs(motor_pwm) > 2500) {
         // Stop everything
         // Will trigger watchdog and reset
         security_set_error(SECURITY_HALL_FREEZE);

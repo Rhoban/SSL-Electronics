@@ -14,6 +14,7 @@ static bool servo_flag = false;
 // Enable and target
 static bool servo_enable = false;
 static float servo_target = 0;
+static float servo_limited_target = 0;
 
 // Speed estimation
 static float servo_speed = 0;
@@ -66,6 +67,19 @@ void servo_tick()
         if (servo_flag) {
             servo_flag = false;
 
+            // Updating limited target
+            float maxAcc = ACC_MAX/1000.0;
+            float diff = servo_limited_target - servo_target;
+            if (fabs(diff) < maxAcc) {
+                servo_limited_target = servo_target;
+            } else {
+                if (diff > 0) {
+                    servo_limited_target -= maxAcc;
+                } else {
+                    servo_limited_target += maxAcc;
+                }
+            }
+
             // Storing current value
             int current_value = encoder_value();
             encoder_rb[encoder_pos] = current_value;
@@ -82,7 +96,7 @@ void servo_tick()
             servo_speed = (1000/(float)SPEED_DT)*speed_pulse/(float)ENCODER_CPR;
 
             if (servo_enable) {
-                float error = (servo_speed-servo_target);
+                float error = (servo_speed - servo_limited_target);
 
                 servo_pwm = kp * error + servo_acc + (error - servo_last_error) * kd;
 
@@ -119,6 +133,7 @@ void servo_set(bool enable, float target)
         servo_pwm = 0;
         servo_acc = 0;
         servo_last_error = 0;
+        servo_limited_target = 0;
         current_resample();
         motor_set(0);
         security_set_error(SECURITY_NO_ERROR);
