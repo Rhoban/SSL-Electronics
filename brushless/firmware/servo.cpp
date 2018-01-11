@@ -55,8 +55,8 @@ void servo_init()
 static int servo_pwm = 0;
 static float servo_acc = 0;
 static float servo_last_error = 0;
-TERMINAL_PARAMETER_INT(kp, "PID P", 500);
-TERMINAL_PARAMETER_INT(ki, "PID I", 5);
+TERMINAL_PARAMETER_INT(kp, "PID P", 250);
+TERMINAL_PARAMETER_INT(ki, "PID I", 3);
 TERMINAL_PARAMETER_INT(kd, "PID D", 1);
 
 void servo_tick()
@@ -79,6 +79,9 @@ void servo_tick()
                     servo_limited_target += maxAcc;
                 }
             }
+
+            // XXX: Removing servo limit
+            servo_limited_target = servo_target;
 
             // Storing current value
             int current_value = encoder_value();
@@ -138,6 +141,13 @@ void servo_set(bool enable, float target)
         motor_set(0);
         security_set_error(SECURITY_NO_ERROR);
     }
+}
+
+void servo_set_pid(float kp_, float ki_, float kd_)
+{
+    kp = kp_;
+    ki = ki_;
+    kd = kd_;
 }
 
 float servo_get_speed()

@@ -3,6 +3,14 @@
 
 #include <stdint.h>
 
+struct driver_packet {
+    bool enable;
+    float targetSpeed;
+    float kp;
+    float ki;
+    float kd;
+} __attribute__((packed));
+
 void drivers_init();
 
 /**
@@ -10,6 +18,7 @@ void drivers_init();
  */
 uint8_t drivers_set(int index, bool enable, float target);
 void drivers_set_safe(int index, bool enable, float target);
+void drivers_set_pid(float kp, float ki, float kd);
 
 /**
  * Tick the drivers

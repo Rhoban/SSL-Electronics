@@ -487,6 +487,9 @@ void com_tick()
         }
         com_ce_enable();
 
+        // Setting PID parmeters
+        drivers_set_pid(com_master_packet.kp, com_master_packet.ki, com_master_packet.kd);
+
         // Driving wheels
         if (com_master_packet.actions & ACTION_ON) {
             drivers_set_safe(0, true, com_master_packet.wheel1);

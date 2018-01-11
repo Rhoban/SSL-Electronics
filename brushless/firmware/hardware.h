@@ -43,7 +43,7 @@
 #define CURRENT_MAX         8
 
 // XXX: Limiting PWM
-#define PWM_MAX             2600    // 0-3000
+#define PWM_MAX             2800    // 0-3000
 #define ACC_MAX             15      // turn/s^2
 
 #endif

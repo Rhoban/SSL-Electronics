@@ -157,7 +157,7 @@ void motor_tick()
     }
     hall_current_phase = phase;
 
-    if ((millis() - hall_last_change) > 50 && abs(motor_pwm) > 2500) {
+    if ((millis() - hall_last_change) > 500 && abs(motor_pwm) >= 2500) {
         // Stop everything
         // Will trigger watchdog and reset
         security_set_error(SECURITY_HALL_FREEZE);
