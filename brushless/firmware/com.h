@@ -1,12 +1,17 @@
 #ifndef _COM_H
 #define _COM_H
 
-struct driver_packet {
+#define DRIVER_PACKET_SET   0x00
+struct driver_packet_set {
     bool enable;
     float targetSpeed;
-    float kp;
-    float ki;
-    float kd;
+} __attribute__((packed));
+
+#define DRIVER_PACKET_PARAMS   0x01
+struct driver_packet_params {
+float kp;
+float ki;
+float kd;
 } __attribute__((packed));
 
 void com_init();

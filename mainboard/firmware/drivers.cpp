@@ -11,8 +11,6 @@ static bool drivers_is_error = false;
 
 static bool drivers_present[5] = {false};
 
-static float kp = 250, ki = 3, kd = 0;
-
 static int drivers_pins[5] = {
     DRIVERS_CS1, DRIVERS_CS4, DRIVERS_CS3,
     DRIVERS_CS2, DRIVERS_CS5
@@ -29,30 +27,42 @@ int drivers_ping(int index)
     return (answer == 0xaa);
 }
 
-uint8_t drivers_set(int index, bool enable, float target)
+static uint8_t drivers_send(int index, uint8_t instruction, uint8_t *data, size_t len)
 {
-    struct driver_packet packet;
-    packet.enable = enable;
-    packet.targetSpeed = target;
-    packet.kp = kp;
-    packet.ki = ki;
-    packet.kd = kd;
-
-    uint8_t *frame = (uint8_t *)&packet;
     uint8_t answer;
 
     digitalWrite(drivers_pins[index], LOW);
     delay_us(25);
-    for (int k=0; k<sizeof(struct driver_packet); k++) {
-        uint8_t reply = drivers.send(frame[k]);
-        if (k == 0) {
-            answer = reply;
-        }
+    answer = drivers.send(instruction);
+
+    for (int k=0; k < len; k++) {
+        drivers.send(data[k]);
     }
     delay_us(5);
     digitalWrite(drivers_pins[index], HIGH);
 
     return answer;
+}
+
+uint8_t drivers_set(int index, bool enable, float target)
+{
+    struct driver_packet_set packet;
+    packet.enable = enable;
+    packet.targetSpeed = target;
+
+    return drivers_send(index, DRIVER_PACKET_SET, (uint8_t*)&packet, sizeof(struct driver_packet_set));
+}
+
+void drivers_set_params(float kp, float ki, float kd)
+{
+    for (int index = 0; index < 5; index++) {
+        struct driver_packet_params packet;
+        packet.kp = kp;
+        packet.ki = ki;
+        packet.kd = kd;
+
+        drivers_send(index, DRIVER_PACKET_PARAMS, (uint8_t*)&packet, sizeof(struct driver_packet_params));
+    }
 }
 
 void drivers_set_safe(int index, bool enable, float target)
@@ -71,19 +81,12 @@ void drivers_set_safe(int index, bool enable, float target)
     }
 }
 
-void drivers_set_pid(float kp_, float ki_, float kd_)
-{
-    kp = kp_;
-    ki = ki_;
-    kd = kd_;
-}
-
 TERMINAL_COMMAND(pid, "PID")
 {
     if (argc != 3) {
         terminal_io()->println("Usage: pid [p] [i] [d]");
     } else {
-        drivers_set_pid(atof(argv[0]), atof(argv[1]), atof(argv[2]));
+        drivers_set_params(atof(argv[0]), atof(argv[1]), atof(argv[2]));
     }
 }
 

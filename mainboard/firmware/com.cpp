@@ -1,31 +1,52 @@
 #include <stdlib.h>
-#include <wirish/wirish.h>
+#include <stdint.h>
 #include <terminal.h>
+#include "com.h"
+#include <wirish/wirish.h>
 #include <watchdog.h>
 #include "kicker.h"
 #include "hardware.h"
 #include "drivers.h"
 #include "voltage.h"
 #include "kicker.h"
-#include "com.h"
 
 // Channels
 static int com_channels[3] = {0, 50, 100};
 
 // Only for master board
 static bool com_master = false;
+
+// Master control packet to send to each robot
 static struct packet_master com_robots[6];
+
+// Status replies from robots
 static struct packet_robot com_statuses[6];
+
+// Parmeters to send to robot
+static struct packet_params com_master_params;
+volatile static bool com_has_params[6] = {false};
+
+// Timestamp of reception for each packets
 static int com_robot_reception[6];
+
+// Current robot we are communicating with
 static int com_master_pos = 0;
+
+// Reception of order via USB
 static int com_usb_reception = 0;
+static int com_usb_packet_type = 0xff;
+static int com_instructions_size[] = {
+    sizeof(struct packet_master)*6,
+    sizeof(struct packet_params)
+};
 
 // Only for robot
 static int com_master_reception = 0;
+static uint8_t com_master_frame[PACKET_SIZE];
 static int com_master_packets = 0;
 static bool com_master_new = false;
 static bool com_master_controlling = false;
-static struct packet_master com_master_packet;
+static int my_actions = 0;
 
 HardwareSPI com(COM_SPI);
 
@@ -168,6 +189,18 @@ static void com_tx(int index, uint8_t *payload, size_t n)
     com_send(index, packet, n+1);
 }
 
+static void com_tx_packet(int index, uint8_t instruction, uint8_t *data, size_t n)
+{
+    uint8_t packet[PACKET_SIZE+1];
+    packet[0] = OP_TX;
+    packet[1] = instruction;
+    for (int k = 0; k < n; k++) {
+        packet[k + 2] = data[k];
+    }
+
+    com_send(index, packet, PACKET_SIZE+1);
+}
+
 static void com_rx(int index, uint8_t *payload, size_t n)
 {
     uint8_t packet[n+1] = {0};
@@ -201,7 +234,7 @@ void com_irq(int index)
             com_master_reception = millis();
             com_master_new = true;
             com_master_packets++;
-            com_rx(index, (uint8_t*)&com_master_packet, sizeof(struct packet_master));
+            com_rx(index, com_master_frame, PACKET_SIZE);
         }
     }
     if (status & 0x20) { // TX
@@ -299,7 +332,7 @@ void com_init()
         if (com_master) {
             com_set_reg(k, REG_RX_PW_P0, sizeof(struct packet_robot));
         } else {
-            com_set_reg(k, REG_RX_PW_P0, sizeof(struct packet_master));
+            com_set_reg(k, REG_RX_PW_P0, PACKET_SIZE);
         }
 
         // Power up
@@ -359,7 +392,7 @@ void com_init()
 static void com_usb_tick()
 {
     static int state = 0;
-    static uint8_t temp[sizeof(com_robots)];
+    static uint8_t temp[150];
     static int pos = 0;
 
     while (SerialUSB.available()) {
@@ -372,48 +405,133 @@ static void com_usb_tick()
         } else if (state == 1) {
             if (c == 0x55) {
                 state++;
-                pos = 0;
             } else {
                 state = 0;
             }
-        } else if (pos < sizeof(com_robots)) {
+        } else if (state == 2) {
+            state++;
+            com_usb_packet_type = c;
+            pos = 0;
+            if (c > PACKET_INSTRUCTIONS) {
+                state = 0;
+            }
+        } else if (pos < com_instructions_size[com_usb_packet_type]) {
             temp[pos++] = c;
         } else {
-            digitalWrite(BOARD_LED_PIN, HIGH);
             if (c == 0xff) {
-                // Received message from USB
-                uint8_t *target = (uint8_t *)com_robots;
-                for (int k = 0; k < sizeof(com_robots); k++) {
-                    target[k] = temp[k];
-                }
                 com_usb_reception = millis();
 
-                // Updating robot statuses
-                for (int k = 0; k < 6; k++) {
-                    if ((millis() - com_robot_reception[k]) >= 100) {
-                        com_statuses[k].status = 0;
+                // This is a parameters packet
+                if (com_usb_packet_type == INSTRUCTION_PARAMS) {
+                    uint8_t *target = (uint8_t *)&com_master_params;
+                    for (int k = 0; k < sizeof(com_master_params); k++) {
+                        target[k] = temp[k];
+                    }
+                    for (int k = 0; k < 6; k++) {
+                        com_has_params[k] = true;
                     }
                 }
 
-                // Sending back robot status
-                uint8_t statuses[sizeof(com_statuses)+3];
-                statuses[0] = 0xaa;
-                statuses[1] = 0x55;
-                statuses[sizeof(com_statuses)+2] = 0xff;
-                uint8_t *source = (uint8_t *)com_statuses;
-                for (int k = 0; k < sizeof(com_statuses); k++) {
-                    statuses[k+2] = source[k];
+                if (com_usb_packet_type == INSTRUCTION_MASTER) {
+                    // Received message from USB
+                    uint8_t *target = (uint8_t *)com_robots;
+                    for (int k = 0; k < sizeof(com_robots); k++) {
+                        target[k] = temp[k];
+                    }
+
+                    // Updating robot statuses
+                    for (int k = 0; k < 6; k++) {
+                        if ((millis() - com_robot_reception[k]) >= 100) {
+                            com_statuses[k].status = 0;
+                        }
+                    }
+
+                    // Sending back robot status
+                    uint8_t statuses[sizeof(com_statuses)+3];
+                    statuses[0] = 0xaa;
+                    statuses[1] = 0x55;
+                    statuses[sizeof(com_statuses)+2] = 0xff;
+                    uint8_t *source = (uint8_t *)com_statuses;
+                    for (int k = 0; k < sizeof(com_statuses); k++) {
+                        statuses[k+2] = source[k];
+                    }
+                    SerialUSB.write(statuses, sizeof(statuses));
                 }
-                SerialUSB.write(statuses, sizeof(statuses));
+            } else {
             }
             state = 0;
         }
     }
 }
 
+void com_process_master()
+{
+    if (com_master_frame[0] == INSTRUCTION_MASTER) {
+        // Answering with status packet
+        struct packet_robot packet;
+        // XXX: Configure id per robot
+        packet.id = 0;
+        // XXX: Complete the status
+        packet.status = STATUS_OK;
+        packet.cap_volt = kicker_cap_voltage()*10.0;
+        packet.bat1_volt = voltage_bat1()*10.0;
+        packet.bat2_volt = voltage_bat2()*10.0;
+
+        com_ce_disable();
+        for (int k=0; k<3; k++) {
+            com_mode(k, true, false);
+            com_set_reg(k, REG_STATUS, 0x70);
+            com_tx(k, (uint8_t *)&packet, sizeof(struct packet_robot));
+        }
+        com_ce_enable();
+
+        // Decoding instruction packet
+        struct packet_master *master_packet;
+        master_packet = (struct packet_master*)(com_master_frame + 1);
+
+        // Driving wheels
+        if (master_packet->actions & ACTION_ON) {
+            drivers_set_safe(0, true, master_packet->wheel1);
+            drivers_set_safe(1, true, master_packet->wheel2);
+            drivers_set_safe(2, true, master_packet->wheel3);
+            drivers_set_safe(3, true, master_packet->wheel4);
+            drivers_set_safe(4, false, 0);
+
+            // Charging
+            if (master_packet->actions & ACTION_CHARGE) {
+                kicker_boost_enable(true);
+            } else {
+                kicker_boost_enable(false);
+            }
+
+            // Kicking
+            if ((master_packet->actions & ACTION_KICK1) &&
+                !(my_actions & ACTION_KICK1)) {
+                kicker_kick(master_packet->kickPower);
+            }
+            // XXX: Handle KICK2
+
+            my_actions = master_packet->actions;
+        } else {
+            drivers_set(0, false, 0);
+            drivers_set(1, false, 0);
+            drivers_set(2, false, 0);
+            drivers_set(3, false, 0);
+            drivers_set(4, false, 0);
+            my_actions = 0;
+            kicker_boost_enable(false);
+        }
+    } else if (com_master_frame[0] == INSTRUCTION_PARAMS) {
+        struct packet_params *params;
+        params = (struct packet_params*)(com_master_frame+1);
+
+        // Setting PID parmeters
+        drivers_set_params(params->kp, params->ki, params->kd);
+    }
+}
+
 void com_tick()
 {
-    static int actions = 0;
     static int last = micros();
 
 // Comment to debug on shell
@@ -449,7 +567,17 @@ void com_tick()
                 com_mode(k, true, false);
                 com_set_reg(k, REG_STATUS, 0x70);
                 com_set_tx_addr(k, com_master_pos);
-                com_tx(k, (uint8_t*)&com_robots[com_master_pos], sizeof(struct packet_master));
+
+                if (com_has_params[com_master_pos]) {
+                    com_tx_packet(k, INSTRUCTION_PARAMS,
+                        (uint8_t*)&com_master_params, sizeof(struct packet_params));
+                } else {
+                    com_tx_packet(k, INSTRUCTION_MASTER,
+                        (uint8_t*)&com_robots[com_master_pos], sizeof(struct packet_master));
+                }
+            }
+            if (com_has_params[com_master_pos]) {
+                com_has_params[com_master_pos] = false;
             }
             com_ce_enable();
 
@@ -459,6 +587,7 @@ void com_tick()
             }
         }
 
+        // XXX: Led for master
         if ((millis() - com_usb_reception) < 100) {
             digitalWrite(BOARD_LED_PIN, HIGH);
         } else {
@@ -470,64 +599,13 @@ void com_tick()
         com_master_controlling = true;
         com_master_new = false;
 
-        struct packet_robot packet;
-        // XXX: Configure id per robot
-        packet.id = 0;
-        // XXX: Complete the status
-        packet.status = STATUS_OK;
-        packet.cap_volt = kicker_cap_voltage()*10.0;
-        packet.bat1_volt = voltage_bat1()*10.0;
-        packet.bat2_volt = voltage_bat2()*10.0;
-
-        com_ce_disable();
-        for (int k=0; k<3; k++) {
-            com_mode(k, true, false);
-            com_set_reg(k, REG_STATUS, 0x70);
-            com_tx(k, (uint8_t *)&packet, sizeof(struct packet_robot));
-        }
-        com_ce_enable();
-
-        // Setting PID parmeters
-        drivers_set_pid(com_master_packet.kp, com_master_packet.ki, com_master_packet.kd);
-
-        // Driving wheels
-        if (com_master_packet.actions & ACTION_ON) {
-            drivers_set_safe(0, true, com_master_packet.wheel1);
-            drivers_set_safe(1, true, com_master_packet.wheel2);
-            drivers_set_safe(2, true, com_master_packet.wheel3);
-            drivers_set_safe(3, true, com_master_packet.wheel4);
-            drivers_set_safe(4, false, 0);
-
-            // Charging
-            if (com_master_packet.actions & ACTION_CHARGE) {
-                kicker_boost_enable(true);
-            } else {
-                kicker_boost_enable(false);
-            }
-
-            // Kicking
-            if ((com_master_packet.actions & ACTION_KICK1) &&
-                !(actions & ACTION_KICK1)) {
-                kicker_kick(com_master_packet.kickPower);
-            }
-            // XXX: Handle KICK2
-
-            actions = com_master_packet.actions;
-        } else {
-            drivers_set(0, false, 0);
-            drivers_set(1, false, 0);
-            drivers_set(2, false, 0);
-            drivers_set(3, false, 0);
-            drivers_set(4, false, 0);
-            actions = 0;
-            kicker_boost_enable(false);
-        }
+        com_process_master();
     }
 
     if ((millis() - com_master_reception) < 100) {
         digitalWrite(BOARD_LED_PIN, HIGH);
     } else {
-        actions = 0;
+        my_actions = 0;
         digitalWrite(BOARD_LED_PIN, LOW);
     }
 }
@@ -650,6 +728,18 @@ TERMINAL_COMMAND(rk, "Remote kick test")
     } else {
         com_robots[0].kickPower = 0;
         com_robots[0].actions &= ~ACTION_KICK1;
+    }
+}
+
+TERMINAL_COMMAND(rpid, "Remote pid")
+{
+    static struct packet_params params;
+    params.kp = 0;
+    params.ki = 0;
+    params.kd = 0;
+
+    for (int k = 0; k < 6; k++) {
+        com_has_params[k] = true;
     }
 }
 

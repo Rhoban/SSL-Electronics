@@ -128,6 +128,9 @@ TERMINAL_COMMAND(hall, "Test the hall sensors")
 
 void motor_set(int value)
 {
+    if (value > 0) value += PWM_MIN;
+    if (value < 0) value -= PWM_MIN;
+
     if (value < -PWM_MAX) value = -PWM_MAX;
     if (value > PWM_MAX) value = PWM_MAX;
     motor_pwm = value;

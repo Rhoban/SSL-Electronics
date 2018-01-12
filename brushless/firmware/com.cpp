@@ -12,10 +12,41 @@ TERMINAL_PARAMETER_INT(rcv, "Received byte", 0);
 TERMINAL_PARAMETER_INT(irqed, "IRQed", 0);
 TERMINAL_PARAMETER_INT(ssed, "Slave selected", 0);
 
-static uint8_t frame[sizeof(struct driver_packet)];
+static uint8_t frame_sizes[] = {
+    sizeof(struct driver_packet_set),
+    sizeof(struct driver_packet_params)
+
+};
+#define INSTRUCTIONS sizeof(frame_size)
+static uint8_t frame[128];
+static int frame_size = 0;
 static int frame_pos = 0;
+static int frame_type = 0xff;
+
 static int last_receive = 0;
 static bool controlling = false;
+
+#define COM_READ_PACKET(type) \
+    struct type *packet;      \
+    packet = (struct type *)frame;
+
+void com_frame_received()
+{
+    switch (frame_type) {
+        case DRIVER_PACKET_SET: {
+            // Setting the target speed
+            COM_READ_PACKET(driver_packet_set)
+            servo_set(packet->enable, packet->targetSpeed);
+        }
+        break;
+        case DRIVER_PACKET_PARAMS: {
+            // Setting the PID parameters
+            COM_READ_PACKET(driver_packet_params)
+            servo_set_pid(packet->kp, packet->ki, packet->kd);
+        }
+        break;
+    }
+}
 
 extern "C"
 {
@@ -28,17 +59,21 @@ void __irq_spi1()
     if (spi_is_rx_nonempty(SPI1)) {
         rcv = spi_rx_reg(SPI1);
 
-        if (frame_pos < sizeof(struct driver_packet)) {
-            frame[frame_pos++] = rcv;
-            if (frame_pos == sizeof(struct driver_packet)) {
-                struct driver_packet *packet;
-                packet = (struct driver_packet *)frame;
+        if (frame_type == 0xff && rcv < INSTRUCTIONS) {
+            // Reading frame type
+            frame_type = rcv;
+            frame_size = frame_sizes[frame_type];
+        } else {
+            // Reading frame data
+            if (frame_pos < frame_size) {
+                frame[frame_pos++] = rcv;
+                if (frame_pos == frame_size) {
+                    com_frame_received();
 
-                last_receive = millis();
-                controlling = true;
-                digitalWrite(LED_PIN, HIGH);
-                servo_set(packet->enable, packet->targetSpeed);
-                servo_set_pid(packet->kp, packet->ki, packet->kd);
+                    last_receive = millis();
+                    controlling = true;
+                    digitalWrite(LED_PIN, HIGH);
+                }
             }
         }
     }
@@ -52,6 +87,7 @@ static void slave_irq()
     if (is_slave) {
         ssed = 1;
         frame_pos = 0;
+        frame_type = 0xff;
         slave.beginSlave(MSBFIRST, 0);
         spi_irq_enable(slave.c_dev(), SPI_RXNE_INTERRUPT);
         if (security_get_error() == SECURITY_NO_ERROR) {
