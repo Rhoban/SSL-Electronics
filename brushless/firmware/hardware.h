@@ -47,10 +47,18 @@
 #define CURRENT_LIMIT       1.5
 #define CURRENT_DURATION    500
 #define CURRENT_MAX         8
+#define CURRENT_DISABLE
 
 // XXX: Limiting PWM
+#ifdef ENCODER_MAGNETIC
+#define PWM_MIN             700     // 0-3000
+#define PWM_MAX             2800    // 0-3000
+#define ACC_MAX             15      // turn/s^2
+#else
 #define PWM_MIN             800     // 0-3000
 #define PWM_MAX             2800    // 0-3000
 #define ACC_MAX             15      // turn/s^2
+#endif
+
 
 #endif

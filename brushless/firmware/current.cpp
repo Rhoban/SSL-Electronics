@@ -26,7 +26,10 @@ void current_resample()
 
 void current_tick()
 {
+#ifdef CURRENT_DISABLE
     return;
+#endif
+
     static int last_update = millis();
     static int last_limit = 0;
 

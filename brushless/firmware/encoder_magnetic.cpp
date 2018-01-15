@@ -49,7 +49,7 @@ void encoder_read()
         delta += 0x4000;
     }
 
-    encoder_cnt += delta;
+    encoder_cnt -= delta;
     magnetic_value = new_magnetic_value;
 }
 
