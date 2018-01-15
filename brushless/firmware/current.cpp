@@ -26,6 +26,7 @@ void current_resample()
 
 void current_tick()
 {
+    return;
     static int last_update = millis();
     static int last_limit = 0;
 

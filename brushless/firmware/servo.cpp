@@ -93,6 +93,7 @@ void servo_tick()
             int past_value = encoder_rb[encoder_pos];
 
             // Updating current speed estimation [pulse per SPEED_DT]
+            // XXX: Is there a problem when we overflowed?
             int speed_pulse = current_value - past_value;
 
             // Converting this into a speed [turn/s]

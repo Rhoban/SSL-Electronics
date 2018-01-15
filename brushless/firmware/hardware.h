@@ -3,14 +3,20 @@
 
 // Encoder configuration
 
-#define ENCODER_QUADRATURE
-// #define ENCODER_MAGNETIC
+// #define ENCODER_QUADRATURE
+#define ENCODER_MAGNETIC
 
 #define ENCODER_SPI         2
 #define ENCODER_SELECT_PIN  31
 #define ENCODER_INDEX_PIN   12
 
+#ifdef ENCODER_QUADRATURE
 #define ENCODER_CPR      1024
+#endif
+
+#ifdef ENCODER_MAGNETIC
+#define ENCODER_CPR      16384
+#endif
 
 // Current sensing
 #define CURRENT_PIN      4

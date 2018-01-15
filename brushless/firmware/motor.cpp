@@ -66,29 +66,48 @@ static int hall_value()
     return hall;
 }
 
-static void set_phases(int u, int v, int w)
+static void set_phases(int u, int v, int w, int phase)
 {
+    static int last_phase = -2;
+    bool update = false;
+
+    update = (last_phase != phase);
+    last_phase = phase;
+    if (u == 0 && v == 0 && w == 0) {
+        last_phase = -1;
+    }
+
+    if (update) {
+        // Setting every output to low
+        for (int k=0; k<6; k++) {
+            digitalWrite(motor_pins[k], LOW);
+            pinMode(motor_pins[k], OUTPUT);
+        }
+
+        delay_us(3);
+    }
+
     if (u >= 0) {
+        if (update) pinMode(U_HIGH_PIN, PWM);
         pwmWrite(U_HIGH_PIN, u);
-        pwmWrite(U_LOW_PIN, 0);
     } else {
-        pwmWrite(U_HIGH_PIN, 0);
+        if (update) pinMode(U_LOW_PIN, PWM);
         pwmWrite(U_LOW_PIN, -u);
     }
 
     if (v >= 0) {
+        if (update) pinMode(V_HIGH_PIN, PWM);
         pwmWrite(V_HIGH_PIN, v);
-        pwmWrite(V_LOW_PIN, 0);
     } else {
-        pwmWrite(V_HIGH_PIN, 0);
+        if (update) pinMode(V_LOW_PIN, PWM);
         pwmWrite(V_LOW_PIN, -v);
     }
 
     if (w >= 0) {
+        if (update) pinMode(W_HIGH_PIN, PWM);
         pwmWrite(W_HIGH_PIN, w);
-        pwmWrite(W_LOW_PIN, 0);
     } else {
-        pwmWrite(W_HIGH_PIN, 0);
+        if (update) pinMode(W_LOW_PIN, PWM);
         pwmWrite(W_LOW_PIN, -w);
     }
 }
@@ -110,10 +129,9 @@ void motor_init()
     _init_timer(3);
 
     // Initalizing motor pins
+    for (int k=0; k<6; k++)  pwmWrite(motor_pins[k], 0);
     for (int k=0; k<6; k++)  digitalWrite(motor_pins[k], LOW);
-    for (int k=0; k<6; k++)  pwmWrite(motor_pins[k], 0);
-    for (int k=0; k<6; k++)  pinMode(motor_pins[k], PWM);
-    for (int k=0; k<6; k++)  pwmWrite(motor_pins[k], 0);
+    for (int k=0; k<6; k++)  pinMode(motor_pins[k], OUTPUT);
 }
 
 TERMINAL_COMMAND(hall, "Test the hall sensors")
@@ -147,15 +165,16 @@ void motor_tick()
         set_phases(
             motor_phases[phase][0]*motor_pwm,
             motor_phases[phase][1]*motor_pwm,
-            motor_phases[phase][2]*motor_pwm
+            motor_phases[phase][2]*motor_pwm,
+            phase
         );
     } else {
         // XXX: This is not a normal state, not sure what should be done
         // in this situation
-        set_phases(0, 0, 0);
+        set_phases(0, 0, 0, -1);
     }
 
-    if (phase != hall_current_phase) {
+    if (phase != hall_current_phase || motor_pwm == 0) {
         hall_last_change = millis();
     }
     hall_current_phase = phase;
@@ -172,6 +191,9 @@ TERMINAL_COMMAND(pwm, "Motor set PWM")
     if (argc > 0) {
         motor_set(atoi(argv[0]));
     } else {
-        terminal_io()->println("usage: pwm [0-3000]");
+        terminal_io()->print("usage: pwm [0-3000] (current: ");
+        terminal_io()->print(abs(motor_pwm));
+        terminal_io()->print(")");
+        terminal_io()->println();
     }
 }
