@@ -84,7 +84,7 @@ static void set_phases(int u, int v, int w, int phase)
             pinMode(motor_pins[k], OUTPUT);
         }
 
-        delay_us(3);
+        delay_us(1);
     }
 
     if (u >= 0) {
@@ -115,9 +115,15 @@ static void set_phases(int u, int v, int w, int phase)
 void motor_init()
 {
     // Initializing hall sensors input
+#ifdef TYPE_DRIBBLER
+    pinMode(HALLU_PIN, INPUT_PULLUP);
+    pinMode(HALLV_PIN, INPUT_PULLUP);
+    pinMode(HALLW_PIN, INPUT_PULLUP);
+#else
     pinMode(HALLU_PIN, INPUT);
     pinMode(HALLV_PIN, INPUT);
     pinMode(HALLW_PIN, INPUT);
+#endif
 
     // Attach interrupts on phase change
     attachInterrupt(HALLU_PIN, motor_tick, CHANGE);
@@ -156,6 +162,13 @@ void motor_set(int value)
 
 void motor_tick()
 {
+    static bool motor_ticking = false;
+
+    if (motor_ticking) {
+        return;
+    }
+    motor_ticking = true;
+
     // Current phase
     int phase = hall_phases[hall_value()];
 
@@ -179,11 +192,13 @@ void motor_tick()
     }
     hall_current_phase = phase;
 
-    if ((millis() - hall_last_change) > 500 && abs(motor_pwm) >= 2500) {
+    if ((millis() - hall_last_change) > 500 && abs(motor_pwm) >= 2250) {
         // Stop everything
         // Will trigger watchdog and reset
         security_set_error(SECURITY_HALL_FREEZE);
     }
+
+    motor_ticking = false;
 }
 
 TERMINAL_COMMAND(pwm, "Motor set PWM")

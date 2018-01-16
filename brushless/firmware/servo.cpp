@@ -67,6 +67,14 @@ void servo_tick()
         if (servo_flag) {
             servo_flag = false;
 
+#if DRIVER_TYPE == TYPE_DRIBBLER
+            // No servoing, the value is just 0-1 of pwm max
+            if (fabs(servo_target) > 0.1) {
+                motor_set(servo_target*PWM_MAX);
+            } else {
+                motor_set(0);
+            }
+#else
             // Updating limited target
             float maxAcc = ACC_MAX/1000.0;
             float diff = servo_limited_target - servo_target;
@@ -81,7 +89,7 @@ void servo_tick()
             }
 
             // XXX: Removing servo limit
-            servo_limited_target = servo_target;
+            //  servo_limited_target = servo_target;
 
             // Storing current value
             int current_value = encoder_value();
@@ -114,6 +122,7 @@ void servo_tick()
 
                 motor_set(servo_pwm);
             }
+#endif
         }
     }
 }
