@@ -68,11 +68,13 @@ void servo_tick()
             servo_flag = false;
 
 #if DRIVER_TYPE == TYPE_DRIBBLER
-            // No servoing, the value is just 0-1 of pwm max
-            if (fabs(servo_target) > 0.1) {
-                motor_set(servo_target*PWM_MAX);
-            } else {
-                motor_set(0);
+            if (servo_enable) {
+                // No servoing, the value is just 0-1 of pwm max
+                if (fabs(servo_target) > 0.1) {
+                    motor_set(servo_target*PWM_MAX);
+                } else {
+                    motor_set(0);
+                }
             }
 #else
             // Updating limited target
