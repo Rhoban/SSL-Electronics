@@ -322,6 +322,8 @@ void com_init()
         uint8_t addr[5] = COM_ADDR;
         if (com_master) {
             addr[4] = COM_MASTER;
+        } else {
+            addr[4] = COM_ID;
         }
         com_set_reg5(k, REG_RX_ADDR_P0, addr);
 
@@ -428,6 +430,8 @@ static void com_usb_tick()
                         target[k] = temp[k];
                     }
                     for (int k = 0; k < 6; k++) {
+                        // XXX: Hack to send parameters to only one robot
+                        // if (k != 1) continue; 
                         com_has_params[k] = true;
                     }
                 }
@@ -469,9 +473,7 @@ void com_process_master()
     if (com_master_frame[0] == INSTRUCTION_MASTER) {
         // Answering with status packet
         struct packet_robot packet;
-        // XXX: Configure id per robot
-        packet.id = 0;
-        // XXX: Complete the status
+        packet.id = COM_ID;
         packet.status = STATUS_OK;
         packet.cap_volt = kicker_cap_voltage()*10.0;
         packet.bat1_volt = voltage_bat1()*10.0;
@@ -495,7 +497,11 @@ void com_process_master()
             drivers_set_safe(1, true, master_packet->wheel2);
             drivers_set_safe(2, true, master_packet->wheel3);
             drivers_set_safe(3, true, master_packet->wheel4);
-            drivers_set_safe(4, false, 0);
+            if (master_packet->actions & ACTION_DRIBBLE) {
+                drivers_set_safe(4, true, -0.5);
+            } else {
+                drivers_set_safe(4, false, 0);
+            }
 
             // Charging
             if (master_packet->actions & ACTION_CHARGE) {
