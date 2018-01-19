@@ -164,7 +164,7 @@
 <wire x1="29.92" y1="-1.968" x2="29.92" y2="46" width="0" layer="20"/>
 <wire x1="29.92" y1="46" x2="-0.08" y2="46" width="0" layer="20"/>
 <wire x1="-0.08" y1="46" x2="-0.08" y2="-1.968" width="0" layer="20"/>
-<text x="9.017" y="42.037" size="0.8128" layer="25">RHOBAN BLDC REV1</text>
+<text x="9.017" y="42.037" size="0.8128" layer="25">RHOBAN BLDC REV2</text>
 <text x="10.16" y="44.577" size="0.8128" layer="25">"MAY THE FORCE</text>
 <text x="12.192" y="43.561" size="0.8128" layer="25">BE WITH US"</text>
 <text x="9.906" y="42.926" size="0.8128" layer="25">--------------------------</text>
@@ -1591,11 +1591,6 @@ design rules under a new name.</description>
 <contactref element="UC1" pad="10"/>
 <wire x1="5.673" y1="8.3948" x2="16.1682" y2="17.201" width="0" layer="19" extent="1-16"/>
 </signal>
-<signal name="N$11">
-<contactref element="C1" pad="2"/>
-<contactref element="DRV1" pad="6"/>
-<wire x1="3.0568" y1="16.9942" x2="8.8226" y2="17.1798" width="0" layer="19" extent="16-16"/>
-</signal>
 <signal name="N$10">
 <contactref element="D2" pad="1"/>
 <contactref element="DRV2" pad="8"/>
@@ -1613,11 +1608,6 @@ design rules under a new name.</description>
 <contactref element="R10" pad="2"/>
 <wire x1="12.658" y1="9.89" x2="12.9628" y2="11.857" width="0" layer="19" extent="16-16"/>
 </signal>
-<signal name="N$14">
-<contactref element="C2" pad="2"/>
-<contactref element="DRV2" pad="6"/>
-<wire x1="12.9628" y1="16.9434" x2="17.103" y2="17.1798" width="0" layer="19" extent="16-16"/>
-</signal>
 <signal name="N$15">
 <contactref element="D3" pad="1"/>
 <contactref element="DRV3" pad="8"/>
@@ -1634,11 +1624,6 @@ design rules under a new name.</description>
 <contactref element="DRV3" pad="3"/>
 <contactref element="R12" pad="2"/>
 <wire x1="20.9892" y1="9.89" x2="21.548" y2="11.857" width="0" layer="19" extent="16-16"/>
-</signal>
-<signal name="N$18">
-<contactref element="C3" pad="2"/>
-<contactref element="DRV3" pad="6"/>
-<wire x1="21.548" y1="16.9434" x2="26.2978" y2="16.9004" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="V_HIGH">
 <contactref element="R9" pad="1"/>
@@ -1850,7 +1835,11 @@ design rules under a new name.</description>
 <wire x1="17.7" y1="30" x2="17.7" y2="34.2" width="2" layer="16"/>
 <wire x1="16.285" y1="26.48" x2="17.7" y2="26.48" width="2" layer="16"/>
 <wire x1="17.7" y1="26.48" x2="17.7" y2="30" width="2" layer="16"/>
+<contactref element="C3" pad="2"/>
+<contactref element="DRV3" pad="6"/>
 <wire x1="17.7" y1="34.2" x2="17.59" y2="34.895" width="0" layer="19" extent="16-16"/>
+<wire x1="21.548" y1="16.9434" x2="18.825" y2="26.48" width="0" layer="19" extent="16-16"/>
+<wire x1="26.2978" y1="16.9004" x2="21.548" y2="16.9434" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="V_PHASE" class="2">
 <contactref element="Q4" pad="MB"/>
@@ -1866,6 +1855,10 @@ design rules under a new name.</description>
 <wire x1="10.055" y1="33.625" x2="10" y2="33.625" width="2" layer="16"/>
 <wire x1="10" y1="33.625" x2="10" y2="30" width="2" layer="16"/>
 <wire x1="10" y1="30" x2="10" y2="26.48" width="2" layer="16"/>
+<contactref element="C2" pad="2"/>
+<contactref element="DRV2" pad="6"/>
+<wire x1="12.9628" y1="16.9434" x2="10.7" y2="26.48" width="0" layer="19" extent="16-16"/>
+<wire x1="17.103" y1="17.1798" x2="12.9628" y2="16.9434" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="U_PHASE" class="2">
 <contactref element="Q2" pad="MB"/>
@@ -1881,7 +1874,11 @@ design rules under a new name.</description>
 <wire x1="2.435" y1="30" x2="7.46" y2="30" width="2" layer="16"/>
 <wire x1="7.46" y1="30" x2="2.5" y2="30" width="2" layer="16"/>
 <wire x1="2.5" y1="30" x2="2.5" y2="27" width="2" layer="16"/>
-<wire x1="2.5" y1="27" x2="2.905" y2="26.48" width="0" layer="19" extent="1-16"/>
+<contactref element="C1" pad="2"/>
+<contactref element="DRV1" pad="6"/>
+<wire x1="2.5" y1="27" x2="2.435" y2="26.48" width="0" layer="19" extent="16-16"/>
+<wire x1="3.0568" y1="16.9942" x2="2.905" y2="26.48" width="0" layer="19" extent="16-16"/>
+<wire x1="8.8226" y1="17.1798" x2="3.0568" y2="16.9942" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="HALLU">
 <contactref element="UC1" pad="14"/>

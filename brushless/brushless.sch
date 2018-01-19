@@ -4085,11 +4085,13 @@ Source: &lt;a href="http://www.jst-mfg.com/product/pdf/eng/eZH.pdf"&gt;http://ww
 <label x="22.86" y="81.28" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
-<net name="N$11" class="0">
+<net name="U_PHASE" class="2">
 <segment>
 <pinref part="C1" gate="G$1" pin="2"/>
 <pinref part="DRV1" gate="G$1" pin="VS"/>
 <wire x1="88.9" y1="78.74" x2="63.5" y2="78.74" width="0.1524" layer="91"/>
+<wire x1="88.9" y1="78.74" x2="88.9" y2="73.66" width="0.1524" layer="91"/>
+<label x="88.9" y="73.66" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
 <net name="N$10" class="0">
@@ -4119,11 +4121,13 @@ Source: &lt;a href="http://www.jst-mfg.com/product/pdf/eng/eZH.pdf"&gt;http://ww
 <pinref part="R10" gate="G$1" pin="2"/>
 </segment>
 </net>
-<net name="N$14" class="0">
+<net name="V_PHASE" class="2">
 <segment>
 <pinref part="C2" gate="G$1" pin="2"/>
 <pinref part="DRV2" gate="G$1" pin="VS"/>
 <wire x1="88.9" y1="48.26" x2="63.5" y2="48.26" width="0.1524" layer="91"/>
+<wire x1="88.9" y1="48.26" x2="88.9" y2="40.64" width="0.1524" layer="91"/>
+<label x="88.9" y="40.64" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
 <net name="N$15" class="0">
@@ -4153,11 +4157,13 @@ Source: &lt;a href="http://www.jst-mfg.com/product/pdf/eng/eZH.pdf"&gt;http://ww
 <pinref part="R12" gate="G$1" pin="2"/>
 </segment>
 </net>
-<net name="N$18" class="0">
+<net name="W_PHASE" class="2">
 <segment>
 <pinref part="C3" gate="G$1" pin="2"/>
 <pinref part="DRV3" gate="G$1" pin="VS"/>
 <wire x1="88.9" y1="20.32" x2="63.5" y2="20.32" width="0.1524" layer="91"/>
+<wire x1="88.9" y1="20.32" x2="88.9" y2="12.7" width="0.1524" layer="91"/>
+<label x="88.9" y="12.7" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
 <net name="V_HIGH" class="0">
