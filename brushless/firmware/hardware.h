@@ -2,7 +2,7 @@
 #define _HARDWARE_H
 
 // Defines the driver type (see below)
-#define DRIVER_TYPE     TYPE_DRIBBLER
+#define DRIVER_TYPE     TYPE_70W
 
 #define TYPE_30W        1
 #define TYPE_70W        2
@@ -58,7 +58,7 @@
 #define SERVO_DT    1
 
 // Current protection
-#define CURRENT_LIMIT       1.5
+#define CURRENT_LIMIT       2.5
 #define CURRENT_DURATION    500
 #define CURRENT_MAX         8
 
@@ -76,7 +76,7 @@
 
 #if DRIVER_TYPE == TYPE_DRIBBLER
 #define PWM_MIN             0       // 0-3000
-#define PWM_MAX             1500    // 0-3000
+#define PWM_MAX             2700    // 0-3000
 #endif
 
 // Limitting acceleration

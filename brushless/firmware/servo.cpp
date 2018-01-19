@@ -55,9 +55,9 @@ void servo_init()
 static int servo_pwm = 0;
 static float servo_acc = 0;
 static float servo_last_error = 0;
-TERMINAL_PARAMETER_INT(kp, "PID P", 250);
-TERMINAL_PARAMETER_INT(ki, "PID I", 3);
-TERMINAL_PARAMETER_INT(kd, "PID D", 1);
+TERMINAL_PARAMETER_INT(kp, "PID P", 150);
+TERMINAL_PARAMETER_INT(ki, "PID I", 2);
+TERMINAL_PARAMETER_INT(kd, "PID D", 0);
 
 void servo_tick()
 {

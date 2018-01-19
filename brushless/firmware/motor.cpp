@@ -157,6 +157,7 @@ void motor_set(int value)
 
     if (value < -PWM_MAX) value = -PWM_MAX;
     if (value > PWM_MAX) value = PWM_MAX;
+
     motor_pwm = value;
 }
 
