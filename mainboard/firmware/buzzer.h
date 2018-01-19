@@ -10,8 +10,10 @@
 #define MELODY_WARNING    3
 // When we start the ID of the motors
 #define MELODY_BEGIN      4
+// When we start the ID of the motors
+#define MELODY_END        5
 // A custom melody used by beep
-#define MELODY_CUSTOM     5
+#define MELODY_CUSTOM     6
 
 /**
  * Initializes the buzzer

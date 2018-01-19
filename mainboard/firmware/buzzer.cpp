@@ -48,7 +48,12 @@ static struct buzzer_note melody_warning[] = {
 
 static struct buzzer_note melody_begin[] = {
     {800, 200},
-    {0, 200},
+    {1000, 200},
+    {0, 0},
+};
+
+static struct buzzer_note melody_end[] = {
+    {1000, 200},
     {800, 200},
     {0, 0},
 };
@@ -116,6 +121,8 @@ void buzzer_play(unsigned int melody_num, bool repeat)
         to_play = &melody_warning[0];
     } else if (melody_num == MELODY_BEGIN) {
         to_play = &melody_begin[0];
+    } else if (melody_num == MELODY_END) {
+        to_play = &melody_end[0];
     } else if (melody_num == MELODY_CUSTOM) {
         to_play = &melody_custom[0];
     } else {

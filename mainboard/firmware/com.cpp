@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <terminal.h>
+#include "buzzer.h"
 #include "com.h"
 #include <wirish/wirish.h>
 #include <watchdog.h>
@@ -42,6 +43,7 @@ static int com_instructions_size[] = {
 
 // Only for robot
 static int com_master_reception = 0;
+static bool com_has_master = false;
 static uint8_t com_master_frame[PACKET_SIZE];
 static int com_master_packets = 0;
 static bool com_master_new = false;
@@ -431,7 +433,7 @@ static void com_usb_tick()
                     }
                     for (int k = 0; k < 6; k++) {
                         // XXX: Hack to send parameters to only one robot
-                        // if (k != 1) continue; 
+                        // if (k != 1) continue;
                         com_has_params[k] = true;
                     }
                 }
@@ -498,7 +500,7 @@ void com_process_master()
             drivers_set_safe(2, true, master_packet->wheel3);
             drivers_set_safe(3, true, master_packet->wheel4);
             if (master_packet->actions & ACTION_DRIBBLE) {
-                drivers_set_safe(4, true, -0.5);
+                drivers_set_safe(4, true, -0.9);
             } else {
                 drivers_set_safe(4, false, 0);
             }
@@ -608,9 +610,17 @@ void com_tick()
         com_process_master();
     }
 
-    if ((millis() - com_master_reception) < 100) {
+    if ((millis() - com_master_reception) < 100 && com_master_reception != 0) {
+        if (!com_has_master) {
+            com_has_master = true;
+            buzzer_play(MELODY_BEGIN);
+        }
         digitalWrite(BOARD_LED_PIN, HIGH);
     } else {
+        if (com_has_master) {
+            com_has_master = false;
+            buzzer_play(MELODY_END);
+        }
         my_actions = 0;
         digitalWrite(BOARD_LED_PIN, LOW);
     }
