@@ -3320,7 +3320,7 @@ Source: &lt;a href="http://www.jst-mfg.com/product/pdf/eng/eZH.pdf"&gt;http://ww
 <attribute name="FARNELL" value="7261403"/>
 </part>
 <part name="C10" library="rhoban" deviceset="CPOL_EU" device="_3.5-8" value="100uF">
-<attribute name="FARNELL" value="1144713"/>
+<attribute name="FARNELL" value="1870964"/>
 </part>
 <part name="D5" library="SparkFun-DiscreteSemi" deviceset="DIODE" device="SOD">
 <attribute name="FARNELL" value="8737843RL"/>
