@@ -5957,7 +5957,9 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 <part name="R7" library="rhoban" deviceset="RESISTANCE" device="-R0805" value="10K">
 <attribute name="FARNELL" value="2447553"/>
 </part>
-<part name="U$15" library="rhoban" deviceset="SRB22A2FBBNN" device=""/>
+<part name="U$15" library="rhoban" deviceset="SRB22A2FBBNN" device="">
+<attribute name="FARNELL" value="1383947"/>
+</part>
 </parts>
 <sheets>
 <sheet>
@@ -6521,7 +6523,9 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 <instance part="R11" gate="G$1" x="-45.72" y="-60.96" rot="R90">
 <attribute name="FARNELL" x="-45.72" y="-60.96" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
-<instance part="U$15" gate="G$1" x="-58.42" y="-15.24"/>
+<instance part="U$15" gate="G$1" x="-58.42" y="-15.24">
+<attribute name="FARNELL" x="-58.42" y="-15.24" size="1.778" layer="96" display="off"/>
+</instance>
 </instances>
 <busses>
 </busses>
