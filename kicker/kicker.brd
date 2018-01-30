@@ -650,17 +650,14 @@ design rules under a new name.</description>
 </pass>
 </autorouter>
 <elements>
-<element name="T1" library="rhoban" package="SOT-23" value="NPN_BC817,215" x="45.212" y="21.59">
-<attribute name="FARNELL" value="1081223" x="99.822" y="-25.4" size="1.778" layer="27" display="off"/>
+<element name="T1" library="rhoban" package="SOT-23" value="NPN_BC817,215" x="44.45" y="24.384">
+<attribute name="FARNELL" value="1081223" x="99.06" y="-22.606" size="1.778" layer="27" display="off"/>
 </element>
-<element name="R1" library="rhoban" package="R0805" value="1K" x="45.212" y="18.034" rot="R180">
-<attribute name="FARNELL" value="2446904" x="19.812" y="71.374" size="1.778" layer="27" rot="R180" display="off"/>
-</element>
-<element name="R3" library="rhoban" package="R0805" value="3K" x="48.768" y="21.59" rot="R270">
-<attribute name="FARNELL" value="2446965" x="-4.572" y="-13.97" size="1.778" layer="27" rot="R270" display="off"/>
+<element name="R3" library="rhoban" package="R0805" value="3K" x="48.006" y="24.384" rot="R270">
+<attribute name="FARNELL" value="2446965" x="-5.334" y="-11.176" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
 <element name="U$1" library="to-247_n-channel_igbt" package="TO-247" value="TO-247A" x="31.496" y="25.4" rot="R90">
-<attribute name="FARNELL" value="1095012" x="40.386" y="66.04" size="1.778" layer="27" rot="R90" display="off"/>
+<attribute name="FARNELL" value="2429705" x="40.386" y="66.04" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
 <element name="SOLENOID1" library="rhoban" package="CONNEC_1X02_BIG" value="CONNEC_1X02BIG" x="25.654" y="11.176" rot="R90">
 <attribute name="FARNELL" value="-" x="72.644" y="48.006" size="1.778" layer="27" rot="R90" display="off"/>
@@ -671,26 +668,26 @@ design rules under a new name.</description>
 <element name="POWERCAP1" library="rhoban" package="CONNEC_1X02_BIG" value="CONNEC_1X02BIG" x="36.576" y="10.16" rot="R180">
 <attribute name="FARNELL" value="-" x="-6.604" y="49.53" size="1.778" layer="27" rot="R180" display="off"/>
 </element>
-<element name="T3" library="rhoban" package="SOT-23" value="NPN_BC817,215" x="53.34" y="21.59">
-<attribute name="FARNELL" value="1081223" x="68.58" y="-33.02" size="1.778" layer="27" display="off"/>
+<element name="T3" library="rhoban" package="SOT-23" value="NPN_BC817,215" x="51.816" y="24.384">
+<attribute name="FARNELL" value="1081223" x="67.056" y="-30.226" size="1.778" layer="27" display="off"/>
 </element>
-<element name="R32" library="rhoban" package="R0805" value="10K" x="53.34" y="15.494">
-<attribute name="FARNELL" value="2446965" x="68.58" y="-44.196" size="1.778" layer="27" display="off"/>
+<element name="R32" library="rhoban" package="R0805" value="10K" x="51.816" y="20.828">
+<attribute name="FARNELL" value="2446965" x="67.056" y="-38.862" size="1.778" layer="27" display="off"/>
 </element>
-<element name="R33" library="rhoban" package="R0805" value="3K" x="56.896" y="21.59" rot="R270">
-<attribute name="FARNELL" value="2446965" x="-2.794" y="1.27" size="1.778" layer="27" rot="R270" display="off"/>
+<element name="R33" library="rhoban" package="R0805" value="3K" x="55.372" y="24.384" rot="R270">
+<attribute name="FARNELL" value="2446965" x="-4.318" y="4.064" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
 <element name="U$11" library="to-247_n-channel_igbt" package="TO-247" value="TO-247A" x="13.97" y="25.4" rot="R90">
-<attribute name="FARNELL" value="1095012" x="40.64" y="66.04" size="1.778" layer="27" rot="R90" display="off"/>
+<attribute name="FARNELL" value="2429705" x="40.64" y="66.04" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
 <element name="SOLENOID2" library="rhoban" package="CONNEC_1X02_BIG" value="CONNEC_1X02BIG" x="18.796" y="10.922" rot="R90">
 <attribute name="FARNELL" value="-" x="65.786" y="60.452" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
-<element name="R34" library="rhoban" package="R0805" value="2M" x="45.466" y="10.414" rot="R180">
-<attribute name="FARNELL" value="2129375" x="20.066" y="70.104" size="1.778" layer="27" rot="R180" display="off"/>
+<element name="R34" library="rhoban" package="R0805" value="2M" x="46.228" y="8.89" rot="R180">
+<attribute name="FARNELL" value="2129375" x="20.828" y="68.58" size="1.778" layer="27" rot="R180" display="off"/>
 </element>
-<element name="R35" library="rhoban" package="R0805" value="10K" x="51.054" y="10.414">
-<attribute name="FARNELL" value="2447553" x="81.534" y="-49.276" size="1.778" layer="27" display="off"/>
+<element name="R35" library="rhoban" package="R0805" value="10K" x="51.054" y="8.89">
+<attribute name="FARNELL" value="2447553" x="81.534" y="-50.8" size="1.778" layer="27" display="off"/>
 </element>
 <element name="BOOST_EN" library="rhoban" package="CONNEC_1X01" value="CONNEC_1X01" x="3.81" y="13.97" rot="R90">
 <attribute name="FARNELL" value="-" x="62.23" y="53.34" size="1.778" layer="27" rot="R90" display="off"/>
@@ -705,20 +702,29 @@ design rules under a new name.</description>
 <element name="U$5" library="rhoban" package="BOOSTER_390V" value="BOOSTER" x="0" y="7.62">
 <attribute name="FARNELL" value="-" x="-1.27" y="7.62" size="1.778" layer="27" display="off"/>
 </element>
-<element name="R2" library="rhoban" package="R0805" value="10K" x="45.212" y="15.494">
-<attribute name="FARNELL" value="2446965" x="45.212" y="15.494" size="1.778" layer="27" display="off"/>
-</element>
-<element name="R4" library="rhoban" package="R0805" value="1K" x="53.34" y="18.034">
-<attribute name="FARNELL" value="2446965" x="53.34" y="18.034" size="1.778" layer="27" display="off"/>
+<element name="R2" library="rhoban" package="R0805" value="10K" x="44.45" y="20.828">
+<attribute name="FARNELL" value="2446965" x="44.45" y="20.828" size="1.778" layer="27" display="off"/>
 </element>
 <element name="U$2" library="SparkFun-Hardware" package="STAND-OFF" value="" x="13.97" y="46.99"/>
 <element name="U$3" library="SparkFun-Hardware" package="STAND-OFF" value="" x="31.496" y="46.99"/>
+<element name="T2" library="rhoban" package="SOT-23" value="NPN_BC817,215" x="44.45" y="17.272">
+<attribute name="FARNELL" value="1081223" x="44.45" y="17.272" size="1.778" layer="27" display="off"/>
+</element>
+<element name="R1" library="rhoban" package="R0805" value="3K" x="44.196" y="13.97">
+<attribute name="FARNELL" value="2446965" x="44.196" y="13.97" size="1.778" layer="27" display="off"/>
+</element>
+<element name="T4" library="rhoban" package="SOT-23" value="NPN_BC817,215" x="52.07" y="17.272">
+<attribute name="FARNELL" value="1081223" x="52.07" y="17.272" size="1.778" layer="27" display="off"/>
+</element>
+<element name="R4" library="rhoban" package="R0805" value="3K" x="51.816" y="13.716">
+<attribute name="FARNELL" value="2446965" x="51.816" y="13.716" size="1.778" layer="27" display="off"/>
+</element>
 </elements>
 <signals>
 <signal name="KICK2">
 <contactref element="X1" pad="5"/>
 <contactref element="R4" pad="2"/>
-<wire x1="53.594" y1="1.27" x2="54.29" y2="18.034" width="0" layer="19" extent="1-1"/>
+<wire x1="52.766" y1="13.716" x2="53.594" y2="1.27" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="GND" class="2">
 <contactref element="T1" pad="2"/>
@@ -742,19 +748,23 @@ design rules under a new name.</description>
 <wire x1="19.47" y1="26.582" x2="25.654" y2="32.766" width="3.81" layer="16" curve="-90"/>
 <wire x1="25.654" y1="32.766" x2="29.63" y2="32.766" width="3.81" layer="16"/>
 <wire x1="29.63" y1="32.766" x2="36.996" y2="25.4" width="3.81" layer="16" curve="-90"/>
-<wire x1="46.162" y1="20.49" x2="54.29" y2="20.49" width="0" layer="19" extent="1-1"/>
-<wire x1="36.996" y1="25.4" x2="46.162" y2="20.49" width="0" layer="19" extent="1-1"/>
+<contactref element="T2" pad="2"/>
+<contactref element="T4" pad="2"/>
+<wire x1="45.4" y1="23.284" x2="52.766" y2="23.284" width="0" layer="19" extent="1-1"/>
+<wire x1="36.996" y1="25.4" x2="45.4" y2="23.284" width="0" layer="19" extent="1-1"/>
 <wire x1="43.434" y1="1.27" x2="37" y2="0.17" width="0" layer="19" extent="16-16"/>
-<wire x1="50.104" y1="10.414" x2="46.162" y2="20.49" width="0" layer="19" extent="1-1"/>
+<wire x1="50.104" y1="8.89" x2="45.4" y2="23.284" width="0" layer="19" extent="1-1"/>
 <wire x1="8.72" y1="14.92" x2="19.47" y2="25.4" width="0" layer="19" extent="1-1"/>
 <wire x1="11" y1="4.62" x2="8.72" y2="14.92" width="0" layer="19" extent="1-1"/>
+<wire x1="45.4" y1="16.172" x2="11" y2="4.62" width="0" layer="19" extent="1-1"/>
+<wire x1="53.02" y1="16.172" x2="45.4" y2="16.172" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$4">
 <contactref element="T1" pad="3"/>
 <contactref element="R3" pad="1"/>
 <contactref element="U$1" pad="P$1"/>
-<wire x1="45.212" y1="22.69" x2="48.768" y2="22.54" width="0" layer="19" extent="1-1"/>
-<wire x1="25.996" y1="25.4" x2="45.212" y2="22.69" width="0" layer="19" extent="1-1"/>
+<wire x1="44.45" y1="25.484" x2="48.006" y2="25.334" width="0" layer="19" extent="1-1"/>
+<wire x1="25.996" y1="25.4" x2="44.45" y2="25.484" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="VIN" class="2">
 <contactref element="R3" pad="2"/>
@@ -763,10 +773,10 @@ design rules under a new name.</description>
 <contactref element="U$5" pad="VIN"/>
 <contactref element="R2" pad="2"/>
 <contactref element="R32" pad="2"/>
-<wire x1="54.29" y1="15.494" x2="56.896" y2="20.64" width="0" layer="19" extent="1-1"/>
-<wire x1="48.768" y1="20.64" x2="54.29" y2="15.494" width="0" layer="19" extent="1-1"/>
-<wire x1="46.162" y1="15.494" x2="48.768" y2="20.64" width="0" layer="19" extent="1-1"/>
-<wire x1="45.974" y1="1.27" x2="46.162" y2="15.494" width="0" layer="19" extent="1-1"/>
+<wire x1="52.766" y1="20.828" x2="55.372" y2="23.434" width="0" layer="19" extent="1-1"/>
+<wire x1="48.006" y1="23.434" x2="52.766" y2="20.828" width="0" layer="19" extent="1-1"/>
+<wire x1="45.4" y1="20.828" x2="48.006" y2="23.434" width="0" layer="19" extent="1-1"/>
+<wire x1="45.974" y1="1.27" x2="45.4" y2="20.828" width="0" layer="19" extent="1-1"/>
 <wire x1="5" y1="4.62" x2="45.974" y2="1.27" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$2" class="2">
@@ -790,14 +800,14 @@ design rules under a new name.</description>
 <wire x1="26.67" y1="10.16" x2="25.654" y2="11.176" width="3.81" layer="16" curve="-90"/>
 <wire x1="25.654" y1="11.176" x2="19.05" y2="11.176" width="3.81" layer="16"/>
 <wire x1="19.05" y1="11.176" x2="18.796" y2="10.922" width="3.81" layer="16" curve="90"/>
-<wire x1="31.496" y1="10.16" x2="44.516" y2="10.414" width="0" layer="19" extent="1-1"/>
+<wire x1="31.496" y1="10.16" x2="45.278" y2="8.89" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$35">
 <contactref element="T3" pad="3"/>
 <contactref element="R33" pad="1"/>
 <contactref element="U$11" pad="P$1"/>
-<wire x1="53.34" y1="22.69" x2="56.896" y2="22.54" width="0" layer="19" extent="1-1"/>
-<wire x1="8.47" y1="25.4" x2="53.34" y2="22.69" width="0" layer="19" extent="1-1"/>
+<wire x1="51.816" y1="25.484" x2="55.372" y2="25.334" width="0" layer="19" extent="1-1"/>
+<wire x1="8.47" y1="25.4" x2="51.816" y2="25.484" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$36" class="2">
 <contactref element="SOLENOID2" pad="P$2"/>
@@ -806,16 +816,16 @@ design rules under a new name.</description>
 <wire x1="13.97" y1="20.828" x2="18.796" y2="16.002" width="3.81" layer="16" curve="90"/>
 </signal>
 <signal name="KICK1">
-<contactref element="R1" pad="1"/>
 <contactref element="X1" pad="4"/>
-<wire x1="51.054" y1="1.27" x2="46.162" y2="18.034" width="0" layer="19" extent="1-1"/>
+<contactref element="R1" pad="2"/>
+<wire x1="51.054" y1="1.27" x2="45.146" y2="13.97" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="CAP">
 <contactref element="R34" pad="1"/>
 <contactref element="R35" pad="2"/>
 <contactref element="X1" pad="6"/>
-<wire x1="46.416" y1="10.414" x2="52.004" y2="10.414" width="0" layer="19" extent="1-1"/>
-<wire x1="56.134" y1="1.27" x2="52.004" y2="10.414" width="0.381" layer="1"/>
+<wire x1="47.178" y1="8.89" x2="52.004" y2="8.89" width="0" layer="19" extent="1-1"/>
+<wire x1="56.134" y1="1.27" x2="52.004" y2="8.89" width="0.381" layer="1"/>
 </signal>
 <signal name="BOOST_EN">
 <contactref element="R36" pad="2"/>
@@ -832,19 +842,29 @@ design rules under a new name.</description>
 <contactref element="BOOST_EN" pad="1"/>
 <wire x1="6.52" y1="13.97" x2="3.81" y2="13.97" width="0.381" layer="1"/>
 </signal>
-<signal name="N$3">
+<signal name="N$1">
+<contactref element="R2" pad="1"/>
+<contactref element="T2" pad="3"/>
+<contactref element="T1" pad="1"/>
+<wire x1="43.5" y1="20.828" x2="43.5" y2="23.284" width="0" layer="19" extent="1-1"/>
+<wire x1="44.45" y1="18.372" x2="43.5" y2="20.828" width="0" layer="19" extent="1-1"/>
+</signal>
+<signal name="N$5">
+<contactref element="T2" pad="1"/>
+<contactref element="R1" pad="1"/>
+<wire x1="43.5" y1="16.172" x2="43.246" y2="13.97" width="0" layer="19" extent="1-1"/>
+</signal>
+<signal name="N$6">
+<contactref element="T4" pad="1"/>
 <contactref element="R4" pad="1"/>
+<wire x1="51.12" y1="16.172" x2="50.866" y2="13.716" width="0" layer="19" extent="1-1"/>
+</signal>
+<signal name="N$3">
+<contactref element="T4" pad="3"/>
 <contactref element="R32" pad="1"/>
 <contactref element="T3" pad="1"/>
-<wire x1="52.39" y1="18.034" x2="52.39" y2="20.49" width="0" layer="19" extent="1-1"/>
-<wire x1="52.39" y1="15.494" x2="52.39" y2="18.034" width="0" layer="19" extent="1-1"/>
-</signal>
-<signal name="N$1">
-<contactref element="R1" pad="2"/>
-<contactref element="R2" pad="1"/>
-<contactref element="T1" pad="1"/>
-<wire x1="44.262" y1="18.034" x2="44.262" y2="20.49" width="0" layer="19" extent="1-1"/>
-<wire x1="44.262" y1="15.494" x2="44.262" y2="18.034" width="0" layer="19" extent="1-1"/>
+<wire x1="50.866" y1="20.828" x2="50.866" y2="23.284" width="0" layer="19" extent="1-1"/>
+<wire x1="52.07" y1="18.372" x2="50.866" y2="20.828" width="0" layer="19" extent="1-1"/>
 </signal>
 </signals>
 </board>

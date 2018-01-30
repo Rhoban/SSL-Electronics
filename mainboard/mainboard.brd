@@ -184,11 +184,11 @@
 <dimension x1="-59.75" y1="43.75" x2="66.25" y2="43.75" x3="3.25" y3="91.75" layer="51"/>
 <dimension x1="-59.75" y1="43.75" x2="-59.75" y2="-38.25" x3="-107.75" y3="2.75" layer="51"/>
 <dimension x1="1.7" y1="60.8" x2="2" y2="-77.5" x3="113.45066875" y3="-8.107915625" layer="51"/>
-<text x="38.75" y="-9.5" size="10" layer="112" rot="R180">1</text>
-<text x="8" y="-8.75" size="10" layer="112" rot="R180">2</text>
-<text x="-12.25" y="13.25" size="10" layer="112" rot="R180">5</text>
-<text x="-25" y="-8.5" size="10" layer="112" rot="R180">3</text>
-<text x="19.5" y="12.75" size="10" layer="112" rot="R180">4</text>
+<text x="37.25" y="-21.7" size="10" layer="112" rot="R180">1</text>
+<text x="6.5" y="-21.85" size="10" layer="112" rot="R180">2</text>
+<text x="-12.25" y="24.65" size="10" layer="112" rot="R180">5</text>
+<text x="-26.2" y="-21.2" size="10" layer="112" rot="R180">3</text>
+<text x="19.5" y="24.15" size="10" layer="112" rot="R180">4</text>
 <text x="-55.25" y="-14" size="1.778" layer="121">3.3V</text>
 <text x="-54.5" y="-23.5" size="1.778" layer="121">5V</text>
 <text x="-55" y="-32" size="1.778" layer="121">12V</text>
@@ -287,6 +287,15 @@
 <wire x1="12.094" y1="-66.29" x2="12.431" y2="-66.38" width="0" layer="20"/>
 <wire x1="12.431" y1="-66.38" x2="12.744" y2="-66.525" width="0" layer="20"/>
 <wire x1="12.744" y1="-66.525" x2="13.029" y2="-66.725" width="0" layer="20"/>
+<text x="38.7" y="-34" size="3" layer="122">1</text>
+<text x="13.3" y="-34.5" size="3" layer="122">2</text>
+<text x="-11.6" y="-34.2" size="3" layer="122">3</text>
+<text x="-36.7" y="-34.5" size="3" layer="122">4</text>
+<text x="-38.5" y="-20.6" size="3" layer="121">DRIVER</text>
+<text x="-5.4" y="-20.8" size="3" layer="121">DRIVER</text>
+<text x="25.6" y="-20.9" size="3" layer="121">DRIVER</text>
+<text x="8.4" y="24.8" size="3" layer="121">DRIVER</text>
+<text x="-23.9" y="25" size="3" layer="121">DRIVER</text>
 </plain>
 <libraries>
 <library name="rhoban">
@@ -949,6 +958,12 @@ reflow soldering</description>
 <wire x1="29.92" y1="-1.968" x2="29.92" y2="46" width="0" layer="21"/>
 <wire x1="29.92" y1="46" x2="-0.08" y2="46" width="0" layer="21"/>
 <wire x1="-0.08" y1="46" x2="-0.08" y2="-1.968" width="0" layer="21"/>
+<hole x="14.9" y="43.8" drill="3"/>
+<hole x="11.7" y="3.8" drill="3"/>
+<rectangle x1="12.994115625" y1="41.8574125" x2="16.758171875" y2="45.66263125" layer="41"/>
+<rectangle x1="12.987053125" y1="41.864471875" x2="16.765234375" y2="45.6485125" layer="42"/>
+<rectangle x1="9.81249375" y1="1.880775" x2="13.6086875" y2="5.72705" layer="42"/>
+<rectangle x1="9.829440625" y1="1.88925" x2="13.59174375" y2="5.735521875" layer="41"/>
 </package>
 <package name="PANASONIC_D8">
 <circle x="0" y="0" radius="3.15" width="0.127" layer="21"/>
@@ -2394,20 +2409,20 @@ design rules under a new name.</description>
 <element name="DRIVER5" library="rhoban" package="RHOBAN_BL_DRIVER" value="RHOBAN_BL_DRIVER" x="-1.285" y="43.515" rot="R180">
 <attribute name="FARNELL" value="1593459,1593459,1593463" x="-1.285" y="43.515" size="1.778" layer="27" rot="R180" display="off"/>
 </element>
-<element name="D5" library="SparkFun-DiscreteSemi" package="SOD-323" value="" x="35.265" y="-47.11" rot="R90">
-<attribute name="FARNELL" value="8737843RL" x="31.455" y="-50.92" size="1.778" layer="27" rot="R90" display="off"/>
+<element name="D5" library="SparkFun-DiscreteSemi" package="SOD-323" value="" x="36.465" y="-47.11" rot="R90">
+<attribute name="FARNELL" value="8737843RL" x="32.655" y="-50.92" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
-<element name="D1" library="SparkFun-DiscreteSemi" package="SOD-323" value="" x="16.62" y="40.36" rot="R270">
-<attribute name="FARNELL" value="8737843RL" x="16.62" y="40.36" size="1.778" layer="27" rot="R270" display="off"/>
+<element name="D1" library="SparkFun-DiscreteSemi" package="SOD-323" value="" x="15.42" y="40.66" rot="R270">
+<attribute name="FARNELL" value="8737843RL" x="15.42" y="40.66" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
-<element name="D2" library="SparkFun-DiscreteSemi" package="SOD-323" value="" x="-29.67" y="-47.155" rot="R90">
-<attribute name="FARNELL" value="8737843RL" x="-29.67" y="-47.155" size="1.778" layer="27" rot="R90" display="off"/>
+<element name="D2" library="SparkFun-DiscreteSemi" package="SOD-323" value="" x="-28.77" y="-47.255" rot="R90">
+<attribute name="FARNELL" value="8737843RL" x="-28.77" y="-47.255" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
-<element name="D3" library="SparkFun-DiscreteSemi" package="SOD-323" value="" x="3.03" y="-47.155" rot="R90">
-<attribute name="FARNELL" value="8737843RL" x="3.03" y="-47.155" size="1.778" layer="27" rot="R90" display="off"/>
+<element name="D3" library="SparkFun-DiscreteSemi" package="SOD-323" value="" x="4.13" y="-47.155" rot="R90">
+<attribute name="FARNELL" value="8737843RL" x="4.13" y="-47.155" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
-<element name="D4" library="SparkFun-DiscreteSemi" package="SOD-323" value="" x="-15.89" y="40.34" rot="R270">
-<attribute name="FARNELL" value="8737843RL" x="-15.89" y="40.34" size="1.778" layer="27" rot="R270" display="off"/>
+<element name="D4" library="SparkFun-DiscreteSemi" package="SOD-323" value="" x="-16.99" y="40.74" rot="R270">
+<attribute name="FARNELL" value="8737843RL" x="-16.99" y="40.74" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
 <element name="R10" library="rhoban" package="R0805" value="10K" x="34.635" y="32.3" rot="R180">
 <attribute name="FARNELL" value="2447553" x="34.635" y="32.3" size="1.778" layer="27" rot="R180" display="off"/>
@@ -2461,9 +2476,9 @@ design rules under a new name.</description>
 </elements>
 <signals>
 <signal name="KICK2">
-<contactref element="MAPLE" pad="X1"/>
 <contactref element="X1" pad="5"/>
-<wire x1="-1.56" y1="55.25" x2="57.37" y2="10.2" width="0" layer="19" extent="1-1"/>
+<contactref element="MAPLE" pad="X26"/>
+<wire x1="-1.56" y1="55.25" x2="42.13" y2="17.82" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="3.3" class="1">
 <contactref element="MAPLE" pad="VCC"/>
@@ -2754,9 +2769,9 @@ design rules under a new name.</description>
 <wire x1="-59.69" y1="-1.27" x2="42.13" y2="25.44" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="IRQ3">
-<contactref element="MAPLE" pad="X25"/>
 <contactref element="COM3" pad="IRQ"/>
-<wire x1="6.985" y1="-60.325" x2="42.13" y2="20.36" width="0" layer="19" extent="1-1"/>
+<contactref element="MAPLE" pad="X0"/>
+<wire x1="6.985" y1="-60.325" x2="57.37" y2="7.66" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="IRQ2">
 <contactref element="MAPLE" pad="X24"/>
@@ -2764,9 +2779,9 @@ design rules under a new name.</description>
 <wire x1="42.13" y1="22.9" x2="66.675" y2="6.35" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="KICK1">
-<contactref element="MAPLE" pad="X0"/>
 <contactref element="X1" pad="4"/>
-<wire x1="0.98" y1="55.25" x2="57.37" y2="7.66" width="0" layer="19" extent="1-1"/>
+<contactref element="MAPLE" pad="X25"/>
+<wire x1="0.98" y1="55.25" x2="42.13" y2="20.36" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="BOOST_EN">
 <contactref element="MAPLE" pad="X27"/>
@@ -2870,9 +2885,9 @@ design rules under a new name.</description>
 <wire x1="-13.4522" y1="44.0278" x2="42.13" y2="40.68" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="DRIVERS_CS2">
-<contactref element="MAPLE" pad="X26"/>
 <contactref element="DRIVER2" pad="CS"/>
-<wire x1="42.13" y1="17.82" x2="19.0578" y2="44.0478" width="0" layer="19" extent="1-1"/>
+<contactref element="MAPLE" pad="X1"/>
+<wire x1="19.0578" y1="44.0478" x2="57.37" y2="10.2" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="DRIVERS_CS1">
 <contactref element="MAPLE" pad="X7"/>
@@ -2882,27 +2897,27 @@ design rules under a new name.</description>
 <signal name="N$8">
 <contactref element="DRIVER1" pad="VDRIVER"/>
 <contactref element="D5" pad="1"/>
-<wire x1="35.265" y1="-48.26" x2="35.3672" y2="-50.7978" width="0" layer="19" extent="1-1"/>
+<wire x1="36.465" y1="-48.26" x2="35.3672" y2="-50.7978" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$9">
 <contactref element="DRIVER4" pad="VDRIVER"/>
 <contactref element="D3" pad="1"/>
-<wire x1="3.03" y1="-48.305" x2="3.1322" y2="-50.5928" width="0" layer="19" extent="1-1"/>
+<wire x1="4.13" y1="-48.305" x2="3.1322" y2="-50.5928" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$10">
 <contactref element="DRIVER5" pad="VDRIVER"/>
 <contactref element="D4" pad="1"/>
-<wire x1="-15.89" y1="41.49" x2="-15.9922" y2="44.0278" width="0" layer="19" extent="1-1"/>
+<wire x1="-16.99" y1="41.89" x2="-15.9922" y2="44.0278" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$12">
 <contactref element="DRIVER3" pad="VDRIVER"/>
 <contactref element="D2" pad="1"/>
-<wire x1="-29.67" y1="-48.305" x2="-29.8178" y2="-50.5928" width="0" layer="19" extent="1-1"/>
+<wire x1="-28.77" y1="-48.405" x2="-29.8178" y2="-50.5928" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$13">
 <contactref element="DRIVER2" pad="VDRIVER"/>
 <contactref element="D1" pad="1"/>
-<wire x1="16.62" y1="41.51" x2="16.5178" y2="44.0478" width="0" layer="19" extent="1-1"/>
+<wire x1="15.42" y1="41.81" x2="16.5178" y2="44.0478" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="COM_CE">
 <contactref element="MAPLE" pad="X13"/>
@@ -2924,11 +2939,11 @@ design rules under a new name.</description>
 <contactref element="D3" pad="2"/>
 <wire x1="-61.35" y1="-27.5" x2="-69.25" y2="-24.1" width="0" layer="19" extent="1-1"/>
 <wire x1="-55.33" y1="-27.75" x2="-61.35" y2="-27.5" width="0" layer="19" extent="1-1"/>
-<wire x1="-29.67" y1="-46.005" x2="-55.33" y2="-27.75" width="0" layer="19" extent="1-1"/>
-<wire x1="3.03" y1="-46.005" x2="-29.67" y2="-46.005" width="0" layer="19" extent="1-1"/>
-<wire x1="35.265" y1="-45.96" x2="3.03" y2="-46.005" width="0" layer="19" extent="1-1"/>
-<wire x1="-15.89" y1="39.19" x2="-55.33" y2="-27.75" width="0" layer="19" extent="1-1"/>
-<wire x1="16.62" y1="39.21" x2="-15.89" y2="39.19" width="0" layer="19" extent="1-1"/>
+<wire x1="-28.77" y1="-46.105" x2="-55.33" y2="-27.75" width="0" layer="19" extent="1-1"/>
+<wire x1="4.13" y1="-46.005" x2="-28.77" y2="-46.105" width="0" layer="19" extent="1-1"/>
+<wire x1="36.465" y1="-45.96" x2="4.13" y2="-46.005" width="0" layer="19" extent="1-1"/>
+<wire x1="-16.99" y1="39.59" x2="-55.33" y2="-27.75" width="0" layer="19" extent="1-1"/>
+<wire x1="15.42" y1="39.51" x2="-16.99" y2="39.59" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="BAT">
 <contactref element="R10" pad="1"/>

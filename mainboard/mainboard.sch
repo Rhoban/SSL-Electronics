@@ -972,6 +972,12 @@ grid 3.5 mm, diameter 8 mm</description>
 <wire x1="29.92" y1="-1.968" x2="29.92" y2="46" width="0" layer="21"/>
 <wire x1="29.92" y1="46" x2="-0.08" y2="46" width="0" layer="21"/>
 <wire x1="-0.08" y1="46" x2="-0.08" y2="-1.968" width="0" layer="21"/>
+<hole x="14.9" y="43.8" drill="3"/>
+<hole x="11.7" y="3.8" drill="3"/>
+<rectangle x1="12.994115625" y1="41.8574125" x2="16.758171875" y2="45.66263125" layer="41"/>
+<rectangle x1="12.987053125" y1="41.864471875" x2="16.765234375" y2="45.6485125" layer="42"/>
+<rectangle x1="9.81249375" y1="1.880775" x2="13.6086875" y2="5.72705" layer="42"/>
+<rectangle x1="9.829440625" y1="1.88925" x2="13.59174375" y2="5.735521875" layer="41"/>
 </package>
 </packages>
 <symbols>
@@ -5927,9 +5933,9 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 <nets>
 <net name="KICK2" class="0">
 <segment>
-<pinref part="MAPLE" gate="G$1" pin="1"/>
-<wire x1="-27.94" y1="81.28" x2="-22.86" y2="81.28" width="0.1524" layer="91"/>
-<label x="-22.86" y="81.28" size="1.27" layer="95" xref="yes"/>
+<pinref part="MAPLE" gate="G$1" pin="26"/>
+<wire x1="-53.34" y1="88.9" x2="-58.42" y2="88.9" width="0.1524" layer="91"/>
+<label x="-58.42" y="88.9" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
 <net name="3.3" class="1">
@@ -6040,13 +6046,6 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 <label x="-58.42" y="96.52" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
-<net name="IRQ3" class="0">
-<segment>
-<pinref part="MAPLE" gate="G$1" pin="25"/>
-<wire x1="-53.34" y1="91.44" x2="-58.42" y2="91.44" width="0.1524" layer="91"/>
-<label x="-58.42" y="91.44" size="1.27" layer="95" rot="R180" xref="yes"/>
-</segment>
-</net>
 <net name="IRQ2" class="0">
 <segment>
 <pinref part="MAPLE" gate="G$1" pin="24"/>
@@ -6056,9 +6055,9 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 </net>
 <net name="KICK1" class="0">
 <segment>
-<pinref part="MAPLE" gate="G$1" pin="0"/>
-<wire x1="-27.94" y1="78.74" x2="-22.86" y2="78.74" width="0.1524" layer="91"/>
-<label x="-22.86" y="78.74" size="1.27" layer="95" xref="yes"/>
+<pinref part="MAPLE" gate="G$1" pin="25"/>
+<wire x1="-53.34" y1="91.44" x2="-58.42" y2="91.44" width="0.1524" layer="91"/>
+<label x="-58.42" y="91.44" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
 <net name="BOOST_EN" class="0">
@@ -6108,13 +6107,6 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 <pinref part="MAPLE" gate="G$1" pin="17"/>
 <wire x1="-53.34" y1="111.76" x2="-58.42" y2="111.76" width="0.1524" layer="91"/>
 <label x="-58.42" y="111.76" size="1.27" layer="95" rot="R180" xref="yes"/>
-</segment>
-</net>
-<net name="DRIVERS_CS2" class="0">
-<segment>
-<pinref part="MAPLE" gate="G$1" pin="26"/>
-<wire x1="-53.34" y1="88.9" x2="-58.42" y2="88.9" width="0.1524" layer="91"/>
-<label x="-58.42" y="88.9" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
 <net name="CAP" class="0">
@@ -6171,6 +6163,20 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 <pinref part="MAPLE" gate="G$1" pin="14"/>
 <wire x1="-27.94" y1="116.84" x2="-22.86" y2="116.84" width="0.1524" layer="91"/>
 <label x="-22.86" y="116.84" size="1.27" layer="95" xref="yes"/>
+</segment>
+</net>
+<net name="IRQ3" class="0">
+<segment>
+<pinref part="MAPLE" gate="G$1" pin="0"/>
+<wire x1="-27.94" y1="78.74" x2="-22.86" y2="78.74" width="0.1524" layer="91"/>
+<label x="-22.86" y="78.74" size="1.27" layer="95" xref="yes"/>
+</segment>
+</net>
+<net name="DRIVERS_CS2" class="0">
+<segment>
+<pinref part="MAPLE" gate="G$1" pin="1"/>
+<wire x1="-27.94" y1="81.28" x2="-22.86" y2="81.28" width="0.1524" layer="91"/>
+<label x="-22.86" y="81.28" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
 </nets>

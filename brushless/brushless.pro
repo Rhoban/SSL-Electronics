@@ -2,24 +2,24 @@ EAGLE AutoRouter Statistics:
 
 Job           : /home/gregwar/SSL-Electronics/brushless/brushless.brd
 
-Start at      : 20:22:55 (26/12/17)
-End at        : 20:23:11 (26/12/17)
-Elapsed time  : 00:00:16
+Start at      : 15:05:03 (30/01/18)
+End at        : 15:05:26 (30/01/18)
+Elapsed time  : 00:00:23
 
-Signals       :    73   RoutingGrid: 5 mil  Layers: 4
-Connections   :   174   predefined:  31 ( 0 Vias )
+Signals       :    71   RoutingGrid: 3.93701 mil  Layers: 4
+Connections   :   173   predefined:  31 ( 0 Vias )
 
-Router memory :   839520
+Router memory :   1342680
 
 Passname          :    Busses     Route Optimize1 Optimize2 Optimize3 Optimize4
 
-Time per pass     :  00:00:00  00:00:08  00:00:02  00:00:02  00:00:02  00:00:02
-Number of Ripups  :         0        53         0         0         0         0
-max. Level        :         0         2         0         0         0         0
-max. Total        :         0        40         0         0         0         0
+Time per pass     :  00:00:01  00:00:11  00:00:03  00:00:03  00:00:03  00:00:02
+Number of Ripups  :         0        34         0         0         0         0
+max. Level        :         0         3         0         0         0         0
+max. Total        :         0        29         0         0         0         0
 
-Routed            :         9       143       143       143       143       143
-Vias              :         0       121        84        78        73        73
-Resolution        :    23.0 %   100.0 %   100.0 %   100.0 %   100.0 %   100.0 %
+Routed            :         7       142       142       142       142       142
+Vias              :         0       116        78        72        67        64
+Resolution        :    22.0 %   100.0 %   100.0 %   100.0 %   100.0 %   100.0 %
 
 Final             : 100.0% finished
