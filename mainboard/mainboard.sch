@@ -979,6 +979,24 @@ grid 3.5 mm, diameter 8 mm</description>
 <rectangle x1="9.81249375" y1="1.880775" x2="13.6086875" y2="5.72705" layer="42"/>
 <rectangle x1="9.829440625" y1="1.88925" x2="13.59174375" y2="5.735521875" layer="41"/>
 </package>
+<package name="SRB22A2FBBNN">
+<wire x1="0" y1="0" x2="0" y2="12.446" width="0.127" layer="21"/>
+<wire x1="0" y1="12.446" x2="0" y2="13.462" width="0.127" layer="21"/>
+<wire x1="0" y1="13.462" x2="0" y2="13.6906" width="0.127" layer="21"/>
+<wire x1="0" y1="13.6906" x2="18.9992" y2="13.6906" width="0.127" layer="21"/>
+<wire x1="18.9992" y1="13.6906" x2="18.9992" y2="0" width="0.127" layer="21"/>
+<wire x1="18.9992" y1="0" x2="0" y2="0" width="0.127" layer="21"/>
+<wire x1="1.778" y1="13.716" x2="1.778" y2="14.478" width="0.127" layer="21"/>
+<wire x1="1.778" y1="14.478" x2="3.81" y2="16.51" width="0.127" layer="21" curve="-90"/>
+<wire x1="3.81" y1="16.51" x2="16.764" y2="13.716" width="0.127" layer="21"/>
+<smd name="P$1" x="9.4996" y="-3.799840625" dx="7.62" dy="3.81" layer="1" rot="R90"/>
+<smd name="P$2" x="1.89991875" y="-3.799840625" dx="7.62" dy="3.81" layer="1" rot="R90"/>
+<wire x1="0" y1="13.462" x2="-1.27" y2="6.096" width="0.127" layer="21"/>
+<wire x1="-1.27" y1="6.096" x2="0" y2="0" width="0.127" layer="21"/>
+<wire x1="19.05" y1="0" x2="20.066" y2="6.604" width="0.127" layer="21"/>
+<wire x1="20.066" y1="6.604" x2="19.05" y2="13.716" width="0.127" layer="21"/>
+<wire x1="0" y1="12.446" x2="18.796" y2="12.446" width="0.127" layer="21"/>
+</package>
 </packages>
 <symbols>
 <symbol name="NPN">
@@ -1153,6 +1171,13 @@ grid 3.5 mm, diameter 8 mm</description>
 <pin name="VCC" x="-12.7" y="2.54" length="middle"/>
 <pin name="GND" x="-12.7" y="-2.54" length="middle"/>
 <pin name="OUT" x="15.24" y="0" length="middle" rot="R180"/>
+</symbol>
+<symbol name="SWITCH">
+<wire x1="0" y1="0" x2="5.08" y2="0" width="0.254" layer="94"/>
+<wire x1="5.08" y1="0" x2="15.24" y2="2.54" width="0.254" layer="94"/>
+<wire x1="15.24" y1="0" x2="20.32" y2="0" width="0.254" layer="94"/>
+<pin name="P$1" x="-2.54" y="0" length="middle"/>
+<pin name="P$2" x="25.4" y="0" length="middle" rot="R180"/>
 </symbol>
 </symbols>
 <devicesets>
@@ -1542,6 +1567,22 @@ grid 3.5 mm, diameter 8 mm</description>
 <connect gate="G$1" pin="GND" pad="3"/>
 <connect gate="G$1" pin="OUT" pad="2"/>
 <connect gate="G$1" pin="VCC" pad="1"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="SRB22A2FBBNN">
+<gates>
+<gate name="G$1" symbol="SWITCH" x="-10.16" y="0"/>
+</gates>
+<devices>
+<device name="" package="SRB22A2FBBNN">
+<connects>
+<connect gate="G$1" pin="P$1" pad="P$1"/>
+<connect gate="G$1" pin="P$2" pad="P$2"/>
 </connects>
 <technologies>
 <technology name=""/>
@@ -5916,6 +5957,7 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 <part name="R7" library="rhoban" deviceset="RESISTANCE" device="-R0805" value="10K">
 <attribute name="FARNELL" value="2447553"/>
 </part>
+<part name="U$15" library="rhoban" deviceset="SRB22A2FBBNN" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -6479,6 +6521,7 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 <instance part="R11" gate="G$1" x="-45.72" y="-60.96" rot="R90">
 <attribute name="FARNELL" x="-45.72" y="-60.96" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
+<instance part="U$15" gate="G$1" x="-58.42" y="-15.24"/>
 </instances>
 <busses>
 </busses>
@@ -6554,7 +6597,7 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 <segment>
 <pinref part="R11" gate="G$1" pin="1"/>
 <wire x1="-45.72" y1="-71.12" x2="-45.72" y2="-66.04" width="0.1524" layer="91"/>
-<label x="-45.72" y="-71.12" size="1.27" layer="95" rot="R270" xref="yes"/>
+<label x="-45.72" y="-71.12" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
 <net name="VIN" class="2">
@@ -6574,14 +6617,14 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 <label x="2.54" y="-76.2" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 <segment>
-<pinref part="XT60" gate="G$1" pin="V+"/>
-<wire x1="-48.26" y1="5.08" x2="-55.88" y2="5.08" width="0.1524" layer="91"/>
-<label x="-55.88" y="5.08" size="1.27" layer="95" rot="R180" xref="yes"/>
-</segment>
-<segment>
 <pinref part="R10" gate="G$1" pin="2"/>
 <wire x1="-45.72" y1="-40.64" x2="-45.72" y2="-38.1" width="0.1524" layer="91"/>
-<label x="-45.72" y="-38.1" size="1.27" layer="95" rot="R90" xref="yes"/>
+<label x="-45.72" y="-38.1" size="1.27" layer="95" xref="yes"/>
+</segment>
+<segment>
+<pinref part="U$15" gate="G$1" pin="P$1"/>
+<wire x1="-60.96" y1="-15.24" x2="-66.04" y2="-15.24" width="0.1524" layer="91"/>
+<label x="-66.04" y="-15.24" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
 <net name="VCC" class="1">
@@ -6624,6 +6667,18 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 <pinref part="R11" gate="G$1" pin="2"/>
 <wire x1="-45.72" y1="-50.8" x2="-45.72" y2="-55.88" width="0.1524" layer="91"/>
 <label x="-45.72" y="-53.34" size="1.27" layer="95" xref="yes"/>
+</segment>
+</net>
+<net name="VIN_BAT" class="2">
+<segment>
+<pinref part="XT60" gate="G$1" pin="V+"/>
+<wire x1="-48.26" y1="5.08" x2="-55.88" y2="5.08" width="0.1524" layer="91"/>
+<label x="-55.88" y="5.08" size="1.27" layer="95" rot="R180" xref="yes"/>
+</segment>
+<segment>
+<pinref part="U$15" gate="G$1" pin="P$2"/>
+<wire x1="-33.02" y1="-15.24" x2="-27.94" y2="-15.24" width="0.1524" layer="91"/>
+<label x="-27.94" y="-15.24" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
 </nets>
