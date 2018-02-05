@@ -5868,10 +5868,10 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 <attribute name="FARNELL" value="1593463"/>
 </part>
 <part name="EMIT" library="rhoban" deviceset="CONNEC_1X02" device="JST-ZH">
-<attribute name="FARNELL" value="-"/>
+<attribute name="FARNELL" value="1212763"/>
 </part>
 <part name="RECEIVE" library="rhoban" deviceset="CONNEC_1X02" device="JST-ZH">
-<attribute name="FARNELL" value="-"/>
+<attribute name="FARNELL" value="3152856"/>
 </part>
 <part name="T2" library="rhoban" deviceset="NPN" device="_BC817,215">
 <attribute name="FARNELL" value="1081223"/>
