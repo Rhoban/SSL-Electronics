@@ -1,3 +1,4 @@
+
 #include <stdlib.h>
 #include <wirish/wirish.h>
 #include <terminal.h>
@@ -24,8 +25,12 @@ static float servo_speed = 0;
 static int encoder_rb[SPEED_RB] = {0};
 static int encoder_pos = 0;
 
+TERMINAL_PARAMETER_BOOL(sdb, "Speed debug", false)
+static int sdb_t = 0;
+
 static void servo_irq()
 {
+    // return;
     encoder_read();
     servo_flag = true;
 }
@@ -53,14 +58,32 @@ void servo_init()
 }
 
 static int servo_pwm = 0;
+static int servo_pwm_limited = 0;
 static float servo_acc = 0;
 static float servo_last_error = 0;
-TERMINAL_PARAMETER_INT(kp, "PID P", 150);
-TERMINAL_PARAMETER_INT(ki, "PID I", 2);
-TERMINAL_PARAMETER_INT(kd, "PID D", 0);
+TERMINAL_PARAMETER_FLOAT(kp, "PID P", 400.0);
+TERMINAL_PARAMETER_FLOAT(ki, "PID I", 1);
+TERMINAL_PARAMETER_FLOAT(kd, "PID D", 100.0);
+
+float servo_feedforward(float target, float current)
+{
+    float sign = target > 0 ? 1 : -1;
+    float boost = 0;
+
+    if (fabs(target) > 0.1) {
+        if (fabs(current) < 0.1) {
+            boost = 100;
+        }
+        return 25*target + sign*(1150 + boost);
+        // return 18*target + sign*(450 + boost);
+    } else {
+        return 0;
+    }
+}
 
 void servo_tick()
 {
+
     if (security_get_error() != SECURITY_NO_ERROR) {
         motor_set(0);
     } else {
@@ -107,22 +130,60 @@ void servo_tick()
             int speed_pulse = current_value - past_value;
 
             // Converting this into a speed [turn/s]
-            servo_speed = (1000/(float)SPEED_DT)*speed_pulse/(float)ENCODER_CPR;
+            servo_speed = 0.95*servo_speed +  0.05*(1000.0/(double)SPEED_DT)*speed_pulse/(double)ENCODER_CPR;
+            if (sdb) {
+                sdb_t += 1;
+                if (sdb_t == 500) {
+                    servo_set(true, 2);
+                }
+                if (sdb_t == 2000) {
+                    // servo_set(true, 2);
+                }
+                if (sdb_t == 2000) {
+                    servo_set(true, 0);
+                }
+                if (sdb_t == 5000) {
+                    sdb = false;
+                }
+                terminal_io()->print(servo_get_speed()*100);
+                terminal_io()->print(" ");
+                terminal_io()->print(servo_limited_target*100);
+                terminal_io()->println();
+            } else {
+                sdb_t = 0;
+            }
 
             if (servo_enable) {
                 float error = (servo_speed - servo_limited_target);
 
-                servo_pwm = kp * error + servo_acc + (error - servo_last_error) * kd;
+                servo_pwm = -servo_feedforward(servo_limited_target, servo_speed);
 
-                servo_acc += ki * error;
+                // Limiting the P impact
+                float j = kp*error;
+                if (j > 800) j = 800;
+                if (j < -800) j = -800;
+
+                servo_pwm += j
+                          + ki * servo_acc
+                          + (error - servo_last_error) * kd;
+
+                servo_acc += error;
                 servo_last_error = error;
 
+                // Limiting accumulator and pwm
                 if (servo_pwm < -3000) servo_pwm = -3000;
                 if (servo_pwm > 3000) servo_pwm = 3000;
-                if (servo_acc < -3000) servo_acc = -3000;
-                if (servo_acc > 3000) servo_acc = 3000;
+                if (servo_acc < -(3000/ki)) servo_acc = -(3000/ki);
+                if (servo_acc > (3000/ki)) servo_acc = (3000/ki);
 
-                motor_set(servo_pwm);
+                // Limiting PWM variation
+                if (abs(servo_pwm_limited - servo_pwm) > 25) {
+                    if (servo_pwm_limited < servo_pwm) servo_pwm_limited += 25;
+                    else servo_pwm_limited -= 25;
+                } else {
+                    servo_pwm = servo_pwm_limited;
+                }
+                motor_set(servo_pwm_limited);
             }
 #endif
         }
@@ -146,6 +207,7 @@ void servo_set(bool enable, float target)
 
     if (!servo_enable) {
         servo_pwm = 0;
+        servo_pwm_limited = 0;
         servo_acc = 0;
         servo_last_error = 0;
         servo_limited_target = 0;
@@ -169,12 +231,13 @@ float servo_get_speed()
 
 TERMINAL_COMMAND(speed, "Speed estimation")
 {
-    terminal_io()->println(servo_get_speed());
+    terminal_io()->println(servo_get_speed()*100);
 }
 
 TERMINAL_COMMAND(em, "Emergency")
 {
     servo_set(false, 0);
+    sdb = false;
 }
 
 TERMINAL_COMMAND(set, "Set target speed")

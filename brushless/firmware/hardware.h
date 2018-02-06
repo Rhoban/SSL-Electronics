@@ -20,7 +20,8 @@
 
 #if DRIVER_TYPE == TYPE_70W
 #define ENCODER_MAGNETIC            // Magnetic AS5048 14bit encoder
-#define ENCODER_CPR      16384
+#define ENCODER_CPR      1024
+// #define ENCODER_CPR      16384
 #endif
 
 #if DRIVER_TYPE == TYPE_DRIBBLER
@@ -54,7 +55,7 @@
 #define LED_PIN     22
 
 // Servo configuration
-#define SPEED_DT    50
+#define SPEED_DT    10
 #define SERVO_DT    1
 
 // Current protection
@@ -65,12 +66,12 @@
 // XXX: Limiting PWM
 #if DRIVER_TYPE == TYPE_70W
 #define CURRENT_DISABLE
-#define PWM_MIN             700     // 0-3000
+#define PWM_MIN             0     // 0-3000
 #define PWM_MAX             2500    // 0-3000
 #endif
 
 #if DRIVER_TYPE == TYPE_30W
-#define PWM_MIN             800     // 0-3000
+#define PWM_MIN             600     // 0-3000
 #define PWM_MAX             2500    // 0-3000
 #endif
 

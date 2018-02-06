@@ -4,6 +4,7 @@
 #include <wirish/wirish.h>
 #include <terminal.h>
 #include <watchdog.h>
+#include "motor.h"
 #include "encoder.h"
 
 HardwareSPI encoder(ENCODER_SPI);
@@ -16,13 +17,27 @@ static uint16_t encoder_read_value()
 {
     uint16_t result;
     digitalWrite(ENCODER_SELECT_PIN, LOW);
-    delay_us(1);
+    //delay_us(1);
     result = (encoder.send(0xff) << 8);
     result |= encoder.send(0xff);
-    delay_us(1);
+    //delay_us(1);
     digitalWrite(ENCODER_SELECT_PIN, HIGH);
 
     return result & 0x3fff;
+}
+
+TERMINAL_COMMAND(erv, "Encoder Read Value")
+{
+    int start = millis();
+
+    while (!SerialUSB.available()) {
+        uint16_t value = encoder_read_value();
+
+        SerialUSB.println(value);
+
+        delay(5);
+        watchdog_feed();
+    }
 }
 
 void encoder_init()
@@ -36,17 +51,20 @@ void encoder_init()
 }
 
 uint16_t magnetic_value = 0;
+uint8_t sample = 0;
+uint16_t average_sample = 0;
 
 void encoder_read()
 {
-    uint16_t new_magnetic_value = encoder_read_value();
+    uint16_t fresh_value = encoder_read_value();
+    uint16_t new_magnetic_value = fresh_value>>4;
     int16_t delta = (new_magnetic_value - magnetic_value);
 
-    if (delta > 0x1fff) {
-        delta -= 0x4000;
+    if (delta > 0x1ff) {
+        delta -= 0x400;
     }
-    if (delta < -0x1fff) {
-        delta += 0x4000;
+    if (delta < -0x1ff) {
+        delta += 0x400;
     }
 
     encoder_cnt -= delta;
@@ -56,6 +74,16 @@ void encoder_read()
 uint32_t encoder_value()
 {
     return encoder_cnt;
+}
+
+TERMINAL_COMMAND(eb, "Encoder benchmark")
+{
+    int start = micros();
+    for (int k=0; k<10000; k++) {
+        watchdog_feed();
+        encoder_read();
+    }
+    terminal_io()->println((micros()-start)/10000.0);
 }
 
 TERMINAL_COMMAND(cnt, "Cnt debug")
@@ -68,7 +96,8 @@ TERMINAL_COMMAND(cnt, "Cnt debug")
         if (k > 10) {
             k = 0;
             encoder_read();
-            terminal_io()->println(encoder_value());
+            // terminal_io()->println(encoder_value());
+            terminal_io()->println(magnetic_value);
         }
     }
 }
