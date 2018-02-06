@@ -10,6 +10,7 @@
 #include "buzzer.h"
 #include "kicker.h"
 #include "voltage.h"
+#include "ir.h"
 
 /**
  * Setup function
@@ -30,6 +31,9 @@ void setup()
 
     // Buzzer
     buzzer_init();
+
+    // IR
+    ir_init();
 
     // Voltage measure
     voltage_init();

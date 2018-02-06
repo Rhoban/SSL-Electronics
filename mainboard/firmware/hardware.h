@@ -50,4 +50,8 @@
 #define BAT2_R1         10000
 #define BAT2_R2         1000
 
+// Infrared
+#define IR_EMIT         12
+#define IR_RECEIVE      10
+
 #endif
