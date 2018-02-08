@@ -85,7 +85,7 @@ void encoder_init()
     encoder_write(ENCODER_MDR0, 0b11);
 }
 
-void encoder_read()
+bool encoder_read()
 {
     encoder_cnt = encoder_read4(ENCODER_CNTR);
 }

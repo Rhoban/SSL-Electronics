@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 void encoder_init();
-void encoder_read();
+bool encoder_read();
 uint32_t encoder_value();
 
 #endif

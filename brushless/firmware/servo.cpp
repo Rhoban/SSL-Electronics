@@ -30,9 +30,9 @@ static int sdb_t = 0;
 
 static void servo_irq()
 {
-    // return;
-    encoder_read();
-    servo_flag = true;
+    if (encoder_read()) {
+        servo_flag = true;
+    }
 }
 
 static void init_timer()
@@ -41,7 +41,7 @@ static void init_timer()
 
     // Configuring timer
     timer.pause();
-    timer.setPrescaleFactor(72);
+    timer.setPrescaleFactor(9);
     timer.setOverflow(1000); // 1Khz
 
     timer.setChannel4Mode(TIMER_OUTPUT_COMPARE);
@@ -132,23 +132,24 @@ void servo_tick()
             // Converting this into a speed [turn/s]
             servo_speed = 0.95*servo_speed +  0.05*(1000.0/(double)SPEED_DT)*speed_pulse/(double)ENCODER_CPR;
             if (sdb) {
-                sdb_t += 1;
-                if (sdb_t == 500) {
-                    servo_set(true, 2);
-                }
-                if (sdb_t == 2000) {
-                    // servo_set(true, 2);
-                }
-                if (sdb_t == 2000) {
-                    servo_set(true, 0);
-                }
-                if (sdb_t == 5000) {
-                    sdb = false;
-                }
-                terminal_io()->print(servo_get_speed()*100);
-                terminal_io()->print(" ");
-                terminal_io()->print(servo_limited_target*100);
-                terminal_io()->println();
+                terminal_io()->println(encoder_value());
+                // sdb_t += 1;
+                // if (sdb_t == 500) {
+                //     servo_set(true, 2);
+                // }
+                // if (sdb_t == 2000) {
+                //     // servo_set(true, 2);
+                // }
+                // if (sdb_t == 2000) {
+                //     servo_set(true, 0);
+                // }
+                // if (sdb_t == 5000) {
+                //     sdb = false;
+                // }
+                // terminal_io()->print(servo_get_speed()*100);
+                // terminal_io()->print(" ");
+                // terminal_io()->print(servo_limited_target*100);
+                // terminal_io()->println();
             } else {
                 sdb_t = 0;
             }
