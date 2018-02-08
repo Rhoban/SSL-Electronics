@@ -105,9 +105,9 @@ bool encoder_read()
     encoder_deltas += encoder_compute_delta(magnetic_value, fresh_value);
     encoder_delta_pos++;
 
-    if (encoder_delta_pos >= 32) {
+    if (encoder_delta_pos >= 8) {
         uint16_t old_magnetic_value = magnetic_value;
-        encoder_deltas /= 32;
+        encoder_deltas /= 8;
         magnetic_value = (magnetic_value + encoder_deltas + 0x4000)%(0x4000);
 
         if (encoder_deltas < -0x4000) {
