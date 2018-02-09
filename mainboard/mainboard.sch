@@ -5941,19 +5941,27 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 <part name="X1" library="Rembrandt Electronics - JST XH Connectors v1-0" deviceset="JST-XH-06-PIN" device="-LONG-PAD"/>
 <part name="U$8" library="rhoban" deviceset="CPOL_EU" device="PANASONIC_D8"/>
 <part name="U$9" library="rhoban" deviceset="CPOL_EU" device="PANASONIC_D8"/>
-<part name="U$1" library="rhoban" deviceset="DRV5023FAEDBZRQ1" device=""/>
+<part name="U$1" library="rhoban" deviceset="DRV5023FAEDBZRQ1" device="">
+<attribute name="FARNELL" value="2673327RL"/>
+</part>
 <part name="R1" library="rhoban" deviceset="RESISTANCE" device="-R0805" value="10K">
 <attribute name="FARNELL" value="2447553"/>
 </part>
-<part name="U$5" library="rhoban" deviceset="DRV5023FAEDBZRQ1" device=""/>
+<part name="U$5" library="rhoban" deviceset="DRV5023FAEDBZRQ1" device="">
+<attribute name="FARNELL" value="2673327RL"/>
+</part>
 <part name="R2" library="rhoban" deviceset="RESISTANCE" device="-R0805" value="10K">
 <attribute name="FARNELL" value="2447553"/>
 </part>
-<part name="U$10" library="rhoban" deviceset="DRV5023FAEDBZRQ1" device=""/>
+<part name="U$10" library="rhoban" deviceset="DRV5023FAEDBZRQ1" device="">
+<attribute name="FARNELL" value="2673327RL"/>
+</part>
 <part name="R3" library="rhoban" deviceset="RESISTANCE" device="-R0805" value="10K">
 <attribute name="FARNELL" value="2447553"/>
 </part>
-<part name="U$11" library="rhoban" deviceset="DRV5023FAEDBZRQ1" device=""/>
+<part name="U$11" library="rhoban" deviceset="DRV5023FAEDBZRQ1" device="">
+<attribute name="FARNELL" value="2673327RL"/>
+</part>
 <part name="R7" library="rhoban" deviceset="RESISTANCE" device="-R0805" value="10K">
 <attribute name="FARNELL" value="2447553"/>
 </part>
@@ -7248,19 +7256,27 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 <frame x1="-35.56" y1="-40.64" x2="121.92" y2="35.56" columns="8" rows="5" layer="94"/>
 </plain>
 <instances>
-<instance part="U$1" gate="G$1" x="0" y="0"/>
+<instance part="U$1" gate="G$1" x="0" y="0">
+<attribute name="FARNELL" x="0" y="0" size="1.778" layer="96" display="off"/>
+</instance>
 <instance part="R1" gate="G$1" x="20.32" y="5.08" rot="R90">
 <attribute name="FARNELL" x="20.32" y="5.08" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
-<instance part="U$5" gate="G$1" x="0" y="-22.86"/>
+<instance part="U$5" gate="G$1" x="0" y="-22.86">
+<attribute name="FARNELL" x="0" y="-22.86" size="1.778" layer="96" display="off"/>
+</instance>
 <instance part="R2" gate="G$1" x="20.32" y="-17.78" rot="R90">
 <attribute name="FARNELL" x="20.32" y="-17.78" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
-<instance part="U$10" gate="G$1" x="73.66" y="0"/>
+<instance part="U$10" gate="G$1" x="73.66" y="0">
+<attribute name="FARNELL" x="73.66" y="0" size="1.778" layer="96" display="off"/>
+</instance>
 <instance part="R3" gate="G$1" x="93.98" y="5.08" rot="R90">
 <attribute name="FARNELL" x="93.98" y="5.08" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
-<instance part="U$11" gate="G$1" x="73.66" y="-22.86"/>
+<instance part="U$11" gate="G$1" x="73.66" y="-22.86">
+<attribute name="FARNELL" x="73.66" y="-22.86" size="1.778" layer="96" display="off"/>
+</instance>
 <instance part="R7" gate="G$1" x="93.98" y="-17.78" rot="R90">
 <attribute name="FARNELL" x="93.98" y="-17.78" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>

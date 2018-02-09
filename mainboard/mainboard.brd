@@ -2482,7 +2482,7 @@ design rules under a new name.</description>
 <attribute name="FARNELL" value="2447553" x="39.5" y="-40.55" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
 <element name="U$5" library="rhoban" package="SOT-23" value="DRV5023FAEDBZRQ1" x="14.5" y="-37.3" rot="MR0">
-<attribute name="FARNELL" value="v" x="14.5" y="-37.3" size="1.778" layer="28" rot="MR0" display="off"/>
+<attribute name="FARNELL" value="2673327RL" x="14.5" y="-37.3" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>
 <element name="R2" library="rhoban" package="R0805" value="10K" x="14.55" y="-40.7" rot="MR180">
 <attribute name="FARNELL" value="2447553" x="14.55" y="-41.7" size="1.778" layer="28" rot="MR180" display="off"/>
