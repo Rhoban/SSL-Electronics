@@ -65,8 +65,10 @@ TERMINAL_PARAMETER_FLOAT(kp, "PID P", 400.0);
 TERMINAL_PARAMETER_FLOAT(ki, "PID I", 1);
 TERMINAL_PARAMETER_FLOAT(kd, "PID D", 100.0);
 
-float servo_feedforward(float target, float current)
+float servo_lut(float target, float current)
 {
+    // XXX: This is a simple LUT based on empirical measured
+    // on motor behavior
     float sign = target > 0 ? 1 : -1;
     float boost = 0;
 
@@ -130,7 +132,9 @@ void servo_tick()
             int speed_pulse = current_value - past_value;
 
             // Converting this into a speed [turn/s]
+            // XXX: The discount was not tuned properly
             servo_speed = 0.95*servo_speed +  0.05*(1000.0/(double)SPEED_DT)*speed_pulse/(double)ENCODER_CPR;
+
             if (sdb) {
                 terminal_io()->println(encoder_value());
                 // sdb_t += 1;
@@ -157,7 +161,8 @@ void servo_tick()
             if (servo_enable) {
                 float error = (servo_speed - servo_limited_target);
 
-                servo_pwm = -servo_feedforward(servo_limited_target, servo_speed);
+                // Applying prior LUT
+                servo_pwm = -servo_lut(servo_limited_target, servo_speed);
 
                 // Limiting the P impact
                 float j = kp*error;
@@ -171,9 +176,11 @@ void servo_tick()
                 servo_acc += error;
                 servo_last_error = error;
 
-                // Limiting accumulator and pwm
+                // Limiting output PWM
                 if (servo_pwm < -3000) servo_pwm = -3000;
                 if (servo_pwm > 3000) servo_pwm = 3000;
+
+                // Limiting accumulator
                 if (servo_acc < -(3000/ki)) servo_acc = -(3000/ki);
                 if (servo_acc > (3000/ki)) servo_acc = (3000/ki);
 
