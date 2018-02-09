@@ -3331,10 +3331,18 @@ Source: &lt;a href="http://www.jst-mfg.com/product/pdf/eng/eZH.pdf"&gt;http://ww
 <part name="JP2" library="SparkFun-Jumpers" deviceset="JUMPER-SMT_2_NC_PASTE" device="_NO-SILK">
 <attribute name="FARNELL" value="-"/>
 </part>
-<part name="K1" library="rhoban" deviceset="614105150721" device=""/>
-<part name="X2" library="Rembrandt Electronics - JST XH Connectors v1-0" deviceset="JST-XH-03-PIN" device="-LONG-PAD" value="MOTOR"/>
-<part name="HALL" library="jst" deviceset="B5B-ZR" device=""/>
-<part name="ENCODER" library="jst" deviceset="B6B-ZR" device=""/>
+<part name="K1" library="rhoban" deviceset="614105150721" device="">
+<attribute name="FARNELL" value="2470821"/>
+</part>
+<part name="X2" library="Rembrandt Electronics - JST XH Connectors v1-0" deviceset="JST-XH-03-PIN" device="-LONG-PAD" value="MOTOR">
+<attribute name="FARNELL" value="-"/>
+</part>
+<part name="HALL" library="jst" deviceset="B5B-ZR" device="">
+<attribute name="FARNELL" value="-"/>
+</part>
+<part name="ENCODER" library="jst" deviceset="B6B-ZR" device="">
+<attribute name="FARNELL" value="-"/>
+</part>
 <part name="D6" library="SparkFun-DiscreteSemi" deviceset="DIODE" device="SOD">
 <attribute name="FARNELL" value="8737843RL"/>
 </part>
@@ -3410,7 +3418,9 @@ Source: &lt;a href="http://www.jst-mfg.com/product/pdf/eng/eZH.pdf"&gt;http://ww
 <instance part="D5" gate="G$1" x="-40.64" y="-55.88" rot="R270">
 <attribute name="FARNELL" x="-40.64" y="-55.88" size="1.27" layer="96" rot="R270" display="off"/>
 </instance>
-<instance part="K1" gate="G$1" x="-53.34" y="-48.26" rot="R180"/>
+<instance part="K1" gate="G$1" x="-53.34" y="-48.26" rot="R180">
+<attribute name="FARNELL" x="-53.34" y="-48.26" size="1.778" layer="96" rot="R180" display="off"/>
+</instance>
 </instances>
 <busses>
 </busses>
@@ -4527,11 +4537,17 @@ Source: &lt;a href="http://www.jst-mfg.com/product/pdf/eng/eZH.pdf"&gt;http://ww
 <instance part="JP2" gate="G$1" x="-15.24" y="-25.4">
 <attribute name="FARNELL" x="-15.24" y="-25.4" size="1.27" layer="96" display="off"/>
 </instance>
-<instance part="X2" gate="-1" x="-35.56" y="-40.64"/>
+<instance part="X2" gate="-1" x="-35.56" y="-40.64">
+<attribute name="FARNELL" x="-35.56" y="-40.64" size="1.778" layer="96" display="off"/>
+</instance>
 <instance part="X2" gate="-2" x="-35.56" y="-43.18"/>
 <instance part="X2" gate="-3" x="-35.56" y="-45.72"/>
-<instance part="HALL" gate="G$1" x="7.62" y="10.16"/>
-<instance part="ENCODER" gate="G$1" x="5.08" y="-5.08"/>
+<instance part="HALL" gate="G$1" x="7.62" y="10.16">
+<attribute name="FARNELL" x="7.62" y="10.16" size="1.778" layer="96" display="off"/>
+</instance>
+<instance part="ENCODER" gate="G$1" x="5.08" y="-5.08">
+<attribute name="FARNELL" x="5.08" y="-5.08" size="1.778" layer="96" display="off"/>
+</instance>
 <instance part="D6" gate="G$1" x="-15.24" y="-33.02">
 <attribute name="FARNELL" x="-15.24" y="-33.02" size="1.27" layer="96" display="off"/>
 </instance>

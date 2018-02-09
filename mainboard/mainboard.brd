@@ -2471,10 +2471,18 @@ design rules under a new name.</description>
 <element name="C2" library="SparkFun-Passives" package="0805@1" value="1uF" x="-69.05" y="-24" rot="R90">
 <attribute name="FARNELL" value="2496946" x="-65.8" y="-36.25" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
-<element name="U$7" library="rhoban" package="PANASONIC_D8" value="" x="-62.950071875" y="17.25001875" rot="R180"/>
-<element name="X1" library="Rembrandt Electronics - JST XH Connectors v1-0" package="JST-XH-06-PACKAGE-LONG-PAD" value="JST-XH-06-PIN-LONG-PAD" x="68.149975" y="21.149953125" rot="R90"/>
-<element name="U$8" library="rhoban" package="PANASONIC_D8" value="" x="65.550075" y="-10.1000125"/>
-<element name="U$9" library="rhoban" package="PANASONIC_D8" value="" x="-10.1000125" y="-60.900071875" rot="R270"/>
+<element name="U$7" library="rhoban" package="PANASONIC_D8" value="220uF" x="-62.950071875" y="17.25001875" rot="R180">
+<attribute name="FARNELL" value="1850103" x="-62.950071875" y="17.25001875" size="1.778" layer="27" rot="R180" display="off"/>
+</element>
+<element name="X1" library="Rembrandt Electronics - JST XH Connectors v1-0" package="JST-XH-06-PACKAGE-LONG-PAD" value="JST-XH-06-PIN-LONG-PAD" x="68.149975" y="21.149953125" rot="R90">
+<attribute name="FARNELL" value="-" x="68.149975" y="21.149953125" size="1.778" layer="27" rot="R90" display="off"/>
+</element>
+<element name="U$8" library="rhoban" package="PANASONIC_D8" value="220uF" x="65.550075" y="-10.1000125">
+<attribute name="FARNELL" value="1850103" x="65.550075" y="-10.1000125" size="1.778" layer="27" display="off"/>
+</element>
+<element name="U$9" library="rhoban" package="PANASONIC_D8" value="220uF" x="-10.1000125" y="-60.900071875" rot="R270">
+<attribute name="FARNELL" value="1850103" x="-10.1000125" y="-60.900071875" size="1.778" layer="27" rot="R270" display="off"/>
+</element>
 <element name="U$1" library="rhoban" package="SOT-23" value="DRV5023FAEDBZRQ1" x="39.5" y="-37.3" rot="MR0">
 <attribute name="FARNELL" value="2673327RL" x="39.5" y="-37.3" size="1.778" layer="28" rot="MR0" display="off"/>
 </element>

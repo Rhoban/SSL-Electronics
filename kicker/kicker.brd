@@ -698,7 +698,9 @@ design rules under a new name.</description>
 <element name="R36" library="rhoban" package="R0805" value="3K" x="11.43" y="13.97" rot="R90">
 <attribute name="FARNELL" value="2446965" x="71.12" y="49.53" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
-<element name="X1" library="Rembrandt Electronics - JST XH Connectors v1-0" package="JST-XH-06-PACKAGE-LONG-PAD" value="JST-XH-06-PIN-LONG-PAD" x="49.784" y="1.27"/>
+<element name="X1" library="Rembrandt Electronics - JST XH Connectors v1-0" package="JST-XH-06-PACKAGE-LONG-PAD" value="JST-XH-06-PIN-LONG-PAD" x="49.784" y="1.27">
+<attribute name="FARNELL" value="-" x="49.784" y="1.27" size="1.778" layer="27" display="off"/>
+</element>
 <element name="U$5" library="rhoban" package="BOOSTER_390V" value="BOOSTER" x="0" y="7.62">
 <attribute name="FARNELL" value="-" x="-1.27" y="7.62" size="1.778" layer="27" display="off"/>
 </element>

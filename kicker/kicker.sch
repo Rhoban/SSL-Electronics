@@ -1016,7 +1016,9 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 <part name="R36" library="rhoban" deviceset="RESISTANCE" device="-R0805" value="3K">
 <attribute name="FARNELL" value="2446965"/>
 </part>
-<part name="X1" library="Rembrandt Electronics - JST XH Connectors v1-0" deviceset="JST-XH-06-PIN" device="-LONG-PAD"/>
+<part name="X1" library="Rembrandt Electronics - JST XH Connectors v1-0" deviceset="JST-XH-06-PIN" device="-LONG-PAD">
+<attribute name="FARNELL" value="-"/>
+</part>
 <part name="U$5" library="rhoban" deviceset="BOOSTER" device="">
 <attribute name="FARNELL" value="-"/>
 </part>
@@ -1097,7 +1099,9 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 <instance part="R36" gate="G$1" x="33.02" y="63.5" rot="R180">
 <attribute name="FARNELL" x="33.02" y="63.5" size="1.778" layer="96" rot="R180" display="off"/>
 </instance>
-<instance part="X1" gate="-1" x="-33.02" y="-12.7"/>
+<instance part="X1" gate="-1" x="-33.02" y="-12.7">
+<attribute name="FARNELL" x="-33.02" y="-12.7" size="1.778" layer="96" display="off"/>
+</instance>
 <instance part="X1" gate="-2" x="-33.02" y="-15.24"/>
 <instance part="X1" gate="-3" x="-33.02" y="-17.78"/>
 <instance part="X1" gate="-4" x="-33.02" y="-20.32"/>

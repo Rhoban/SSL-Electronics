@@ -5937,10 +5937,18 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 <part name="C2" library="SparkFun-Passives" deviceset="CAP" device="0805" value="1uF">
 <attribute name="FARNELL" value="2496946"/>
 </part>
-<part name="U$7" library="rhoban" deviceset="CPOL_EU" device="PANASONIC_D8"/>
-<part name="X1" library="Rembrandt Electronics - JST XH Connectors v1-0" deviceset="JST-XH-06-PIN" device="-LONG-PAD"/>
-<part name="U$8" library="rhoban" deviceset="CPOL_EU" device="PANASONIC_D8"/>
-<part name="U$9" library="rhoban" deviceset="CPOL_EU" device="PANASONIC_D8"/>
+<part name="U$7" library="rhoban" deviceset="CPOL_EU" device="PANASONIC_D8" value="220uF">
+<attribute name="FARNELL" value="1850103"/>
+</part>
+<part name="X1" library="Rembrandt Electronics - JST XH Connectors v1-0" deviceset="JST-XH-06-PIN" device="-LONG-PAD">
+<attribute name="FARNELL" value="-"/>
+</part>
+<part name="U$8" library="rhoban" deviceset="CPOL_EU" device="PANASONIC_D8" value="220uF">
+<attribute name="FARNELL" value="1850103"/>
+</part>
+<part name="U$9" library="rhoban" deviceset="CPOL_EU" device="PANASONIC_D8" value="220uF">
+<attribute name="FARNELL" value="1850103"/>
+</part>
 <part name="U$1" library="rhoban" deviceset="DRV5023FAEDBZRQ1" device="">
 <attribute name="FARNELL" value="2673327RL"/>
 </part>
@@ -6303,9 +6311,15 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 <instance part="COM3" gate="G$1" x="2.54" y="-30.48">
 <attribute name="FARNELL" x="2.54" y="-30.48" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="U$7" gate="G$1" x="40.64" y="25.4"/>
-<instance part="U$8" gate="G$1" x="43.18" y="-2.54"/>
-<instance part="U$9" gate="G$1" x="43.18" y="-33.02"/>
+<instance part="U$7" gate="G$1" x="40.64" y="25.4">
+<attribute name="FARNELL" x="40.64" y="25.4" size="1.778" layer="96" display="off"/>
+</instance>
+<instance part="U$8" gate="G$1" x="43.18" y="-2.54">
+<attribute name="FARNELL" x="43.18" y="-2.54" size="1.778" layer="96" display="off"/>
+</instance>
+<instance part="U$9" gate="G$1" x="43.18" y="-33.02">
+<attribute name="FARNELL" x="43.18" y="-33.02" size="1.778" layer="96" display="off"/>
+</instance>
 </instances>
 <busses>
 </busses>
@@ -6872,7 +6886,9 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 <instance part="X1" gate="-2" x="7.62" y="5.08"/>
 <instance part="X1" gate="-3" x="7.62" y="2.54"/>
 <instance part="X1" gate="-4" x="7.62" y="0"/>
-<instance part="X1" gate="-5" x="7.62" y="-2.54"/>
+<instance part="X1" gate="-5" x="7.62" y="-2.54">
+<attribute name="FARNELL" x="7.62" y="-2.54" size="1.778" layer="96" display="off"/>
+</instance>
 <instance part="X1" gate="-6" x="7.62" y="-5.08"/>
 </instances>
 <busses>

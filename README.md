@@ -17,25 +17,69 @@ You can then compile and install:
     make
     make install
 
+-------------------------------------------------
 
 ## Components
 
-### Maple mini
+### Main board
+
+### Connectors
+
+* JST-ZH 2 pin connector + cables
+* JST-XH 6 pins connector for kicker board
+* XT-60 connector (same as wire connector)
+
+#### Maple mini
 
 Board containing micro-controller (mainboard controller)
 
-### GY-85
+#### GY-85
 
 9DOF IMU
 
-### nRF24L01 modules
+#### nRF24L01 modules
 
 2.4Ghz communication modules
 
-### Voltage booster
+### Screws
+
+* M3 holes are on the board, on a 126x160mm rectangle.
+* M3x10 spacers can be used to hold the drivers on the board
+
+-------------------------------------------------
+
+## Brushless driver
+
+### Connectors
+
+* JST-ZH 5 pin connector (for hall sensor)
+* JST-ZH 6 pin connector (for encoder)
+* JST-XH 3 pin connector (for motor phases)
+
+-------------------------------------------------
+
+## Kicker board
+
+### Power capacitor
+
+Power capacitors, current target is 2200uF / 200V (2102441)
+
+### Connectors
+
+* JST-XH 6 pins connector
+
+#### Voltage booster
 
 Can be easily found with keywords "390V booster"
 
-### Fuses
+### Screws
 
-F447
+M3 spacers to fix the board
+
+-------------------------------------------------
+
+## Misc
+
+#### Fuses
+
+F447 fuses on the wire are used to protect
