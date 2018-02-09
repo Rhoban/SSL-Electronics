@@ -43,7 +43,7 @@ Board containing micro-controller (mainboard controller)
 
 ### Screws
 
-* M3 holes are on the board, on a 126x160mm rectangle.
+* M3 holes are on the board, on a 126x82mm rectangle.
 * M3x10 spacers can be used to hold the drivers on the board
 
 -------------------------------------------------
