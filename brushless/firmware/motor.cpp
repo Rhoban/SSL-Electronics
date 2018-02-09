@@ -34,12 +34,12 @@ static int motor_phases[6][3] = {
 // sensor value
 static int hall_phases[8] = {
     -1,                     // 0b000 (impossible)
-    5,                      // 0b001
-    1,                      // 0b010
-    0,                      // 0b011
-    3,                      // 0b100
-    4,                      // 0b101
-    2,                      // 0b110
+    0,                      // 0b001
+    2,                      // 0b010
+    1,                      // 0b011
+    4,                      // 0b100
+    5,                      // 0b101
+    3,                      // 0b110
     -1,                     // 0b111 (impossible)
 };
 
@@ -71,6 +71,8 @@ static void set_phases(int u, int v, int w, int phase)
     static int last_phase = -2;
     bool update = false;
 
+    // Checking if we should update the mos phase, and generate
+    // a deadtime
     update = (last_phase != phase);
     last_phase = phase;
     if (u == 0 && v == 0 && w == 0) {
@@ -84,6 +86,7 @@ static void set_phases(int u, int v, int w, int phase)
             pinMode(motor_pins[k], OUTPUT);
         }
 
+        // Dead-time
         delay_us(1);
     }
 
@@ -174,8 +177,6 @@ void motor_tick()
     int phase = hall_phases[hall_value()];
 
     if (phase >= 0) {
-        phase = (phase + 1) % 6;
-
         set_phases(
             motor_phases[phase][0]*motor_pwm,
             motor_phases[phase][1]*motor_pwm,
