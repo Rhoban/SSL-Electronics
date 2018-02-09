@@ -88,6 +88,7 @@ void encoder_init()
 bool encoder_read()
 {
     encoder_cnt = encoder_read4(ENCODER_CNTR);
+    return true;
 }
 
 uint32_t encoder_value()
