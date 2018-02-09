@@ -55,23 +55,6 @@ uint16_t magnetic_value = 0;
 uint8_t sample = 0;
 uint16_t average_sample = 0;
 
-int32_t encoder_read_delta()
-{
-    uint16_t fresh_value = encoder_read_value();
-    uint16_t new_magnetic_value = fresh_value;
-    int32_t delta = (new_magnetic_value - magnetic_value);
-
-    if (delta > 0x1fff) {
-        delta -= 0x4000;
-    }
-    if (delta < -0x1fff) {
-        delta += 0x4000;
-    }
-
-    magnetic_value = new_magnetic_value;
-    return delta;
-}
-
 static int32_t encoder_deltas = 0;
 static uint8_t encoder_delta_pos = 0;
 
@@ -89,16 +72,6 @@ int32_t encoder_compute_delta(uint16_t a, uint16_t b)
     return delta;
 }
 
-bool errored = false;
-int last_error = 0;
-
-TERMINAL_COMMAND(tst, "Test")
-{
-    if (errored) {
-        terminal_io()->println(last_error);
-    }
-}
-
 bool encoder_read()
 {
     uint16_t fresh_value = encoder_read_value();
@@ -108,11 +81,6 @@ bool encoder_read()
     if (encoder_delta_pos >= 8) {
         encoder_deltas /= 8;
         magnetic_value = (magnetic_value + encoder_deltas + 0x4000)%(0x4000);
-
-        if (encoder_deltas < -0x4000) {
-            errored = true;
-            last_error = encoder_deltas;
-        }
 
         encoder_cnt -= encoder_deltas;
 
