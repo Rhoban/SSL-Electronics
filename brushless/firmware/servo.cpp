@@ -61,9 +61,9 @@ static int servo_pwm = 0;
 static int servo_pwm_limited = 0;
 static float servo_acc = 0;
 static float servo_last_error = 0;
-TERMINAL_PARAMETER_FLOAT(kp, "PID P", 400.0);
-TERMINAL_PARAMETER_FLOAT(ki, "PID I", 1);
-TERMINAL_PARAMETER_FLOAT(kd, "PID D", 100.0);
+TERMINAL_PARAMETER_FLOAT(kp, "PID P", 10.0);
+TERMINAL_PARAMETER_FLOAT(ki, "PID I", 0.5);
+TERMINAL_PARAMETER_FLOAT(kd, "PID D", 0.5);
 
 float servo_lut(float target, float current)
 {
@@ -74,10 +74,10 @@ float servo_lut(float target, float current)
 
     if (fabs(target) > 0.1) {
         if (fabs(current) < 0.1) {
-            boost = 100;
+            // boost = 100;
+            return 16*target + sign*(60 + boost);
         }
-        return 25*target + sign*(1150 + boost);
-        // return 18*target + sign*(450 + boost);
+        // return 15*target + sign*(40 + boost);
     } else {
         return 0;
     }
@@ -170,7 +170,7 @@ void servo_tick()
                 if (j < -800) j = -800;
 
                 servo_pwm += j
-                          + ki * servo_acc
+                          + round(ki * servo_acc)
                           + (error - servo_last_error) * kd;
 
                 servo_acc += error;
@@ -189,7 +189,7 @@ void servo_tick()
                     if (servo_pwm_limited < servo_pwm) servo_pwm_limited += 25;
                     else servo_pwm_limited -= 25;
                 } else {
-                    servo_pwm = servo_pwm_limited;
+                    servo_pwm_limited = servo_pwm;
                 }
                 motor_set(servo_pwm_limited);
             }

@@ -66,8 +66,14 @@ static int hall_value()
     return hall;
 }
 
+TERMINAL_PARAMETER_INT(dts, "", 0);
+
 static void set_phases(int u, int v, int w, int phase)
 {
+    if (u != 0 && v != 0 && w != 0) {
+        u = v = w = 0;
+    }
+
     static int last_phase = -2;
     bool update = false;
 
@@ -77,6 +83,10 @@ static void set_phases(int u, int v, int w, int phase)
     last_phase = phase;
     if (u == 0 && v == 0 && w == 0) {
         last_phase = -1;
+    }
+
+    if (update) {
+        dts++;
     }
 
     if (update) {
@@ -94,24 +104,30 @@ static void set_phases(int u, int v, int w, int phase)
         if (update) pinMode(U_HIGH_PIN, PWM);
         pwmWrite(U_HIGH_PIN, u);
     } else {
-        if (update) pinMode(U_LOW_PIN, PWM);
-        pwmWrite(U_LOW_PIN, -u);
+        // if (update) pinMode(U_LOW_PIN, PWM);
+        // pwmWrite(U_LOW_PIN, -u);
+
+        if (update) digitalWrite(U_LOW_PIN, HIGH);
     }
 
     if (v >= 0) {
         if (update) pinMode(V_HIGH_PIN, PWM);
         pwmWrite(V_HIGH_PIN, v);
     } else {
-        if (update) pinMode(V_LOW_PIN, PWM);
-        pwmWrite(V_LOW_PIN, -v);
+        // if (update) pinMode(V_LOW_PIN, PWM);
+        // pwmWrite(V_LOW_PIN, -v);
+
+        if (update) digitalWrite(V_LOW_PIN, HIGH);
     }
 
     if (w >= 0) {
         if (update) pinMode(W_HIGH_PIN, PWM);
         pwmWrite(W_HIGH_PIN, w);
     } else {
-        if (update) pinMode(W_LOW_PIN, PWM);
-        pwmWrite(W_LOW_PIN, -w);
+        // if (update) pinMode(W_LOW_PIN, PWM);
+        // pwmWrite(W_LOW_PIN, -w);
+
+        if (update) digitalWrite(W_LOW_PIN, HIGH);
     }
 }
 
@@ -175,8 +191,9 @@ void motor_tick()
 
     // Current phase
     int phase = hall_phases[hall_value()];
+    // phase = 0; // XXX: To debug current & heat, to be removed
 
-    if (phase >= 0) {
+    if (phase >= 0 && phase < 6) {
         set_phases(
             motor_phases[phase][0]*motor_pwm,
             motor_phases[phase][1]*motor_pwm,
@@ -194,7 +211,7 @@ void motor_tick()
     }
     hall_current_phase = phase;
 
-    if ((millis() - hall_last_change) > 500 && abs(motor_pwm) >= 2250) {
+    if ((millis() - hall_last_change) > 500 && abs(motor_pwm) >= 300) {
         // Stop everything
         // Will trigger watchdog and reset
         security_set_error(SECURITY_HALL_FREEZE);
