@@ -15,10 +15,9 @@ struct packet_master {
     #define ACTION_CHARGE  (1<<4)   // Enable/disable the capacitor charge
     uint8_t actions;
 
-    float wheel1;                   // Wheel speeds in turn/s
-    float wheel2;
-    float wheel4;
-    float wheel3;
+    float x_speed;                  // Kinematic orders
+    float y_speed;
+    float t_speed;
 
     uint16_t kickPower;             // Kick power (this is a duration in uS)
 } __attribute__((packed));

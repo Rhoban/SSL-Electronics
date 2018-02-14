@@ -11,6 +11,7 @@
 #include "kicker.h"
 #include "voltage.h"
 #include "ir.h"
+#include "kinematic.h"
 
 /**
  * Setup function
@@ -39,9 +40,9 @@ void setup()
     voltage_init();
 
     if (com_is_all_ok() && drivers_is_all_ok()) {
-        buzzer_play(MELODY_BOOT);
+        // buzzer_play(MELODY_BOOT);
     } else {
-        buzzer_play(MELODY_WARNING);
+        // buzzer_play(MELODY_WARNING);
     }
 
     terminal_init(&SerialUSB);
@@ -75,6 +76,9 @@ void loop()
 
     // Voltage
     voltage_tick();
+
+    // Kinematic
+    kinematic_tick();
 }
 
 TERMINAL_COMMAND(diag, "Diagnostic")

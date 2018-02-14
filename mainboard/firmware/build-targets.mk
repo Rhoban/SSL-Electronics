@@ -2,7 +2,7 @@
 # Defines here your cpp source files
 # Ex : main.cpp test.cpp ...
 SRC_FILES = main.cpp drivers.cpp com.cpp buzzer.cpp \
-	kicker.cpp voltage.cpp ir.cpp
+	kicker.cpp voltage.cpp ir.cpp kinematic.cpp
 
 ifeq ($(ENABLE_RHOCK),yes)
 SRC_FILES += rhock-functions.cpp rhock-stream.cpp

@@ -6,6 +6,7 @@
 #include <wirish/wirish.h>
 #include <watchdog.h>
 #include "kicker.h"
+#include "kinematic.h"
 #include "hardware.h"
 #include "drivers.h"
 #include "voltage.h"
@@ -299,7 +300,7 @@ bool com_is_ok(int index)
 void com_init()
 {
     // Initializing SPI
-    com.begin(SPI_18MHZ, MSBFIRST, 0);
+    com.begin(SPI_4_5MHZ, MSBFIRST, 0);
 
     // Initializing CS pins
     for (int k=0; k<5; k++) {
@@ -382,10 +383,9 @@ void com_init()
     if (com_master) {
         for (int k=0; k<6; k++) {
             com_robots[k].actions = 0;
-            com_robots[k].wheel1 = 0;
-            com_robots[k].wheel2 = 0;
-            com_robots[k].wheel3 = 0;
-            com_robots[k].wheel4 = 0;
+            com_robots[k].x_speed = 0;
+            com_robots[k].y_speed = 0;
+            com_robots[k].t_speed = 0;
             com_robot_reception[k] = 0;
         }
     }
@@ -495,10 +495,7 @@ void com_process_master()
 
         // Driving wheels
         if (master_packet->actions & ACTION_ON) {
-            drivers_set_safe(0, true, master_packet->wheel1);
-            drivers_set_safe(1, true, master_packet->wheel2);
-            drivers_set_safe(2, true, master_packet->wheel3);
-            drivers_set_safe(3, true, master_packet->wheel4);
+            kinematic_set(master_packet->x_speed, master_packet->y_speed, master_packet->t_speed);
             if (master_packet->actions & ACTION_DRIBBLE) {
                 drivers_set_safe(4, true, -0.9);
             } else {
@@ -719,10 +716,6 @@ TERMINAL_COMMAND(m, "Master set")
 {
     if (argc == 4) {
         com_robots[0].actions = ACTION_ON;
-        com_robots[0].wheel1 = atof(argv[0]);
-        com_robots[0].wheel2 = atof(argv[1]);
-        com_robots[0].wheel3 = atof(argv[2]);
-        com_robots[0].wheel4 = atof(argv[3]);
     }
 }
 
@@ -764,12 +757,12 @@ TERMINAL_COMMAND(em, "Emergency")
     if (com_master) {
         for (int k=0; k<6; k++) {
             com_robots[k].actions = 0;
-            com_robots[k].wheel1 = 0;
-            com_robots[k].wheel2 = 0;
-            com_robots[k].wheel3 = 0;
-            com_robots[k].wheel4 = 0;
+            com_robots[k].x_speed = 0;
+            com_robots[k].y_speed = 0;
+            com_robots[k].t_speed = 0;
         }
     } else {
+        kinematic_stop();
         for (int k=0; k<5; k++) {
             drivers_set(k, false, 0.0);
         }
