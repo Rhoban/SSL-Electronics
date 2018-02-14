@@ -3193,7 +3193,7 @@ Source: &lt;a href="http://www.jst-mfg.com/product/pdf/eng/eZH.pdf"&gt;http://ww
 <attribute name="FARNELL" value="2496946"/>
 </part>
 <part name="DRV1" library="rhoban" deviceset="OPEN-BLDC_IR2101" device="">
-<attribute name="FARNELL" value="2296000"/>
+<attribute name="FARNELL" value="8638730"/>
 </part>
 <part name="D1" library="rhoban" deviceset="ZETEX_VAR2SOT23" device="">
 <attribute name="FARNELL" value="2317446"/>
@@ -3208,7 +3208,7 @@ Source: &lt;a href="http://www.jst-mfg.com/product/pdf/eng/eZH.pdf"&gt;http://ww
 <attribute name="FARNELL" value="2528772"/>
 </part>
 <part name="DRV2" library="rhoban" deviceset="OPEN-BLDC_IR2101" device="">
-<attribute name="FARNELL" value="2296000"/>
+<attribute name="FARNELL" value="8638730"/>
 </part>
 <part name="D2" library="rhoban" deviceset="ZETEX_VAR2SOT23" device="">
 <attribute name="FARNELL" value="2317446"/>
@@ -3223,7 +3223,7 @@ Source: &lt;a href="http://www.jst-mfg.com/product/pdf/eng/eZH.pdf"&gt;http://ww
 <attribute name="FARNELL" value="2528772"/>
 </part>
 <part name="DRV3" library="rhoban" deviceset="OPEN-BLDC_IR2101" device="">
-<attribute name="FARNELL" value="2296000"/>
+<attribute name="FARNELL" value="8638730"/>
 </part>
 <part name="D3" library="rhoban" deviceset="ZETEX_VAR2SOT23" device="">
 <attribute name="FARNELL" value="2317446"/>
