@@ -1351,12 +1351,18 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 <label x="-35.56" y="-58.42" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 <segment>
-<wire x1="7.62" y1="-45.72" x2="10.16" y2="-45.72" width="0.1524" layer="91"/>
+<wire x1="7.62" y1="-45.72" x2="8.255" y2="-45.72" width="0.1524" layer="91"/>
 <label x="10.16" y="-45.72" size="1.27" layer="95" xref="yes"/>
+<pinref part="U$4" gate="G$1" pin="TR1_EMITTER"/>
+<wire x1="8.255" y1="-45.72" x2="10.16" y2="-45.72" width="0.1524" layer="91"/>
+<junction x="8.255" y="-45.72"/>
 </segment>
 <segment>
-<wire x1="7.62" y1="-58.42" x2="10.16" y2="-58.42" width="0.1524" layer="91"/>
+<wire x1="7.62" y1="-58.42" x2="8.255" y2="-58.42" width="0.1524" layer="91"/>
 <label x="10.16" y="-58.42" size="1.27" layer="95" xref="yes"/>
+<pinref part="U$4" gate="G$1" pin="TR2_EMITTER"/>
+<wire x1="8.255" y1="-58.42" x2="10.16" y2="-58.42" width="0.1524" layer="91"/>
+<junction x="8.255" y="-58.42"/>
 </segment>
 </net>
 <net name="N$4" class="0">
@@ -1527,20 +1533,23 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 <segment>
 <pinref part="U$4" gate="G$1" pin="LED1_ANODE"/>
 <pinref part="R7" gate="G$1" pin="1"/>
-<wire x1="-22.86" y1="-35.56" x2="-20.32" y2="-35.56" width="0.1524" layer="91"/>
+<wire x1="-20.32" y1="-35.56" x2="-22.86" y2="-35.56" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="N$10" class="0">
 <segment>
 <pinref part="U$4" gate="G$1" pin="LED2_ANODE"/>
 <pinref part="R8" gate="G$1" pin="1"/>
-<wire x1="-22.86" y1="-48.26" x2="-20.32" y2="-48.26" width="0.1524" layer="91"/>
+<wire x1="-20.32" y1="-48.26" x2="-22.86" y2="-48.26" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="KICK_TR1" class="0">
 <segment>
-<wire x1="7.62" y1="-35.56" x2="10.16" y2="-35.56" width="0.1524" layer="91"/>
+<wire x1="7.62" y1="-35.56" x2="8.255" y2="-35.56" width="0.1524" layer="91"/>
 <label x="10.16" y="-35.56" size="1.27" layer="95" xref="yes"/>
+<pinref part="U$4" gate="G$1" pin="TR1_COLLECTOR"/>
+<wire x1="8.255" y1="-35.56" x2="10.16" y2="-35.56" width="0.1524" layer="91"/>
+<junction x="8.255" y="-35.56"/>
 </segment>
 <segment>
 <pinref part="R2" gate="G$1" pin="1"/>
@@ -1553,8 +1562,11 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 </net>
 <net name="KICK_TR2" class="0">
 <segment>
-<wire x1="7.62" y1="-48.26" x2="10.16" y2="-48.26" width="0.1524" layer="91"/>
+<wire x1="7.62" y1="-48.26" x2="8.255" y2="-48.26" width="0.1524" layer="91"/>
 <label x="10.16" y="-48.26" size="1.27" layer="95" xref="yes"/>
+<pinref part="U$4" gate="G$1" pin="TR2_COLLECTOR"/>
+<wire x1="8.255" y1="-48.26" x2="10.16" y2="-48.26" width="0.1524" layer="91"/>
+<junction x="8.255" y="-48.26"/>
 </segment>
 <segment>
 <pinref part="R32" gate="G$1" pin="1"/>

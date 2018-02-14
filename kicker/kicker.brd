@@ -808,14 +808,18 @@ design rules under a new name.</description>
 <wire x1="29.63" y1="32.766" x2="36.996" y2="25.4" width="3.81" layer="16" curve="-90"/>
 <contactref element="U$4" pad="2"/>
 <contactref element="U$4" pad="4"/>
-<wire x1="45.4" y1="23.284" x2="52.766" y2="23.284" width="0" layer="19" extent="1-1"/>
+<contactref element="U$4" pad="7"/>
+<contactref element="U$4" pad="5"/>
+<wire x1="50.165" y1="17.4498" x2="52.766" y2="23.284" width="0" layer="19" extent="1-1"/>
+<wire x1="47.625" y1="17.4498" x2="50.165" y2="17.4498" width="0" layer="19" extent="1-1"/>
+<wire x1="50.165" y1="12.5222" x2="50.165" y2="17.4498" width="0" layer="19" extent="1-1"/>
+<wire x1="47.625" y1="12.5222" x2="50.165" y2="12.5222" width="0" layer="19" extent="1-1"/>
+<wire x1="50.104" y1="8.89" x2="50.165" y2="12.5222" width="0" layer="19" extent="1-1"/>
+<wire x1="45.4" y1="23.284" x2="47.625" y2="17.4498" width="0" layer="19" extent="1-1"/>
 <wire x1="36.996" y1="25.4" x2="45.4" y2="23.284" width="0" layer="19" extent="1-1"/>
 <wire x1="43.434" y1="1.27" x2="37" y2="0.17" width="0" layer="19" extent="16-16"/>
-<wire x1="50.104" y1="8.89" x2="43.434" y2="1.27" width="0" layer="19" extent="1-1"/>
 <wire x1="8.72" y1="14.92" x2="19.47" y2="25.4" width="0" layer="19" extent="1-1"/>
 <wire x1="11" y1="4.62" x2="8.72" y2="14.92" width="0" layer="19" extent="1-1"/>
-<wire x1="47.625" y1="12.5222" x2="11" y2="4.62" width="0" layer="19" extent="1-1"/>
-<wire x1="50.165" y1="12.5222" x2="47.625" y2="12.5222" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$4">
 <contactref element="T1" pad="3"/>
@@ -903,12 +907,16 @@ design rules under a new name.</description>
 <signal name="KICK_TR1">
 <contactref element="R2" pad="1"/>
 <contactref element="T1" pad="1"/>
+<contactref element="U$4" pad="8"/>
 <wire x1="43.5" y1="20.828" x2="43.5" y2="23.284" width="0" layer="19" extent="1-1"/>
+<wire x1="46.355" y1="17.4498" x2="43.5" y2="20.828" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="KICK_TR2">
 <contactref element="R32" pad="1"/>
 <contactref element="T3" pad="1"/>
+<contactref element="U$4" pad="6"/>
 <wire x1="50.866" y1="20.828" x2="50.866" y2="23.284" width="0" layer="19" extent="1-1"/>
+<wire x1="48.895" y1="17.4498" x2="50.866" y2="20.828" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="N$7">
 <contactref element="U$1" pad="P$1"/>
