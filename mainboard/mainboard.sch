@@ -6805,6 +6805,11 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <wire x1="-63.5" y1="45.72" x2="-66.04" y2="45.72" width="0.1524" layer="91"/>
 <label x="-66.04" y="45.72" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
+<segment>
+<pinref part="MAPLE" gate="G$1" pin="31"/>
+<wire x1="-53.34" y1="76.2" x2="-55.88" y2="76.2" width="0.1524" layer="91"/>
+<label x="-55.88" y="76.2" size="1.27" layer="95" rot="R180" xref="yes"/>
+</segment>
 </net>
 <net name="ADDR3" class="0">
 <segment>
@@ -6842,13 +6847,6 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <pinref part="U1" gate="A" pin="7"/>
 <wire x1="-17.78" y1="35.56" x2="-15.24" y2="35.56" width="0.1524" layer="91"/>
 <label x="-15.24" y="35.56" size="1.27" layer="95" xref="yes"/>
-</segment>
-</net>
-<net name="ADDR4" class="0">
-<segment>
-<pinref part="MAPLE" gate="G$1" pin="31"/>
-<wire x1="-53.34" y1="76.2" x2="-55.88" y2="76.2" width="0.1524" layer="91"/>
-<label x="-55.88" y="76.2" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
 <net name="COM_CE2" class="0">

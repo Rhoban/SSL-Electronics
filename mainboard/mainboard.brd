@@ -184,11 +184,11 @@
 <dimension x1="-59.75" y1="43.75" x2="66.25" y2="43.75" x3="3.25" y3="82.950015625" layer="51"/>
 <dimension x1="-59.75" y1="43.75" x2="-59.75" y2="-38.25" x3="-102.750009375" y3="2.75" layer="51"/>
 <dimension x1="1.7" y1="60.8" x2="2" y2="-77.5" x3="111.65133125" y3="-8.11181875" layer="51"/>
-<text x="38.050003125" y="-21.8" size="10" layer="112" rot="R180">1</text>
-<text x="6.4" y="-21.85" size="10" layer="112" rot="R180">2</text>
-<text x="-12.35" y="24.45" size="10" layer="112" rot="R180">5</text>
+<text x="38.050003125" y="-21.8" size="10" layer="112" rot="R180">2</text>
+<text x="6.4" y="-21.85" size="10" layer="112" rot="R180">5</text>
+<text x="-12.35" y="24.45" size="10" layer="112" rot="R180">4</text>
 <text x="-26.2" y="-21.2" size="10" layer="112" rot="R180">3</text>
-<text x="18.8" y="23.85" size="10" layer="112" rot="R180">4</text>
+<text x="18.8" y="23.85" size="10" layer="112" rot="R180">1</text>
 <text x="-55.25" y="-14" size="1.778" layer="121">3.3V</text>
 <text x="-54.5" y="-23.5" size="1.778" layer="121">5V</text>
 <text x="-55" y="-32" size="1.778" layer="121">12V</text>
@@ -3323,6 +3323,8 @@ design rules under a new name.</description>
 </signal>
 <signal name="ADDR2">
 <contactref element="U1" pad="10"/>
+<contactref element="MAPLE" pad="X31"/>
+<wire x1="46.774915625" y1="-23.936146875" x2="42.13" y2="5.12" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="ADDR3">
 <contactref element="U1" pad="9"/>
@@ -3336,9 +3338,6 @@ design rules under a new name.</description>
 </signal>
 <signal name="N$26">
 <contactref element="U1" pad="4"/>
-</signal>
-<signal name="ADDR4">
-<contactref element="MAPLE" pad="X31"/>
 </signal>
 <signal name="COM_CE1">
 <contactref element="COM1" pad="CE"/>
