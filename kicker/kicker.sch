@@ -1245,14 +1245,14 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 <instance part="R36" gate="G$1" x="33.02" y="63.5" rot="R180">
 <attribute name="FARNELL" x="33.02" y="63.5" size="1.778" layer="96" rot="R180" display="off"/>
 </instance>
-<instance part="X1" gate="-1" x="-33.02" y="-12.7">
-<attribute name="FARNELL" x="-33.02" y="-12.7" size="1.778" layer="96" display="off"/>
+<instance part="X1" gate="-1" x="-55.88" y="-5.08">
+<attribute name="FARNELL" x="-55.88" y="-5.08" size="1.778" layer="96" display="off"/>
 </instance>
-<instance part="X1" gate="-2" x="-33.02" y="-15.24"/>
-<instance part="X1" gate="-3" x="-33.02" y="-17.78"/>
-<instance part="X1" gate="-4" x="-33.02" y="-20.32"/>
-<instance part="X1" gate="-5" x="-33.02" y="-22.86"/>
-<instance part="X1" gate="-6" x="-33.02" y="-25.4"/>
+<instance part="X1" gate="-2" x="-55.88" y="-7.62"/>
+<instance part="X1" gate="-3" x="-55.88" y="-10.16"/>
+<instance part="X1" gate="-4" x="-55.88" y="-12.7"/>
+<instance part="X1" gate="-5" x="-55.88" y="-15.24"/>
+<instance part="X1" gate="-6" x="-55.88" y="-17.78"/>
 <instance part="U$5" gate="G$1" x="22.86" y="-30.48">
 <attribute name="FARNELL" x="22.86" y="-30.48" size="1.27" layer="96" display="off"/>
 </instance>
@@ -1287,8 +1287,8 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 <net name="KICK2" class="0">
 <segment>
 <pinref part="X1" gate="-5" pin="S"/>
-<wire x1="-35.56" y1="-22.86" x2="-40.64" y2="-22.86" width="0.1524" layer="91"/>
-<label x="-40.64" y="-22.86" size="1.27" layer="95" rot="R180" xref="yes"/>
+<wire x1="-58.42" y1="-15.24" x2="-63.5" y2="-15.24" width="0.1524" layer="91"/>
+<label x="-63.5" y="-15.24" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 <segment>
 <pinref part="R8" gate="G$1" pin="2"/>
@@ -1339,8 +1339,8 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 </segment>
 <segment>
 <pinref part="X1" gate="-1" pin="S"/>
-<wire x1="-35.56" y1="-12.7" x2="-40.64" y2="-12.7" width="0.1524" layer="91"/>
-<label x="-40.64" y="-12.7" size="1.27" layer="95" rot="R180" xref="yes"/>
+<wire x1="-58.42" y1="-5.08" x2="-63.5" y2="-5.08" width="0.1524" layer="91"/>
+<label x="-63.5" y="-5.08" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 <segment>
 <pinref part="U$5" gate="G$1" pin="OUT-"/>
@@ -1410,8 +1410,8 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 </segment>
 <segment>
 <pinref part="X1" gate="-2" pin="S"/>
-<wire x1="-35.56" y1="-15.24" x2="-40.64" y2="-15.24" width="0.1524" layer="91"/>
-<label x="-40.64" y="-15.24" size="1.27" layer="95" rot="R180" xref="yes"/>
+<wire x1="-58.42" y1="-7.62" x2="-63.5" y2="-7.62" width="0.1524" layer="91"/>
+<label x="-63.5" y="-7.62" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 <segment>
 <pinref part="U$5" gate="G$1" pin="IN+"/>
@@ -1489,8 +1489,8 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 <net name="KICK1" class="0">
 <segment>
 <pinref part="X1" gate="-4" pin="S"/>
-<wire x1="-35.56" y1="-20.32" x2="-40.64" y2="-20.32" width="0.1524" layer="91"/>
-<label x="-40.64" y="-20.32" size="1.27" layer="95" rot="R180" xref="yes"/>
+<wire x1="-58.42" y1="-12.7" x2="-63.5" y2="-12.7" width="0.1524" layer="91"/>
+<label x="-63.5" y="-12.7" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 <segment>
 <pinref part="R7" gate="G$1" pin="2"/>
@@ -1507,8 +1507,8 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 </segment>
 <segment>
 <pinref part="X1" gate="-6" pin="S"/>
-<wire x1="-35.56" y1="-25.4" x2="-40.64" y2="-25.4" width="0.1524" layer="91"/>
-<label x="-40.64" y="-25.4" size="1.27" layer="95" rot="R180" xref="yes"/>
+<wire x1="-58.42" y1="-17.78" x2="-63.5" y2="-17.78" width="0.1524" layer="91"/>
+<label x="-63.5" y="-17.78" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
 <net name="BOOST_EN" class="0">
@@ -1519,8 +1519,8 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 </segment>
 <segment>
 <pinref part="X1" gate="-3" pin="S"/>
-<wire x1="-35.56" y1="-17.78" x2="-40.64" y2="-17.78" width="0.1524" layer="91"/>
-<label x="-40.64" y="-17.78" size="1.27" layer="95" rot="R180" xref="yes"/>
+<wire x1="-58.42" y1="-10.16" x2="-63.5" y2="-10.16" width="0.1524" layer="91"/>
+<label x="-63.5" y="-10.16" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
 <net name="N$38" class="0">
