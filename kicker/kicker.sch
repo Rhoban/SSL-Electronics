@@ -1183,6 +1183,12 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 <part name="R8" library="rhoban" deviceset="RESISTANCE" device="-R0805" value="3K">
 <attribute name="FARNELL" value="2446965"/>
 </part>
+<part name="T2" library="rhoban" deviceset="NPN" device="_BC817,215">
+<attribute name="FARNELL" value="1081223"/>
+</part>
+<part name="T4" library="rhoban" deviceset="NPN" device="_BC817,215">
+<attribute name="FARNELL" value="1081223"/>
+</part>
 </parts>
 <sheets>
 <sheet>
@@ -1267,6 +1273,12 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 </instance>
 <instance part="R8" gate="G$1" x="-27.94" y="-48.26" rot="R180">
 <attribute name="FARNELL" x="-30.48" y="-45.72" size="1.778" layer="96" rot="R180" display="off"/>
+</instance>
+<instance part="T2" gate="G$1" x="-63.5" y="-35.56">
+<attribute name="FARNELL" x="-63.5" y="-35.56" size="1.778" layer="96" display="off"/>
+</instance>
+<instance part="T4" gate="G$1" x="-63.5" y="-55.88">
+<attribute name="FARNELL" x="-63.5" y="-55.88" size="1.778" layer="96" display="off"/>
 </instance>
 </instances>
 <busses>
@@ -1363,6 +1375,16 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 <pinref part="U$4" gate="G$1" pin="TR2_EMITTER"/>
 <wire x1="8.255" y1="-58.42" x2="10.16" y2="-58.42" width="0.1524" layer="91"/>
 <junction x="8.255" y="-58.42"/>
+</segment>
+<segment>
+<pinref part="T2" gate="G$1" pin="E"/>
+<wire x1="-60.96" y1="-40.64" x2="-60.96" y2="-43.18" width="0.1524" layer="91"/>
+<label x="-60.96" y="-43.18" size="1.27" layer="95" xref="yes"/>
+</segment>
+<segment>
+<pinref part="T4" gate="G$1" pin="E"/>
+<wire x1="-60.96" y1="-60.96" x2="-60.96" y2="-63.5" width="0.1524" layer="91"/>
+<label x="-60.96" y="-63.5" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
 <net name="N$4" class="0">
@@ -1529,18 +1551,32 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 <wire x1="58.42" y1="20.32" x2="63.5" y2="20.32" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="N$9" class="0">
+<net name="KICK1R" class="0">
 <segment>
 <pinref part="U$4" gate="G$1" pin="LED1_ANODE"/>
 <pinref part="R7" gate="G$1" pin="1"/>
 <wire x1="-20.32" y1="-35.56" x2="-22.86" y2="-35.56" width="0.1524" layer="91"/>
+<wire x1="-22.86" y1="-35.56" x2="-22.86" y2="-40.64" width="0.1524" layer="91"/>
+<label x="-22.86" y="-40.64" size="1.27" layer="95" rot="R180" xref="yes"/>
+</segment>
+<segment>
+<pinref part="T2" gate="G$1" pin="B"/>
+<wire x1="-66.04" y1="-35.56" x2="-68.58" y2="-35.56" width="0.1524" layer="91"/>
+<label x="-68.58" y="-35.56" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
-<net name="N$10" class="0">
+<net name="KICK2R" class="0">
 <segment>
 <pinref part="U$4" gate="G$1" pin="LED2_ANODE"/>
 <pinref part="R8" gate="G$1" pin="1"/>
 <wire x1="-20.32" y1="-48.26" x2="-22.86" y2="-48.26" width="0.1524" layer="91"/>
+<wire x1="-22.86" y1="-48.26" x2="-22.86" y2="-53.34" width="0.1524" layer="91"/>
+<label x="-22.86" y="-53.34" size="1.27" layer="95" rot="R180" xref="yes"/>
+</segment>
+<segment>
+<pinref part="T4" gate="G$1" pin="B"/>
+<wire x1="-66.04" y1="-55.88" x2="-68.58" y2="-55.88" width="0.1524" layer="91"/>
+<label x="-68.58" y="-55.88" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
 <net name="KICK_TR1" class="0">
@@ -1559,6 +1595,11 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 <wire x1="-50.8" y1="12.7" x2="-55.88" y2="12.7" width="0.1524" layer="91"/>
 <label x="-55.88" y="12.7" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
+<segment>
+<pinref part="T2" gate="G$1" pin="C"/>
+<wire x1="-60.96" y1="-30.48" x2="-60.96" y2="-27.94" width="0.1524" layer="91"/>
+<label x="-60.96" y="-27.94" size="1.27" layer="95" xref="yes"/>
+</segment>
 </net>
 <net name="KICK_TR2" class="0">
 <segment>
@@ -1575,6 +1616,11 @@ Number of pins: &lt;b&gt;6&lt;/b&gt;&lt;b&gt;&lt;P&gt;
 <wire x1="40.64" y1="12.7" x2="30.48" y2="12.7" width="0.1524" layer="91"/>
 <wire x1="30.48" y1="12.7" x2="25.4" y2="12.7" width="0.1524" layer="91"/>
 <label x="25.4" y="12.7" size="1.27" layer="95" rot="R180" xref="yes"/>
+</segment>
+<segment>
+<pinref part="T4" gate="G$1" pin="C"/>
+<wire x1="-60.96" y1="-50.8" x2="-60.96" y2="-48.26" width="0.1524" layer="91"/>
+<label x="-60.96" y="-48.26" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
 </nets>
