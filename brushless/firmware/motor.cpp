@@ -134,15 +134,9 @@ static void set_phases(int u, int v, int w, int phase)
 void motor_init()
 {
     // Initializing hall sensors input
-#ifdef TYPE_DRIBBLER
     pinMode(HALLU_PIN, INPUT_PULLUP);
     pinMode(HALLV_PIN, INPUT_PULLUP);
     pinMode(HALLW_PIN, INPUT_PULLUP);
-#else
-    pinMode(HALLU_PIN, INPUT);
-    pinMode(HALLV_PIN, INPUT);
-    pinMode(HALLW_PIN, INPUT);
-#endif
 
     // Attach interrupts on phase change
     attachInterrupt(HALLU_PIN, motor_tick, CHANGE);
