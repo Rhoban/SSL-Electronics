@@ -21,12 +21,14 @@ You can then compile and install:
 
 ## Components
 
+You can find most of the component source in the `FARNELL` attribute of each component.
+
 ### Main board
 
 ### Connectors
 
 * JST-ZH 2 pin connector + cables
-* JST-XH 6 pins connector for kicker board
+* JST-XH 7 pins connector for kicker board
 * XT-60 connector (same as wire connector)
 
 #### Maple mini
@@ -66,7 +68,7 @@ Power capacitors, current target is 2200uF / 200V (2102441)
 
 ### Connectors
 
-* JST-XH 6 pins connector
+* JST-XH 7 pins connector
 
 #### Voltage booster
 
