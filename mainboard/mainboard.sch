@@ -7170,11 +7170,11 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <instance part="C2" gate="G$1" x="2.54" y="-101.6" rot="R180">
 <attribute name="FARNELL" x="2.54" y="-101.6" size="1.778" layer="96" rot="R180" display="off"/>
 </instance>
-<instance part="R10" gate="G$1" x="-45.72" y="-45.72" rot="R90">
-<attribute name="FARNELL" x="-45.72" y="-45.72" size="1.778" layer="96" rot="R90" display="off"/>
+<instance part="R10" gate="G$1" x="-48.26" y="-35.56" rot="R90">
+<attribute name="FARNELL" x="-48.26" y="-35.56" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
-<instance part="R11" gate="G$1" x="-45.72" y="-60.96" rot="R90">
-<attribute name="FARNELL" x="-45.72" y="-60.96" size="1.778" layer="96" rot="R90" display="off"/>
+<instance part="R11" gate="G$1" x="-48.26" y="-50.8" rot="R90">
+<attribute name="FARNELL" x="-48.26" y="-50.8" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
 <instance part="U$15" gate="G$1" x="-58.42" y="-15.24">
 <attribute name="FARNELL" x="-58.42" y="-15.24" size="1.778" layer="96" display="off"/>
@@ -7253,8 +7253,8 @@ You are welcome to use this library for commercial purposes. For attribution, we
 </segment>
 <segment>
 <pinref part="R11" gate="G$1" pin="1"/>
-<wire x1="-45.72" y1="-71.12" x2="-45.72" y2="-66.04" width="0.1524" layer="91"/>
-<label x="-45.72" y="-71.12" size="1.27" layer="95" xref="yes"/>
+<wire x1="-48.26" y1="-60.96" x2="-48.26" y2="-55.88" width="0.1524" layer="91"/>
+<label x="-48.26" y="-60.96" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
 <net name="VIN" class="2">
@@ -7275,8 +7275,8 @@ You are welcome to use this library for commercial purposes. For attribution, we
 </segment>
 <segment>
 <pinref part="R10" gate="G$1" pin="2"/>
-<wire x1="-45.72" y1="-40.64" x2="-45.72" y2="-38.1" width="0.1524" layer="91"/>
-<label x="-45.72" y="-38.1" size="1.27" layer="95" xref="yes"/>
+<wire x1="-48.26" y1="-30.48" x2="-48.26" y2="-27.94" width="0.1524" layer="91"/>
+<label x="-48.26" y="-27.94" size="1.27" layer="95" xref="yes"/>
 </segment>
 <segment>
 <pinref part="U$15" gate="G$1" pin="P$1"/>
@@ -7308,8 +7308,8 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <label x="22.86" y="-96.52" size="1.27" layer="95" xref="yes"/>
 </segment>
 <segment>
-<wire x1="2.54" y1="-99.06" x2="2.54" y2="-93.98" width="0.1524" layer="91"/>
-<label x="2.54" y="-93.98" size="1.27" layer="95" xref="yes"/>
+<wire x1="2.54" y1="-99.06" x2="2.54" y2="-96.52" width="0.1524" layer="91"/>
+<label x="2.54" y="-96.52" size="1.27" layer="95" xref="yes"/>
 <pinref part="C2" gate="G$1" pin="2"/>
 </segment>
 <segment>
@@ -7322,8 +7322,8 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <segment>
 <pinref part="R10" gate="G$1" pin="1"/>
 <pinref part="R11" gate="G$1" pin="2"/>
-<wire x1="-45.72" y1="-50.8" x2="-45.72" y2="-55.88" width="0.1524" layer="91"/>
-<label x="-45.72" y="-53.34" size="1.27" layer="95" xref="yes"/>
+<wire x1="-48.26" y1="-40.64" x2="-48.26" y2="-45.72" width="0.1524" layer="91"/>
+<label x="-48.26" y="-43.18" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
 <net name="VIN_BAT" class="2">
@@ -7634,7 +7634,7 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <label x="-5.08" y="5.08" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
-<net name="12V" class="0">
+<net name="12V" class="1">
 <segment>
 <pinref part="X2" gate="-3" pin="S"/>
 <wire x1="-2.54" y1="2.54" x2="-5.08" y2="2.54" width="0.1524" layer="91"/>

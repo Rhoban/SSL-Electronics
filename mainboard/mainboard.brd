@@ -3254,7 +3254,7 @@ design rules under a new name.</description>
 <signal name="COM_CE">
 <contactref element="MAPLE" pad="X13"/>
 </signal>
-<signal name="12V">
+<signal name="12V" class="1">
 <contactref element="U$6" pad="+"/>
 <contactref element="C2" pad="2"/>
 <contactref element="REG3.3V1" pad="P$3"/>
