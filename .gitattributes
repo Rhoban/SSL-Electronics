@@ -1,0 +1,2 @@
+*.brd -crlf -diff
+*.sch -crlf -diff
