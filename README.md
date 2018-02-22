@@ -39,7 +39,7 @@ Board containing micro-controller (mainboard controller)
 
 #### nRF24L01 modules
 
-2.4Ghz communication modules
+2.4Ghz communication modules with short antenna (Farnell: 2143316)
 
 ### Screws
 
