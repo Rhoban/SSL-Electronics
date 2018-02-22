@@ -1077,32 +1077,32 @@ design rules under a new name.</description>
 <element name="D1" library="rhoban" package="ZETEX_SOT-23" value="" x="8.7972" y="12.4952" rot="MR180">
 <attribute name="FARNELL" value="2317446" x="8.7972" y="12.4952" size="1.778" layer="28" rot="MR180" display="off"/>
 </element>
-<element name="R1" library="SparkFun-Resistors" package="0805" value="1K" x="4.9878" y="35.5648" rot="R90">
+<element name="R1" library="SparkFun-Resistors" package="0805" value="10" x="4.9878" y="35.5648" rot="R90">
 <attribute name="PROD_ID" value=" " x="4.9878" y="35.5648" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="VALUE" value=" " x="4.9878" y="35.5648" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="FARNELL" value="2446904" x="4.9878" y="35.5648" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
-<element name="R2" library="SparkFun-Resistors" package="0805" value="1K" x="4.9944" y="39.3652" rot="R270">
+<element name="R2" library="SparkFun-Resistors" package="0805" value="10" x="4.9944" y="39.3652" rot="R270">
 <attribute name="PROD_ID" value=" " x="4.9944" y="39.3652" size="1.778" layer="27" rot="R270" display="off"/>
 <attribute name="VALUE" value=" " x="4.9944" y="39.3652" size="1.778" layer="27" rot="R270" display="off"/>
 <attribute name="FARNELL" value="2446904" x="4.9944" y="39.3652" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
-<element name="R3" library="SparkFun-Resistors" package="0805" value="1K" x="11.8204" y="35.4886" rot="R90">
+<element name="R3" library="SparkFun-Resistors" package="0805" value="10" x="11.8204" y="35.4886" rot="R90">
 <attribute name="PROD_ID" value=" " x="11.8204" y="35.4886" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="VALUE" value=" " x="11.8204" y="35.4886" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="FARNELL" value="2446904" x="11.8204" y="35.4886" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
-<element name="R4" library="SparkFun-Resistors" package="0805" value="1K" x="11.6746" y="39.3652" rot="R270">
+<element name="R4" library="SparkFun-Resistors" package="0805" value="10" x="11.6746" y="39.3652" rot="R270">
 <attribute name="PROD_ID" value=" " x="11.6746" y="39.3652" size="1.778" layer="27" rot="R270" display="off"/>
 <attribute name="VALUE" value=" " x="11.6746" y="39.3652" size="1.778" layer="27" rot="R270" display="off"/>
 <attribute name="FARNELL" value="2446904" x="11.6746" y="39.3652" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
-<element name="R5" library="SparkFun-Resistors" package="0805" value="1K" x="19.669" y="35.6918" rot="R90">
+<element name="R5" library="SparkFun-Resistors" package="0805" value="10" x="19.669" y="35.6918" rot="R90">
 <attribute name="PROD_ID" value=" " x="19.669" y="35.6918" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="VALUE" value=" " x="19.669" y="35.6918" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="FARNELL" value="2446904" x="19.669" y="35.6918" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
-<element name="R6" library="SparkFun-Resistors" package="0805" value="1K" x="19.4216" y="39.3652" rot="R270">
+<element name="R6" library="SparkFun-Resistors" package="0805" value="10" x="19.4216" y="39.3652" rot="R270">
 <attribute name="PROD_ID" value=" " x="19.4216" y="39.3652" size="1.778" layer="27" rot="R270" display="off"/>
 <attribute name="VALUE" value=" " x="19.4216" y="39.3652" size="1.778" layer="27" rot="R270" display="off"/>
 <attribute name="FARNELL" value="2446904" x="19.4216" y="39.3652" size="1.778" layer="27" rot="R270" display="off"/>

@@ -3237,22 +3237,22 @@ Source: &lt;a href="http://www.jst-mfg.com/product/pdf/eng/eZH.pdf"&gt;http://ww
 <part name="C3" library="SparkFun-Capacitors" deviceset="0.33UF/330NF" device="-0805-50V-10%" value="10µF">
 <attribute name="FARNELL" value="2528772"/>
 </part>
-<part name="R1" library="SparkFun-Resistors" deviceset="RESISTOR" device="0805" value="1K">
+<part name="R1" library="SparkFun-Resistors" deviceset="RESISTOR" device="0805" value="10">
 <attribute name="FARNELL" value="2446904"/>
 </part>
-<part name="R2" library="SparkFun-Resistors" deviceset="RESISTOR" device="0805" value="1K">
+<part name="R2" library="SparkFun-Resistors" deviceset="RESISTOR" device="0805" value="10">
 <attribute name="FARNELL" value="2446904"/>
 </part>
-<part name="R3" library="SparkFun-Resistors" deviceset="RESISTOR" device="0805" value="1K">
+<part name="R3" library="SparkFun-Resistors" deviceset="RESISTOR" device="0805" value="10">
 <attribute name="FARNELL" value="2446904"/>
 </part>
-<part name="R4" library="SparkFun-Resistors" deviceset="RESISTOR" device="0805" value="1K">
+<part name="R4" library="SparkFun-Resistors" deviceset="RESISTOR" device="0805" value="10">
 <attribute name="FARNELL" value="2446904"/>
 </part>
-<part name="R5" library="SparkFun-Resistors" deviceset="RESISTOR" device="0805" value="1K">
+<part name="R5" library="SparkFun-Resistors" deviceset="RESISTOR" device="0805" value="10">
 <attribute name="FARNELL" value="2446904"/>
 </part>
-<part name="R6" library="SparkFun-Resistors" deviceset="RESISTOR" device="0805" value="1K">
+<part name="R6" library="SparkFun-Resistors" deviceset="RESISTOR" device="0805" value="10">
 <attribute name="FARNELL" value="2446904"/>
 </part>
 <part name="R14" library="SparkFun-Resistors" deviceset="RESISTOR" device="0805" value="10K">
@@ -4347,7 +4347,7 @@ Source: &lt;a href="http://www.jst-mfg.com/product/pdf/eng/eZH.pdf"&gt;http://ww
 <segment>
 <pinref part="R2" gate="G$1" pin="1"/>
 <wire x1="12.7" y1="17.78" x2="10.16" y2="17.78" width="0.1524" layer="91"/>
-<label x="5.08" y="17.78" size="1.27" layer="95" rot="R180" xref="yes"/>
+<label x="5.08" y="17.78" size="1.27" layer="95" rot="R90" xref="yes"/>
 <pinref part="R15" gate="G$1" pin="2"/>
 <wire x1="10.16" y1="17.78" x2="5.08" y2="17.78" width="0.1524" layer="91"/>
 <junction x="10.16" y="17.78"/>
@@ -4406,7 +4406,7 @@ Source: &lt;a href="http://www.jst-mfg.com/product/pdf/eng/eZH.pdf"&gt;http://ww
 <segment>
 <pinref part="R4" gate="G$1" pin="1"/>
 <wire x1="53.34" y1="17.78" x2="48.26" y2="17.78" width="0.1524" layer="91"/>
-<label x="43.18" y="17.78" size="1.27" layer="95" rot="R180" xref="yes"/>
+<label x="43.18" y="17.78" size="1.27" layer="95" rot="R90" xref="yes"/>
 <pinref part="R16" gate="G$1" pin="2"/>
 <wire x1="48.26" y1="17.78" x2="43.18" y2="17.78" width="0.1524" layer="91"/>
 <junction x="48.26" y="17.78"/>
@@ -4416,7 +4416,7 @@ Source: &lt;a href="http://www.jst-mfg.com/product/pdf/eng/eZH.pdf"&gt;http://ww
 <segment>
 <pinref part="R6" gate="G$1" pin="1"/>
 <wire x1="93.98" y1="17.78" x2="88.9" y2="17.78" width="0.1524" layer="91"/>
-<label x="83.82" y="17.78" size="1.27" layer="95" rot="R180" xref="yes"/>
+<label x="83.82" y="17.78" size="1.27" layer="95" rot="R90" xref="yes"/>
 <pinref part="R19" gate="G$1" pin="2"/>
 <wire x1="88.9" y1="17.78" x2="83.82" y2="17.78" width="0.1524" layer="91"/>
 <junction x="88.9" y="17.78"/>
