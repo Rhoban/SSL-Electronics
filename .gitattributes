@@ -1,2 +1,2 @@
-*.brd -crlf -diff
-*.sch -crlf -diff
+*.brd -merge
+*.sch -merge
