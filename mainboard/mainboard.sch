@@ -69,7 +69,7 @@
 <layer number="90" name="Modules" color="5" fill="1" visible="yes" active="yes"/>
 <layer number="91" name="Nets" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="92" name="Busses" color="1" fill="1" visible="yes" active="yes"/>
-<layer number="93" name="Pins" color="2" fill="1" visible="yes" active="yes"/>
+<layer number="93" name="Pins" color="2" fill="1" visible="no" active="yes"/>
 <layer number="94" name="Symbols" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="95" name="Names" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="96" name="Values" color="7" fill="1" visible="yes" active="yes"/>
@@ -7463,7 +7463,7 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <segment>
 <pinref part="R5" gate="G$1" pin="1"/>
 <wire x1="-10.16" y1="15.24" x2="-12.7" y2="15.24" width="0.1524" layer="91"/>
-<label x="-20.32" y="15.24" size="1.27" layer="95" xref="yes"/>
+<label x="-22.86" y="15.24" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
 <net name="N$6" class="0">
@@ -7492,7 +7492,7 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <segment>
 <pinref part="R4" gate="G$1" pin="1"/>
 <wire x1="-10.16" y1="2.54" x2="-12.7" y2="2.54" width="0.1524" layer="91"/>
-<label x="-22.86" y="2.54" size="1.27" layer="95" xref="yes"/>
+<label x="-27.94" y="2.54" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
 <net name="IR_RECEIVE" class="0">
