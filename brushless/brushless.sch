@@ -3261,17 +3261,11 @@ DIN A3, landscape with location and doc. field</description>
 <part name="R36" library="SparkFun-Resistors" deviceset="RESISTOR" device="0805" value="1K">
 <attribute name="FARNELL" value="2446904"/>
 </part>
-<part name="R39" library="SparkFun-Resistors" deviceset="RESISTOR" device="0805" value="1K">
-<attribute name="FARNELL" value="2446904"/>
-</part>
 <part name="R40" library="SparkFun-Resistors" deviceset="RESISTOR" device="0805" value="10K">
 <attribute name="FARNELL" value="2447553"/>
 </part>
 <part name="R48" library="SparkFun-Resistors" deviceset="RESISTOR" device="0805" value="10K">
 <attribute name="FARNELL" value="2447553"/>
-</part>
-<part name="R49" library="SparkFun-Resistors" deviceset="RESISTOR" device="0805" value="1K">
-<attribute name="FARNELL" value="2446904"/>
 </part>
 <part name="R50" library="SparkFun-Resistors" deviceset="RESISTOR" device="0805" value="10K">
 <attribute name="FARNELL" value="2447553"/>
@@ -3539,17 +3533,11 @@ DIN A3, landscape with location and doc. field</description>
 <instance part="R36" gate="G$1" x="-63.5" y="40.64" rot="MR270">
 <attribute name="FARNELL" x="-63.5" y="40.64" size="1.778" layer="96" rot="MR270" display="off"/>
 </instance>
-<instance part="R39" gate="G$1" x="-2.54" y="33.02" rot="MR270">
-<attribute name="FARNELL" x="-2.54" y="33.02" size="1.778" layer="96" rot="MR270" display="off"/>
-</instance>
 <instance part="R40" gate="G$1" x="-2.54" y="71.12" rot="MR270">
 <attribute name="FARNELL" x="-2.54" y="71.12" size="1.778" layer="96" rot="MR270" display="off"/>
 </instance>
 <instance part="R48" gate="G$1" x="-33.02" y="33.02" rot="MR270">
 <attribute name="FARNELL" x="-33.02" y="33.02" size="1.778" layer="96" rot="MR270" display="off"/>
-</instance>
-<instance part="R49" gate="G$1" x="-33.02" y="71.12" rot="MR270">
-<attribute name="FARNELL" x="-33.02" y="71.12" size="1.778" layer="96" rot="MR270" display="off"/>
 </instance>
 <instance part="R50" gate="G$1" x="-20.32" y="-55.88" rot="MR90">
 <attribute name="FARNELL" x="-20.32" y="-55.88" size="1.778" layer="96" rot="MR90" display="off"/>
@@ -3668,10 +3656,14 @@ DIN A3, landscape with location and doc. field</description>
 <net name="VUSB" class="0">
 <segment>
 <wire x1="-50.8" y1="-27.94" x2="-45.72" y2="-27.94" width="0.1524" layer="91"/>
-<wire x1="-45.72" y1="-27.94" x2="-45.72" y2="-15.24" width="0.1524" layer="91"/>
+<wire x1="-45.72" y1="-27.94" x2="-45.72" y2="-22.86" width="0.1524" layer="91"/>
 <pinref part="K1" gate="G$1" pin="1VCC"/>
 <pinref part="D5" gate="G$1" pin="A"/>
+<wire x1="-45.72" y1="-22.86" x2="-45.72" y2="-15.24" width="0.1524" layer="91"/>
 <wire x1="-45.72" y1="-15.24" x2="-38.1" y2="-15.24" width="0.1524" layer="91"/>
+<wire x1="-45.72" y1="-22.86" x2="-17.78" y2="-22.86" width="0.1524" layer="91"/>
+<junction x="-45.72" y="-22.86"/>
+<label x="-17.78" y="-22.86" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
 <net name="RX1" class="0">
@@ -3748,18 +3740,6 @@ DIN A3, landscape with location and doc. field</description>
 <label x="15.24" y="-40.64" size="1.27" layer="95" rot="R90" xref="yes"/>
 <pinref part="OSC" gate="G$1" pin="1"/>
 <pinref part="C20" gate="G$1" pin="2"/>
-</segment>
-</net>
-<net name="N$26" class="0">
-<segment>
-<wire x1="-30.48" y1="58.42" x2="-30.48" y2="60.96" width="0.1524" layer="91"/>
-<wire x1="-30.48" y1="60.96" x2="-33.02" y2="60.96" width="0.1524" layer="91"/>
-<wire x1="-33.02" y1="60.96" x2="-33.02" y2="58.42" width="0.1524" layer="91"/>
-<wire x1="-33.02" y1="60.96" x2="-33.02" y2="66.04" width="0.1524" layer="91"/>
-<junction x="-33.02" y="60.96"/>
-<pinref part="BUT" gate="G$1" pin="1"/>
-<pinref part="BUT" gate="G$1" pin="3"/>
-<pinref part="R49" gate="G$1" pin="2"/>
 </segment>
 </net>
 <net name="RESET" class="0">
@@ -3987,8 +3967,13 @@ DIN A3, landscape with location and doc. field</description>
 </segment>
 <segment>
 <pinref part="3.3/4.5D" gate="G$1" pin="+3V3"/>
-<wire x1="-33.02" y1="78.74" x2="-33.02" y2="76.2" width="0.1524" layer="91"/>
-<pinref part="R49" gate="G$1" pin="1"/>
+<wire x1="-30.48" y1="58.42" x2="-30.48" y2="60.96" width="0.1524" layer="91"/>
+<wire x1="-30.48" y1="60.96" x2="-33.02" y2="60.96" width="0.1524" layer="91"/>
+<wire x1="-33.02" y1="60.96" x2="-33.02" y2="58.42" width="0.1524" layer="91"/>
+<junction x="-33.02" y="60.96"/>
+<pinref part="BUT" gate="G$1" pin="1"/>
+<pinref part="BUT" gate="G$1" pin="3"/>
+<wire x1="-33.02" y1="60.96" x2="-33.02" y2="78.74" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="AGND" class="0">
@@ -3998,9 +3983,14 @@ DIN A3, landscape with location and doc. field</description>
 <wire x1="-33.02" y1="25.4" x2="-33.02" y2="27.94" width="0.1524" layer="91"/>
 </segment>
 <segment>
-<pinref part="R39" gate="G$1" pin="2"/>
 <pinref part="AGND2" gate="VR1" pin="AGND"/>
-<wire x1="-2.54" y1="25.4" x2="-2.54" y2="27.94" width="0.1524" layer="91"/>
+<pinref part="RESET" gate="G$1" pin="3"/>
+<wire x1="0" y1="48.26" x2="0" y2="45.72" width="0.1524" layer="91"/>
+<wire x1="-2.54" y1="48.26" x2="-2.54" y2="45.72" width="0.1524" layer="91"/>
+<pinref part="RESET" gate="G$1" pin="1"/>
+<wire x1="0" y1="45.72" x2="-2.54" y2="45.72" width="0.1524" layer="91"/>
+<junction x="-2.54" y="45.72"/>
+<wire x1="-2.54" y1="45.72" x2="-2.54" y2="25.4" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="D4" gate="G$1" pin="C"/>
@@ -4062,18 +4052,6 @@ DIN A3, landscape with location and doc. field</description>
 <pinref part="C7" gate="G$1" pin="1"/>
 <pinref part="C12" gate="G$1" pin="1"/>
 <pinref part="AGND10" gate="VR1" pin="AGND"/>
-</segment>
-</net>
-<net name="N$1" class="0">
-<segment>
-<pinref part="RESET" gate="G$1" pin="3"/>
-<wire x1="0" y1="48.26" x2="0" y2="45.72" width="0.1524" layer="91"/>
-<wire x1="-2.54" y1="48.26" x2="-2.54" y2="45.72" width="0.1524" layer="91"/>
-<wire x1="-2.54" y1="45.72" x2="-2.54" y2="38.1" width="0.1524" layer="91"/>
-<pinref part="RESET" gate="G$1" pin="1"/>
-<pinref part="R39" gate="G$1" pin="1"/>
-<wire x1="0" y1="45.72" x2="-2.54" y2="45.72" width="0.1524" layer="91"/>
-<junction x="-2.54" y="45.72"/>
 </segment>
 </net>
 </nets>
@@ -4948,7 +4926,7 @@ DIN A3, landscape with location and doc. field</description>
 <wire x1="223.52" y1="50.8" x2="223.52" y2="45.72" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="VUSB1" class="0">
+<net name="VUSB" class="0">
 <segment>
 <pinref part="D12" gate="G$1" pin="A"/>
 <wire x1="149.86" y1="35.56" x2="157.48" y2="35.56" width="0.1524" layer="91"/>
