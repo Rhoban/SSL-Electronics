@@ -43,6 +43,12 @@ static int hall_phases[8] = {
     -1,                     // 0b111 (impossible)
 };
 
+static void _bc_load()
+{
+    digitalWrite(W_LOW_PIN, LOW);
+    digitalWrite(W_LOW_PIN, HIGH);
+}
+
 static void _init_timer(int number)
 {
     HardwareTimer timer(number);
@@ -52,6 +58,13 @@ static void _init_timer(int number)
     timer.setPrescaleFactor(1);
     timer.setOverflow(3000); // 24Khz
     timer.refresh();
+
+    if (number == 3) {
+        // timer.setChannel1Mode(TIMER_OUTPUT_COMPARE);
+        // timer.setCompare(TIMER_CH1, 2550);
+        // timer.attachCompare1Interrupt(_bc_load);
+    }
+
     timer.resume();
 }
 
@@ -67,6 +80,28 @@ static int hall_value()
 }
 
 TERMINAL_PARAMETER_INT(dts, "", 0);
+
+TERMINAL_COMMAND(tst, "Test")
+{
+    digitalWrite(W_LOW_PIN, LOW);
+    digitalWrite(W_HIGH_PIN, LOW);
+    digitalWrite(U_LOW_PIN, LOW);
+    pinMode(W_LOW_PIN, OUTPUT);
+    pinMode(W_HIGH_PIN, OUTPUT);
+
+    digitalWrite(U_LOW_PIN, HIGH);
+    if (argv > 0) {
+        digitalWrite(W_LOW_PIN, HIGH);
+        delay_us(atoi(argv[0]));
+        digitalWrite(W_LOW_PIN, LOW);
+    }
+    delay_us(3);
+    digitalWrite(W_HIGH_PIN, HIGH);
+    delay_us(5);
+    digitalWrite(W_HIGH_PIN, LOW);
+    digitalWrite(U_LOW_PIN, LOW);
+    delay_us(10);
+}
 
 static void set_phases(int u, int v, int w, int phase)
 {
@@ -91,8 +126,13 @@ static void set_phases(int u, int v, int w, int phase)
 
     if (update) {
         // Setting every output to low
+        digitalWrite(U_HIGH_PIN, LOW);
+        digitalWrite(V_HIGH_PIN, LOW);
+        digitalWrite(W_HIGH_PIN, LOW);
+        digitalWrite(U_LOW_PIN, HIGH);
+        digitalWrite(V_LOW_PIN, HIGH);
+        digitalWrite(W_LOW_PIN, HIGH);
         for (int k=0; k<6; k++) {
-            digitalWrite(motor_pins[k], LOW);
             pinMode(motor_pins[k], OUTPUT);
         }
 
@@ -107,7 +147,7 @@ static void set_phases(int u, int v, int w, int phase)
         // if (update) pinMode(U_LOW_PIN, PWM);
         // pwmWrite(U_LOW_PIN, -u);
 
-        if (update) digitalWrite(U_LOW_PIN, HIGH);
+        if (update) digitalWrite(U_LOW_PIN, LOW);
     }
 
     if (v >= 0) {
@@ -117,7 +157,7 @@ static void set_phases(int u, int v, int w, int phase)
         // if (update) pinMode(V_LOW_PIN, PWM);
         // pwmWrite(V_LOW_PIN, -v);
 
-        if (update) digitalWrite(V_LOW_PIN, HIGH);
+        if (update) digitalWrite(V_LOW_PIN, LOW);
     }
 
     if (w >= 0) {
@@ -127,7 +167,7 @@ static void set_phases(int u, int v, int w, int phase)
         // if (update) pinMode(W_LOW_PIN, PWM);
         // pwmWrite(W_LOW_PIN, -w);
 
-        if (update) digitalWrite(W_LOW_PIN, HIGH);
+        if (update) digitalWrite(W_LOW_PIN, LOW);
     }
 }
 
@@ -149,7 +189,12 @@ void motor_init()
 
     // Initalizing motor pins
     for (int k=0; k<6; k++)  pwmWrite(motor_pins[k], 0);
-    for (int k=0; k<6; k++)  digitalWrite(motor_pins[k], LOW);
+    digitalWrite(U_HIGH_PIN, LOW);
+    digitalWrite(V_HIGH_PIN, LOW);
+    digitalWrite(W_HIGH_PIN, LOW);
+    digitalWrite(U_LOW_PIN, HIGH);
+    digitalWrite(V_LOW_PIN, HIGH);
+    digitalWrite(W_LOW_PIN, HIGH);
     for (int k=0; k<6; k++)  pinMode(motor_pins[k], OUTPUT);
 }
 
@@ -174,6 +219,17 @@ void motor_set(int value)
     motor_pwm = value;
 }
 
+TERMINAL_COMMAND(bdw, "Bdw")
+{
+    int start = micros();
+    for (int k=0; k<10000; k++) {
+        digitalWrite(U_LOW_PIN, LOW);
+    }
+    terminal_io()->println(micros()-start);
+}
+
+TERMINAL_PARAMETER_INT(fp, "Force phase", -1);
+
 void motor_tick()
 {
     static bool motor_ticking = false;
@@ -185,7 +241,9 @@ void motor_tick()
 
     // Current phase
     int phase = hall_phases[hall_value()];
-    // phase = 0; // XXX: To debug current & heat, to be removed
+    if (fp >= 0) {
+        phase = fp;
+    }
 
     if (phase >= 0 && phase < 6) {
         set_phases(
@@ -205,10 +263,10 @@ void motor_tick()
     }
     hall_current_phase = phase;
 
-    if ((millis() - hall_last_change) > 500 && abs(motor_pwm) >= 300) {
+    if (fp < 0 && (millis() - hall_last_change) > 500 && abs(motor_pwm) >= 300) {
         // Stop everything
-        // Will trigger watchdog and reset
         security_set_error(SECURITY_HALL_FREEZE);
+        // Will trigger watchdog and reset
     }
 
     motor_ticking = false;
