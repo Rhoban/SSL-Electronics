@@ -19,28 +19,26 @@ static int com_channels[3] = {0, 50, 100};
 static bool com_master = false;
 
 // Master control packet to send to each robot
-static struct packet_master com_robots[6];
+static uint8_t com_robots[MAX_ROBOTS][PACKET_SIZE + 1];
+static bool com_should_transmit[MAX_ROBOTS] = {false};
 
 // Status replies from robots
-static struct packet_robot com_statuses[6];
+static struct packet_robot com_statuses[MAX_ROBOTS];
+static bool com_has_status[MAX_ROBOTS] = {false};
 
 // Parmeters to send to robot
 static struct packet_params com_master_params;
-volatile static bool com_has_params[6] = {false};
+volatile static bool com_has_params[MAX_ROBOTS] = {false};
 
 // Timestamp of reception for each packets
-static int com_robot_reception[6];
+static int com_robot_reception[MAX_ROBOTS];
 
 // Current robot we are communicating with
 static int com_master_pos = 0;
 
 // Reception of order via USB
 static int com_usb_reception = 0;
-static int com_usb_packet_type = 0xff;
-static int com_instructions_size[] = {
-    sizeof(struct packet_master)*6,
-    sizeof(struct packet_params)
-};
+static size_t com_usb_nb_robots = 0;
 
 // Only for robot
 static int com_master_reception = 0;
@@ -192,18 +190,6 @@ static void com_tx(int index, uint8_t *payload, size_t n)
     com_send(index, packet, n+1);
 }
 
-static void com_tx_packet(int index, uint8_t instruction, uint8_t *data, size_t n)
-{
-    uint8_t packet[PACKET_SIZE+1];
-    packet[0] = OP_TX;
-    packet[1] = instruction;
-    for (int k = 0; k < n; k++) {
-        packet[k + 2] = data[k];
-    }
-
-    com_send(index, packet, PACKET_SIZE+1);
-}
-
 static void com_rx(int index, uint8_t *payload, size_t n)
 {
     uint8_t packet[n+1] = {0};
@@ -225,15 +211,17 @@ void com_irq(int index)
         com_available[index] = true;
 
         if (com_master) {
+            // Receiving a status packet from a robot
             struct packet_robot packet;
             com_rx(index, (uint8_t*)&packet, sizeof(struct packet_robot));
 
-            if (packet.id < 6) {
+            if (packet.id < MAX_ROBOTS) {
+                com_has_status[packet.id] = true;
                 com_statuses[packet.id] = packet;
                 com_robot_reception[packet.id] = millis();
             }
         } else {
-            // Reading master packet!
+            // Receiving an instruction packet from the master
             com_master_reception = millis();
             com_master_new = true;
             com_master_packets++;
@@ -380,15 +368,6 @@ void com_init()
     }
 
     // Disable everything in robot commands
-    if (com_master) {
-        for (int k=0; k<6; k++) {
-            com_robots[k].actions = 0;
-            com_robots[k].x_speed = 0;
-            com_robots[k].y_speed = 0;
-            com_robots[k].t_speed = 0;
-            com_robot_reception[k] = 0;
-        }
-    }
     com_master_packets = 0;
     com_master_pos = 0;
 }
@@ -396,8 +375,8 @@ void com_init()
 static void com_usb_tick()
 {
     static int state = 0;
-    static uint8_t temp[150];
-    static int pos = 0;
+    static uint8_t temp[1024];
+    static size_t pos = 0;
 
     while (SerialUSB.available()) {
         watchdog_feed();
@@ -413,58 +392,34 @@ static void com_usb_tick()
                 state = 0;
             }
         } else if (state == 2) {
-            state++;
-            com_usb_packet_type = c;
+            com_usb_nb_robots = c;
             pos = 0;
-            if (c > PACKET_INSTRUCTIONS) {
+            if (com_usb_nb_robots < MAX_ROBOTS) {
+                state++;
+            } else {
                 state = 0;
             }
-        } else if (pos < com_instructions_size[com_usb_packet_type]) {
+        } else if (pos < com_usb_nb_robots*(1 + PACKET_SIZE) && pos < sizeof(temp)) {
             temp[pos++] = c;
         } else {
             if (c == 0xff) {
-                com_usb_reception = millis();
-
-                // This is a parameters packet
-                if (com_usb_packet_type == INSTRUCTION_PARAMS) {
-                    uint8_t *target = (uint8_t *)&com_master_params;
-                    for (int k = 0; k < sizeof(com_master_params); k++) {
-                        target[k] = temp[k];
-                    }
-                    for (int k = 0; k < 6; k++) {
-                        // XXX: Hack to send parameters to only one robot
-                        // if (k != 1) continue;
-                        com_has_params[k] = true;
-                    }
-                }
-
-                if (com_usb_packet_type == INSTRUCTION_MASTER) {
-                    // Received message from USB
-                    uint8_t *target = (uint8_t *)com_robots;
-                    for (int k = 0; k < sizeof(com_robots); k++) {
-                        target[k] = temp[k];
-                    }
-
-                    // Updating robot statuses
-                    for (int k = 0; k < 6; k++) {
-                        if ((millis() - com_robot_reception[k]) >= 100) {
-                            com_statuses[k].status = 0;
+                // Fetch all the data that should be transmitted to the robots
+                for (size_t k=0; k<com_usb_nb_robots; k++) {
+                    uint8_t robot_id = temp[k*(PACKET_SIZE + 1)];
+                    if (robot_id < MAX_ROBOTS) {
+                        for (size_t n=0; n<PACKET_SIZE; n++) {
+                            com_robots[robot_id][n] = temp[k*(1 + PACKET_SIZE)+1+n];
                         }
+                        com_should_transmit[robot_id] = true;
                     }
-
-                    // Sending back robot status
-                    uint8_t statuses[sizeof(com_statuses)+3];
-                    statuses[0] = 0xaa;
-                    statuses[1] = 0x55;
-                    statuses[sizeof(com_statuses)+2] = 0xff;
-                    uint8_t *source = (uint8_t *)com_statuses;
-                    for (int k = 0; k < sizeof(com_statuses); k++) {
-                        statuses[k+2] = source[k];
-                    }
-                    SerialUSB.write(statuses, sizeof(statuses));
                 }
-            } else {
+                for (size_t k=0; k<MAX_ROBOTS; k++) {
+                    com_has_status[k] = false;
+                }
+                com_master_pos = -1;
+                com_usb_reception = millis();
             }
+
             state = 0;
         }
     }
@@ -482,7 +437,7 @@ void com_process_master()
         packet.bat2_volt = voltage_bat2()*10.0;
 
         com_ce_disable();
-        for (int k=0; k<3; k++) {
+        for (size_t k=0; k<3; k++) {
             com_mode(k, true, false);
             com_set_reg(k, REG_STATUS, 0x70);
             com_tx(k, (uint8_t *)&packet, sizeof(struct packet_robot));
@@ -557,38 +512,69 @@ void com_tick()
         // Feed the watchdog
         watchdog_feed();
 
-        // Sending a packet to a robot
-        // XXX: Using micros() in unsafe because it sometime overflow, to fix!
-        // XXX: If the robot answered, we can ask the next quicker?
-        #ifdef BINARY
-        if ((millis() - com_usb_reception) < 100 && com_master && (micros() - last) > 1650) {
-        #else
-        if (com_master && (micros() - last) > 1650) {
-        #endif
-            last = micros();
+        bool transmitting = false;
+        while (com_master_pos < MAX_ROBOTS && !transmitting) {
+            // Sending a packet to a robot
+            // XXX: Using micros() in unsafe because it sometime overflow, to fix!
+            // We either received a status from the previous robot or the timeout expired,
+            // we should ask the next one
+            if (com_master_pos < 0 || com_has_status[com_master_pos] || (micros() - last) > 1700) {
+                // Asking the next
+                com_master_pos++;
+                last = 0;
 
-            com_ce_disable();
-            for (int k=0; k<3; k++) {
-                com_mode(k, true, false);
-                com_set_reg(k, REG_STATUS, 0x70);
-                com_set_tx_addr(k, com_master_pos);
+                // Should we send a packet to this robot ?
+                if (com_master_pos < MAX_ROBOTS && com_should_transmit[com_master_pos]) {
+                    last = micros();
+                    transmitting = true;
 
-                if (com_has_params[com_master_pos]) {
-                    com_tx_packet(k, INSTRUCTION_PARAMS,
-                        (uint8_t*)&com_master_params, sizeof(struct packet_params));
-                } else {
-                    com_tx_packet(k, INSTRUCTION_MASTER,
-                        (uint8_t*)&com_robots[com_master_pos], sizeof(struct packet_master));
+                    // Sending the packet to the 3 modules
+                    com_ce_disable();
+                    for (size_t k=0; k<3; k++) {
+                        // Preparing to transmit
+                        com_mode(k, true, false);
+                        com_set_reg(k, REG_STATUS, 0x70);
+                        com_set_tx_addr(k, com_master_pos);
+
+                        // Transmitting the payload
+                        com_tx(k, com_robots[com_master_pos], PACKET_SIZE);
+                    }
+                    com_ce_enable();
+                    com_should_transmit[com_master_pos] = false;
                 }
-            }
-            if (com_has_params[com_master_pos]) {
-                com_has_params[com_master_pos] = false;
-            }
-            com_ce_enable();
 
-            com_master_pos++;
-            if (com_master_pos >= 6) {
-                com_master_pos = 0;
+                if (com_master_pos >= MAX_ROBOTS) {
+                    // Our cyle is over, sending back the robot statuses
+                    size_t statuses = 0;
+                    for (size_t k=0; k<MAX_ROBOTS; k++) {
+                        if (com_has_status[k]) {
+                            statuses++;
+                        }
+                    }
+                    uint8_t answer[1+1+1+statuses*(1+sizeof(struct packet_robot))+1];
+                    // Answer header
+                    answer[0] = 0xaa;
+                    answer[1] = 0x55;
+                    // Number of robots in the packet
+                    answer[2] = statuses;
+                    size_t pos = 3;
+                    for (size_t k=0; k<MAX_ROBOTS; k++) {
+                        if (com_has_status[k]) {
+                            // Inserting the robot #
+                            answer[pos++] = k;
+                            // Copying structure data
+                            uint8_t *ptr = (uint8_t *)&com_statuses[k];
+                            for (size_t n=0; n<sizeof(struct packet_robot); n++) {
+                                answer[pos++] = ptr[n];
+                            }
+                        }
+                    }
+                    // Ending with 0xff
+                    answer[pos] = 0xff;
+                    SerialUSB.write(answer, sizeof(answer));
+                }
+            } else {
+                transmitting = true;
             }
         }
 
@@ -632,7 +618,7 @@ TERMINAL_COMMAND(ct, "Com tx")
 {
     if (com_available[2]) {
 
-        for (int k=0; k<PAYLOAD_SIZE; k++) {
+        for (size_t k=0; k<PAYLOAD_SIZE; k++) {
             terminal_io()->println(com_data[2][k]);
         }
 
@@ -660,18 +646,18 @@ TERMINAL_COMMAND(st, "St")
     terminal_io()->println("RX_ADDR_P0");
     uint8_t value[5];
     com_read_reg5(2, REG_RX_ADDR_P0, value);
-    for (int k=0; k<5; k++)
+    for (size_t k=0; k<5; k++)
     terminal_io()->println((int)value[k]);
 
     terminal_io()->println("TX_ADDR");
     com_read_reg5(2, REG_TX_ADDR, value);
-    for (int k=0; k<5; k++)
+    for (size_t k=0; k<5; k++)
     terminal_io()->println((int)value[k]);
 }
 
 bool com_is_all_ok()
 {
-    for (int k=0; k<3; k++) {
+    for (size_t k=0; k<3; k++) {
         if (!com_is_ok(k)) {
             return false;
         }
@@ -684,7 +670,7 @@ void com_diagnostic()
 {
     com_init();
 
-    for (int k=0; k<3; k++) {
+    for (size_t k=0; k<3; k++) {
         terminal_io()->print("* Com module #");
         terminal_io()->print(k);
         if (com_is_ok(k)) {
@@ -703,7 +689,7 @@ TERMINAL_COMMAND(master, "Enable master mode")
 
 TERMINAL_COMMAND(ms, "Master status")
 {
-    for (int k=0; k<6; k++) {
+    for (size_t k=0; k<MAX_ROBOTS; k++) {
         if (millis() - com_robot_reception[k] < 100) {
             terminal_io()->print("Robot #");
             terminal_io()->print(k);
@@ -712,56 +698,9 @@ TERMINAL_COMMAND(ms, "Master status")
     }
 }
 
-TERMINAL_COMMAND(m, "Master set")
-{
-    if (argc == 4) {
-        com_robots[0].actions = ACTION_ON;
-    }
-}
-
-TERMINAL_COMMAND(rc, "Remote charge test")
-{
-    if (atoi(argv[0])) {
-        com_robots[0].actions |= ACTION_ON;
-        com_robots[0].actions |= ACTION_CHARGE;
-    } else {
-        com_robots[0].actions &= ~ACTION_CHARGE;
-    }
-}
-
-TERMINAL_COMMAND(rk, "Remote kick test")
-{
-    if (atoi(argv[0])) {
-        com_robots[0].kickPower = atoi(argv[0]);
-        com_robots[0].actions |= ACTION_KICK1;
-    } else {
-        com_robots[0].kickPower = 0;
-        com_robots[0].actions &= ~ACTION_KICK1;
-    }
-}
-
-TERMINAL_COMMAND(rpid, "Remote pid")
-{
-    static struct packet_params params;
-    params.kp = 0;
-    params.ki = 0;
-    params.kd = 0;
-
-    for (int k = 0; k < 6; k++) {
-        com_has_params[k] = true;
-    }
-}
-
 TERMINAL_COMMAND(em, "Emergency")
 {
-    if (com_master) {
-        for (int k=0; k<6; k++) {
-            com_robots[k].actions = 0;
-            com_robots[k].x_speed = 0;
-            com_robots[k].y_speed = 0;
-            com_robots[k].t_speed = 0;
-        }
-    } else {
+    if (!com_master) {
         kinematic_stop();
         for (int k=0; k<5; k++) {
             drivers_set(k, false, 0.0);
