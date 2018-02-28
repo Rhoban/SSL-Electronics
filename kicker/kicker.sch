@@ -5568,10 +5568,14 @@ Standard schematic elements and footprints for 5mm, 3mm, 1206, and 0603 sized LE
 <part name="GND14" library="supply1" deviceset="GND" device=""/>
 <part name="GND15" library="supply1" deviceset="GND" device=""/>
 <part name="GND16" library="supply1" deviceset="GND" device=""/>
-<part name="D2" library="diode" deviceset="1N6267A" device=""/>
-<part name="D3" library="diode" deviceset="1N6267A" device=""/>
-<part name="C1" library="rcl" deviceset="C-EU" device="C0805"/>
-<part name="C2" library="rcl" deviceset="C-EU" device="C0805"/>
+<part name="D2" library="diode" deviceset="1N6267A" device="">
+<attribute name="FARNELL" value="9551735"/>
+</part>
+<part name="D3" library="diode" deviceset="1N6267A" device="">
+<attribute name="FARNELL" value="9551735"/>
+</part>
+<part name="C1" library="rcl" deviceset="C-EU" device="C0805" value="1uF"/>
+<part name="C2" library="rcl" deviceset="C-EU" device="C0805" value="1uF"/>
 <part name="GND17" library="supply1" deviceset="GND" device=""/>
 <part name="GND18" library="supply1" deviceset="GND" device=""/>
 <part name="R8" library="rhoban" deviceset="RESISTANCE" device="-R0805" value="3K">
@@ -5594,8 +5598,12 @@ Standard schematic elements and footprints for 5mm, 3mm, 1206, and 0603 sized LE
 <attribute name="FARNELL" value="2447553"/>
 </part>
 <part name="GND21" library="supply1" deviceset="GND" device=""/>
-<part name="D5" library="diode" deviceset="ZENER-DIODE" device="SOD80C"/>
-<part name="D1" library="diode" deviceset="ZENER-DIODE" device="SOD80C"/>
+<part name="D5" library="diode" deviceset="ZENER-DIODE" device="SOD80C" value="12V">
+<attribute name="FARNELL" value="2319144"/>
+</part>
+<part name="D1" library="diode" deviceset="ZENER-DIODE" device="SOD80C" value="3.9V">
+<attribute name="FARNELL" value="1097198"/>
+</part>
 </parts>
 <sheets>
 <sheet>
@@ -5696,8 +5704,12 @@ Standard schematic elements and footprints for 5mm, 3mm, 1206, and 0603 sized LE
 <instance part="GND14" gate="1" x="116.84" y="0"/>
 <instance part="GND15" gate="1" x="-20.32" y="0"/>
 <instance part="GND16" gate="1" x="78.74" y="0"/>
-<instance part="D2" gate="1" x="137.16" y="48.26" rot="R90"/>
-<instance part="D3" gate="1" x="33.02" y="48.26" rot="R90"/>
+<instance part="D2" gate="1" x="137.16" y="48.26" rot="R90">
+<attribute name="FARNELL" x="137.16" y="48.26" size="1.778" layer="96" rot="R90" display="off"/>
+</instance>
+<instance part="D3" gate="1" x="33.02" y="48.26" rot="R90">
+<attribute name="FARNELL" x="33.02" y="48.26" size="1.778" layer="96" rot="R90" display="off"/>
+</instance>
 <instance part="C1" gate="G$1" x="-22.86" y="35.56"/>
 <instance part="C2" gate="G$1" x="76.2" y="35.56"/>
 <instance part="GND17" gate="1" x="-22.86" y="27.94"/>
@@ -5723,8 +5735,12 @@ Standard schematic elements and footprints for 5mm, 3mm, 1206, and 0603 sized LE
 <attribute name="FARNELL" x="58.42" y="96.52" size="1.778" layer="96" rot="R90" display="off"/>
 </instance>
 <instance part="GND21" gate="1" x="58.42" y="66.04"/>
-<instance part="D5" gate="G$1" x="58.42" y="76.2" rot="R90"/>
-<instance part="D1" gate="G$1" x="119.38" y="96.52" rot="R90"/>
+<instance part="D5" gate="G$1" x="58.42" y="76.2" rot="R90">
+<attribute name="FARNELL" x="58.42" y="76.2" size="1.778" layer="96" rot="R90" display="off"/>
+</instance>
+<instance part="D1" gate="G$1" x="119.38" y="96.52" rot="R90">
+<attribute name="FARNELL" x="119.38" y="96.52" size="1.778" layer="96" rot="R90" display="off"/>
+</instance>
 </instances>
 <busses>
 </busses>
