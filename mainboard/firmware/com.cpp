@@ -432,7 +432,7 @@ void com_process_master()
         struct packet_robot packet;
         packet.id = COM_ID;
         packet.status = STATUS_OK;
-        packet.cap_volt = kicker_cap_voltage()*10.0;
+        packet.cap_volt = kicker_cap_voltage();
         packet.bat1_volt = voltage_bat1()*10.0;
         packet.bat2_volt = voltage_bat2()*10.0;
 
@@ -450,7 +450,8 @@ void com_process_master()
 
         // Driving wheels
         if (master_packet->actions & ACTION_ON) {
-            kinematic_set(master_packet->x_speed, master_packet->y_speed, master_packet->t_speed);
+            kinematic_set(master_packet->x_speed/1000.0, master_packet->y_speed/1000.0,
+                 master_packet->t_speed/1000.0);
             if (master_packet->actions & ACTION_DRIBBLE) {
                 drivers_set_safe(4, true, -0.9);
             } else {

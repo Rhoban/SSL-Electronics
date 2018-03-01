@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define PACKET_SIZE                 28
+#define PACKET_SIZE                 16
 #define PACKET_INSTRUCTIONS         2
 #define MAX_ROBOTS                  8
 
@@ -16,11 +16,11 @@ struct packet_master {
     #define ACTION_CHARGE  (1<<4)   // Enable/disable the capacitor charge
     uint8_t actions;
 
-    float x_speed;                  // Kinematic orders
-    float y_speed;
-    float t_speed;
+    int16_t x_speed;                // Kinematic orders (mm/s and mrad/s)
+    int16_t y_speed;
+    int16_t t_speed;
 
-    uint16_t kickPower;             // Kick power (this is a duration in uS)
+    uint8_t kickPower;             // Kick power (this is a duration in x25 uS)
 } __attribute__((packed));
 
 #define INSTRUCTION_PARAMS          0x01
@@ -37,7 +37,7 @@ struct packet_robot {
     #define STATUS_IR           (1<<2)  // The infrared barrier detects something
     uint8_t status;
 
-    uint16_t cap_volt;                  // Kick capcaitor voltage (10th of V)
+    uint8_t cap_volt;                  // Kick capcaitor voltage (V)
 
     uint8_t bat1_volt;                  // Battery 1 voltage (10th of V)
     uint8_t bat2_volt;                  // Battery 2 voltage (10th of V)
