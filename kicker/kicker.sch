@@ -5533,13 +5533,13 @@ Standard schematic elements and footprints for 5mm, 3mm, 1206, and 0603 sized LE
 <part name="DRV1" library="rhoban" deviceset="OPEN-BLDC_IR2101" device="">
 <attribute name="FARNELL" value="8638730"/>
 </part>
-<part name="R1" library="rhoban" deviceset="RESISTANCE" device="-R0805" value="3K">
+<part name="R1" library="rhoban" deviceset="RESISTANCE" device="-R0805" value="470">
 <attribute name="FARNELL" value="2446965"/>
 </part>
 <part name="DRV2" library="rhoban" deviceset="OPEN-BLDC_IR2101" device="">
 <attribute name="FARNELL" value="8638730"/>
 </part>
-<part name="R2" library="rhoban" deviceset="RESISTANCE" device="-R0805" value="3K">
+<part name="R2" library="rhoban" deviceset="RESISTANCE" device="-R0805" value="470">
 <attribute name="FARNELL" value="2446965"/>
 </part>
 <part name="FRAME1" library="frames" deviceset="A4L-LOC" device=""/>
@@ -5558,10 +5558,10 @@ Standard schematic elements and footprints for 5mm, 3mm, 1206, and 0603 sized LE
 <part name="GND10" library="supply1" deviceset="GND" device=""/>
 <part name="GND11" library="supply1" deviceset="GND" device=""/>
 <part name="GND12" library="supply1" deviceset="GND" device=""/>
-<part name="R4" library="rhoban" deviceset="RESISTANCE" device="-R0805" value="3K">
+<part name="R4" library="rhoban" deviceset="RESISTANCE" device="-R0805" value="470">
 <attribute name="FARNELL" value="2446965"/>
 </part>
-<part name="R7" library="rhoban" deviceset="RESISTANCE" device="-R0805" value="3K">
+<part name="R7" library="rhoban" deviceset="RESISTANCE" device="-R0805" value="470">
 <attribute name="FARNELL" value="2446965"/>
 </part>
 <part name="GND13" library="supply1" deviceset="GND" device=""/>
@@ -5578,7 +5578,7 @@ Standard schematic elements and footprints for 5mm, 3mm, 1206, and 0603 sized LE
 <part name="C2" library="rcl" deviceset="C-EU" device="C0805" value="1uF"/>
 <part name="GND17" library="supply1" deviceset="GND" device=""/>
 <part name="GND18" library="supply1" deviceset="GND" device=""/>
-<part name="R8" library="rhoban" deviceset="RESISTANCE" device="-R0805" value="3K">
+<part name="R8" library="rhoban" deviceset="RESISTANCE" device="-R0805" value="100K">
 <attribute name="FARNELL" value="2446965"/>
 </part>
 <part name="GND19" library="supply1" deviceset="GND" device=""/>
@@ -5591,10 +5591,10 @@ Standard schematic elements and footprints for 5mm, 3mm, 1206, and 0603 sized LE
 <part name="R9" library="rhoban" deviceset="RESISTANCE" device="-R0805" value="10K">
 <attribute name="FARNELL" value="2447553"/>
 </part>
-<part name="R10" library="rhoban" deviceset="RESISTANCE" device="-R0805" value="10K">
+<part name="R10" library="rhoban" deviceset="RESISTANCE" device="-R0805" value="100K">
 <attribute name="FARNELL" value="2447553"/>
 </part>
-<part name="R11" library="rhoban" deviceset="RESISTANCE" device="-R0805" value="10K">
+<part name="R11" library="rhoban" deviceset="RESISTANCE" device="-R0805" value="100K">
 <attribute name="FARNELL" value="2447553"/>
 </part>
 <part name="GND21" library="supply1" deviceset="GND" device=""/>
