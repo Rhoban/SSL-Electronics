@@ -188,18 +188,18 @@
 <text x="15.79998125" y="28.8499" size="10" layer="112" rot="R180">5</text>
 <text x="-35.44995625" y="26.94999375" size="10" layer="112" rot="R180">4</text>
 <text x="-35.79998125" y="-18.30000625" size="10" layer="112" rot="R180">3</text>
-<text x="47.89994375" y="25.049996875" size="10" layer="112" rot="R180">1</text>
+<text x="48.499940625" y="27.749990625" size="10" layer="112" rot="R180">1</text>
 <text x="-128.749853125" y="-34.099959375" size="1.778" layer="121">3.3V</text>
 <text x="-127.999853125" y="-43.599959375" size="1.778" layer="121">5V</text>
 <text x="-128.499853125" y="-52.099959375" size="1.778" layer="121">12V</text>
-<text x="48.49998125" y="-32.800003125" size="3" layer="122">1</text>
-<text x="22.69998125" y="16.1999" size="3" layer="122">2</text>
-<text x="-2.20001875" y="16.4999" size="3" layer="122">3</text>
-<text x="-46.29998125" y="-31.60000625" size="3" layer="122">4</text>
+<text x="38.400003125" y="-34.2" size="3" layer="122">1</text>
+<text x="13.8" y="-33.9" size="3" layer="122">2</text>
+<text x="-11.1" y="-34.299996875" size="3" layer="122">3</text>
+<text x="-34.900003125" y="-33.900003125" size="3" layer="122">4</text>
 <text x="-48.09998125" y="-17.70000625" size="3" layer="121">DRIVER</text>
 <text x="3.99998125" y="29.8999" size="3" layer="121">DRIVER</text>
 <text x="35.39998125" y="-19.700003125" size="3" layer="121">DRIVER</text>
-<text x="37.49994375" y="25.999996875" size="3" layer="121">DRIVER</text>
+<text x="37.19994375" y="29.399990625" size="3" layer="121">DRIVER</text>
 <text x="-46.99995625" y="27.49999375" size="3" layer="121">DRIVER</text>
 <text x="72.2997125" y="14.39996875" size="1.778" layer="21" rot="R90">KICKER</text>
 <text x="145.8995875" y="83.2999375" size="1.778" layer="21">SWITCH</text>
