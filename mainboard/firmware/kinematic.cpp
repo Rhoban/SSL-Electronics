@@ -61,6 +61,12 @@ void kinematic_stop()
 
 #define MAX_ACCELERATION    (10*0.01)
 
+int16_t pwm_lut(float target)
+{
+    float sign = (target < 0) ? -1 : 1;
+    return 32*target + sign*60;
+}
+
 void kinematic_tick()
 {
     static int last_tick = millis();
@@ -107,10 +113,10 @@ void kinematic_tick()
                 // terminal_io()->print(front_right);
                 // terminal_io()->println();
 
-                drivers_set_safe(0, true, front_left);
-                drivers_set_safe(1, true, rear_left);
-                drivers_set_safe(2, true, rear_right);
-                drivers_set_safe(3, true, front_right);
+                drivers_set_safe(0, true, front_left, pwm_lut(front_left));
+                drivers_set_safe(1, true, rear_left, pwm_lut(rear_left));
+                drivers_set_safe(2, true, rear_right, pwm_lut(rear_right));
+                drivers_set_safe(3, true, front_right, pwm_lut(front_right));
             }
         } else {
             front_left = 0;
@@ -123,11 +129,25 @@ void kinematic_tick()
 
 TERMINAL_COMMAND(kin, "Kinematic")
 {
+    float x = atof(argv[0]);
+    float y = atof(argv[1]);
+    float t = atof(argv[2]);
     if (argc >= 3) {
         while (!SerialUSB.available()) {
-            kinematic_set(atof(argv[0]), atof(argv[1]), atof(argv[2]));
+            kinematic_set(x, y, t);
             kinematic_tick();
             watchdog_feed();
+            terminal_io()->print(x);
+            terminal_io()->print(" ");
+            terminal_io()->print(y);
+            terminal_io()->print(" ");
+            terminal_io()->print(t);
+            terminal_io()->print(" ");
+            terminal_io()->print(front_left);
+            terminal_io()->print(" ");
+            terminal_io()->print(driver_answers[0].pwm);
+            terminal_io()->print(" ");
+            terminal_io()->println();
             delay(5);
         }
     }
