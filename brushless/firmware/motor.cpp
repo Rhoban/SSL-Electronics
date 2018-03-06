@@ -45,8 +45,8 @@ static int hall_phases[8] = {
 
 static void _bc_load()
 {
-    digitalWrite(W_LOW_PIN, LOW);
-    digitalWrite(W_LOW_PIN, HIGH);
+    // digitalWrite(W_LOW_PIN, LOW);
+    // digitalWrite(W_LOW_PIN, HIGH);
 }
 
 static void _init_timer(int number)
@@ -129,9 +129,15 @@ static void set_phases(int u, int v, int w, int phase)
         digitalWrite(U_HIGH_PIN, LOW);
         digitalWrite(V_HIGH_PIN, LOW);
         digitalWrite(W_HIGH_PIN, LOW);
+        #ifdef IR2101
+        digitalWrite(U_LOW_PIN, LOW);
+        digitalWrite(V_LOW_PIN, LOW);
+        digitalWrite(W_LOW_PIN, LOW);
+        #else
         digitalWrite(U_LOW_PIN, HIGH);
         digitalWrite(V_LOW_PIN, HIGH);
         digitalWrite(W_LOW_PIN, HIGH);
+        #endif
         for (int k=0; k<6; k++) {
             pinMode(motor_pins[k], OUTPUT);
         }
@@ -147,7 +153,11 @@ static void set_phases(int u, int v, int w, int phase)
         // if (update) pinMode(U_LOW_PIN, PWM);
         // pwmWrite(U_LOW_PIN, -u);
 
+        #ifdef IR2101
+        if (update) digitalWrite(U_LOW_PIN, HIGH);
+        #else
         if (update) digitalWrite(U_LOW_PIN, LOW);
+        #endif
     }
 
     if (v >= 0) {
@@ -157,7 +167,11 @@ static void set_phases(int u, int v, int w, int phase)
         // if (update) pinMode(V_LOW_PIN, PWM);
         // pwmWrite(V_LOW_PIN, -v);
 
+        #ifdef IR2101
+        if (update) digitalWrite(V_LOW_PIN, HIGH);
+        #else
         if (update) digitalWrite(V_LOW_PIN, LOW);
+        #endif
     }
 
     if (w >= 0) {
@@ -167,7 +181,11 @@ static void set_phases(int u, int v, int w, int phase)
         // if (update) pinMode(W_LOW_PIN, PWM);
         // pwmWrite(W_LOW_PIN, -w);
 
+        #ifdef IR2101
+        if (update) digitalWrite(W_LOW_PIN, HIGH);
+        #else
         if (update) digitalWrite(W_LOW_PIN, LOW);
+        #endif
     }
 }
 
@@ -192,9 +210,15 @@ void motor_init()
     digitalWrite(U_HIGH_PIN, LOW);
     digitalWrite(V_HIGH_PIN, LOW);
     digitalWrite(W_HIGH_PIN, LOW);
+    #ifdef IR2101
+    digitalWrite(U_LOW_PIN, LOW);
+    digitalWrite(V_LOW_PIN, LOW);
+    digitalWrite(W_LOW_PIN, LOW);
+    #else
     digitalWrite(U_LOW_PIN, HIGH);
     digitalWrite(V_LOW_PIN, HIGH);
     digitalWrite(W_LOW_PIN, HIGH);
+    #endif
     for (int k=0; k<6; k++)  pinMode(motor_pins[k], OUTPUT);
 }
 
@@ -263,7 +287,7 @@ void motor_tick()
     }
     hall_current_phase = phase;
 
-    if (fp < 0 && (millis() - hall_last_change) > 500 && abs(motor_pwm) >= 300) {
+    if (fp < 0 && (millis() - hall_last_change) > 500 && abs(motor_pwm) >= 500) {
         // Stop everything
         security_set_error(SECURITY_HALL_FREEZE);
         // Will trigger watchdog and reset

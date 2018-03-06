@@ -15,10 +15,13 @@ static bool servo_flag = false;
 // Enable and target
 static bool servo_enable = false;
 static float servo_target = 0;
+static int16_t servo_prior_pwm = 0;
 static float servo_limited_target = 0;
 
 // Speed estimation
 static float servo_speed = 0;
+static volatile float servo_public_speed = 0;
+static volatile int16_t servo_public_pwm = 0;
 
 // Number of values stored in the speed ring buffer
 #define SPEED_RB        (((SPEED_DT)/SERVO_DT)+1)
@@ -75,8 +78,8 @@ float servo_lut(float target, float current)
     if (fabs(target) > 0.1) {
         if (fabs(current) < 0.1) {
             // boost = 100;
-            return 16*target + sign*(60 + boost);
         }
+        return 16*target + sign*(60 + boost);
         // return 15*target + sign*(40 + boost);
     } else {
         return 0;
@@ -85,18 +88,17 @@ float servo_lut(float target, float current)
 
 void servo_tick()
 {
-
     if (security_get_error() != SECURITY_NO_ERROR) {
         motor_set(0);
     } else {
         if (servo_flag) {
             servo_flag = false;
 
-#if DRIVER_TYPE == TYPE_DRIBBLER
+#ifdef ENCODER_NONE
             if (servo_enable) {
                 // No servoing, the value is just 0-1 of pwm max
                 if (fabs(servo_target) > 0.1) {
-                    motor_set(servo_target*PWM_MAX);
+                    motor_set((servo_target/20.0)*PWM_MAX);
                 } else {
                     motor_set(0);
                 }
@@ -162,7 +164,7 @@ void servo_tick()
                 float error = (servo_speed - servo_limited_target);
 
                 // Applying prior LUT
-                servo_pwm = -servo_lut(servo_limited_target, servo_speed);
+                servo_pwm = -servo_prior_pwm;
 
                 // Limiting the P impact
                 float j = kp*error;
@@ -196,6 +198,9 @@ void servo_tick()
 #endif
         }
     }
+
+    servo_public_pwm = servo_pwm_limited;
+    servo_public_speed = servo_speed;
 }
 
 TERMINAL_COMMAND(dbg, "Dbg servo")
@@ -208,13 +213,15 @@ TERMINAL_COMMAND(dbg, "Dbg servo")
     terminal_io()->println(servo_acc);
 }
 
-void servo_set(bool enable, float target)
+void servo_set(bool enable, float target, int16_t pwm)
 {
     servo_enable = enable;
     servo_target = target;
+    servo_prior_pwm = pwm;
 
     if (!servo_enable) {
         servo_pwm = 0;
+        servo_prior_pwm = 0;
         servo_pwm_limited = 0;
         servo_acc = 0;
         servo_last_error = 0;
@@ -234,7 +241,7 @@ void servo_set_pid(float kp_, float ki_, float kd_)
 
 float servo_get_speed()
 {
-    return servo_speed;
+    return servo_public_speed;
 }
 
 TERMINAL_COMMAND(speed, "Speed estimation")
@@ -255,4 +262,21 @@ TERMINAL_COMMAND(set, "Set target speed")
     } else {
         terminal_io()->println("Usage: set [turn/s]");
     }
+}
+
+int servo_get_pwm()
+{
+    return servo_public_pwm;
+}
+
+TERMINAL_COMMAND(servo, "Servo status")
+{
+    terminal_io()->print("Target speed: ");
+    terminal_io()->println(servo_target);
+    terminal_io()->print("Prior PWM: ");
+    terminal_io()->println(servo_prior_pwm);
+    terminal_io()->print("Speed: ");
+    terminal_io()->println(servo_public_speed);
+    terminal_io()->print("PWM: ");
+    terminal_io()->println(servo_public_pwm);
 }

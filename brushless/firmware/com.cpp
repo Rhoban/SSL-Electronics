@@ -36,7 +36,7 @@ void com_frame_received()
         case DRIVER_PACKET_SET: {
             // Setting the target speed
             COM_READ_PACKET(driver_packet_set)
-            servo_set(packet->enable, packet->targetSpeed);
+            servo_set(packet->enable, packet->targetSpeed, packet->pwm);
         }
         break;
         case DRIVER_PACKET_PARAMS: {
@@ -48,6 +48,11 @@ void com_frame_received()
     }
 }
 
+// SPI answer
+static struct driver_packet_ans answer;
+uint8_t *answer_ptr;
+size_t answer_pos = 0;
+
 extern "C"
 {
 void __irq_spi1()
@@ -56,6 +61,9 @@ void __irq_spi1()
     irqed += 1;
     rcv = SPI1->regs->SR;
 
+    if (spi_is_tx_empty(SPI1)) {
+        spi_tx_reg(SPI1, answer_ptr[answer_pos++]);
+    }
     if (spi_is_rx_nonempty(SPI1)) {
         rcv = spi_rx_reg(SPI1);
 
@@ -89,12 +97,20 @@ static void slave_irq()
         frame_pos = 0;
         frame_type = 0xff;
         slave.beginSlave(MSBFIRST, 0);
-        spi_irq_enable(slave.c_dev(), SPI_RXNE_INTERRUPT);
+
+        // Sending the status
         if (security_get_error() == SECURITY_NO_ERROR) {
-            spi_tx_reg(SPI1, 0xaa);
+            answer.status = 0x55;
         } else {
-            spi_tx_reg(SPI1, 0x50|security_get_error());
+            answer.status = 0x80|security_get_error();
         }
+        answer.speed = servo_get_speed();
+        answer.pwm = servo_get_pwm();
+        answer_ptr = (uint8_t*)&answer;
+        answer_pos = 0;
+
+        spi_tx_reg(SPI1, 0x00);
+        spi_irq_enable(slave.c_dev(), SPI_RXNE_INTERRUPT|SPI_TXE_INTERRUPT);
     } else {
         slave.end();
         pinMode(slave.misoPin(), INPUT_FLOATING);
@@ -107,7 +123,7 @@ void com_init()
 {
     // Enabling remap on SPI1
     afio_remap(AFIO_REMAP_SPI1);
-    pinMode(SLAVE_PIN, INPUT);
+    pinMode(SLAVE_PIN, INPUT_PULLUP);
     attachInterrupt(SLAVE_PIN, slave_irq, CHANGE);
 
     // Turning led off
@@ -124,4 +140,9 @@ void com_tick()
             servo_set(false, 0);
         }
     }
+}
+
+TERMINAL_COMMAND(ap, "")
+{
+    terminal_io()->println(answer_pos);
 }

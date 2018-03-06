@@ -19,9 +19,10 @@
 #endif
 
 #if DRIVER_TYPE == TYPE_70W
-#define ENCODER_MAGNETIC            // Magnetic AS5048 14bit encoder
+// #define ENCODER_MAGNETIC            // Magnetic AS5048 14bit encoder
 // #define ENCODER_CPR      1024
-#define ENCODER_CPR      16384
+// #define ENCODER_CPR      16384
+#define ENCODER_NONE                // No encoder
 #endif
 
 #if DRIVER_TYPE == TYPE_DRIBBLER
@@ -68,16 +69,19 @@
 #define CURRENT_DISABLE
 #define PWM_MIN             0     // 0-3000
 #define PWM_MAX             2500    // 0-3000
+#define IR2101
 #endif
 
 #if DRIVER_TYPE == TYPE_30W
 #define PWM_MIN             600     // 0-3000
 #define PWM_MAX             2500    // 0-3000
+#define IR2101
 #endif
 
 #if DRIVER_TYPE == TYPE_DRIBBLER
 #define PWM_MIN             0       // 0-3000
 #define PWM_MAX             2700    // 0-3000
+#define IR2101
 #endif
 
 // Limitting acceleration
