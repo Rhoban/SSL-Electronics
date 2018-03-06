@@ -3285,19 +3285,19 @@ DIN A3, landscape with location and doc. field</description>
 <part name="DRV1" library="rhoban" deviceset="OPEN-BLDC_IR2101" device="">
 <attribute name="FARNELL" value="8638730"/>
 </part>
-<part name="C1" library="SparkFun-Capacitors" deviceset="0.33UF/330NF" device="-0805-50V-10%" value="10µF">
+<part name="C1" library="SparkFun-Capacitors" deviceset="0.33UF/330NF" device="-0805-50V-10%" value="1µF">
 <attribute name="FARNELL" value="2528772"/>
 </part>
 <part name="DRV2" library="rhoban" deviceset="OPEN-BLDC_IR2101" device="">
 <attribute name="FARNELL" value="8638730"/>
 </part>
-<part name="C2" library="SparkFun-Capacitors" deviceset="0.33UF/330NF" device="-0805-50V-10%" value="10µF">
+<part name="C2" library="SparkFun-Capacitors" deviceset="0.33UF/330NF" device="-0805-50V-10%" value="1µF">
 <attribute name="FARNELL" value="2528772"/>
 </part>
 <part name="DRV3" library="rhoban" deviceset="OPEN-BLDC_IR2101" device="">
 <attribute name="FARNELL" value="8638730"/>
 </part>
-<part name="C3" library="SparkFun-Capacitors" deviceset="0.33UF/330NF" device="-0805-50V-10%" value="10µF">
+<part name="C3" library="SparkFun-Capacitors" deviceset="0.33UF/330NF" device="-0805-50V-10%" value="1µF">
 <attribute name="FARNELL" value="2528772"/>
 </part>
 <part name="R1" library="SparkFun-Resistors" deviceset="RESISTOR" device="0805" value="10">

@@ -1070,7 +1070,7 @@ design rules under a new name.</description>
 <attribute name="NAME" x="20.5514" y="28.4468" size="0.6096" layer="25" font="vector" ratio="20" rot="R90"/>
 <attribute name="VALUE" x="19.9164" y="29.4628" size="0.6096" layer="27" font="vector" ratio="20" rot="R90"/>
 </element>
-<element name="C1" library="SparkFun-Capacitors" package="0805" value="10µF" x="6.3496" y="25.1198" smashed="yes" rot="MR90">
+<element name="C1" library="SparkFun-Capacitors" package="0805" value="1µF" x="6.3496" y="25.1198" smashed="yes" rot="MR90">
 <attribute name="PROD_ID" value="CAP-08469" x="6.3496" y="25.1198" size="1.778" layer="28" rot="MR90" display="off"/>
 <attribute name="VALUE" value="0.33µF" x="6.3496" y="25.1198" size="1.778" layer="28" rot="MR90" display="off"/>
 <attribute name="FARNELL" value="2528772" x="6.3496" y="25.1198" size="1.778" layer="28" rot="MR90" display="off"/>
@@ -1082,7 +1082,7 @@ design rules under a new name.</description>
 <attribute name="VALUE" x="6.9513" y="17.5402" size="1.27" layer="28" ratio="10" rot="MR90"/>
 <attribute name="NAME" x="8.7293" y="18.1752" size="0.8128" layer="26" ratio="10" rot="MR90"/>
 </element>
-<element name="C2" library="SparkFun-Capacitors" package="0805" value="10µF" x="13.592" y="27.2488" smashed="yes" rot="MR90">
+<element name="C2" library="SparkFun-Capacitors" package="0805" value="1µF" x="13.592" y="27.2488" smashed="yes" rot="MR90">
 <attribute name="PROD_ID" value="CAP-08469" x="12.322" y="27.2488" size="1.778" layer="28" rot="MR90" display="off"/>
 <attribute name="VALUE" value="0.33µF" x="12.322" y="27.2488" size="1.778" layer="28" rot="MR90" display="off"/>
 <attribute name="FARNELL" value="2528772" x="13.592" y="27.2488" size="1.778" layer="28" rot="MR90" display="off"/>
@@ -1094,7 +1094,7 @@ design rules under a new name.</description>
 <attribute name="VALUE" x="15.5065" y="19.8992" size="1.27" layer="28" ratio="10" rot="MR90"/>
 <attribute name="NAME" x="16.0145" y="20.4072" size="0.8128" layer="26" ratio="10" rot="MR90"/>
 </element>
-<element name="C3" library="SparkFun-Capacitors" package="0805" value="10µF" x="20.7328" y="28.6394" smashed="yes" rot="MR90">
+<element name="C3" library="SparkFun-Capacitors" package="0805" value="1µF" x="20.7328" y="28.6394" smashed="yes" rot="MR90">
 <attribute name="PROD_ID" value="CAP-08469" x="19.4628" y="28.6394" size="1.778" layer="28" rot="MR90" display="off"/>
 <attribute name="VALUE" value="0.33µF" x="19.4628" y="28.6394" size="1.778" layer="28" rot="MR90" display="off"/>
 <attribute name="FARNELL" value="2528772" x="20.7328" y="28.6394" size="1.778" layer="28" rot="MR90" display="off"/>
