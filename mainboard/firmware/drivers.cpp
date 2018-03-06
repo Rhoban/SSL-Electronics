@@ -75,7 +75,7 @@ void drivers_set_safe(int index, bool enable, float target, int16_t pwm)
     if (!drivers_is_error && drivers_present[index]) {
         struct driver_packet_ans tmp = drivers_set(index, enable, target, pwm);
 
-        if ((driver_answers[index].status & 0xf0) == 0x80) {
+        if ((tmp.status & 0xf0) == 0x80) {
             driver_answers[index] = tmp;
             for (int k=0; k<5; k++) {
                 drivers_set(k, false, 0.0);
@@ -86,7 +86,7 @@ void drivers_set_safe(int index, bool enable, float target, int16_t pwm)
             terminal_io()->println("Error on driver:");
             terminal_io()->println(index);
             terminal_io()->println(driver_answers[index].status);
-        } else if (driver_answers[index].status == 0x55) {
+        } else if (tmp.status == 0x55) {
             driver_answers[index] = tmp;
         }
     }
