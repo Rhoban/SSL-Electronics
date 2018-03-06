@@ -7,14 +7,23 @@
 struct driver_packet_set {
     bool enable;
     float targetSpeed;
+    int16_t pwm;
+} __attribute__((packed));
+
+struct driver_packet_ans {
+    uint8_t status;
+    float speed;
+    int16_t pwm;
 } __attribute__((packed));
 
 #define DRIVER_PACKET_PARAMS   0x01
 struct driver_packet_params {
-float kp;
-float ki;
-float kd;
+    float kp;
+    float ki;
+    float kd;
 } __attribute__((packed));
+
+extern struct driver_packet_ans driver_answers[5];
 
 /**
  * Initializes the drivers
@@ -24,8 +33,8 @@ void drivers_init();
 /**
  * Set the speed of the nth wheel [turn/s]
  */
-uint8_t drivers_set(int index, bool enable, float target);
-void drivers_set_safe(int index, bool enable, float target);
+struct driver_packet_ans drivers_set(int index, bool enable, float target, int16_t pwm=0);
+void drivers_set_safe(int index, bool enable, float target, int16_t pwm=0);
 void drivers_set_params(float kp, float ki, float kd);
 
 /**

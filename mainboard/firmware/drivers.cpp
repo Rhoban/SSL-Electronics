@@ -8,8 +8,8 @@
 
 HardwareSPI drivers(DRIVERS_SPI);
 static bool drivers_is_error = false;
-
 static bool drivers_present[5] = {false};
+struct driver_packet_ans driver_answers[5];
 
 static int drivers_pins[5] = {
     DRIVERS_CS1, DRIVERS_CS4, DRIVERS_CS3,
@@ -19,38 +19,43 @@ static int drivers_pins[5] = {
 int drivers_ping(int index)
 {
     digitalWrite(drivers_pins[index], LOW);
-    delay_us(25);
+    delay_us(35);
+    drivers.send(0);
     int answer = drivers.send(0);
     delay_us(5);
     digitalWrite(drivers_pins[index], HIGH);
 
-    return (answer == 0xaa);
+    return (answer == 0x55);
 }
 
-static uint8_t drivers_send(int index, uint8_t instruction, uint8_t *data, size_t len)
+static void drivers_send(int index, uint8_t instruction, uint8_t *data, size_t len, uint8_t *answer)
 {
-    uint8_t answer;
-
     digitalWrite(drivers_pins[index], LOW);
-    delay_us(25);
-    answer = drivers.send(instruction);
+    delay_us(35);
+
+    drivers.send(instruction);
 
     for (int k=0; k < len; k++) {
-        drivers.send(data[k]);
+        if (answer == NULL) {
+            drivers.send(data[k]);
+        } else {
+            *(answer++) = drivers.send(data[k]);
+        }
     }
     delay_us(5);
     digitalWrite(drivers_pins[index], HIGH);
-
-    return answer;
 }
 
-uint8_t drivers_set(int index, bool enable, float target)
+struct driver_packet_ans drivers_set(int index, bool enable, float target, int16_t pwm)
 {
     struct driver_packet_set packet;
     packet.enable = enable;
     packet.targetSpeed = target;
+    packet.pwm = pwm;
 
-    return drivers_send(index, DRIVER_PACKET_SET, (uint8_t*)&packet, sizeof(struct driver_packet_set));
+    struct driver_packet_ans answer;
+    drivers_send(index, DRIVER_PACKET_SET, (uint8_t*)&packet, sizeof(struct driver_packet_set), (uint8_t*)&answer);
+    return answer;
 }
 
 void drivers_set_params(float kp, float ki, float kd)
@@ -61,22 +66,28 @@ void drivers_set_params(float kp, float ki, float kd)
         packet.ki = ki;
         packet.kd = kd;
 
-        drivers_send(index, DRIVER_PACKET_PARAMS, (uint8_t*)&packet, sizeof(struct driver_packet_params));
+        drivers_send(index, DRIVER_PACKET_PARAMS, (uint8_t*)&packet, sizeof(struct driver_packet_params), NULL);
     }
 }
 
-void drivers_set_safe(int index, bool enable, float target)
+void drivers_set_safe(int index, bool enable, float target, int16_t pwm)
 {
     if (!drivers_is_error && drivers_present[index]) {
-        uint8_t answer = drivers_set(index, enable, target);
+        struct driver_packet_ans tmp = drivers_set(index, enable, target, pwm);
 
-        if ((answer&0xf0) == 0x50) {
+        if ((driver_answers[index].status & 0xf0) == 0x80) {
+            driver_answers[index] = tmp;
             for (int k=0; k<5; k++) {
                 drivers_set(k, false, 0.0);
             }
 
             drivers_is_error = true;
             buzzer_play(MELODY_WARNING);
+            terminal_io()->println("Error on driver:");
+            terminal_io()->println(index);
+            terminal_io()->println(driver_answers[index].status);
+        } else if (driver_answers[index].status == 0x55) {
+            driver_answers[index] = tmp;
         }
     }
 }
@@ -106,7 +117,7 @@ void drivers_tick()
 void drivers_init()
 {
     // Initializing SPI
-    drivers.begin(SPI_9MHZ, MSBFIRST, 0);
+    drivers.begin(SPI_281_250KHZ, MSBFIRST, 0);
 
     // Initializing CS pins
     for (int k=0; k<5; k++) {
@@ -195,5 +206,19 @@ TERMINAL_COMMAND(err, "Error")
         terminal_io()->println("Drivers are in error mode");
     } else {
         terminal_io()->println("Drivers are OK");
+    }
+}
+
+TERMINAL_COMMAND(ddb, "")
+{
+    struct driver_packet_ans ans = drivers_set(2, true, 0, 1);
+
+    terminal_io()->print(ans.speed);
+    terminal_io()->print(" ");
+    terminal_io()->println(ans.pwm);
+
+    uint8_t *ptr = (uint8_t*)&ans;
+    for (size_t k=0; k<sizeof(ans); k++) {
+        terminal_io()->println((int)ptr[k]);
     }
 }

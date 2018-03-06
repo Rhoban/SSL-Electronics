@@ -306,7 +306,7 @@ void com_init()
         // Disabling auto acknowledgement
         com_set_reg(k, REG_EN_AA, 0x00);
 
-        // Setting the appropriate challen for this module
+        // Setting the appropriate channel for this module
         com_set_reg(k, REG_RF_CH, com_channels[k]);
 
         // Setting the address
@@ -453,7 +453,7 @@ void com_process_master()
             kinematic_set(master_packet->x_speed/1000.0, master_packet->y_speed/1000.0,
                  master_packet->t_speed/1000.0);
             if (master_packet->actions & ACTION_DRIBBLE) {
-                drivers_set_safe(4, true, -0.9);
+                drivers_set_safe(4, true, 0.2);
             } else {
                 drivers_set_safe(4, false, 0);
             }
@@ -587,6 +587,7 @@ void com_tick()
         }
     }
 
+    // Processing a packet from the master
     if (!com_master && com_master_new) {
         com_master_controlling = true;
         com_master_new = false;
@@ -594,6 +595,7 @@ void com_tick()
         com_process_master();
     }
 
+    // Checking the last master reception, playing melody when the reception is changing
     if ((millis() - com_master_reception) < 100 && com_master_reception != 0) {
         if (!com_has_master) {
             com_has_master = true;
