@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="6.1">
+<eagle version="8.7.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
+<setting keepoldvectorfont="yes"/>
 <setting verticaltext="up"/>
 </settings>
 <grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
@@ -3285,19 +3286,19 @@ DIN A3, landscape with location and doc. field</description>
 <part name="DRV1" library="rhoban" deviceset="OPEN-BLDC_IR2101" device="">
 <attribute name="FARNELL" value="8638730"/>
 </part>
-<part name="C1" library="SparkFun-Capacitors" deviceset="0.33UF/330NF" device="-0805-50V-10%" value="10µF">
+<part name="C1" library="SparkFun-Capacitors" deviceset="0.33UF/330NF" device="-0805-50V-10%" value="1µF">
 <attribute name="FARNELL" value="2528772"/>
 </part>
 <part name="DRV2" library="rhoban" deviceset="OPEN-BLDC_IR2101" device="">
 <attribute name="FARNELL" value="8638730"/>
 </part>
-<part name="C2" library="SparkFun-Capacitors" deviceset="0.33UF/330NF" device="-0805-50V-10%" value="10µF">
+<part name="C2" library="SparkFun-Capacitors" deviceset="0.33UF/330NF" device="-0805-50V-10%" value="1µF">
 <attribute name="FARNELL" value="2528772"/>
 </part>
 <part name="DRV3" library="rhoban" deviceset="OPEN-BLDC_IR2101" device="">
 <attribute name="FARNELL" value="8638730"/>
 </part>
-<part name="C3" library="SparkFun-Capacitors" deviceset="0.33UF/330NF" device="-0805-50V-10%" value="10µF">
+<part name="C3" library="SparkFun-Capacitors" deviceset="0.33UF/330NF" device="-0805-50V-10%" value="1µF">
 <attribute name="FARNELL" value="2528772"/>
 </part>
 <part name="R1" library="SparkFun-Resistors" deviceset="RESISTOR" device="0805" value="10">
