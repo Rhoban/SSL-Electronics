@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="8.7.0">
+<eagle version="6.1">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
-<setting keepoldvectorfont="yes"/>
 <setting verticaltext="up"/>
 </settings>
 <grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
@@ -3423,13 +3422,13 @@ DIN A3, landscape with location and doc. field</description>
 <part name="AGND18" library="supply1" deviceset="AGND" device=""/>
 <part name="AGND19" library="supply1" deviceset="AGND" device=""/>
 <part name="AGND20" library="supply1" deviceset="AGND" device=""/>
-<part name="C9" library="SparkFun-Passives" deviceset="CAP" device="0805" value="1000pF">
+<part name="C9" library="SparkFun-Passives" deviceset="CAP" device="0805" value="100nF">
 <attribute name="FARNELL" value="2496935"/>
 </part>
-<part name="C11" library="SparkFun-Passives" deviceset="CAP" device="0805" value="1000pF">
+<part name="C11" library="SparkFun-Passives" deviceset="CAP" device="0805" value="1uF">
 <attribute name="FARNELL" value="2496935"/>
 </part>
-<part name="C13" library="SparkFun-Passives" deviceset="CAP" device="0805" value="1000pF">
+<part name="C13" library="SparkFun-Passives" deviceset="CAP" device="0805" value="100nF">
 <attribute name="FARNELL" value="2496935"/>
 </part>
 <part name="3.3/4.5D3" library="supply1" deviceset="+3V3" device=""/>
