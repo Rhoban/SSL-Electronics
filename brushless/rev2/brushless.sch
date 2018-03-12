@@ -3425,10 +3425,10 @@ DIN A3, landscape with location and doc. field</description>
 <part name="C9" library="SparkFun-Passives" deviceset="CAP" device="0805" value="1000pF">
 <attribute name="FARNELL" value="2496935"/>
 </part>
-<part name="C11" library="SparkFun-Passives" deviceset="CAP" device="0805" value="1000pF">
+<part name="C11" library="SparkFun-Passives" deviceset="CAP" device="0805" value="1uF">
 <attribute name="FARNELL" value="2496935"/>
 </part>
-<part name="C13" library="SparkFun-Passives" deviceset="CAP" device="0805" value="1000pF">
+<part name="C13" library="SparkFun-Passives" deviceset="CAP" device="0805" value="100nF">
 <attribute name="FARNELL" value="2496935"/>
 </part>
 <part name="3.3/4.5D3" library="supply1" deviceset="+3V3" device=""/>
