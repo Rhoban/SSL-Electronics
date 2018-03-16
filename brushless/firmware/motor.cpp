@@ -129,15 +129,9 @@ static void set_phases(int u, int v, int w, int phase)
         digitalWrite(U_HIGH_PIN, LOW);
         digitalWrite(V_HIGH_PIN, LOW);
         digitalWrite(W_HIGH_PIN, LOW);
-        #ifdef IR2101
         digitalWrite(U_LOW_PIN, LOW);
         digitalWrite(V_LOW_PIN, LOW);
         digitalWrite(W_LOW_PIN, LOW);
-        #else
-        digitalWrite(U_LOW_PIN, HIGH);
-        digitalWrite(V_LOW_PIN, HIGH);
-        digitalWrite(W_LOW_PIN, HIGH);
-        #endif
         for (int k=0; k<6; k++) {
             pinMode(motor_pins[k], OUTPUT);
         }
@@ -149,43 +143,28 @@ static void set_phases(int u, int v, int w, int phase)
     if (u >= 0) {
         if (update) pinMode(U_HIGH_PIN, PWM);
         pwmWrite(U_HIGH_PIN, u);
-    } else {
-        // if (update) pinMode(U_LOW_PIN, PWM);
-        // pwmWrite(U_LOW_PIN, -u);
+    }
 
-        #ifdef IR2101
+    if (u != 0) {
         if (update) digitalWrite(U_LOW_PIN, HIGH);
-        #else
-        if (update) digitalWrite(U_LOW_PIN, LOW);
-        #endif
     }
 
     if (v >= 0) {
         if (update) pinMode(V_HIGH_PIN, PWM);
         pwmWrite(V_HIGH_PIN, v);
-    } else {
-        // if (update) pinMode(V_LOW_PIN, PWM);
-        // pwmWrite(V_LOW_PIN, -v);
+    }
 
-        #ifdef IR2101
+    if (v != 0) {
         if (update) digitalWrite(V_LOW_PIN, HIGH);
-        #else
-        if (update) digitalWrite(V_LOW_PIN, LOW);
-        #endif
     }
 
     if (w >= 0) {
         if (update) pinMode(W_HIGH_PIN, PWM);
         pwmWrite(W_HIGH_PIN, w);
-    } else {
-        // if (update) pinMode(W_LOW_PIN, PWM);
-        // pwmWrite(W_LOW_PIN, -w);
+    }
 
-        #ifdef IR2101
+    if (w != 0) {
         if (update) digitalWrite(W_LOW_PIN, HIGH);
-        #else
-        if (update) digitalWrite(W_LOW_PIN, LOW);
-        #endif
     }
 }
 
@@ -210,15 +189,9 @@ void motor_init()
     digitalWrite(U_HIGH_PIN, LOW);
     digitalWrite(V_HIGH_PIN, LOW);
     digitalWrite(W_HIGH_PIN, LOW);
-    #ifdef IR2101
     digitalWrite(U_LOW_PIN, LOW);
     digitalWrite(V_LOW_PIN, LOW);
     digitalWrite(W_LOW_PIN, LOW);
-    #else
-    digitalWrite(U_LOW_PIN, HIGH);
-    digitalWrite(V_LOW_PIN, HIGH);
-    digitalWrite(W_LOW_PIN, HIGH);
-    #endif
     for (int k=0; k<6; k++)  pinMode(motor_pins[k], OUTPUT);
 }
 

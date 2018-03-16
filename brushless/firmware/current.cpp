@@ -37,13 +37,13 @@ void current_tick()
         last_update += 10;
         samples++;
 
-        // Measured voltage [V] on the current sensor output
+        // Measured voltage [mV] on the current sensor output
         float voltage = (5.0/3.0)*analogRead(CURRENT_PIN)*3300.0/4096.0;
 
         if (samples == 1) {
             current = voltage;
         } else {
-            current = current*0.95 + voltage*0.05;
+            current = current*0.98 + voltage*0.02;
         }
 
         if (samples == 100) {
@@ -83,4 +83,6 @@ TERMINAL_COMMAND(amps, "Current")
 {
     terminal_io()->print(current_amps());
     terminal_io()->println(" A");
+    terminal_io()->print(current);
+    terminal_io()->println(" V");
 }
