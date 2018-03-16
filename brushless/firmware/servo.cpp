@@ -45,7 +45,7 @@ static void init_timer()
     // Configuring timer
     timer.pause();
     timer.setPrescaleFactor(9);
-    timer.setOverflow(1000); // 1Khz
+    timer.setOverflow(1000); // 8Khz
 
     timer.setChannel4Mode(TIMER_OUTPUT_COMPARE);
     timer.setCompare(TIMER_CH4, 1);
