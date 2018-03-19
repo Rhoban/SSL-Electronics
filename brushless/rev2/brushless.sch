@@ -3367,8 +3367,8 @@ DIN A3, landscape with location and doc. field</description>
 <part name="C10" library="rhoban" deviceset="CPOL_EU" device="_3.5-8" value="100uF">
 <attribute name="FARNELL" value="1870964"/>
 </part>
-<part name="D5" library="SparkFun-DiscreteSemi" deviceset="DIODE" device="SOD">
-<attribute name="FARNELL" value="8737843RL"/>
+<part name="D5" library="SparkFun-DiscreteSemi" deviceset="DIODE" device="SOD" value="Schottky">
+<attribute name="FARNELL" value="2760406"/>
 </part>
 <part name="JP1" library="SparkFun-Jumpers" deviceset="JUMPER-SMT_2_NC_PASTE" device="_NO-SILK">
 <attribute name="FARNELL" value="-"/>
@@ -3432,35 +3432,35 @@ DIN A3, landscape with location and doc. field</description>
 <attribute name="FARNELL" value="2496935"/>
 </part>
 <part name="3.3/4.5D3" library="supply1" deviceset="+3V3" device=""/>
-<part name="D6" library="SparkFun-DiscreteSemi" deviceset="DIODE" device="SOD">
-<attribute name="FARNELL" value="8737843RL"/>
+<part name="D6" library="SparkFun-DiscreteSemi" deviceset="DIODE" device="SOD" value="Schottky">
+<attribute name="FARNELL" value="2760406"/>
 </part>
-<part name="D1" library="SparkFun-DiscreteSemi" deviceset="DIODE" device="SOD">
-<attribute name="FARNELL" value="8737843RL"/>
+<part name="D1" library="SparkFun-DiscreteSemi" deviceset="DIODE" device="SOD" value="Signal">
+<attribute name="FARNELL" value="1843678RL"/>
 </part>
-<part name="D2" library="SparkFun-DiscreteSemi" deviceset="DIODE" device="SOD">
-<attribute name="FARNELL" value="8737843RL"/>
+<part name="D2" library="SparkFun-DiscreteSemi" deviceset="DIODE" device="SOD" value="Schottky">
+<attribute name="FARNELL" value="2760406"/>
 </part>
-<part name="D7" library="SparkFun-DiscreteSemi" deviceset="DIODE" device="SOD">
-<attribute name="FARNELL" value="8737843RL"/>
+<part name="D7" library="SparkFun-DiscreteSemi" deviceset="DIODE" device="SOD" value="Signal">
+<attribute name="FARNELL" value="1843678RL"/>
 </part>
-<part name="D8" library="SparkFun-DiscreteSemi" deviceset="DIODE" device="SOD">
-<attribute name="FARNELL" value="8737843RL"/>
+<part name="D8" library="SparkFun-DiscreteSemi" deviceset="DIODE" device="SOD" value="Signal">
+<attribute name="FARNELL" value="1843678RL"/>
 </part>
-<part name="D9" library="SparkFun-DiscreteSemi" deviceset="DIODE" device="SOD">
-<attribute name="FARNELL" value="8737843RL"/>
+<part name="D9" library="SparkFun-DiscreteSemi" deviceset="DIODE" device="SOD" value="Signal">
+<attribute name="FARNELL" value="1843678RL"/>
 </part>
-<part name="D3" library="SparkFun-DiscreteSemi" deviceset="DIODE" device="SOD">
-<attribute name="FARNELL" value="8737843RL"/>
+<part name="D3" library="SparkFun-DiscreteSemi" deviceset="DIODE" device="SOD" value="Schottky">
+<attribute name="FARNELL" value="2760406"/>
 </part>
-<part name="D10" library="SparkFun-DiscreteSemi" deviceset="DIODE" device="SOD">
-<attribute name="FARNELL" value="8737843RL"/>
+<part name="D10" library="SparkFun-DiscreteSemi" deviceset="DIODE" device="SOD" value="Signal">
+<attribute name="FARNELL" value="1843678RL"/>
 </part>
-<part name="D11" library="SparkFun-DiscreteSemi" deviceset="DIODE" device="SOD">
-<attribute name="FARNELL" value="8737843RL"/>
+<part name="D11" library="SparkFun-DiscreteSemi" deviceset="DIODE" device="SOD" value="Signal">
+<attribute name="FARNELL" value="1843678RL"/>
 </part>
-<part name="D12" library="SparkFun-DiscreteSemi" deviceset="DIODE" device="SOD">
-<attribute name="FARNELL" value="8737843RL"/>
+<part name="D12" library="SparkFun-DiscreteSemi" deviceset="DIODE" device="SOD" value="Schottky">
+<attribute name="FARNELL" value="2760406"/>
 </part>
 <part name="R7" library="SparkFun-Resistors" deviceset="RESISTOR" device="0805" value="10">
 <attribute name="FARNELL" value="2446904"/>
