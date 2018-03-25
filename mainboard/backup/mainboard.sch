@@ -6473,9 +6473,9 @@ In this library the device names are the same as the pin names of the symbols, t
 </class>
 <class number="1" name="alim_small" width="0.508" drill="0">
 </class>
-<class number="2" name="alim_big" width="0.508" drill="0">
+<class number="2" name="alim_big" width="1.524" drill="0">
 </class>
-<class number="3" name="alim_very_big" width="0.508" drill="0">
+<class number="3" name="alim_very_big" width="0.762" drill="0">
 </class>
 </classes>
 <parts>
