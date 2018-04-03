@@ -11,7 +11,7 @@ void motor_init();
 /**
  * Sets the target PWM value for the motor [0-3000]
  */
-void motor_set(int value);
+void motor_set(bool enable, int value);
 
 /**
  * Ticks the motor

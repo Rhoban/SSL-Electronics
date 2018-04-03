@@ -14,6 +14,7 @@ static int motor_pins[6] = {
 
 // Target PWM speed [0-3000]
 static int motor_pwm = 0;
+static bool motor_on = false;
 
 // Hall current phase
 static int hall_current_phase = 0;
@@ -81,43 +82,27 @@ static int hall_value()
 
 TERMINAL_PARAMETER_INT(dts, "", 0);
 
-TERMINAL_COMMAND(tst, "Test")
-{
-    digitalWrite(W_LOW_PIN, LOW);
-    digitalWrite(W_HIGH_PIN, LOW);
-    digitalWrite(U_LOW_PIN, LOW);
-    pinMode(W_LOW_PIN, OUTPUT);
-    pinMode(W_HIGH_PIN, OUTPUT);
-
-    digitalWrite(U_LOW_PIN, HIGH);
-    if (argv > 0) {
-        digitalWrite(W_LOW_PIN, HIGH);
-        delay_us(atoi(argv[0]));
-        digitalWrite(W_LOW_PIN, LOW);
-    }
-    delay_us(3);
-    digitalWrite(W_HIGH_PIN, HIGH);
-    delay_us(5);
-    digitalWrite(W_HIGH_PIN, LOW);
-    digitalWrite(U_LOW_PIN, LOW);
-    delay_us(10);
-}
-
 static void set_phases(int u, int v, int w, int phase)
 {
-    if (u != 0 && v != 0 && w != 0) {
+    bool stopped = false;
+    if (!motor_on || (u != 0 && v != 0 && w != 0)) {
         u = v = w = 0;
     }
+    if (u == 0 && v == 0 && w == 0) {
+        stopped = true;
+    }
 
-    static int last_phase = -2;
+    static int last_phase = -8;
+    static bool last_stopped = true;
     bool update = false;
 
     // Checking if we should update the mos phase, and generate
     // a deadtime
-    update = (last_phase != phase);
+    update = (last_phase != phase) || (stopped != last_stopped);
     last_phase = phase;
-    if (u == 0 && v == 0 && w == 0) {
-        last_phase = -1;
+    last_stopped = stopped;
+    if (!motor_on) {
+        last_phase = -2;
     }
 
     if (update) {
@@ -126,45 +111,39 @@ static void set_phases(int u, int v, int w, int phase)
 
     if (update) {
         // Setting every output to low
-        digitalWrite(U_HIGH_PIN, LOW);
-        digitalWrite(V_HIGH_PIN, LOW);
-        digitalWrite(W_HIGH_PIN, LOW);
         digitalWrite(U_LOW_PIN, LOW);
         digitalWrite(V_LOW_PIN, LOW);
         digitalWrite(W_LOW_PIN, LOW);
-        for (int k=0; k<6; k++) {
-            pinMode(motor_pins[k], OUTPUT);
+
+        pwmWrite(U_HIGH_PIN, 0);
+        pwmWrite(V_HIGH_PIN, 0);
+        pwmWrite(W_HIGH_PIN, 0);
+    }
+
+    if (motor_on) {
+        if (u >= 0) {
+            pwmWrite(U_HIGH_PIN, u);
         }
 
-        // Dead-time
-        delay_us(1);
-    }
+        if (stopped || u != 0) {
+            if (update) digitalWrite(U_LOW_PIN, HIGH);
+        }
 
-    if (u >= 0) {
-        if (update) pinMode(U_HIGH_PIN, PWM);
-        pwmWrite(U_HIGH_PIN, u);
-    }
+        if (v >= 0) {
+            pwmWrite(V_HIGH_PIN, v);
+        }
 
-    if (u != 0) {
-        if (update) digitalWrite(U_LOW_PIN, HIGH);
-    }
+        if (stopped || v != 0) {
+            if (update) digitalWrite(V_LOW_PIN, HIGH);
+        }
 
-    if (v >= 0) {
-        if (update) pinMode(V_HIGH_PIN, PWM);
-        pwmWrite(V_HIGH_PIN, v);
-    }
+        if (w >= 0) {
+            pwmWrite(W_HIGH_PIN, w);
+        }
 
-    if (v != 0) {
-        if (update) digitalWrite(V_LOW_PIN, HIGH);
-    }
-
-    if (w >= 0) {
-        if (update) pinMode(W_HIGH_PIN, PWM);
-        pwmWrite(W_HIGH_PIN, w);
-    }
-
-    if (w != 0) {
-        if (update) digitalWrite(W_LOW_PIN, HIGH);
+        if (stopped || w != 0) {
+            if (update) digitalWrite(W_LOW_PIN, HIGH);
+        }
     }
 }
 
@@ -192,7 +171,14 @@ void motor_init()
     digitalWrite(U_LOW_PIN, LOW);
     digitalWrite(V_LOW_PIN, LOW);
     digitalWrite(W_LOW_PIN, LOW);
-    for (int k=0; k<6; k++)  pinMode(motor_pins[k], OUTPUT);
+
+    pinMode(U_LOW_PIN, OUTPUT);
+    pinMode(V_LOW_PIN, OUTPUT);
+    pinMode(W_LOW_PIN, OUTPUT);
+
+    pinMode(U_HIGH_PIN, PWM);
+    pinMode(V_HIGH_PIN, PWM);
+    pinMode(W_HIGH_PIN, PWM);
 }
 
 TERMINAL_COMMAND(hall, "Test the hall sensors")
@@ -205,8 +191,10 @@ TERMINAL_COMMAND(hall, "Test the hall sensors")
     terminal_io()->println();
 }
 
-void motor_set(int value)
+void motor_set(bool enable, int value)
 {
+    motor_on = enable;
+
     if (value > 0) value += PWM_MIN;
     if (value < 0) value -= PWM_MIN;
 
@@ -272,7 +260,7 @@ void motor_tick()
 TERMINAL_COMMAND(pwm, "Motor set PWM")
 {
     if (argc > 0) {
-        motor_set(atoi(argv[0]));
+        motor_set(true, atoi(argv[0]));
     } else {
         terminal_io()->print("usage: pwm [0-3000] (current: ");
         terminal_io()->print(abs(motor_pwm));

@@ -9,7 +9,7 @@ static SecurityError security_error = SECURITY_NO_ERROR;
 void security_set_error(SecurityError type)
 {
     if (security_error == SECURITY_NO_ERROR || type == SECURITY_NO_ERROR) {
-        motor_set(0);
+        motor_set(false, 0);
         security_error = type;
     }
 }

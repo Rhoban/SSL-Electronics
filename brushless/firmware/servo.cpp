@@ -89,7 +89,7 @@ float servo_lut(float target, float current)
 void servo_tick()
 {
     if (security_get_error() != SECURITY_NO_ERROR) {
-        motor_set(0);
+        motor_set(false, 0);
     } else {
         if (servo_flag) {
             servo_flag = false;
@@ -98,9 +98,9 @@ void servo_tick()
             if (servo_enable) {
                 // No servoing, the value is just 0-1 of pwm max
                 if (fabs(servo_target) > 0.1) {
-                    motor_set((servo_target/20.0)*PWM_MAX);
+                    motor_set(true, (servo_target/20.0)*PWM_MAX);
                 } else {
-                    motor_set(0);
+                    motor_set(false, 0);
                 }
             }
 #else
@@ -193,7 +193,7 @@ void servo_tick()
                 } else {
                     servo_pwm_limited = servo_pwm;
                 }
-                motor_set(servo_pwm_limited);
+                motor_set(true, servo_pwm_limited);
             }
 #endif
         }
@@ -227,7 +227,7 @@ void servo_set(bool enable, float target, int16_t pwm)
         servo_last_error = 0;
         servo_limited_target = 0;
         current_resample();
-        motor_set(0);
+        motor_set(false, 0);
         security_set_error(SECURITY_NO_ERROR);
     }
 }
