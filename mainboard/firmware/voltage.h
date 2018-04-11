@@ -8,7 +8,6 @@ void voltage_tick();
 /**
  * Voltage of two batteries [V]
  */
-float voltage_bat1();
-float voltage_bat2();
+float voltage_value();
 
 #endif

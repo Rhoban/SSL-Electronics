@@ -3,6 +3,7 @@
 #include <terminal.h>
 #include "hardware.h"
 #include "kicker.h"
+#include "mux.h"
 
 static bool kicking = false;
 static int kick_end = 0;
@@ -12,6 +13,7 @@ TERMINAL_PARAMETER_FLOAT(cap, "Capacitor charge", 0.0);
 static void _kicker_irq()
 {
     digitalWrite(KICKER1_PIN, HIGH);
+    digitalWrite(KICKER2_PIN, HIGH);
 
     HardwareTimer timer(KICKER_TIMER);
     timer.pause();
@@ -40,11 +42,11 @@ void kicker_init()
 
     // Kicker pin
     digitalWrite(KICKER1_PIN, HIGH);
+    digitalWrite(KICKER2_PIN, HIGH);
     pinMode(KICKER1_PIN, OUTPUT);
     digitalWrite(KICKER1_PIN, HIGH);
-
-    // Cap voltage
-    pinMode(CAP_PIN, INPUT);
+    pinMode(KICKER2_PIN, OUTPUT);
+    digitalWrite(KICKER2_PIN, HIGH);
 }
 
 void kicker_boost_enable(bool enable)
@@ -56,13 +58,20 @@ void kicker_boost_enable(bool enable)
     }
 }
 
-void kicker_kick(int power)
+void kicker_kick(int kicker, int power)
 {
+    if (power < 0) {
+        return;
+    }
     if (power > 65000) {
         power = 65000;
     }
 
-    digitalWrite(KICKER1_PIN, LOW);
+    if (kicker == 0) {
+        digitalWrite(KICKER1_PIN, LOW);
+    } else {
+        digitalWrite(KICKER2_PIN, LOW);
+    }
 
     HardwareTimer timer(KICKER_TIMER);
     timer.pause();
@@ -77,7 +86,7 @@ void kicker_tick()
 {
     static int lastSample = millis();
 
-    float voltage = 3.3*analogRead(CAP_PIN)/4096;
+    float voltage = 3.3*mux_sample(CAP_ADDR)/4096;
     voltage = voltage*(CAP_R1+CAP_R2)/CAP_R2;
 
     if (millis() - lastSample > 5) {
@@ -102,9 +111,9 @@ TERMINAL_COMMAND(boost, "Enable/disable the booster")
 
 TERMINAL_COMMAND(kick, "Kicks")
 {
-    if (argc) {
-        kicker_kick(atoi(argv[0]));
+    if (argc == 2) {
+        kicker_kick(atoi(argv[0]), atoi(argv[1]));
     } else {
-        terminal_io()->println("Usage: kick [power]");
+        terminal_io()->println("Usage: kick [kicker] [power]");
     }
 }

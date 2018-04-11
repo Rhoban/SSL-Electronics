@@ -12,8 +12,8 @@ static bool drivers_present[5] = {false};
 struct driver_packet_ans driver_answers[5];
 
 static int drivers_pins[5] = {
-    DRIVERS_CS1, DRIVERS_CS4, DRIVERS_CS3,
-    DRIVERS_CS2, DRIVERS_CS5
+    DRIVERS_CS1, DRIVERS_CS2, DRIVERS_CS3,
+    DRIVERS_CS4, DRIVERS_CS5
 };
 
 int drivers_ping(int index)

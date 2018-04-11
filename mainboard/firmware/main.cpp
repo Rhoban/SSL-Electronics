@@ -12,12 +12,19 @@
 #include "voltage.h"
 #include "ir.h"
 #include "kinematic.h"
+#include "mux.h"
 
 /**
  * Setup function
  */
 void setup()
 {
+    init();
+    RCC_BASE->APB1ENR &= ~RCC_APB1ENR_USART2EN;
+
+    // Multiplexer
+    mux_init();
+
     // Initalizng com
     com_init();
 
@@ -46,6 +53,9 @@ void setup()
     }
 
     terminal_init(&SerialUSB);
+
+    // Multiplexer
+    mux_init();
 }
 
 /**
@@ -68,9 +78,6 @@ void loop()
     // Drivers
     drivers_tick();
 
-    // Ticking the terminal
-    terminal_tick();
-
     // Kick
     kicker_tick();
 
@@ -79,6 +86,9 @@ void loop()
 
     // Kinematic
     kinematic_tick();
+
+    // Ticking the terminal
+    terminal_tick();
 }
 
 TERMINAL_COMMAND(diag, "Diagnostic")

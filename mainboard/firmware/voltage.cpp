@@ -3,14 +3,13 @@
 #include <terminal.h>
 #include "hardware.h"
 #include "voltage.h"
+#include "mux.h"
 
-TERMINAL_PARAMETER_FLOAT(bat1, "Battery 1", 0.0);
-TERMINAL_PARAMETER_FLOAT(bat2, "Battery 2", 0.0);
+TERMINAL_PARAMETER_FLOAT(bat, "Battery 1", 0.0);
 
 void voltage_init()
 {
-    pinMode(BAT1_PIN, INPUT);
-    pinMode(BAT2_PIN, INPUT);
+    bat = 0;
 }
 
 void voltage_tick()
@@ -20,23 +19,13 @@ void voltage_tick()
     if ((millis() - lastSample) > 5) {
         lastSample = millis();
 
-        float v1 = analogRead(BAT1_PIN)*3.3/4096;
-        v1 = v1*(BAT1_R1 + BAT1_R2)/BAT1_R2;
-        bat1 = bat1*0.99 + v1*0.01;
-
-        float v2 = analogRead(BAT1_PIN)*3.3/4096;
-        v2 = (v2*(BAT1_R1 + BAT1_R2)/BAT1_R2) - v1;
-        if (v2 < 0) v2 = 0;
-        bat2 = bat2*0.99 + v2*0.01;
+        float v1 = mux_sample(BAT_ADDR)*3.3/4096;
+        v1 = v1*(BAT_R1 + BAT_R2)/BAT_R2;
+        bat = bat*0.99 + v1*0.01;
     }
 }
 
-float voltage_bat1()
+float voltage_value()
 {
-    return bat1;
-}
-
-float voltage_bat2()
-{
-    return bat2;
+    return bat;
 }

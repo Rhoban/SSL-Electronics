@@ -259,14 +259,18 @@ static void com_set_tx_addr(int index, uint8_t target)
     com_set_reg5(index, REG_TX_ADDR, addr);
 }
 
-static void com_ce_enable()
+static void com_ce_enable(int index)
 {
-    digitalWrite(COM_CE, HIGH);
+    if (index == 0) digitalWrite(COM_CE1, HIGH);
+    else if (index == 1) digitalWrite(COM_CE2, HIGH);
+    else if (index == 2) digitalWrite(COM_CE3, HIGH);
 }
 
-static void com_ce_disable()
+static void com_ce_disable(int index)
 {
-    digitalWrite(COM_CE, LOW);
+    if (index == 0) digitalWrite(COM_CE1, LOW);
+    else if (index == 1) digitalWrite(COM_CE2, LOW);
+    else if (index == 2) digitalWrite(COM_CE3, LOW);
 }
 
 bool com_is_ok(int index)
@@ -298,9 +302,12 @@ void com_init()
     }
 
     // Initializing COM_CE
-    digitalWrite(COM_CE, LOW);
-    pinMode(COM_CE, OUTPUT);
-    digitalWrite(COM_CE, LOW);
+    digitalWrite(COM_CE1, LOW);
+    digitalWrite(COM_CE2, LOW);
+    digitalWrite(COM_CE3, LOW);
+    pinMode(COM_CE1, OUTPUT);
+    pinMode(COM_CE2, OUTPUT);
+    pinMode(COM_CE3, OUTPUT);
 
     for (int k=0; k<3; k++) {
         // Disabling auto acknowledgement
@@ -338,7 +345,9 @@ void com_init()
     }
 
     // Listening
-    com_ce_enable();
+    for (int k=0; k<3; k++) {
+        com_ce_enable(k);
+    }
 
     // Initializing IRQ pins
     detachInterrupt(COM_IRQ1);
@@ -433,16 +442,15 @@ void com_process_master()
         packet.id = COM_ID;
         packet.status = STATUS_OK;
         packet.cap_volt = kicker_cap_voltage();
-        packet.bat1_volt = voltage_bat1()*10.0;
-        packet.bat2_volt = voltage_bat2()*10.0;
+        packet.voltage = voltage_value()*10.0;
 
-        com_ce_disable();
         for (size_t k=0; k<3; k++) {
+            com_ce_disable(k);
             com_mode(k, true, false);
             com_set_reg(k, REG_STATUS, 0x70);
             com_tx(k, (uint8_t *)&packet, sizeof(struct packet_robot));
+            com_ce_enable(k);
         }
-        com_ce_enable();
 
         // Decoding instruction packet
         struct packet_master *master_packet;
@@ -468,7 +476,7 @@ void com_process_master()
             // Kicking
             if ((master_packet->actions & ACTION_KICK1) &&
                 !(my_actions & ACTION_KICK1)) {
-                kicker_kick(master_packet->kickPower);
+                kicker_kick(1, master_packet->kickPower);
             }
             // XXX: Handle KICK2
 
@@ -530,8 +538,8 @@ void com_tick()
                     transmitting = true;
 
                     // Sending the packet to the 3 modules
-                    com_ce_disable();
                     for (size_t k=0; k<3; k++) {
+                        com_ce_disable(k);
                         // Preparing to transmit
                         com_mode(k, true, false);
                         com_set_reg(k, REG_STATUS, 0x70);
@@ -539,8 +547,8 @@ void com_tick()
 
                         // Transmitting the payload
                         com_tx(k, com_robots[com_master_pos], PACKET_SIZE);
+                        com_ce_enable(k);
                     }
-                    com_ce_enable();
                     com_should_transmit[com_master_pos] = false;
                 }
 
@@ -709,4 +717,6 @@ TERMINAL_COMMAND(em, "Emergency")
             drivers_set(k, false, 0.0);
         }
     }
+
+    kicker_boost_enable(false);
 }

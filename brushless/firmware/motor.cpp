@@ -268,3 +268,27 @@ TERMINAL_COMMAND(pwm, "Motor set PWM")
         terminal_io()->println();
     }
 }
+
+TERMINAL_COMMAND(itest, "Interference test")
+{
+    for (int k=0; k<6; k++) {
+        for (int j=0; k<6; k++) {
+            if (j != k) {
+                int pin1 = motor_pins[j];
+                int pin2 = motor_pins[k];
+
+                pinMode(pin1, INPUT_PULLUP);
+                pinMode(pin2, OUTPUT);
+                digitalWrite(pin2, LOW);
+
+                if (digitalRead(pin1) == LOW) {
+                    terminal_io()->print("Interference between ");
+                    terminal_io()->print(motor_pins[j]);
+                    terminal_io()->print(" and ");
+                    terminal_io()->print(motor_pins[k]);
+                    terminal_io()->println();
+                }
+            }
+        }
+    }
+}
