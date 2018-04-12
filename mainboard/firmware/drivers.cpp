@@ -178,7 +178,8 @@ TERMINAL_COMMAND(blink, "Blink the drivers")
 
 bool drivers_is_all_ok()
 {
-    for (int k=0; k<5; k++) {
+    // XXX: We are only looking for the 4th firsts
+    for (int k=0; k<4; k++) {
         if (!drivers_present[k]) {
             return false;
         }
