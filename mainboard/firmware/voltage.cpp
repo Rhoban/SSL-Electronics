@@ -5,11 +5,14 @@
 #include "voltage.h"
 #include "mux.h"
 
+static bool bat_init = false;
+
 TERMINAL_PARAMETER_FLOAT(bat, "Battery 1", 0.0);
 
 void voltage_init()
 {
     bat = 0;
+    bat_init = false;
 }
 
 void voltage_tick()
@@ -21,7 +24,13 @@ void voltage_tick()
 
         float v1 = mux_sample(BAT_ADDR)*3.3/4096;
         v1 = v1*(BAT_R1 + BAT_R2)/BAT_R2;
-        bat = bat*0.99 + v1*0.01;
+
+        if (bat_init) {
+            bat_init = false;
+            bat = v1;
+        } else {
+            bat = bat*0.99 + v1*0.01;
+        }
     }
 }
 

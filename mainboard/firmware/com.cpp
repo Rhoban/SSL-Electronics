@@ -441,6 +441,11 @@ void com_process_master()
         struct packet_robot packet;
         packet.id = COM_ID;
         packet.status = STATUS_OK;
+
+        if (!drivers_is_all_ok()) {
+            packet.status |= STATUS_DRIVER_ERR;
+        }
+
         packet.cap_volt = kicker_cap_voltage();
         packet.voltage = voltage_value()*10.0;
 
