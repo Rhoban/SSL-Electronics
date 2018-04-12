@@ -403,7 +403,7 @@ static void com_usb_tick()
         } else if (state == 2) {
             com_usb_nb_robots = c;
             pos = 0;
-            if (com_usb_nb_robots < MAX_ROBOTS) {
+            if (com_usb_nb_robots <= MAX_ROBOTS) {
                 state++;
             } else {
                 state = 0;
@@ -476,9 +476,13 @@ void com_process_master()
             // Kicking
             if ((master_packet->actions & ACTION_KICK1) &&
                 !(my_actions & ACTION_KICK1)) {
-                kicker_kick(1, master_packet->kickPower);
+                kicker_kick(1, master_packet->kickPower*25);
             }
-            // XXX: Handle KICK2
+
+            if ((master_packet->actions & ACTION_KICK2) &&
+                !(my_actions & ACTION_KICK2)) {
+                kicker_kick(0, master_packet->kickPower*25);
+            }
 
             my_actions = master_packet->actions;
         } else {
@@ -553,7 +557,7 @@ void com_tick()
                 }
 
                 if (com_master_pos >= MAX_ROBOTS) {
-                    // Our cyle is over, sending back the robot statuses
+                    // Our cycle is over, sending back the robot statuses
                     size_t statuses = 0;
                     for (size_t k=0; k<MAX_ROBOTS; k++) {
                         if (com_has_status[k]) {
@@ -607,13 +611,13 @@ void com_tick()
     if ((millis() - com_master_reception) < 100 && com_master_reception != 0) {
         if (!com_has_master) {
             com_has_master = true;
-            buzzer_play(MELODY_BEGIN);
+            // buzzer_play(MELODY_BEGIN);
         }
         digitalWrite(BOARD_LED_PIN, HIGH);
     } else {
         if (com_has_master) {
             com_has_master = false;
-            buzzer_play(MELODY_END);
+            // buzzer_play(MELODY_END);
         }
         my_actions = 0;
         digitalWrite(BOARD_LED_PIN, LOW);
