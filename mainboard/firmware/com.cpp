@@ -616,13 +616,13 @@ void com_tick()
     if ((millis() - com_master_reception) < 100 && com_master_reception != 0) {
         if (!com_has_master) {
             com_has_master = true;
-            // buzzer_play(MELODY_BEGIN);
+            buzzer_play(MELODY_BEGIN);
         }
         digitalWrite(BOARD_LED_PIN, HIGH);
     } else {
         if (com_has_master) {
             com_has_master = false;
-            // buzzer_play(MELODY_END);
+            buzzer_play(MELODY_END);
         }
         my_actions = 0;
         digitalWrite(BOARD_LED_PIN, LOW);
