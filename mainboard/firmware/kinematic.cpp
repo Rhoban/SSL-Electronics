@@ -18,13 +18,13 @@ static int enabled_since = 0;
 #define ANGLE_FRONT  DEG2RAD(120)
 
 #define FRONT_LEFT_X     -sin(ANGLE_FRONT)
-#define FRONT_LEFT_Y     cos(ANGLE_FRONT)
+#define FRONT_LEFT_Y     -cos(ANGLE_FRONT)
 #define FRONT_RIGHT_X    -sin(-ANGLE_FRONT)
-#define FRONT_RIGHT_Y    cos(-ANGLE_FRONT)
+#define FRONT_RIGHT_Y    -cos(-ANGLE_FRONT)
 #define REAR_LEFT_X      -sin(ANGLE_REAR)
-#define REAR_LEFT_Y      cos(ANGLE_REAR)
+#define REAR_LEFT_Y      -cos(ANGLE_REAR)
 #define REAR_RIGHT_X     -sin(-ANGLE_REAR)
-#define REAR_RIGHT_Y     cos(-ANGLE_REAR)
+#define REAR_RIGHT_Y     -cos(-ANGLE_REAR)
 
 void kinematic_compute(float x, float y, float t,
     float *frontLeft, float *frontRight, float *rearLeft, float *rearRight)
@@ -64,7 +64,7 @@ void kinematic_stop()
 int16_t pwm_lut(float target)
 {
     float sign = (target < 0) ? -1 : 1;
-    return 32*target + sign*60;
+    return 20*target + sign*83;
 }
 
 void kinematic_tick()
