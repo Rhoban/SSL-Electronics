@@ -39,7 +39,7 @@ struct packet_robot {
 
     uint8_t cap_volt;                  // Kick capcaitor voltage (V)
 
-    uint8_t voltage;                  // Battery 1 voltage (10th of V)
+    uint8_t voltage;                  // Battery 1 voltage (8th of V)
 } __attribute__((packed));
 
 void com_init();

@@ -447,7 +447,7 @@ void com_process_master()
         }
 
         packet.cap_volt = kicker_cap_voltage();
-        packet.voltage = voltage_value()*10.0;
+        packet.voltage = voltage_value()*8.0;
 
         for (size_t k=0; k<3; k++) {
             com_ce_disable(k);
