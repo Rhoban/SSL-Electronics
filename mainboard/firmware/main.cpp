@@ -87,6 +87,9 @@ void loop()
     // Kinematic
     kinematic_tick();
 
+    // IR
+    ir_tick();
+
     // Ticking the terminal
     terminal_tick();
 }

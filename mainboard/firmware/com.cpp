@@ -11,6 +11,7 @@
 #include "drivers.h"
 #include "voltage.h"
 #include "kicker.h"
+#include "ir.h"
 
 // Channels
 static int com_channels[3] = {0, 50, 100};
@@ -465,8 +466,8 @@ void com_process_master()
         if (master_packet->actions & ACTION_ON) {
             kinematic_set(master_packet->x_speed/1000.0, master_packet->y_speed/1000.0,
                  master_packet->t_speed/1000.0);
-            if (master_packet->actions & ACTION_DRIBBLE) {
-                drivers_set_safe(4, true, 0.2);
+            if (master_packet->actions & ACTION_DRIBBLE && ir_present()) {
+                drivers_set_safe(4, true, 0.4);
             } else {
                 drivers_set_safe(4, false, 0);
             }
@@ -479,17 +480,22 @@ void com_process_master()
             }
 
             // Kicking
-            if ((master_packet->actions & ACTION_KICK1) &&
-                !(my_actions & ACTION_KICK1)) {
-                kicker_kick(1, master_packet->kickPower*25);
-            }
+            if (ir_present()) {
+                if ((master_packet->actions & ACTION_KICK1) &&
+                    !(my_actions & ACTION_KICK1)) {
+                    kicker_kick(1, master_packet->kickPower*25);
+                }
 
-            if ((master_packet->actions & ACTION_KICK2) &&
-                !(my_actions & ACTION_KICK2)) {
-                kicker_kick(0, master_packet->kickPower*25);
-            }
+                if ((master_packet->actions & ACTION_KICK2) &&
+                    !(my_actions & ACTION_KICK2)) {
+                    kicker_kick(0, master_packet->kickPower*25);
+                }
 
-            my_actions = master_packet->actions;
+                my_actions = master_packet->actions;
+            } else {
+                my_actions = master_packet->actions;
+                my_actions &= ~(ACTION_KICK1 | ACTION_KICK2);
+            }
         } else {
             drivers_set(0, false, 0);
             drivers_set(1, false, 0);
