@@ -34,4 +34,22 @@ float servo_get_speed();
  */
 int servo_get_pwm();
 
+
+class fifo{
+  public:
+    fifo();
+    fifo(int _length);
+    ~fifo();
+
+    void top(double _newValue);
+    void init();
+    int get_Length();
+    double get_Value(int _pos);
+
+  private:
+    int length;
+    double *data;
+    void pop();
+};
+
 #endif
