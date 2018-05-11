@@ -11,8 +11,10 @@
 #include "kicker.h"
 #include "voltage.h"
 #include "ir.h"
+#include "infos.h"
 #include "kinematic.h"
 #include "mux.h"
+#include "infos.h"
 
 /**
  * Setup function
@@ -21,6 +23,9 @@ void setup()
 {
     init();
     RCC_BASE->APB1ENR &= ~RCC_APB1ENR_USART2EN;
+
+    // Can be used to set the robot id
+    // infos_set_id(8);
 
     // Multiplexer
     mux_init();
@@ -56,6 +61,9 @@ void setup()
 
     // Multiplexer
     mux_init();
+
+    // Infos
+    infos_init();
 }
 
 /**

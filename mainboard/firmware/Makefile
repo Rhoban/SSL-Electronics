@@ -44,7 +44,7 @@ BOARD ?= maple_mini
 MEMORY_TARGET ?= flash
 
 BOOTLOADER ?= robotis
-BOOTLOADER_PORT ?= /dev/ttyACM0
+BOOTLOADER_PORT ?= /dev/ttyACM1
 
 # $(BOARD)- and $(MEMORY_TARGET)-specific configuration
 include $(MAKEDIR)/target-config.mk
@@ -75,7 +75,7 @@ GLOBAL_CFLAGS   := -Os -gdwarf-2 -nostdlib \
 		   -Wl,--gc-sections $(TARGET_FLAGS) \
 		   -DRC=Serial2 \
 		   -DBOOTLOADER_$(BOOTLOADER) \
-		   -DMETABOT_VERSION="0.0" 
+		   -DMETABOT_VERSION="0.0"
 GLOBAL_CXXFLAGS := -fno-rtti -fno-exceptions -Wall $(TARGET_FLAGS)
 GLOBAL_ASFLAGS  := -x assembler-with-cpp $(TARGET_FLAGS)
 LDFLAGS  = $(TARGET_LDFLAGS) $(TOOLCHAIN_LDFLAGS) -mcpu=cortex-m3 -mthumb \

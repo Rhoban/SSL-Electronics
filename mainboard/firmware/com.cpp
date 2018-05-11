@@ -11,6 +11,7 @@
 #include "drivers.h"
 #include "voltage.h"
 #include "kicker.h"
+#include "infos.h"
 #include "ir.h"
 
 // Channels
@@ -45,10 +46,14 @@ static size_t com_usb_nb_robots = 0;
 static int com_master_reception = 0;
 static bool com_has_master = false;
 static uint8_t com_master_frame[PACKET_SIZE];
-static int com_master_packets = 0;
+static volatile int com_master_packets = 0;
+static int com_last_init = 0;
 static bool com_master_new = false;
 static bool com_master_controlling = false;
 static int my_actions = 0;
+
+static bool com_module_present[3] = {true};
+static int com_module_last_missing[3] = {0};
 
 HardwareSPI com(COM_SPI);
 
@@ -68,6 +73,9 @@ HardwareSPI com(COM_SPI);
 #define REG_RF_CH       0x05
 #define REG_RF_SETUP    0x06
 #define REG_STATUS      0x07
+#define REG_STATUS_ZERO     0x80
+#define REG_STATUS_RX_DR    0x40
+#define REG_STATUS_TX_DS    0x20
 #define REG_OBSERVE_TX  0x08
 #define REG_RPD         0x09
 #define REG_RX_ADDR_P0  0x0a  // 5 bytes
@@ -150,6 +158,14 @@ uint8_t com_read_reg(int index, uint8_t reg)
     return packet[1];
 }
 
+uint8_t com_read_status(int index)
+{
+    uint8_t packet[1] = {OP_NOP};
+    com_send(index, packet, 1);
+
+    return packet[0];
+}
+
 void com_read_reg5(int index, uint8_t reg, uint8_t result[5])
 {
     reg |= OP_READ;
@@ -204,39 +220,51 @@ static void com_rx(int index, uint8_t *payload, size_t n)
     }
 }
 
-void com_irq(int index)
+bool com_is_ok(int index);
+
+bool com_irq(int index)
 {
-    int status = com_read_reg(index, REG_STATUS);
+    int status = com_read_status(index);
 
-    if (status & 0x40) { // RX
-        com_available[index] = true;
+    // Checking that the module is present (bit 7 should be always 0)
+    if (status != 0xff) {
+        if (status & REG_STATUS_RX_DR) { // RX
+            com_available[index] = true;
 
-        if (com_master) {
-            // Receiving a status packet from a robot
-            struct packet_robot packet;
-            com_rx(index, (uint8_t*)&packet, sizeof(struct packet_robot));
+            if (com_master) {
+                // Receiving a status packet from a robot
+                struct packet_robot packet;
+                com_rx(index, (uint8_t*)&packet, sizeof(struct packet_robot));
 
-            if (packet.id < MAX_ROBOTS) {
-                com_has_status[packet.id] = true;
-                com_statuses[packet.id] = packet;
-                com_robot_reception[packet.id] = millis();
+                if (packet.id < MAX_ROBOTS) {
+                    com_has_status[packet.id] = true;
+                    com_statuses[packet.id] = packet;
+                    com_robot_reception[packet.id] = millis();
+                }
+            } else {
+                // Receiving an instruction packet from the master
+                com_master_reception = millis();
+                com_master_new = true;
+                com_master_packets++;
+                com_rx(index, com_master_frame, PACKET_SIZE);
             }
-        } else {
-            // Receiving an instruction packet from the master
-            com_master_reception = millis();
-            com_master_new = true;
-            com_master_packets++;
-            com_rx(index, com_master_frame, PACKET_SIZE);
         }
-    }
-    if (status & 0x20) { // TX
-        com_mode(index, true, true);
+        if (status & REG_STATUS_TX_DS) { // TX
+            com_mode(index, true, true);
+        }
+
+        // Resetting flags
+        if (status & (REG_STATUS_RX_DR | REG_STATUS_TX_DS)) {
+            com_set_reg(index, REG_STATUS, 0x70);
+        }
+
+        return true;
     }
 
-    // Resetting flags
-    com_set_reg(index, REG_STATUS, 0x70);
+    return false;
 }
 
+/*
 void com_irq1()
 {
     com_irq(0);
@@ -250,6 +278,30 @@ void com_irq2()
 void com_irq3()
 {
     com_irq(2);
+}
+*/
+
+
+static void com_poll()
+{
+    bool reinit = false;
+    for (int k=0; k<3; k++) {
+        bool present = com_irq(k);
+
+        if (!present) {
+            com_module_last_missing[k] = millis();
+            com_module_present[k] = false;
+        } else {
+            if (!com_module_present[k] && (millis() - com_module_last_missing[k] > 150)) {
+                reinit = true;
+                com_module_present[k] = true;
+            }
+        }
+    }
+
+    if (reinit) {
+        com_init();
+    }
 }
 
 static void com_set_tx_addr(int index, uint8_t target)
@@ -292,6 +344,11 @@ bool com_is_ok(int index)
 
 void com_init()
 {
+    // Not initializing if we don't have an id and are not master
+    if (infos_get_id() == 0xff && !com_master) {
+        return;
+    }
+
     // Initializing SPI
     com.begin(SPI_4_5MHZ, MSBFIRST, 0);
 
@@ -322,7 +379,7 @@ void com_init()
         if (com_master) {
             addr[4] = COM_MASTER;
         } else {
-            addr[4] = COM_ID;
+            addr[4] = infos_get_id();
         }
         com_set_reg5(k, REG_RX_ADDR_P0, addr);
 
@@ -341,7 +398,9 @@ void com_init()
 
         // If I am not the master, I will talk only to the master
         if (!com_master) {
-            com_set_tx_addr(2, COM_MASTER);
+            for (int k=0; k<3; k++) {
+                com_set_tx_addr(k, COM_MASTER);
+            }
         }
     }
 
@@ -351,6 +410,11 @@ void com_init()
     }
 
     // Initializing IRQ pins
+    // XXX: We don't listen to IRQs anymore because there was a routing issue
+    // in rev1, IRQ2 & IRQ3 was routed to USB D+/D- pins which make it not
+    // suitable to use, se we now poll the communication module.
+    // This may be fixed in the future.
+    /*
     detachInterrupt(COM_IRQ1);
     if (com_is_ok(0)) {
         if (com_read_reg(0, REG_STATUS) & 0xf0) {
@@ -376,10 +440,22 @@ void com_init()
         pinMode(COM_IRQ3, INPUT);
         attachInterrupt(COM_IRQ3, com_irq3, FALLING);
     }
+    */
 
     // Disable everything in robot commands
     com_master_packets = 0;
     com_master_pos = 0;
+    com_last_init = millis();
+}
+
+TERMINAL_COMMAND(ci, "CI")
+{
+    com_init();
+}
+
+TERMINAL_COMMAND(comi, "Com stats")
+{
+    terminal_io()->println(millis()-com_last_init);
 }
 
 static void com_usb_tick()
@@ -440,11 +516,15 @@ void com_process_master()
     if (com_master_frame[0] == INSTRUCTION_MASTER) {
         // Answering with status packet
         struct packet_robot packet;
-        packet.id = COM_ID;
+        packet.id = infos_get_id();
         packet.status = STATUS_OK;
 
         if (!drivers_is_all_ok()) {
             packet.status |= STATUS_DRIVER_ERR;
+        }
+
+        if (ir_present()) {
+            packet.status |= STATUS_IR;
         }
 
         packet.cap_volt = kicker_cap_voltage();
@@ -525,6 +605,9 @@ void com_tick()
     while (com_master) {
         // Feed the watchdog
         watchdog_feed();
+
+        // Polling com IRQs
+        com_poll();
 
         // Tick the communication with USB master
         #ifdef BINARY
@@ -610,6 +693,9 @@ void com_tick()
         }
     }
 
+    // Polling IRQs
+    com_poll();
+
     // Processing a packet from the master
     if (!com_master && com_master_new) {
         com_master_controlling = true;
@@ -656,27 +742,29 @@ TERMINAL_COMMAND(ct, "Com tx")
 
 TERMINAL_COMMAND(st, "St")
 {
+    int index = atoi(argv[0]);
+
     terminal_io()->println("STATUS");
-    terminal_io()->println(com_read_reg(2, REG_STATUS));
+    terminal_io()->println(com_read_status(index));
     terminal_io()->println("CONFIG");
-    terminal_io()->println(com_read_reg(2, REG_CONFIG));
+    terminal_io()->println(com_read_reg(index, REG_CONFIG));
     terminal_io()->println("EN_AA");
-    terminal_io()->println(com_read_reg(2, REG_EN_AA));
+    terminal_io()->println(com_read_reg(index, REG_EN_AA));
     terminal_io()->println("EN_RXADDR");
-    terminal_io()->println(com_read_reg(2, REG_EN_RXADDR));
+    terminal_io()->println(com_read_reg(index, REG_EN_RXADDR));
     terminal_io()->println("RF_CH");
-    terminal_io()->println(com_read_reg(2, REG_RF_CH));
+    terminal_io()->println(com_read_reg(index, REG_RF_CH));
     terminal_io()->println("RX_PW_P0");
-    terminal_io()->println(com_read_reg(2, REG_RX_PW_P0));
+    terminal_io()->println(com_read_reg(index, REG_RX_PW_P0));
 
     terminal_io()->println("RX_ADDR_P0");
     uint8_t value[5];
-    com_read_reg5(2, REG_RX_ADDR_P0, value);
+    com_read_reg5(index, REG_RX_ADDR_P0, value);
     for (size_t k=0; k<5; k++)
     terminal_io()->println((int)value[k]);
 
     terminal_io()->println("TX_ADDR");
-    com_read_reg5(2, REG_TX_ADDR, value);
+    com_read_reg5(index, REG_TX_ADDR, value);
     for (size_t k=0; k<5; k++)
     terminal_io()->println((int)value[k]);
 }
