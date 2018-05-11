@@ -36,9 +36,6 @@ void setup()
     // Initalizing drivers
     drivers_init();
 
-    // Starting the watchdog
-    watchdog_start(WATCHDOG_14MS);
-
     // Kicker
     kicker_init();
 
@@ -62,8 +59,11 @@ void setup()
     // Infos
     infos_init();
 
-    // Multiplexer
-    mux_init();
+    // Starting the watchdog
+    watchdog_start(WATCHDOG_14MS);
+
+    // Reiniting com
+    com_init();
 }
 
 /**
