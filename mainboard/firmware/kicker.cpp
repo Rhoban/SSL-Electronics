@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <wirish/wirish.h>
 #include <terminal.h>
+#include <watchdog.h>
 #include "hardware.h"
 #include "kicker.h"
 #include "mux.h"
@@ -100,6 +101,11 @@ float kicker_cap_voltage()
     return cap;
 }
 
+TERMINAL_COMMAND(cd, "Cap debug")
+{
+    terminal_io()->println(mux_sample(CAP_ADDR));
+}
+
 TERMINAL_COMMAND(boost, "Enable/disable the booster")
 {
     if (argc) {
@@ -115,5 +121,24 @@ TERMINAL_COMMAND(kick, "Kicks")
         kicker_kick(atoi(argv[0]), atoi(argv[1]));
     } else {
         terminal_io()->println("Usage: kick [kicker] [power]");
+    }
+}
+
+TERMINAL_COMMAND(cc, "Clear cap")
+{
+    kicker_boost_enable(0);
+
+    for (int k=0; k<300; k++) {
+        watchdog_feed();
+        kicker_kick(1, 250);
+        delay(5);
+    }
+
+    for (int k=0; k<5; k++) {
+        kicker_kick(1, 5000);
+        delay(5);
+        watchdog_feed();
+        delay(5);
+        watchdog_feed();
     }
 }

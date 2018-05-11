@@ -59,11 +59,11 @@ void setup()
 
     terminal_init(&SerialUSB);
 
-    // Multiplexer
-    mux_init();
-
     // Infos
     infos_init();
+
+    // Multiplexer
+    mux_init();
 }
 
 /**

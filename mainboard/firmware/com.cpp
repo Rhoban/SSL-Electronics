@@ -3,6 +3,7 @@
 #include <terminal.h>
 #include "buzzer.h"
 #include "com.h"
+#include "mux.h"
 #include <wirish/wirish.h>
 #include <watchdog.h>
 #include "kicker.h"
@@ -47,6 +48,7 @@ static int com_master_reception = 0;
 static bool com_has_master = false;
 static uint8_t com_master_frame[PACKET_SIZE];
 static volatile int com_master_packets = 0;
+static int com_master_channel_packets[3] = {0};
 static int com_last_init = 0;
 static bool com_master_new = false;
 static bool com_master_controlling = false;
@@ -246,6 +248,7 @@ bool com_irq(int index)
                 com_master_reception = millis();
                 com_master_new = true;
                 com_master_packets++;
+                com_master_channel_packets[index]++;
                 com_rx(index, com_master_frame, PACKET_SIZE);
             }
         }
@@ -446,6 +449,8 @@ void com_init()
     com_master_packets = 0;
     com_master_pos = 0;
     com_last_init = millis();
+
+    mux_init();
 }
 
 TERMINAL_COMMAND(ci, "CI")
@@ -708,13 +713,13 @@ void com_tick()
     if ((millis() - com_master_reception) < 100 && com_master_reception != 0) {
         if (!com_has_master) {
             com_has_master = true;
-            buzzer_play(MELODY_BEGIN);
+            // buzzer_play(MELODY_BEGIN);
         }
         digitalWrite(BOARD_LED_PIN, HIGH);
     } else {
         if (com_has_master) {
             com_has_master = false;
-            buzzer_play(MELODY_END);
+            // buzzer_play(MELODY_END);
         }
         my_actions = 0;
         digitalWrite(BOARD_LED_PIN, LOW);
@@ -724,6 +729,9 @@ void com_tick()
 TERMINAL_COMMAND(mp, "Master packets")
 {
     terminal_io()->println(com_master_packets);
+    terminal_io()->println(com_master_channel_packets[0]);
+    terminal_io()->println(com_master_channel_packets[1]);
+    terminal_io()->println(com_master_channel_packets[2]);
 }
 
 TERMINAL_COMMAND(ct, "Com tx")
