@@ -54,6 +54,8 @@ static bool com_master_new = false;
 static bool com_master_controlling = false;
 static int my_actions = 0;
 
+static bool com_txing[3] = {false};
+
 static bool com_module_present[3] = {true};
 static int com_module_last_missing[3] = {0};
 
@@ -96,6 +98,11 @@ HardwareSPI com(COM_SPI);
 #define REG_FIFO_STATUS 0x17
 #define REG_DYNPD       0x1c
 #define REG_FEATURE     0x1d
+
+#define TX_FULL         (1<<5)
+#define TX_EMPTY        (1<<4)
+#define RX_FULL         (1<<1)
+#define RX_EMPTY        (1<<0)
 
 #define PAYLOAD_SIZE    5
 
@@ -200,6 +207,8 @@ static void com_mode(int index, bool power, bool rx)
 
 static void com_tx(int index, uint8_t *payload, size_t n)
 {
+    com_txing[index] = true;
+
     uint8_t packet[n+1];
     packet[0] = OP_TX;
     for (int k=0; k<n; k++) {
@@ -222,15 +231,13 @@ static void com_rx(int index, uint8_t *payload, size_t n)
     }
 }
 
-bool com_is_ok(int index);
-
 bool com_irq(int index)
 {
-    int status = com_read_status(index);
+    int fifo = com_read_reg(index, REG_FIFO_STATUS);
 
     // Checking that the module is present (bit 7 should be always 0)
-    if (status != 0xff) {
-        if (status & REG_STATUS_RX_DR) { // RX
+    if (fifo != 0xff) {
+        if ((fifo & RX_EMPTY) == 0) { // RX
             com_available[index] = true;
 
             if (com_master) {
@@ -252,13 +259,9 @@ bool com_irq(int index)
                 com_rx(index, com_master_frame, PACKET_SIZE);
             }
         }
-        if (status & REG_STATUS_TX_DS) { // TX
+        if (com_txing[index] && ((fifo & TX_EMPTY) != 0)) { // TX is over
+            com_txing[index] = false;
             com_mode(index, true, true);
-        }
-
-        // Resetting flags
-        if (status & (REG_STATUS_RX_DR | REG_STATUS_TX_DS)) {
-            com_set_reg(index, REG_STATUS, 0x70);
         }
 
         return true;
@@ -409,6 +412,8 @@ void com_init()
 
     // Listening
     for (int k=0; k<3; k++) {
+        com_txing[k] = false;
+        com_set_reg(k, REG_STATUS, 0x70);
         com_ce_enable(k);
     }
 
@@ -516,32 +521,37 @@ static void com_usb_tick()
     }
 }
 
+void com_send_status_to_master()
+{
+    struct packet_robot packet;
+    packet.id = infos_get_id();
+    packet.status = STATUS_OK;
+
+    if (!drivers_is_all_ok()) {
+        packet.status |= STATUS_DRIVER_ERR;
+    }
+
+    if (ir_present()) {
+        packet.status |= STATUS_IR;
+    }
+
+    packet.cap_volt = kicker_cap_voltage();
+    packet.voltage = voltage_value()*8.0;
+
+    for (size_t k=0; k<3; k++) {
+        com_ce_disable(k);
+        com_mode(k, true, false);
+        com_set_reg(k, REG_STATUS, 0x70);
+        com_tx(k, (uint8_t *)&packet, sizeof(struct packet_robot));
+        com_ce_enable(k);
+    }
+}
+
 void com_process_master()
 {
     if (com_master_frame[0] == INSTRUCTION_MASTER) {
         // Answering with status packet
-        struct packet_robot packet;
-        packet.id = infos_get_id();
-        packet.status = STATUS_OK;
-
-        if (!drivers_is_all_ok()) {
-            packet.status |= STATUS_DRIVER_ERR;
-        }
-
-        if (ir_present()) {
-            packet.status |= STATUS_IR;
-        }
-
-        packet.cap_volt = kicker_cap_voltage();
-        packet.voltage = voltage_value()*8.0;
-
-        for (size_t k=0; k<3; k++) {
-            com_ce_disable(k);
-            com_mode(k, true, false);
-            com_set_reg(k, REG_STATUS, 0x70);
-            com_tx(k, (uint8_t *)&packet, sizeof(struct packet_robot));
-            com_ce_enable(k);
-        }
+        com_send_status_to_master();
 
         // Decoding instruction packet
         struct packet_master *master_packet;
@@ -630,7 +640,7 @@ void com_tick()
             // XXX: Using micros() in unsafe because it sometime overflow, to fix!
             // We either received a status from the previous robot or the timeout expired,
             // we should ask the next one
-            if (com_master_pos < 0 || com_has_status[com_master_pos] || (micros() - last) > 1700) {
+            if (com_master_pos < 0 || com_has_status[com_master_pos] || (micros() - last) > 3000) {
                 // Asking the next
                 com_master_pos++;
                 last = 0;
@@ -762,6 +772,8 @@ TERMINAL_COMMAND(st, "St")
     terminal_io()->println(com_read_reg(index, REG_EN_RXADDR));
     terminal_io()->println("RF_CH");
     terminal_io()->println(com_read_reg(index, REG_RF_CH));
+    terminal_io()->println("FIFO_STATUS");
+    terminal_io()->println(com_read_reg(index, REG_FIFO_STATUS));
     terminal_io()->println("RX_PW_P0");
     terminal_io()->println(com_read_reg(index, REG_RX_PW_P0));
 
