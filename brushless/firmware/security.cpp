@@ -26,6 +26,6 @@ TERMINAL_COMMAND(err, "Error")
         terminal_io()->println("No error");
     } else {
         terminal_io()->print("Error: ");
-        terminal_io()->println(driver_error(security_erro));
+        terminal_io()->println(driver_error(security_error));
     }
 }
