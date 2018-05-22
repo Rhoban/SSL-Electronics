@@ -3,6 +3,7 @@
 #include "security.h"
 #include "servo.h"
 #include "motor.h"
+#include "errors.h"
 
 static SecurityError security_error = SECURITY_NO_ERROR;
 
@@ -23,11 +24,8 @@ TERMINAL_COMMAND(err, "Error")
 {
     if (security_error == SECURITY_NO_ERROR) {
         terminal_io()->println("No error");
-    } else if (security_error == SECURITY_CURRENT_MAX) {
-        terminal_io()->println("Error: Current max");
-    } else if (security_error == SECURITY_CURRENT_LIMIT) {
-        terminal_io()->println("Error: Current limit");
-    } else if (security_error == SECURITY_HALL_FREEZE) {
-        terminal_io()->println("Error: Hall freeze");
+    } else {
+        terminal_io()->print("Error: ");
+        terminal_io()->println(driver_error(security_erro));
     }
 }

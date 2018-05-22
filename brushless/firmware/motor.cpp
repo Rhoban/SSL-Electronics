@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <wirish/wirish.h>
 #include <terminal.h>
+#include "encoder.h"
 #include "hardware.h"
 #include "motor.h"
 #include "security.h"
@@ -17,8 +18,10 @@ static int motor_pwm = 0;
 static bool motor_on = false;
 
 // Hall current phase
-static int hall_current_phase = 0;
+static int hall_current_phase = -2;
 static int hall_last_change = 0;
+static int hall_last_change_moving = 0;
+static int encoder_last_ok = 0;
 
 // Consecutive phases
 static int motor_phases[6][3] = {
@@ -243,16 +246,38 @@ void motor_tick()
         set_phases(0, 0, 0, -1);
     }
 
-    if (phase != hall_current_phase || motor_pwm == 0) {
+    if (phase != hall_current_phase) {
+        if (abs(motor_pwm) < 500) {
+            hall_last_change_moving = millis();
+        }
         hall_last_change = millis();
     }
     hall_current_phase = phase;
 
-    if (fp < 0 && (millis() - hall_last_change) > 500 && abs(motor_pwm) >= 500) {
+    if ((millis() - hall_last_change) > 500 && hall_current_phase == -1) {
+        security_set_error(SECURITY_HALL_MISSING);
+    }
+
+    if (fp < 0 && (millis() - hall_last_change_moving) > 500 && abs(motor_pwm) >= 500) {
         // Stop everything
         security_set_error(SECURITY_HALL_FREEZE);
-        // Will trigger watchdog and reset
     }
+
+    if (!encoder_is_present() && !encoder_is_ok()) {
+        encoder_last_ok = millis();
+    } else {
+        if ((millis() - encoder_last_ok) > 500) {
+            if (!encoder_is_present()) {
+                security_set_error(SECURITY_ENCODER_MISSING);
+            } else if (!encoder_is_ok()) {
+                security_set_error(SECURITY_ENCODER_FAILURE);
+            }
+        }
+    }
+
+    // if (!encoder_is_present()) {
+    //     security_set_error(ENCODER
+    // }
 
     motor_ticking = false;
 }

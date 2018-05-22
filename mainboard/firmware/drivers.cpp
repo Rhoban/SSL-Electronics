@@ -5,6 +5,7 @@
 #include "hardware.h"
 #include "drivers.h"
 #include "buzzer.h"
+#include "../../brushless/firmware/errors.h"
 
 HardwareSPI drivers(DRIVERS_SPI);
 static bool drivers_is_error = false;
@@ -16,16 +17,22 @@ static int drivers_pins[5] = {
     DRIVERS_CS4, DRIVERS_CS5
 };
 
-int drivers_ping(int index)
+uint8_t drivers_status(int index)
 {
     digitalWrite(drivers_pins[index], LOW);
     delay_us(35);
     drivers.send(0);
-    int answer = drivers.send(0);
+    uint8_t answer = drivers.send(0);
     delay_us(5);
     digitalWrite(drivers_pins[index], HIGH);
 
-    return (answer == 0x55);
+    return answer;
+}
+
+int drivers_ping(int index)
+{
+    uint8_t status = drivers_status(index);
+    return (status == 0x55 || ((status&0xf0) == 0x80));
 }
 
 static void drivers_send(int index, uint8_t instruction, uint8_t *data, size_t len, uint8_t *answer)
@@ -196,7 +203,13 @@ void drivers_diagnostic()
         if (!drivers_present[k]) {
             terminal_io()->println(" MISSING");
         } else {
-            terminal_io()->println(" OK");
+            uint8_t status = drivers_status(k);
+            if (status == 0x55) {
+                terminal_io()->println(" OK");
+            } else {
+                terminal_io()->print(" ERR: ");
+                terminal_io()->println(driver_error(status&0xf));
+            }
         }
     }
 }

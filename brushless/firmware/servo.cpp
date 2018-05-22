@@ -31,8 +31,8 @@ static int encoder_pos = 0;
 #define VMAX 20
 #define NBR_COEF 4
 #define ART_LIM  2500
-#define PLOT 1
-#define PLOT_CURR 1
+#define PLOT 2
+#define PLOT_CURR 0
 #define STEP 1
 #define STEP1 2
 #define STEP2 10
@@ -359,7 +359,7 @@ void servo_tick()
 
                 #endif
 
-                terminal_io()->println("");
+                // terminal_io()->println("");
 
                 cpt++;
                 motor_set(true, -new_cmd);

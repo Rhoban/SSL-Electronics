@@ -12,16 +12,36 @@ HardwareSPI encoder(ENCODER_SPI);
 
 // Counter value
 static uint32_t encoder_cnt = 0;
+static uint16_t encoder_magnitude = 0;
+static bool encoder_present = true;
+
+bool encoder_is_ok()
+{
+    return encoder_magnitude > 500;
+}
+
+bool encoder_is_present()
+{
+    return encoder_present;
+}
 
 // Instruction
 static uint16_t encoder_read_value()
 {
     uint16_t result;
     digitalWrite(ENCODER_SELECT_PIN, LOW);
-    //delay_us(1);
-    result = (encoder.send(0xff) << 8);
-    result |= encoder.send(0xff);
-    //delay_us(1);
+
+    result = (encoder.send(0x7f) << 8);
+    result |= encoder.send(0xfe);
+
+    digitalWrite(ENCODER_SELECT_PIN, HIGH);
+    digitalWrite(ENCODER_SELECT_PIN, LOW);
+
+    encoder_magnitude = (encoder.send(0xff) << 8);
+    encoder_magnitude |= encoder.send(0xff);
+    encoder_present = (encoder_magnitude != 0 && encoder_magnitude != 0xffff);
+    encoder_magnitude &= 0x3fff;
+
     digitalWrite(ENCODER_SELECT_PIN, HIGH);
 
     return result & 0x3fff;
@@ -34,7 +54,11 @@ TERMINAL_COMMAND(erv, "Encoder Read Value")
     while (!SerialUSB.available()) {
         uint16_t value = encoder_read_value();
 
-        SerialUSB.println(value);
+        SerialUSB.print(value);
+        SerialUSB.print(" (");
+        SerialUSB.print(encoder_magnitude);
+        SerialUSB.print(")");
+        SerialUSB.println();
 
         delay(5);
         watchdog_feed();

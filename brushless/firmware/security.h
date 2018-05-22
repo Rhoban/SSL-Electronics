@@ -5,7 +5,10 @@ typedef enum {
     SECURITY_NO_ERROR = 0,
     SECURITY_HALL_FREEZE = 1,
     SECURITY_CURRENT_LIMIT = 2,
-    SECURITY_CURRENT_MAX = 3
+    SECURITY_CURRENT_MAX = 3,
+    SECURITY_HALL_MISSING = 4,
+    SECURITY_ENCODER_MISSING = 5,
+    SECURITY_ENCODER_FAILURE = 6,
 } SecurityError;
 
 void security_set_error(SecurityError type);
