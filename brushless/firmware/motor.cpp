@@ -22,6 +22,7 @@ static int hall_current_phase = -2;
 static int hall_last_change = 0;
 static int hall_last_change_moving = 0;
 static int encoder_last_ok = 0;
+static bool safe_mode = true;
 
 // Consecutive phases
 static int motor_phases[6][3] = {
@@ -263,14 +264,16 @@ void motor_tick()
         security_set_error(SECURITY_HALL_FREEZE);
     }
 
-    if (!encoder_is_present() && !encoder_is_ok()) {
-        encoder_last_ok = millis();
-    } else {
-        if ((millis() - encoder_last_ok) > 500) {
-            if (!encoder_is_present()) {
-                security_set_error(SECURITY_ENCODER_MISSING);
-            } else if (!encoder_is_ok()) {
-                security_set_error(SECURITY_ENCODER_FAILURE);
+    if (safe_mode) {
+        if (!encoder_is_present() && !encoder_is_ok()) {
+            encoder_last_ok = millis();
+        } else {
+            if ((millis() - encoder_last_ok) > 500) {
+                if (!encoder_is_present()) {
+                    security_set_error(SECURITY_ENCODER_MISSING);
+                } else if (!encoder_is_ok()) {
+                    security_set_error(SECURITY_ENCODER_FAILURE);
+                }
             }
         }
     }
@@ -280,6 +283,15 @@ void motor_tick()
     // }
 
     motor_ticking = false;
+}
+
+TERMINAL_COMMAND(safe, "Safe mode")
+{
+    if (argc) {
+        safe_mode = (atoi(argv[0]) != 0);
+    } else {
+        terminal_io()->println("Usage: safe [0|1]");
+    }
 }
 
 TERMINAL_COMMAND(pwm, "Motor set PWM")
