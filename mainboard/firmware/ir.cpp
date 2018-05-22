@@ -38,6 +38,15 @@ void ir_tick()
     }
 }
 
+void ir_diagnostic()
+{
+    if (ir_present()) {
+        terminal_io()->println("* IR: ERROR OR SOMETHING PRESENT");
+    } else {
+        terminal_io()->println("* IR: OK");
+    }
+}
+
 TERMINAL_COMMAND(ir, "Test IR")
 {
     while (!SerialUSB.available()) {

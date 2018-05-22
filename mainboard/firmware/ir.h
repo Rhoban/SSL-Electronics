@@ -10,4 +10,6 @@ void ir_tick();
  */
 bool ir_present();
 
+void ir_diagnostic();
+
 #endif

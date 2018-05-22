@@ -106,4 +106,5 @@ TERMINAL_COMMAND(diag, "Diagnostic")
 {
     drivers_diagnostic();
     com_diagnostic();
+    ir_diagnostic();
 }
