@@ -19,7 +19,6 @@ int mux_sample(int addr)
     digitalWrite(ADDR1, ((addr>>0)&1) ? HIGH : LOW);
     digitalWrite(ADDR2, ((addr>>1)&1) ? HIGH : LOW);
     digitalWrite(ADDR3, ((addr>>2)&1) ? HIGH : LOW);
-    delay(1);
 
     return analogRead(MUX);
 }

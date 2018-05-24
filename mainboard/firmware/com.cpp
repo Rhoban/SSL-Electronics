@@ -477,6 +477,7 @@ static void com_usb_tick()
     while (SerialUSB.available()) {
         watchdog_feed();
         uint8_t c = SerialUSB.read();
+
         if (state == 0) {
             if (c == 0xaa) {
                 state++;
@@ -509,6 +510,8 @@ static void com_usb_tick()
                         com_should_transmit[robot_id] = true;
                     }
                 }
+
+                com_poll();
                 for (size_t k=0; k<MAX_ROBOTS; k++) {
                     com_has_status[k] = false;
                 }
@@ -551,6 +554,7 @@ void com_process_master()
 {
     if (com_master_frame[0] == INSTRUCTION_MASTER) {
         // Answering with status packet
+        com_poll();
         com_send_status_to_master();
 
         // Decoding instruction packet
@@ -558,7 +562,8 @@ void com_process_master()
         master_packet = (struct packet_master*)(com_master_frame + 1);
 
         // Driving wheels
-        if (master_packet->actions & ACTION_ON) {
+        if (false) {
+        // if (master_packet->actions & ACTION_ON) {
             kinematic_set(master_packet->x_speed/1000.0, master_packet->y_speed/1000.0,
                  master_packet->t_speed/1000.0);
             if (master_packet->actions & ACTION_DRIBBLE && ir_present()) {
@@ -640,7 +645,7 @@ void com_tick()
             // XXX: Using micros() in unsafe because it sometime overflow, to fix!
             // We either received a status from the previous robot or the timeout expired,
             // we should ask the next one
-            if (com_master_pos < 0 || com_has_status[com_master_pos] || (micros() - last) > 3000) {
+            if (com_master_pos < 0 || com_has_status[com_master_pos] || (micros() - last) > 2500) {
                 // Asking the next
                 com_master_pos++;
                 last = 0;
@@ -669,10 +674,11 @@ void com_tick()
                     // Our cycle is over, sending back the robot statuses
                     size_t statuses = 0;
                     for (size_t k=0; k<MAX_ROBOTS; k++) {
-                        if (com_has_status[k]) {
+                        if (com_has_status[k] ) {
                             statuses++;
                         }
                     }
+                    #ifdef BINARY
                     uint8_t answer[1+1+1+statuses*(1+sizeof(struct packet_robot))+1];
                     // Answer header
                     answer[0] = 0xaa;
@@ -694,6 +700,7 @@ void com_tick()
                     // Ending with 0xff
                     answer[pos] = 0xff;
                     SerialUSB.write(answer, sizeof(answer));
+                    #endif
                 }
             } else {
                 transmitting = true;
@@ -744,17 +751,22 @@ TERMINAL_COMMAND(mp, "Master packets")
     terminal_io()->println(com_master_channel_packets[2]);
 }
 
-TERMINAL_COMMAND(ct, "Com tx")
+TERMINAL_COMMAND(ms, "Master send")
 {
-    if (com_available[2]) {
+    for (int k=0; k<PACKET_SIZE; k++) {
+        com_robots[3][k] = 0;
+    }
+    com_has_status[3] = false;
+    com_should_transmit[3] = true;
+    com_master_pos = -1;
+}
 
-        for (size_t k=0; k<PAYLOAD_SIZE; k++) {
-            terminal_io()->println(com_data[2][k]);
-        }
-
-        com_available[2] = false;
+TERMINAL_COMMAND(mr, "Master receive")
+{
+    if (com_has_status[3]) {
+        terminal_io()->println("Got answer");
     } else {
-        terminal_io()->println("Nothing to read");
+        terminal_io()->println("Got nothing");
     }
 }
 
@@ -819,17 +831,6 @@ TERMINAL_COMMAND(master, "Enable master mode")
 {
     com_master = true;
     com_init();
-}
-
-TERMINAL_COMMAND(ms, "Master status")
-{
-    for (size_t k=0; k<MAX_ROBOTS; k++) {
-        if (millis() - com_robot_reception[k] < 100) {
-            terminal_io()->print("Robot #");
-            terminal_io()->print(k);
-            terminal_io()->println(" is alive.");
-        }
-    }
 }
 
 TERMINAL_COMMAND(em, "Emergency")

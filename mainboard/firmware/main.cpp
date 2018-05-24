@@ -66,11 +66,32 @@ void setup()
     com_init();
 }
 
+// Benchmaking main loop
+int avg = 0;
+int n = 0;
+TERMINAL_COMMAND(bl, "")
+{
+    terminal_io()->println(avg/(n-1));
+    avg = 0;
+    n = 0;
+}
+
 /**
  * Loop function
  */
 void loop()
 {
+    // Benchmarking main loop
+    static int last = micros();
+    if (n < 100) {
+        int loop = micros() - last;
+        last = micros();
+        if (n != 0) {
+            avg += loop;
+        }
+        n += 1;
+    }
+
     digitalWrite(BOARD_LED_PIN, LOW);
     pinMode(BOARD_LED_PIN, OUTPUT);
 

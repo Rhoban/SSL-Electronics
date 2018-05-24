@@ -87,10 +87,10 @@ void kicker_tick()
 {
     static int lastSample = millis();
 
-    float voltage = 3.3*mux_sample(CAP_ADDR)/4096;
-    voltage = voltage*(CAP_R1+CAP_R2)/CAP_R2;
-
     if (millis() - lastSample > 5) {
+        float voltage = 3.3*mux_sample(CAP_ADDR)/4096;
+        voltage = voltage*(CAP_R1+CAP_R2)/CAP_R2;
+
         lastSample = millis();
         cap = voltage*0.99 + cap*0.01;
     }
