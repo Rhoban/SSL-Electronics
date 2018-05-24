@@ -645,7 +645,7 @@ void com_tick()
             // XXX: Using micros() in unsafe because it sometime overflow, to fix!
             // We either received a status from the previous robot or the timeout expired,
             // we should ask the next one
-            if (com_master_pos < 0 || com_has_status[com_master_pos] || (micros() - last) > 2000) {
+            if (com_master_pos < 0 || com_has_status[com_master_pos] || (micros() - last) > 1750) {
                 // Asking the next
                 com_master_pos++;
                 last = 0;
