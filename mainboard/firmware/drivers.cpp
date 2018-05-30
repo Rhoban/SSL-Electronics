@@ -90,9 +90,9 @@ void drivers_set_safe(int index, bool enable, float target, int16_t pwm)
 
             drivers_is_error = true;
             buzzer_play(MELODY_WARNING);
-            terminal_io()->println("Error on driver:");
-            terminal_io()->println(index);
-            terminal_io()->println(driver_answers[index].status);
+            // terminal_io()->println("Error on driver:");
+            // terminal_io()->println(index);
+            // terminal_io()->println(driver_answers[index].status&0xf);
         } else if (tmp.status == 0x55) {
             driver_answers[index] = tmp;
         }
