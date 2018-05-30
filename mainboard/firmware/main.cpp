@@ -24,8 +24,11 @@ void setup()
     init();
     RCC_BASE->APB1ENR &= ~RCC_APB1ENR_USART2EN;
 
+    digitalWrite(BOARD_LED_PIN, LOW);
+    pinMode(BOARD_LED_PIN, OUTPUT);
+
     // Can be used to set the robot id
-    // infos_set_id(8);
+    // infos_set_id(0);
 
     // Multiplexer
     mux_init();
@@ -91,9 +94,6 @@ void loop()
         }
         n += 1;
     }
-
-    digitalWrite(BOARD_LED_PIN, LOW);
-    pinMode(BOARD_LED_PIN, OUTPUT);
 
     // Feeding watchdog
     watchdog_feed();
