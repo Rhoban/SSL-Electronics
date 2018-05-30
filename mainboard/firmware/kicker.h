@@ -20,4 +20,10 @@ void kicker_tick();
  */
 float kicker_cap_voltage();
 
+
+/**
+ * Clear the capacitors
+ */
+void kicker_clear();
+
 #endif

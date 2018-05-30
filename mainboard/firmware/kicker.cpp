@@ -8,6 +8,9 @@
 
 static bool kicking = false;
 static int kick_end = 0;
+static bool clearing = false;
+static int clear = 0;
+static bool charging = false;
 
 TERMINAL_PARAMETER_FLOAT(cap, "Capacitor charge", 0.0);
 
@@ -50,9 +53,17 @@ void kicker_init()
     digitalWrite(KICKER2_PIN, HIGH);
 }
 
+void kicker_clear()
+{
+    clearing = true;
+    clear = 0;
+}
+
 void kicker_boost_enable(bool enable)
 {
+    charging = enable;
     if (enable) {
+        clearing = false;
         pwmWrite(BOOSTER_PIN, 500);
     } else {
         pwmWrite(BOOSTER_PIN, 0);
@@ -85,14 +96,33 @@ void kicker_kick(int kicker, int power)
 
 void kicker_tick()
 {
+    static int lastClear = millis();
     static int lastSample = millis();
 
+    // Sampling capacitor voltage
     if (millis() - lastSample > 5) {
         float voltage = 3.3*mux_sample(CAP_ADDR)/4096;
         voltage = voltage*(CAP_R1+CAP_R2)/CAP_R2;
 
         lastSample = millis();
         cap = voltage*0.99 + cap*0.01;
+
+        if (cap > 24 && !charging) {
+            kicker_clear();
+        }
+    }
+
+    // Triggering kicks for clearing
+    if (clearing) {
+        if ((millis() - lastClear) >= 10) {
+            lastClear = millis();
+            kicker_kick(1, 150);
+            clear++;
+
+            if (clear > 500) {
+                clearing = false;
+            }
+        }
     }
 }
 
@@ -121,24 +151,5 @@ TERMINAL_COMMAND(kick, "Kicks")
         kicker_kick(atoi(argv[0]), atoi(argv[1]));
     } else {
         terminal_io()->println("Usage: kick [kicker] [power]");
-    }
-}
-
-TERMINAL_COMMAND(cc, "Clear cap")
-{
-    kicker_boost_enable(0);
-
-    for (int k=0; k<300; k++) {
-        watchdog_feed();
-        kicker_kick(1, 250);
-        delay(5);
-    }
-
-    for (int k=0; k<5; k++) {
-        kicker_kick(1, 5000);
-        delay(5);
-        watchdog_feed();
-        delay(5);
-        watchdog_feed();
     }
 }
