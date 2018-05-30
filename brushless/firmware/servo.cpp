@@ -179,6 +179,8 @@ float servo_lut(float target, float current)
 void servo_tick()
 {
     if (security_get_error() != SECURITY_NO_ERROR) {
+        error.init();
+        cmd.init();
         motor_set(false, 0);
     } else {
         if (servo_flag) {

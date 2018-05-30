@@ -248,10 +248,11 @@ void motor_tick()
     }
 
     if (phase != hall_current_phase) {
-        if (abs(motor_pwm) < 500) {
-            hall_last_change_moving = millis();
-        }
+        hall_last_change_moving = millis();
         hall_last_change = millis();
+    }
+    if (abs(motor_pwm) < 300) {
+        hall_last_change_moving = millis();
     }
     hall_current_phase = phase;
 
@@ -265,7 +266,7 @@ void motor_tick()
     }
 
     if (safe_mode) {
-        if (!encoder_is_present() && !encoder_is_ok()) {
+        if (encoder_is_present() && encoder_is_ok()) {
             encoder_last_ok = millis();
         } else {
             if ((millis() - encoder_last_ok) > 500) {
