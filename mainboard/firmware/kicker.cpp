@@ -21,6 +21,10 @@ static void _kicker_irq()
 
     HardwareTimer timer(KICKER_TIMER);
     timer.pause();
+    
+    if (charging) {
+        pwmWrite(BOOSTER_PIN, 500);
+    }
 }
 
 void kicker_init()
@@ -62,6 +66,7 @@ void kicker_clear()
 void kicker_boost_enable(bool enable)
 {
     charging = enable;
+
     if (enable) {
         clearing = false;
         pwmWrite(BOOSTER_PIN, 500);
@@ -92,6 +97,10 @@ void kicker_kick(int kicker, int power)
     timer.setCompare(TIMER_CH4, power);
     timer.refresh();
     timer.resume();
+
+    if (charging) {
+        pwmWrite(BOOSTER_PIN, 0);
+    }
 }
 
 void kicker_tick()
