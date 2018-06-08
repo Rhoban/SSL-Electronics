@@ -567,6 +567,8 @@ void com_send_status_to_master()
     }
 }
 
+TERMINAL_PARAMETER_INT(actions, "actions", 0);
+
 void com_process_master()
 {
     if (com_master_frame[0] == INSTRUCTION_MASTER) {
@@ -581,11 +583,12 @@ void com_process_master()
         if (master_packet->actions & ACTION_ON) {
             kinematic_set(master_packet->x_speed/1000.0, master_packet->y_speed/1000.0,
                  master_packet->t_speed/1000.0);
+            actions = master_packet->actions;
 
-            if (master_packet->actions & ACTION_DRIBBLE && ir_present()) {
+            if ((master_packet->actions & ACTION_DRIBBLE) && ir_present()) {
                 drivers_set_safe(4, true, 0.4);
             } else {
-                drivers_set_safe(4, false, 0);
+                drivers_set(4, false, 0);
             }
 
             // Charging
