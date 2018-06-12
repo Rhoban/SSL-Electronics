@@ -374,6 +374,8 @@ void com_init()
 
     // Initializing SPI
     com.begin(SPI_4_5MHZ, MSBFIRST, 0);
+    // com.begin(SPI_2_25MHZ, MSBFIRST, 0);
+    // com.begin(SPI_1_125MHZ, MSBFIRST, 0);
 
     // Initializing CS pins
     for (int k=0; k<5; k++) {
