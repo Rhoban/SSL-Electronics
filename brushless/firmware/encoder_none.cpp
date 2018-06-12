@@ -23,4 +23,15 @@ TERMINAL_COMMAND(cnt, "Cnt debug")
 {
     terminal_io()->println("There is no encoder");
 }
+
+bool encoder_is_present()
+{
+    return true;
+}
+
+bool encoder_is_ok()
+{
+    return true;
+}
+
 #endif
