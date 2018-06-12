@@ -190,7 +190,7 @@ void servo_tick()
             if (servo_enable) {
                 // No servoing, the value is just 0-1 of pwm max
                 if (fabs(servo_target) > 0.1) {
-                    motor_set(true, (servo_target/20.0)*PWM_MAX);
+                    motor_set(true, servo_target*PWM_MAX);
                 } else {
                     motor_set(false, 0);
                 }
