@@ -5,6 +5,7 @@
 #include "hardware.h"
 #include <watchdog.h>
 
+bool ir_detected = false;
 int ir_value = 0;
 
 void ir_init()
@@ -19,7 +20,12 @@ void ir_init()
 int presentSince = 0;
 bool ir_present()
 {
-    return (millis() - presentSince) > 200;
+    return (millis() - presentSince) > 100;
+}
+
+bool ir_present_now()
+{
+    return ir_detected;
 }
 
 void ir_tick()
@@ -32,7 +38,10 @@ void ir_tick()
         ir_value = analogRead(IR_RECEIVE);
 
         if (ir_value < IR_THRESHOLD) {
+            ir_detected = false;
             presentSince = millis();
+        } else {
+            ir_detected = true;    
         }
         digitalWrite(IR_EMIT, LOW);
     }
@@ -63,4 +72,5 @@ TERMINAL_COMMAND(ir, "Test IR")
 TERMINAL_COMMAND(irp, "Ir present?")
 {
     terminal_io()->println(ir_present() ? 1 : 0);
+    terminal_io()->println(ir_present_now() ? 1 : 0);
 }

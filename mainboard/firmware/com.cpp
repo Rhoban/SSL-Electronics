@@ -373,8 +373,8 @@ void com_init()
     }
 
     // Initializing SPI
-    com.begin(SPI_4_5MHZ, MSBFIRST, 0);
-    // com.begin(SPI_2_25MHZ, MSBFIRST, 0);
+    // com.begin(SPI_4_5MHZ, MSBFIRST, 0);
+    com.begin(SPI_2_25MHZ, MSBFIRST, 0);
     // com.begin(SPI_1_125MHZ, MSBFIRST, 0);
 
     // Initializing CS pins
@@ -587,8 +587,8 @@ void com_process_master()
                  master_packet->t_speed/1000.0);
             actions = master_packet->actions;
 
-            if ((master_packet->actions & ACTION_DRIBBLE) && ir_present()) {
-                drivers_set_safe(4, true, 0.4);
+            if ((master_packet->actions & ACTION_DRIBBLE) && ir_present_now()) {
+                drivers_set_safe(4, true, 0.5);
             } else {
                 drivers_set(4, false, 0);
             }
@@ -603,14 +603,15 @@ void com_process_master()
 
             // Kicking
             if (ir_present()) {
+                bool inverted = infos_kicker_inverted();
                 if ((master_packet->actions & ACTION_KICK1) &&
                     !(my_actions & ACTION_KICK1)) {
-                    kicker_kick(1, master_packet->kickPower*25);
+                    kicker_kick(inverted ? 0 : 1, master_packet->kickPower*25);
                 }
 
                 if ((master_packet->actions & ACTION_KICK2) &&
                     !(my_actions & ACTION_KICK2)) {
-                    kicker_kick(0, master_packet->kickPower*25);
+                    kicker_kick(inverted ? 1 : 0, master_packet->kickPower*25);
                 }
 
                 my_actions = master_packet->actions;

@@ -12,6 +12,7 @@
 struct robot_infos
 {
     int id;
+    bool kickerInverted;
 };
 
 static struct robot_infos infos;
@@ -29,32 +30,24 @@ int infos_get_id()
     return infos.id;
 }
 
-TERMINAL_COMMAND(id, "ID")
+bool infos_kicker_inverted()
 {
-    terminal_io()->println(infos.id);
-
-    terminal_io()->print("Hall #1: ");
-    terminal_io()->println(mux_sample(HALL1_ADDR));
-
-    terminal_io()->print("Hall #2: ");
-    terminal_io()->println(mux_sample(HALL2_ADDR));
-
-    terminal_io()->print("Hall #3: ");
-    terminal_io()->println(mux_sample(HALL3_ADDR));
-
-    terminal_io()->print("Hall #4: ");
-    terminal_io()->println(mux_sample(HALL4_ADDR));
+    return infos.kickerInverted;    
 }
 
-void infos_set_id(int id)
+TERMINAL_COMMAND(infos, "ID")
+{
+    terminal_io()->println("ID:");
+    terminal_io()->println(infos.id);
+    
+    terminal_io()->println("Kicker inverted:");
+    terminal_io()->println((int)infos.kickerInverted);
+
+}
+
+void infos_set(int id, bool kickerInverted)
 {
     infos.id = id;
+    infos.kickerInverted = kickerInverted;
     flash_write(INFOS_FLASH_ADDR, (void *)&infos, sizeof(infos));
-}
-
-TERMINAL_COMMAND(setid, "Set ID in the persistent flash")
-{
-    if (argc) {
-        infos_set_id(atoi(argv[0]));
-    }
 }

@@ -10,6 +10,11 @@ void ir_tick();
  */
 bool ir_present();
 
+/**
+ * Is something present right now ?
+ */
+bool ir_present_now();
+
 void ir_diagnostic();
 
 #endif
