@@ -21,7 +21,7 @@ static void _kicker_irq()
 
     HardwareTimer timer(KICKER_TIMER);
     timer.pause();
-    
+
     if (charging) {
         pwmWrite(BOOSTER_PIN, 500);
     }

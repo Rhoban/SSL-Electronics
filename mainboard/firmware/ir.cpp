@@ -20,7 +20,7 @@ void ir_init()
 int presentSince = 0;
 bool ir_present()
 {
-    return (millis() - presentSince) > 100;
+    return (millis() - presentSince) > 10;
 }
 
 bool ir_present_now()
@@ -41,7 +41,7 @@ void ir_tick()
             ir_detected = false;
             presentSince = millis();
         } else {
-            ir_detected = true;    
+            ir_detected = true;
         }
         digitalWrite(IR_EMIT, LOW);
     }

@@ -16,7 +16,7 @@
 #include "ir.h"
 
 // Channels
-static int com_channels[3] = {0, 50, 100};
+static int com_channels[3] = {0, 10, 60};
 
 // Only for master board
 static bool com_master = false;
@@ -587,7 +587,8 @@ void com_process_master()
                  master_packet->t_speed/1000.0);
             actions = master_packet->actions;
 
-            if ((master_packet->actions & ACTION_DRIBBLE) && ir_present_now()) {
+            //if ((master_packet->actions & ACTION_DRIBBLE) && (ir_present()) || ) {
+            if ((master_packet->actions & ACTION_DRIBBLE)) {
                 drivers_set_safe(4, true, 0.5);
             } else {
                 drivers_set(4, false, 0);
