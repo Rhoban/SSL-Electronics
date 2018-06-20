@@ -5,7 +5,7 @@
 
 #define PACKET_SIZE                 16
 #define PACKET_INSTRUCTIONS         2
-#define MAX_ROBOTS                  8
+#define MAX_ROBOTS                  16
 
 #define INSTRUCTION_MASTER          0x00
 struct packet_master {

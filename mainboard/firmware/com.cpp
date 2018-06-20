@@ -587,7 +587,7 @@ void com_process_master()
                  master_packet->t_speed/1000.0);
             actions = master_packet->actions;
 
-            //if ((master_packet->actions & ACTION_DRIBBLE) && (ir_present()) || ) {
+            //if ((master_packet->actions & ACTION_DRIBBLE) && (ir_present()) ) {
             if ((master_packet->actions & ACTION_DRIBBLE)) {
                 drivers_set_safe(4, true, 0.5);
             } else {
