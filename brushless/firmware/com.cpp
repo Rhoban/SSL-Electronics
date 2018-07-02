@@ -5,6 +5,7 @@
 #include "com.h"
 #include "servo.h"
 #include "security.h"
+#include "encoder.h"
 
 HardwareSPI slave(SLAVE_SPI);
 
@@ -14,9 +15,10 @@ TERMINAL_PARAMETER_INT(ssed, "Slave selected", 0);
 
 static uint8_t frame_sizes[] = {
     sizeof(struct driver_packet_set),
-    sizeof(struct driver_packet_params)
-
+    sizeof(struct driver_packet_params),
+    sizeof(struct driver_odom)
 };
+
 #define INSTRUCTIONS sizeof(frame_size)
 static uint8_t frame[128];
 static int frame_size = 0;
@@ -45,11 +47,18 @@ void com_frame_received()
             servo_set_pid(packet->kp, packet->ki, packet->kd);
         }
         break;
+        case DRIVER_PACKET_ODOM: {
+            // Sending encoder value
+            COM_READ_PACKET(driver_odom)
+            //servo_set_pid(packet->kp, packet->ki, packet->kd);
+        }
+        break;
     }
 }
 
 // SPI answer
 static struct driver_packet_ans answer;
+static struct driver_odom answer_odom;
 uint8_t *answer_ptr;
 size_t answer_pos = 0;
 
@@ -95,18 +104,25 @@ static void slave_irq()
     if (is_slave) {
         ssed = 1;
         frame_pos = 0;
-        frame_type = 0xff;
+        //frame_type = 0xff;
         slave.beginSlave(MSBFIRST, 0);
 
-        // Sending the status
-        if (security_get_error() == SECURITY_NO_ERROR) {
-            answer.status = 0x55;
-        } else {
-            answer.status = 0x80|security_get_error();
+        if(frame_type == DRIVER_PACKET_ODOM){
+          answer_odom.enc_cnt = encoder_value();
+          answer_ptr = (uint8_t*)&answer_odom;
         }
-        answer.speed = servo_get_speed();
-        answer.pwm = servo_get_pwm();
-        answer_ptr = (uint8_t*)&answer;
+        else{
+          if (security_get_error() == SECURITY_NO_ERROR) {
+              answer.status = 0x55;
+          } else {
+              answer.status = 0x80|security_get_error();
+          }
+          answer.speed = servo_get_speed();
+          answer.pwm = servo_get_pwm();
+          answer_ptr = (uint8_t*)&answer;
+        }
+
+
         answer_pos = 0;
 
         spi_tx_reg(SPI1, 0x00);

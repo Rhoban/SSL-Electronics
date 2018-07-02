@@ -23,7 +23,16 @@ struct driver_packet_params {
     float kd;
 } __attribute__((packed));
 
+#define DRIVER_PACKET_ODOM   0x02
+struct driver_odom {
+    uint32_t enc_cnt;
+} __attribute__((packed));
+
+struct driver_ping {
+}__attribute__((packed));
+
 extern struct driver_packet_ans driver_answers[5];
+extern struct driver_odom driver_odom_answers[5];
 
 /**
  * Initializes the drivers
@@ -34,6 +43,7 @@ void drivers_init();
  * Set the speed of the nth wheel [turn/s]
  */
 struct driver_packet_ans drivers_set(int index, bool enable, float target, int16_t pwm=0);
+struct driver_odom drivers_ask_odom(int index);
 void drivers_set_safe(int index, bool enable, float target, int16_t pwm=0);
 void drivers_set_params(float kp, float ki, float kd);
 

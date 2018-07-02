@@ -8,5 +8,7 @@ bool encoder_read();
 bool encoder_is_present();
 bool encoder_is_ok();
 uint32_t encoder_value();
+uint16_t encoder_read_value();
+
 
 #endif

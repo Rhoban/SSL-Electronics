@@ -26,6 +26,8 @@ static int enabled_since = 0;
 #define REAR_RIGHT_X     -sin(-ANGLE_REAR)
 #define REAR_RIGHT_Y     -cos(-ANGLE_REAR)
 
+#define MAX_ACCELERATION    (10*0.01)
+
 void kinematic_compute(float x, float y, float t,
     float *frontLeft, float *frontRight, float *rearLeft, float *rearRight)
 {
@@ -58,8 +60,6 @@ void kinematic_stop()
     target_t = 0;
     enabled = false;
 }
-
-#define MAX_ACCELERATION    (10*0.01)
 
 int16_t pwm_lut(float target)
 {
