@@ -31,7 +31,7 @@ void odometry_init(){
 
 void odometry_tick(){
 
-      if((odom_enable == true)&&((millis() - last_tick)> 0.01)){
+      if((odom_enable == true)&&((millis() - last_tick)> 0.1)){
         last_tick = millis();
         struct driver_odom tmp;
         for(int i = 0; i < 4; i++){
@@ -45,11 +45,16 @@ void odometry_tick(){
       delta[2] = instantaneous_encoder[2] - current_encoder[2];
       delta[3] = instantaneous_encoder[3] - current_encoder[3];
 
+      for(int i = 0; i < 4; i++){
+          current_encoder[i] += instantaneous_encoder[i];
+      }
+
+
 
 
       float x_ref_bot = DIST_TOUR/(ENC_TOUR*(1+COS15+SIN15))*(delta[0]*COS15 - delta[3]*SIN15 - delta[2]); //Dist parcourue dans le sens du robot en m
-      float y_ref_bot = DIST_TOUR/(ENC_TOUR*(1+COS15+SIN15))*(delta[0]*SIN15 - delta[3]*COS15 + delta[3]);
-      float rot_ref_bot = 1/(4*DIAMETER)*(delta[0]+delta[1]+delta[2]+delta[3]);
+      float y_ref_bot = DIST_TOUR/(ENC_TOUR*(1+COS15+SIN15))*(delta[0]*SIN15 - delta[3]*COS15 + delta[1]);
+      float rot_ref_bot = DIST_TOUR/(ENC_TOUR*(4*DIAMETER))*(delta[0]+delta[1]+delta[2]+delta[3]);
 
       current_position.ang  += rot_ref_bot;
       current_position.xpos += x_ref_bot*cos(current_position.ang) - y_ref_bot*sin(current_position.ang);
