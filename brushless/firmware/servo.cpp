@@ -350,7 +350,7 @@ void servo_tick()
                 fifo_filtred_consigne.top(current_filtred_consigne_v);
 
 
-                double current_error = current_filtred_consigne_v - (servo_speed)*2*3.1416;
+                double current_error = (current_filtred_consigne_v - servo_speed)*2*3.1416;
                 fifo_error.top(current_error);
 
                 //FeedForward et Regulation
