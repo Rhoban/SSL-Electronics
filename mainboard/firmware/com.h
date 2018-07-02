@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define PACKET_SIZE                 16
+#define PACKET_SIZE                 8
 #define PACKET_INSTRUCTIONS         2
 #define MAX_ROBOTS                  16
 
