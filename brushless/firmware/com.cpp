@@ -13,6 +13,8 @@ TERMINAL_PARAMETER_INT(rcv, "Received byte", 0);
 TERMINAL_PARAMETER_INT(irqed, "IRQed", 0);
 TERMINAL_PARAMETER_INT(ssed, "Slave selected", 0);
 
+bool odom_received = false;
+
 static uint8_t frame_sizes[] = {
     sizeof(struct driver_packet_set),
     sizeof(struct driver_packet_params),
@@ -39,17 +41,20 @@ void com_frame_received()
             // Setting the target speed
             COM_READ_PACKET(driver_packet_set)
             servo_set(packet->enable, packet->targetSpeed, packet->pwm);
+            odom_received = false;
         }
         break;
         case DRIVER_PACKET_PARAMS: {
             // Setting the PID parameters
             COM_READ_PACKET(driver_packet_params)
             servo_set_pid(packet->kp, packet->ki, packet->kd);
+            odom_received = false;
         }
         break;
         case DRIVER_PACKET_ODOM: {
             // Sending encoder value
             COM_READ_PACKET(driver_odom)
+            odom_received = true;
             //servo_set_pid(packet->kp, packet->ki, packet->kd);
         }
         break;
@@ -104,10 +109,10 @@ static void slave_irq()
     if (is_slave) {
         ssed = 1;
         frame_pos = 0;
-        //frame_type = 0xff;
+        frame_type = 0xff;
         slave.beginSlave(MSBFIRST, 0);
 
-        if(frame_type == DRIVER_PACKET_ODOM){
+        if(odom_received == true){
           answer_odom.enc_cnt = encoder_value();
           answer_ptr = (uint8_t*)&answer_odom;
         }
