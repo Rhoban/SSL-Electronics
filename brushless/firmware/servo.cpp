@@ -31,8 +31,7 @@ static int encoder_pos = 0;
 #define VMAX 20
 #define NBR_COEF 5
 #define ART_LIM  2500
-#define PLOT 2
-#define PLOT_CURR 0
+
 #define STEP 1
 #define STEP1 2
 #define STEP2 10
@@ -87,16 +86,12 @@ void fifo::init(){
     data[i] = 0;
   }
 }
+
 #if ASSERV_FPI == 1
+// PI correct
+
 static double coef_err[NBR_COEF] = {0.0512, -0.0502, 0, 0, 0};//t  t-1   t-2  t-3
 static double coef_cmd[NBR_COEF] = {1, 0, 0, 0, 0}; //t-1 t-2 t-3 t-4
-
-/* wx = 40
-static double coef_ff_cns[NBR_COEF] = {0.00001396, 0.00002853, -0.00007848, 0.00002384, 0.00001224};
-static double coef_ff_cmd[NBR_COEF] = {3.843, -5.539, 3.548, -0.8521, 0};
-
-static double coef_f_cns[NBR_COEF] = {0.00000002077, 0.0000005259, 0.0000013, 0.0000004986, 0.00000001867};
-static double coef_f_cns_f[NBR_COEF] = {3.843, -5.539, 3.548, -0.8521, 0}; */
 
 
 static double coef_ff_cns[NBR_COEF] = {0.001044, 0.001819, -0.005422, 0.001785, 0.00078};
@@ -104,6 +99,21 @@ static double coef_ff_cmd[NBR_COEF] = {3.548, -4.72, 2.791, -0.6188, 0};
 
 static double coef_f_cns[NBR_COEF] = {0.000001596, 0.00003831, 0.00008979, 0.00003265, 0.000001159};
 static double coef_f_cns_f[NBR_COEF] = {3.548, -4.72, 2.791, -0.6188, 0};
+
+
+// wx = 40
+/*static double coef_ff_cns[NBR_COEF] = {0.00001396, 0.00002853, -0.00007848, 0.00002384, 0.00001224};
+static double coef_ff_cmd[NBR_COEF] = {3.843, -5.539, 3.548, -0.8521, 0};
+
+static double coef_f_cns[NBR_COEF] = {0.00000002077, 0.0000005259, 0.0000013, 0.0000004986, 0.00000001867};
+static double coef_f_cns_f[NBR_COEF] = {3.843, -5.539, 3.548, -0.8521, 0}; */
+
+//wx = 120
+/*static double coef_ff_cns[NBR_COEF] = {0.001044, 0.001819, -0.005422, 0.001785, 0.00078};
+static double coef_ff_cmd[NBR_COEF] = {3.548, -4.72, 2.791, -0.6188, 0};
+
+static double coef_f_cns[NBR_COEF] = {0.000001596, 0.00003831, 0.00008979, 0.00003265, 0.000001159};
+static double coef_f_cns_f[NBR_COEF] = {3.548, -4.72, 2.791, -0.6188, 0};*/
 
 
 #endif
@@ -202,6 +212,8 @@ void servo_tick()
     if (security_get_error() != SECURITY_NO_ERROR) {
         fifo_error.init();
         fifo_command.init();
+        fifo_consigne.init();
+        fifo_filtred_consigne.init();
         motor_set(false, 0);
     } else {
         if (servo_flag) {
@@ -296,45 +308,11 @@ void servo_tick()
             }
 
             if (servo_enable) {
-                /*float error = (servo_speed - servo_limited_target);
-
-                // Applying prior LUT
-                servo_pwm = -servo_prior_pwm;
-
-                // Limiting the P impact
-                float j = kp*error;
-                if (j > 800) j = 800;
-                if (j < -800) j = -800;
-
-                servo_pwm += j
-                          + round(ki * servo_acc)
-                          + (error - servo_last_error) * kd;
-
-                servo_acc += error;
-                servo_last_error = error;
-
-                // Limiting output PWM
-                if (servo_pwm < -3000) servo_pwm = -3000;
-                if (servo_pwm > 3000) servo_pwm = 3000;
-
-                // Limiting accumulator
-                if (servo_acc < -(3000/ki)) servo_acc = -(3000/ki);
-                if (servo_acc > (3000/ki)) servo_acc = (3000/ki);
-
-                // Limiting PWM variation
-                if (abs(servo_pwm_limited - servo_pwm) > 25) {
-                    if (servo_pwm_limited < servo_pwm) servo_pwm_limited += 25;
-                    else servo_pwm_limited -= 25;
-                } else {
-                    servo_pwm_limited = servo_pwm;sr
-                }
-                motor_set(servo_pwm_limited);
-            }*/
 
                 double current_command = 0;
                 double current_command_v = 0;
 
-                double current_filtred_consigne_v = 0;
+                double current_filtred_consigne = 0;
                 double current_command_ff_v = 0;
                 double current_command_pid_v = 0;
 
@@ -344,66 +322,43 @@ void servo_tick()
 
                 //Filtrage de consigne
 
-                for(int i = 0; i < NBR_COEF; i++){
-                  current_filtred_consigne_v += coef_f_cns[i]*fifo_consigne.get_Value(i) + coef_f_cns_f[i]*fifo_filtred_consigne.get_Value(i);
+                for(int j = 0; j < NBR_COEF; j++){
+                  current_filtred_consigne += coef_f_cns_f[j]*fifo_filtred_consigne.get_Value(j) + coef_f_cns[j]*fifo_consigne.get_Value(j);
                 }
-                fifo_filtred_consigne.top(current_filtred_consigne_v);
+                fifo_filtred_consigne.top(current_filtred_consigne);
 
 
-                double current_error = (current_filtred_consigne_v - servo_speed)*2*3.1416;
+                double current_error = current_filtred_consigne - (servo_speed)*2*3.1416;
                 fifo_error.top(current_error);
 
                 //FeedForward et Regulation
 
                 for(int i = 0; i < NBR_COEF; i++){
-                  current_command_pid_v += coef_cmd[i]*fifo_command.get_Value(i) + coef_err[i]*fifo_error.get_Value(i);
                   current_command_ff_v += coef_ff_cmd[i]*fifo_command.get_Value(i) + coef_ff_cns[i]*fifo_consigne.get_Value(i);
-
-                  #if PLOT == 0
-                  terminal_io()->println(i);
-                  terminal_io()->print("cmd = ");
-                  terminal_io()->println(fifo_command.get_Value(i));
-                  terminal_io()->print("err = ");
-                  terminal_io()->println(error.get_Value(i));
-                  #endif
+                  current_command_pid_v += coef_cmd[i]*fifo_command.get_Value(i) + coef_err[i]*fifo_error.get_Value(i);
                 }
+
 
                 current_command_v = current_command_pid_v + current_command_ff_v;
 
-                current_command_v = (current_command_v >= 18)? 18: current_command_v;
-                current_command_v = (current_command_v <= -18)? 18 : current_command_v;
-                current_command = current_command_v*3000/VMAX;
+                current_command_v = (current_command_v >=  18) ?  18 : current_command_v;
+                current_command_v = (current_command_v <= -18) ? -18 : current_command_v;
+                current_command   = current_command_v*3000/VMAX;
                 fifo_command.top(current_command_v);
 
-                #if PLOT == 0
-                terminal_io()->print("current_command = ");
-                terminal_io()->println(current_command);
-                terminal_io()->print("current_command_v = ");
-                terminal_io()->println(current_command_v);
-                terminal_io()->println();
-                #endif
-
+                /*
                 terminal_io()->print(servo_speed);
                 terminal_io()->print(" ");
                 terminal_io()->println(servo_target);
-
-                #if PLOT == 1
-                //terminal_io()->println(cpt);
-                terminal_io()->print(servo_speed);
                 terminal_io()->print(" ");
-                terminal_io()->print(servo_target);
+                terminal_io()->println(current_command_ff_v);
                 terminal_io()->print(" ");
-                terminal_io()->print(current_command_v);
+                terminal_io()->println(current_command_pid_v);
                 terminal_io()->print(" ");
-                #endif
+                terminal_io()->println(current_error);
+                terminal_io()->print(" ");
+                terminal_io()->println(current_command_v);*/
 
-                #if PLOT_CURR == 1
-
-                terminal_io()->print(current_amps());
-
-                #endif
-
-                // terminal_io()->println("");
 
                 cpt++;
                 motor_set(true, -current_command);
@@ -495,6 +450,7 @@ TERMINAL_COMMAND(step, "Step")
   }
     //do nothing, use sdb=1 to avoid the servo impact
 }
+
 TERMINAL_COMMAND(clean, "Clean fifo of asserv")
 {
   servo_set(false, 0);
@@ -502,14 +458,19 @@ TERMINAL_COMMAND(clean, "Clean fifo of asserv")
   sdb = false;
   fifo_error.init();
   fifo_command.init();
+  fifo_consigne.init();
+  fifo_filtred_consigne.init();
 }
 
 TERMINAL_COMMAND(set, "Set target speed")
 {
     if (argc > 0) {
-        servo_set(true, atof(argv[0]));
         fifo_error.init();
         fifo_command.init();
+        fifo_consigne.init();
+        fifo_filtred_consigne.init();
+        servo_set(true, atof(argv[0]));
+
     } else {
         terminal_io()->println("Usage: set [turn/s]");
     }
