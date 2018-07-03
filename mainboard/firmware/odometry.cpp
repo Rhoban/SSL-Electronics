@@ -6,6 +6,7 @@
 #define ENC_TOUR     16438
 #define DIST_TOUR    0.179
 #define DIAMETER     0.18
+#define RADIUS     DIAMETER/2
 
 #define PLOT_ODOM    1
 
@@ -55,11 +56,12 @@ void odometry_tick(){
           current_encoder[i] += delta[i];
       }
 
-      float x_ref_bot = DIST_TOUR/(ENC_TOUR*(1+COS15+SIN15))*(delta[0]*COS15 - delta[3]*SIN15 - delta[2]); //Dist parcourue dans le sens du robot en m
-      float y_ref_bot = DIST_TOUR/(ENC_TOUR*(1+COS15+SIN15))*(delta[0]*SIN15 - delta[3]*COS15 + delta[1]);
-      float rot_ref_bot = DIST_TOUR/(ENC_TOUR*(4*DIAMETER))*(delta[0]+delta[1]+delta[2]+delta[3]);
+      double x_ref_bot = DIST_TOUR/(ENC_TOUR*(1+COS15+SIN15))*(delta[0]*COS15 - delta[3]*SIN15 - delta[2]); //Dist parcourue dans le sens du robot en m
+      double y_ref_bot = DIST_TOUR/(ENC_TOUR*(1+COS15+SIN15))*(delta[0]*SIN15 - delta[3]*COS15 + delta[1]);
+      double rot_ref_bot = DIST_TOUR/(ENC_TOUR*(4*RADIUS))*(delta[0] + delta[1] + delta[2] + delta[3]);
+      //double rot_ref_bot = 1/((4*DIAMETER))*(delta[0] + delta[1] + delta[2] + delta[3]);
 
-      current_position.ang  += rot_ref_bot;
+      current_position.ang  += (rot_ref_bot*360)/(2*3.1415);
       current_position.xpos += x_ref_bot*cos(current_position.ang) - y_ref_bot*sin(current_position.ang);
       current_position.ypos += x_ref_bot*sin(current_position.ang) + y_ref_bot*cos(current_position.ang);
 
