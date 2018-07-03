@@ -11,9 +11,9 @@
 
 
 struct position {
-  float xpos;
-  float ypos;
-  float ang;
+  double xpos;
+  double ypos;
+  double ang;
 };
 
 
