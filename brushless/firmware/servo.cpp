@@ -333,7 +333,7 @@ void servo_tick()
                 }
 
                 new_cmd_V = (new_cmd_V >= 18)? 18: new_cmd_V;
-                new_cmd_V = (new_cmd_V <= -18)? 18 : new_cmd_V;
+                new_cmd_V = (new_cmd_V <= -18)? -18 : new_cmd_V;
                 new_cmd = new_cmd_V*3000/VMAX;
                 cmd.top(new_cmd_V);
 
