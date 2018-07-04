@@ -14,6 +14,7 @@ struct driver_packet_ans {
     uint8_t status;
     float speed;
     int16_t pwm;
+    uint32_t enc_cnt;
 } __attribute__((packed));
 
 #define DRIVER_PACKET_PARAMS   0x01

@@ -132,7 +132,7 @@ TERMINAL_COMMAND(eb, "Encoder benchmark")
 
 TERMINAL_COMMAND(cnt, "Cnt debug")
 {
-    terminal_io()->println(encoder_cnt);
+    terminal_io()->println((int32_t)encoder_cnt);
     terminal_io()->println(encoder_read_value());
 }
 #endif
