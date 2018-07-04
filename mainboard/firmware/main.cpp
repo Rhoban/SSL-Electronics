@@ -127,7 +127,7 @@ void loop()
     terminal_tick();
 
     // odometry
-    odometry_tick();
+    //odometry_tick();
 }
 
 TERMINAL_COMMAND(diag, "Diagnostic")

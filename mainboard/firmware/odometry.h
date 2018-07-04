@@ -17,12 +17,14 @@ struct position {
 };
 
 
-void odometry_init();
+void odometry_init(); //initialize odometry variables
 
+void odometry_stop(); //Stop Odometry
 
-void odometry_tick();
+void odometry_tick(); //Odometry routine
 
+void odometry_tare(double _x, double _y, double _r); //Set an offset for the position of the robot
 
-struct position odometry_value();
+void odometry_fetch_encoders_value(); //Update value of current encoders after a tare
 
 #endif

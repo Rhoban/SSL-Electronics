@@ -124,6 +124,7 @@ static void slave_irq()
           }
           answer.speed = servo_get_speed();
           answer.pwm = servo_get_pwm();
+          answer.enc_cnt = encoder_value();
           answer_ptr = (uint8_t*)&answer;
         }
 
