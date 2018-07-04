@@ -38,10 +38,8 @@ static int encoder_pos = 0;
 #define STEP3 50
 #define RAMP 0
 
-#define ASSERV_FPI 1
-#define ASSERV_FPI2 0
-#define BO 0
-#define ASSERV_TEST 0
+#define ASSERV_FPI 0
+#define ASSERV_TEST 1
 
 fifo::fifo(){
 
@@ -93,7 +91,6 @@ void fifo::init(){
 static double coef_err[NBR_COEF] = {0.0512, -0.0502, 0, 0, 0};//t  t-1   t-2  t-3
 static double coef_cmd[NBR_COEF] = {1, 0, 0, 0, 0}; //t-1 t-2 t-3 t-4
 
-
 static double coef_ff_cns[NBR_COEF] = {0.001044, 0.001819, -0.005422, 0.001785, 0.00078};
 static double coef_ff_cmd[NBR_COEF] = {3.548, -4.72, 2.791, -0.6188, 0};
 
@@ -118,21 +115,24 @@ static double coef_f_cns_f[NBR_COEF] = {3.548, -4.72, 2.791, -0.6188, 0};*/
 
 #endif
 
-#if ASSERV_FPI2 == 1
-static double coef_err[NBR_COEF] = {0.0524, -0.0514, 0, 0, 0};//t  t-1   t-2  t-3
-static double coef_cmd[NBR_COEF] = {1, 0, 0, 0, 0}; //t-1 t-2 t-3 t-4
-
-#endif
-
 #if ASSERV_TEST == 1
-static double coef_err[NBR_COEF] = {0.0254, -0.0246, 0, 0, 0};//t  t-1   t-2  t-3
+//PI
+static double coef_err[NBR_COEF] = {0.05241, -0.05137, 0, 0, 0}; //t  t-1   t-2  t-3
 static double coef_cmd[NBR_COEF] = {1, 0, 0, 0, 0}; //t-1 t-2 t-3 t-4
 
-#endif
+//FF wx = 30
+/*static double coef_ff_cns[NBR_COEF] = {0.000004462, 0.000009293, -0.00002533, 0.000007611, 0.000003989};
+static double coef_ff_cmd[NBR_COEF] = {3.882, -5.651, 3.656, -0.8869, 0};
+//F wx = 30
+static double coef_f_cns[NBR_COEF] = {0.00000006616, 0.0000001686, 0.0000004196, 0.000000162, 0.000000006108};
+static double coef_f_cns_f[NBR_COEF] = {3.882, -5.651, 3.656, -0.8869, 0};*/
 
-#if BO == 1
-static double coef_err[NBR_COEF] = {0, 0, 0, 0, 0};//t  t-1   t-2  t-3
-static double coef_cmd[NBR_COEF] = {0, 0, 0, 0, 0}; //t-1 t-2 t-3 t-4
+//FF wx = 20
+static double coef_ff_cns[NBR_COEF] = {0.0000008901, 0.000001889, -0.000005102, 0.000001516, 0.000000812};
+static double coef_ff_cmd[NBR_COEF] = {3.921, -5.765, 3.767, -0.9231, 0};
+//F wx = 20
+static double coef_f_cns[NBR_COEF] = {0.000000001316, 0.00000003376, 0.00000008455, 0.00000003287, 0.0000000001247};
+static double coef_f_cns_f[NBR_COEF] = {3.921, -5.765, 3.767, -0.9231, 0};
 
 #endif
 
@@ -316,7 +316,7 @@ void servo_tick()
                 double current_command_ff_v = 0;
                 double current_command_pid_v = 0;
 
-                double servo_filt_target = servo_target*2*3.1416;
+                double servo_filt_target = servo_target*2*3.14159265359;
                 fifo_consigne.top(servo_filt_target);
 
 
@@ -328,7 +328,7 @@ void servo_tick()
                 fifo_filtred_consigne.top(current_filtred_consigne);
 
 
-                double current_error = current_filtred_consigne - (servo_speed)*2*3.1416;
+                double current_error = current_filtred_consigne - (servo_speed)*2*3.14159265359;
                 fifo_error.top(current_error);
 
                 //FeedForward et Regulation
@@ -346,18 +346,20 @@ void servo_tick()
                 current_command   = current_command_v*3000/VMAX;
                 fifo_command.top(current_command_v);
 
-                /*
-                terminal_io()->print(servo_speed);
+
+                terminal_io()->print(servo_speed);              //1
                 terminal_io()->print(" ");
-                terminal_io()->println(servo_target);
+                terminal_io()->print(servo_target);             //2
                 terminal_io()->print(" ");
-                terminal_io()->println(current_command_ff_v);
+                terminal_io()->print(current_command_ff_v);     //3
                 terminal_io()->print(" ");
-                terminal_io()->println(current_command_pid_v);
+                terminal_io()->print(current_command_pid_v);    //4
                 terminal_io()->print(" ");
-                terminal_io()->println(current_error);
+                terminal_io()->print(current_filtred_consigne); //5
                 terminal_io()->print(" ");
-                terminal_io()->println(current_command_v);*/
+                terminal_io()->print(current_error);            //6
+                terminal_io()->print(" ");
+                terminal_io()->println(current_command_v);      //7
 
 
                 cpt++;
