@@ -15,7 +15,7 @@ static int enabled_since = 0;
 extern bool odom_enable;
 extern bool tare_round;
 extern struct position current_position;
-
+int compteur = 0;
 #define DEG2RAD(deg) (deg*M_PI/180.0)
 #define WHEEL_RADIUS (0.06/2.0)
 #define ROBOT_RADIUS (0.17/2.0)
@@ -32,7 +32,7 @@ extern struct position current_position;
 #define REAR_RIGHT_Y     -cos(-ANGLE_REAR)
 
 #define KIN_PASSIV       1
-#define ODOM_PLOT        1
+#define ODOM_PLOT        0
 
 #define MAX_ACCELERATION    (10*0.01)
 
@@ -128,13 +128,19 @@ void kinematic_tick()
                 drivers_set_safe(2, true, rear_right, pwm_lut(rear_right));
                 drivers_set_safe(3, true, front_right, pwm_lut(front_right));
                 odometry_tick();
+                compteur++;
                 #if ODOM_PLOT == 1
+
+              if(compteur >= 10){
+                compteur = 0;
                 terminal_io()->print("x : ");
                 terminal_io()->println(current_position.xpos);
                 terminal_io()->print("y : ");
                 terminal_io()->println(current_position.ypos);
                 terminal_io()->print("Ang : ");
                 terminal_io()->println(current_position.ang);
+              }
+
                 #endif
             }
         } else {
