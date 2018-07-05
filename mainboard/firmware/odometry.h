@@ -25,6 +25,5 @@ void odometry_tick(); //Odometry routine
 
 void odometry_tare(double _x, double _y, double _r); //Set an offset for the position of the robot
 
-void odometry_fetch_encoders_value(); //Update value of current encoders after a tare
 
 #endif

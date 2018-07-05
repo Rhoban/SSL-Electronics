@@ -8,6 +8,8 @@ struct driver_packet_set {
     bool enable;
     float targetSpeed;
     int16_t pwm;
+    uint32_t padding1;
+    uint8_t padding2;
 } __attribute__((packed));
 
   struct driver_packet_ans {

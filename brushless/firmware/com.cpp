@@ -75,7 +75,7 @@ void __irq_spi1()
     irqed += 1;
     rcv = SPI1->regs->SR;
 
-    if (spi_is_tx_empty(SPI1)) {
+    if ((spi_is_tx_empty(SPI1))&&(answer_pos < sizeof(driver_packet_ans))) {
         spi_tx_reg(SPI1, answer_ptr[answer_pos++]);
     }
     if (spi_is_rx_nonempty(SPI1)) {
@@ -112,23 +112,15 @@ static void slave_irq()
         frame_type = 0xff;
         slave.beginSlave(MSBFIRST, 0);
 
-        if(odom_received == true){
-          answer_odom.enc_cnt = encoder_value();
-          answer_ptr = (uint8_t*)&answer_odom;
+        if (security_get_error() == SECURITY_NO_ERROR) {
+            answer.status = 0x55;
+        } else {
+            answer.status = 0x80|security_get_error();
         }
-        else{
-          if (security_get_error() == SECURITY_NO_ERROR) {
-              answer.status = 0x55;
-          } else {
-              answer.status = 0x80|security_get_error();
-          }
-          answer.speed = servo_get_speed();
-          answer.pwm = servo_get_pwm();
-          answer.enc_cnt = encoder_value();
-          answer_ptr = (uint8_t*)&answer;
-        }
-
-
+        answer.speed = servo_get_speed();
+        answer.pwm = servo_get_pwm();
+        answer.enc_cnt = encoder_value();
+        answer_ptr = (uint8_t*)&answer;
         answer_pos = 0;
 
         spi_tx_reg(SPI1, 0x00);

@@ -11,7 +11,6 @@ HardwareSPI drivers(DRIVERS_SPI);
 static bool drivers_is_error = false;
 static bool drivers_present[5] = {false};
 struct driver_packet_ans driver_answers[5];
-struct driver_odom driver_odom_answers[5];
 
 static int drivers_pins[5] = {
     DRIVERS_CS1, DRIVERS_CS2, DRIVERS_CS3,
@@ -64,15 +63,6 @@ struct driver_packet_ans drivers_set(int index, bool enable, float target, int16
     struct driver_packet_ans answer;
     drivers_send(index, DRIVER_PACKET_SET, (uint8_t*)&packet, sizeof(struct driver_packet_set), (uint8_t*)&answer);
       return answer;
-}
-
-struct driver_odom drivers_ask_odom(int index)
-{
-    struct driver_ping packet;
-
-    struct driver_odom answer;
-    drivers_send(index, DRIVER_PACKET_ODOM, (uint8_t*)&packet, sizeof(struct driver_odom), (uint8_t*)&answer);
-    return answer;
 }
 
 void drivers_set_params(float kp, float ki, float kd)
