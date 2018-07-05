@@ -75,7 +75,8 @@ void __irq_spi1()
     irqed += 1;
     rcv = SPI1->regs->SR;
 
-    if ((spi_is_tx_empty(SPI1))&&(answer_pos < sizeof(driver_packet_ans))) {
+    //if ((spi_is_tx_empty(SPI1))&&(answer_pos < sizeof(driver_packet_ans))) {
+    if (spi_is_tx_empty(SPI1)) {
         spi_tx_reg(SPI1, answer_ptr[answer_pos++]);
     }
     if (spi_is_rx_nonempty(SPI1)) {

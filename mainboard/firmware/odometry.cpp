@@ -6,7 +6,8 @@
 #define ENC_TOUR     16438
 #define DIST_TOUR    0.179
 #define DIAMETER     0.18
-#define RADIUS     DIAMETER/2
+#define RADIUS       DIAMETER/2
+#define PI           3.14159
 
 struct position current_position;
 int32_t current_encoder[4];
@@ -58,30 +59,31 @@ void odometry_tick(){
           instantaneous_encoder[i] = driver_answers[i].enc_cnt;
         }
 
-        delta[0] = instantaneous_encoder[0] - current_encoder[0];
-        delta[1] = instantaneous_encoder[1] - current_encoder[1];
-        delta[2] = instantaneous_encoder[2] - current_encoder[2];
-        delta[3] = instantaneous_encoder[3] - current_encoder[3];
+        delta[0] = (instantaneous_encoder[0] - current_encoder[0]);
+        delta[1] = (instantaneous_encoder[1] - current_encoder[1]);
+        delta[2] = (instantaneous_encoder[2] - current_encoder[2]);
+        delta[3] = (instantaneous_encoder[3] - current_encoder[3]);
 
         for(int i = 0; i < 4; i++){
             current_encoder[i] += delta[i];
         }
 
-        double x_ref_bot   = DIST_TOUR/(ENC_TOUR*(1 + COS15 + SIN15))*(delta[0]*COS15 - delta[3]*SIN15 - delta[2]); //Dist parcourue dans le sens du robot en m
-        double y_ref_bot   = DIST_TOUR/(ENC_TOUR*(1 + COS15 + SIN15))*(delta[0]*SIN15 - delta[3]*COS15 + delta[1]);
-        double rot_ref_bot = 2*PI/(ENC_TOUR*RADIUS*4)*(delta[0] + delta[1] + delta[2] + delta[3]);
+        double x_ref_bot   = 1/(1 + COS15 + SIN15)*(delta[0]*COS15 - delta[3]*SIN15 - delta[2]); //Dist parcourue dans le sens du robot en m
+        double y_ref_bot   = 1/(1 + COS15 + SIN15)*(delta[0]*SIN15 - delta[3]*COS15 + delta[1]);
+        double rot_ref_bot = DIST_TOUR/(ENC_TOUR*4)*(delta[0] + delta[1] + delta[2] + delta[3]);
         //double rot_ref_bot = 1/((4*DIAMETER))*(delta[0] + delta[1] + delta[2] + delta[3]);
 
-        current_position.ang  += (rot_ref_bot);
+        current_position.ang  += rot_ref_bot;
         current_position.xpos += x_ref_bot*cos(current_position.ang) - y_ref_bot*sin(current_position.ang);
         current_position.ypos += x_ref_bot*sin(current_position.ang) + y_ref_bot*cos(current_position.ang);
-
-        terminal_io()->print("x : ");
-        terminal_io()->println(current_position.xpos);
-        terminal_io()->print("y : ");
-        terminal_io()->println(current_position.ypos);
-        terminal_io()->print("Ang : ");
-        terminal_io()->println(current_position.ang);
+        /*
+        terminal_io()->print(delta[0]);
+        terminal_io()->print(" - ");
+        terminal_io()->print(delta[1]);
+        terminal_io()->print(" - ");
+        terminal_io()->print(delta[2]);
+        terminal_io()->print(" - ");
+        terminal_io()->println(delta[3]);*/
     }
   }
 }

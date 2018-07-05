@@ -16,6 +16,8 @@ extern bool odom_enable;
 extern bool tare_round;
 extern struct position current_position;
 int compteur = 0;
+bool kin_passiv = false;
+
 #define DEG2RAD(deg) (deg*M_PI/180.0)
 #define WHEEL_RADIUS (0.06/2.0)
 #define ROBOT_RADIUS (0.17/2.0)
@@ -30,9 +32,7 @@ int compteur = 0;
 #define REAR_LEFT_Y      -cos(ANGLE_REAR)
 #define REAR_RIGHT_X     -sin(-ANGLE_REAR)
 #define REAR_RIGHT_Y     -cos(-ANGLE_REAR)
-
-#define KIN_PASSIV       1
-#define ODOM_PLOT        0
+#define ODOM_PLOT        1
 
 #define MAX_ACCELERATION    (10*0.01)
 
@@ -123,23 +123,33 @@ void kinematic_tick()
                 // terminal_io()->print(" ");
                 // terminal_io()->print(front_right);
                 // terminal_io()->println();
-                drivers_set_safe(0, true, front_left, pwm_lut(front_left));
-                drivers_set_safe(1, true, rear_left, pwm_lut(rear_left));
-                drivers_set_safe(2, true, rear_right, pwm_lut(rear_right));
-                drivers_set_safe(3, true, front_right, pwm_lut(front_right));
-                odometry_tick();
-                compteur++;
-                #if ODOM_PLOT == 1
+                if(kin_passiv == false){
+                  drivers_set_safe(0, true, front_left, pwm_lut(front_left));
+                  drivers_set_safe(1, true, rear_left, pwm_lut(rear_left));
+                  drivers_set_safe(2, true, rear_right, pwm_lut(rear_right));
+                  drivers_set_safe(3, true, front_right, pwm_lut(front_right));
+                }else{
+                  drivers_set_safe(0, false, front_left, pwm_lut(front_left));
+                  drivers_set_safe(1, false, rear_left, pwm_lut(rear_left));
+                  drivers_set_safe(2, false, rear_right, pwm_lut(rear_right));
+                  drivers_set_safe(3, false, front_right, pwm_lut(front_right));
+                }
 
-              if(compteur >= 10){
-                compteur = 0;
-                terminal_io()->print("x : ");
-                terminal_io()->println(current_position.xpos);
-                terminal_io()->print("y : ");
-                terminal_io()->println(current_position.ypos);
-                terminal_io()->print("Ang : ");
-                terminal_io()->println(current_position.ang);
-              }
+                odometry_tick();
+
+
+                #if ODOM_PLOT == 1
+                compteur++;
+                if(compteur >= 10){
+                  compteur = 0;
+                  terminal_io()->print("x : ");
+                  terminal_io()->println(current_position.xpos);
+                  terminal_io()->print("y : ");
+                  terminal_io()->println(current_position.ypos);
+                  terminal_io()->print("Ang : ");
+                  terminal_io()->println(current_position.ang);
+                  terminal_io()->println("");
+                }
 
                 #endif
             }
@@ -157,8 +167,17 @@ TERMINAL_COMMAND(kin, "Kinematic")
     float x = atof(argv[0]);
     float y = atof(argv[1]);
     float t = atof(argv[2]);
+
     odom_enable = true;
     tare_round = true;
+
+    if((x == 0)&&(y == 0)&&(t == 0)){
+      kin_passiv = true;
+    }
+    else{
+      kin_passiv = false;
+    }
+
     if (argc >= 3) {
         while (!SerialUSB.available()) {
             kinematic_set(x, y, t);
