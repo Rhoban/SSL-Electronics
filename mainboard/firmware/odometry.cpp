@@ -11,7 +11,7 @@
 
 struct position current_position;
 int32_t current_encoder[4];
-int32_t delta[4];
+double delta[4];
 int32_t instantaneous_encoder[4];
 bool odom_enable;
 bool tare_round = true;
@@ -59,24 +59,33 @@ void odometry_tick(){
           instantaneous_encoder[i] = driver_answers[i].enc_cnt;
         }
 
-        delta[0] = (instantaneous_encoder[0] - current_encoder[0]);
-        delta[1] = (instantaneous_encoder[1] - current_encoder[1]);
-        delta[2] = (instantaneous_encoder[2] - current_encoder[2]);
-        delta[3] = (instantaneous_encoder[3] - current_encoder[3]);
+        delta[0] = ((instantaneous_encoder[0] - current_encoder[0])*2*WHEEL_RADIUS*PI)/(ENC_TOUR);
+        delta[1] = ((instantaneous_encoder[1] - current_encoder[1])*2*WHEEL_RADIUS*PI)/(ENC_TOUR);
+        delta[2] = ((instantaneous_encoder[2] - current_encoder[2])*2*WHEEL_RADIUS*PI)/(ENC_TOUR);
+        delta[3] = ((instantaneous_encoder[3] - current_encoder[3])*2*WHEEL_RADIUS*PI)/(ENC_TOUR);
 
         for(int i = 0; i < 4; i++){
-            current_encoder[i] += delta[i];
+            current_encoder[i] += (instantaneous_encoder[i] - current_encoder[i]);
         }
-
+        /*
         double x_ref_bot   = 1/(1 + COS15 + SIN15)*(delta[0]*COS15 - delta[3]*SIN15 - delta[2]); //Dist parcourue dans le sens du robot en m
         double y_ref_bot   = 1/(1 + COS15 + SIN15)*(delta[0]*SIN15 - delta[3]*COS15 + delta[1]);
         double rot_ref_bot = DIST_TOUR/(ENC_TOUR*4)*(delta[0] + delta[1] + delta[2] + delta[3]);
-        //double rot_ref_bot = 1/((4*DIAMETER))*(delta[0] + delta[1] + delta[2] + delta[3]);
+        //double rot_ref_bot = 1/((4*DIAMETER))*(delta[0] + delta[1] + delta[2] + delta[3]);*/
 
+        double x_ref_bot   = -0.0025023*delta[0] - 0.6995097*delta[1] + 0.7143253*delta[2] - 0.0123133*delta[3];//Dist parcourue dans le sens du robot en m
+        double y_ref_bot   =  0.7498925*delta[0] - 0.6830839*delta[1] + 0.3196460*delta[2] - 0.3864545*delta[3];
+        double rot_ref_bot =  6.6610783*delta[0] - 2.1470984*delta[1] + 5.8474938*delta[2] + 0.7496375*delta[3];
+
+        /*
         current_position.ang  += rot_ref_bot;
         current_position.xpos += x_ref_bot*cos(current_position.ang) - y_ref_bot*sin(current_position.ang);
-        current_position.ypos += x_ref_bot*sin(current_position.ang) + y_ref_bot*cos(current_position.ang);
-        /*
+        current_position.ypos += x_ref_bot*sin(current_position.ang) + y_ref_bot*cos(current_position.ang);*/
+        current_position.ang  += rot_ref_bot;//*360/(2*PI);
+        current_position.xpos += x_ref_bot;
+        current_position.ypos += y_ref_bot;
+
+/*
         terminal_io()->print(delta[0]);
         terminal_io()->print(" - ");
         terminal_io()->print(delta[1]);
