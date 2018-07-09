@@ -168,8 +168,8 @@ TERMINAL_COMMAND(kin, "Kinematic")
     float y = atof(argv[1]);
     float t = atof(argv[2]);
 
+    odometry_tare();
     odom_enable = true;
-    tare_round = true;
 
     if((x == 0)&&(y == 0)&&(t == 0)){
       kin_passiv = true;
