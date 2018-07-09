@@ -7,6 +7,8 @@
 #define RADIUS       0.079
 #define DIST_TOUR    2*RADIUS
 #define PI           3.14159
+#define ODOM_PLOT    1
+#define DIV_PLOT     10
 
 struct position current_position;
 int32_t current_encoder[4];
@@ -14,6 +16,7 @@ double delta[4];
 int32_t instantaneous_encoder[4];
 bool odom_enable;
 bool tare_round = true;
+int compteur = 0;
 
 
 void odometry_init(){
@@ -59,9 +62,7 @@ void odometry_tick(){
         delta[2] = ((instantaneous_encoder[2] - current_encoder[2])*2*WHEEL_RADIUS*PI)/(ENC_TOUR);
         delta[3] = ((instantaneous_encoder[3] - current_encoder[3])*2*WHEEL_RADIUS*PI)/(ENC_TOUR);
 
-        for(int i = 0; i < 4; i++){
-            current_encoder[i] += (instantaneous_encoder[i] - current_encoder[i]);
-        }
+
         /*
         double x_ref_bot   = 1/(1 + COS15 + SIN15)*(delta[0]*COS15 - delta[3]*SIN15 - delta[2]); //Dist parcourue dans le sens du robot en m
         double y_ref_bot   = 1/(1 + COS15 + SIN15)*(delta[0]*SIN15 - delta[3]*COS15 + delta[1]);
@@ -76,6 +77,24 @@ void odometry_tick(){
         current_position.xpos += x_ref_bot;
         current_position.ypos += y_ref_bot;
 
+        #if ODOM_PLOT == 1
+        compteur++;
+        if(compteur >= DIV_PLOT){
+          compteur = 0;
+          terminal_io()->print("x : ");
+          terminal_io()->println(current_position.xpos);
+          terminal_io()->print("y : ");
+          terminal_io()->println(current_position.ypos);
+          terminal_io()->print("Ang : ");
+          terminal_io()->println(current_position.ang);
+          terminal_io()->println("");
+        }
+
+        #endif
+
+        for(int i = 0; i < 4; i++){
+            current_encoder[i] += (instantaneous_encoder[i] - current_encoder[i]);
+        }
 /*
         terminal_io()->print(delta[0]);
         terminal_io()->print(" - ");

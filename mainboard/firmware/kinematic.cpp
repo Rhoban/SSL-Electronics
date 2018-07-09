@@ -14,8 +14,9 @@ static bool enabled = false;
 static int enabled_since = 0;
 extern bool odom_enable;
 extern bool tare_round;
+int compteur_odom=0;
 extern struct position current_position;
-int compteur = 0;
+
 bool kin_passiv = false;
 
 #define DEG2RAD(deg) (deg*M_PI/180.0)
@@ -32,7 +33,9 @@ bool kin_passiv = false;
 #define REAR_LEFT_Y      -cos(ANGLE_REAR)
 #define REAR_RIGHT_X     -sin(-ANGLE_REAR)
 #define REAR_RIGHT_Y     -cos(-ANGLE_REAR)
-#define ODOM_PLOT        1
+
+#define DIVISION_ODOM    1
+
 
 #define MAX_ACCELERATION    (10*0.01)
 
@@ -135,23 +138,15 @@ void kinematic_tick()
                   drivers_set_safe(3, false, front_right, pwm_lut(front_right));
                 }
 
-                odometry_tick();
-
-
-                #if ODOM_PLOT == 1
-                compteur++;
-                if(compteur >= 10){
-                  compteur = 0;
-                  terminal_io()->print("x : ");
-                  terminal_io()->println(current_position.xpos);
-                  terminal_io()->print("y : ");
-                  terminal_io()->println(current_position.ypos);
-                  terminal_io()->print("Ang : ");
-                  terminal_io()->println(current_position.ang);
-                  terminal_io()->println("");
+                compteur_odom++;
+                if(compteur_odom >= DIVISION_ODOM){
+                  odometry_tick();
+                  compteur_odom = 0;
                 }
 
-                #endif
+
+
+
             }
         } else {
             front_left = 0;
