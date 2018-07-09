@@ -168,7 +168,7 @@ TERMINAL_COMMAND(kin, "Kinematic")
     float y = atof(argv[1]);
     float t = atof(argv[2]);
 
-    odometry_tare();
+    odometry_tare(0.0,0.0,0.0);
     odom_enable = true;
 
     if((x == 0)&&(y == 0)&&(t == 0)){

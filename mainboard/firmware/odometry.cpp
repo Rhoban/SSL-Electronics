@@ -111,7 +111,7 @@ TERMINAL_COMMAND(st_odom, "Stop of Odometry"){
 }
 
 TERMINAL_COMMAND(tare_odom, "Tare of Odometry"){
-  odometry_tare();
+  odometry_tare(0.0,0.0,0.0);
 }
 
 TERMINAL_COMMAND(enc, "Encoder value"){
