@@ -4,9 +4,8 @@
 #define COS15        0.9659
 #define SIN15        0.2588
 #define ENC_TOUR     16438
-#define DIST_TOUR    0.179
-#define DIAMETER     0.18
-#define RADIUS       DIAMETER/2
+#define RADIUS       0.079
+#define DIST_TOUR    2*RADIUS
 #define PI           3.14159
 
 struct position current_position;
@@ -46,10 +45,6 @@ void odometry_tick(){
           current_encoder[i] = driver_answers[i].enc_cnt;
         }
 
-        current_position.ang  = 0;
-        current_position.xpos = 0;
-        current_position.ypos = 0;
-
         tare_round = false;
       }
       else{
@@ -77,10 +72,6 @@ void odometry_tick(){
         double y_ref_bot   =  0.31530*delta[0] - 0.55132*delta[1] - 0.27710*delta[2] + 0.51313*delta[3];
         double rot_ref_bot =  2.82213*delta[0] + 1.39437*delta[1] + 3.84884*delta[2] + 4.59289*delta[3];
 
-        /*
-        current_position.ang  += rot_ref_bot;
-        current_position.xpos += x_ref_bot*cos(current_position.ang) - y_ref_bot*sin(current_position.ang);
-        current_position.ypos += x_ref_bot*sin(current_position.ang) + y_ref_bot*cos(current_position.ang);*/
         current_position.ang  += rot_ref_bot*360/(2*PI);
         current_position.xpos += x_ref_bot;
         current_position.ypos += y_ref_bot;
@@ -103,9 +94,12 @@ void odometry_tare(double _x = 0.0, double _y = 0.0, double _r = 0.0){
   current_position.xpos = _x;
   current_position.ypos = _y;
   current_position.ang  = _r;
+  tare_round = true;
 }
 
-
+struct position getOdometry(){
+  return current_position;
+}
 
 
 TERMINAL_COMMAND(odom, "Start of Odometry"){
