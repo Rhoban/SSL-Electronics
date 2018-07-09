@@ -73,15 +73,15 @@ void odometry_tick(){
         double rot_ref_bot = DIST_TOUR/(ENC_TOUR*4)*(delta[0] + delta[1] + delta[2] + delta[3]);
         //double rot_ref_bot = 1/((4*DIAMETER))*(delta[0] + delta[1] + delta[2] + delta[3]);*/
 
-        double x_ref_bot   = -0.0025023*delta[0] - 0.6995097*delta[1] + 0.7143253*delta[2] - 0.0123133*delta[3];//Dist parcourue dans le sens du robot en m
-        double y_ref_bot   =  0.7498925*delta[0] - 0.6830839*delta[1] + 0.3196460*delta[2] - 0.3864545*delta[3];
-        double rot_ref_bot =  6.6610783*delta[0] - 2.1470984*delta[1] + 5.8474938*delta[2] + 0.7496375*delta[3];
+        double x_ref_bot   = -0.33551*delta[0] - 0.46505*delta[1] + 0.46505*delta[2] + 0.33551*delta[3];//Dist parcourue dans le sens du robot en m
+        double y_ref_bot   =  0.31530*delta[0] - 0.55132*delta[1] - 0.27710*delta[2] + 0.51313*delta[3];
+        double rot_ref_bot =  2.82213*delta[0] + 1.39437*delta[1] + 3.84884*delta[2] + 4.59289*delta[3];
 
         /*
         current_position.ang  += rot_ref_bot;
         current_position.xpos += x_ref_bot*cos(current_position.ang) - y_ref_bot*sin(current_position.ang);
         current_position.ypos += x_ref_bot*sin(current_position.ang) + y_ref_bot*cos(current_position.ang);*/
-        current_position.ang  += rot_ref_bot;//*360/(2*PI);
+        current_position.ang  += rot_ref_bot*360/(2*PI);
         current_position.xpos += x_ref_bot;
         current_position.ypos += y_ref_bot;
 
