@@ -59,6 +59,8 @@ struct driver_packet_ans drivers_set(int index, bool enable, float target, int16
     packet.enable = enable;
     packet.targetSpeed = target;
     packet.pwm = pwm;
+    packet.padding1 = 0;
+    packet.padding2 = 0;
 
     struct driver_packet_ans answer;
     drivers_send(index, DRIVER_PACKET_SET, (uint8_t*)&packet, sizeof(struct driver_packet_set), (uint8_t*)&answer);

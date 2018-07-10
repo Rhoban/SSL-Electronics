@@ -62,24 +62,30 @@ void odometry_tick(){
         delta[2] = ((instantaneous_encoder[2] - current_encoder[2])*2*WHEEL_RADIUS*PI)/(ENC_TOUR);
         delta[3] = ((instantaneous_encoder[3] - current_encoder[3])*2*WHEEL_RADIUS*PI)/(ENC_TOUR);
 
+        if((fabs(delta[0]) >= 1)||(fabs(delta[1]) >= 1)||(fabs(delta[2]) >= 1)||(fabs(delta[3]) >= 1)){
+            terminal_io()->println("ORTIEEEE");
+        }
+        else{
+            /*
+            double x_ref_bot   = 1/(1 + COS15 + SIN15)*(delta[0]*COS15 - delta[3]*SIN15 - delta[2]); //Dist parcourue dans le sens du robot en m
+            double y_ref_bot   = 1/(1 + COS15 + SIN15)*(delta[0]*SIN15 - delta[3]*COS15 + delta[1]);
+            double rot_ref_bot = DIST_TOUR/(ENC_TOUR*4)*(delta[0] + delta[1] + delta[2] + delta[3]);
+            //double rot_ref_bot = 1/((4*DIAMETER))*(delta[0] + delta[1] + delta[2] + delta[3]);*/
 
-        /*
-        double x_ref_bot   = 1/(1 + COS15 + SIN15)*(delta[0]*COS15 - delta[3]*SIN15 - delta[2]); //Dist parcourue dans le sens du robot en m
-        double y_ref_bot   = 1/(1 + COS15 + SIN15)*(delta[0]*SIN15 - delta[3]*COS15 + delta[1]);
-        double rot_ref_bot = DIST_TOUR/(ENC_TOUR*4)*(delta[0] + delta[1] + delta[2] + delta[3]);
-        //double rot_ref_bot = 1/((4*DIAMETER))*(delta[0] + delta[1] + delta[2] + delta[3]);*/
+            double x_ref_bot   = -0.34641*delta[0] - 0.28284*delta[1] + 0.28284*delta[2] + 0.34641*delta[3];//Dist parcourue dans le sens du robot en m
+            double y_ref_bot   =  0.41421*delta[0] - 0.41421*delta[1] - 0.41421*delta[2] + 0.41421*delta[3];
+            double rot_ref_bot =  3.70751*delta[0] + 2.62160*delta[1] + 2.62160*delta[2] + 3.70751*delta[3];
 
-        double x_ref_bot   = -0.34641*delta[0] - 0.28284*delta[1] + 0.28284*delta[2] + 0.34641*delta[3];//Dist parcourue dans le sens du robot en m
-        double y_ref_bot   =  0.41421*delta[0] - 0.41421*delta[1] - 0.41421*delta[2] + 0.41421*delta[3];
-        double rot_ref_bot =  3.70751*delta[0] + 2.62160*delta[1] + 2.62160*delta[2] + 3.70751*delta[3];
+            current_position.ang  += rot_ref_bot;//*360/(2*PI);
+    	      current_position.xpos += x_ref_bot*cos(current_position.ang) - y_ref_bot*sin(current_position.ang);
+            current_position.ypos += x_ref_bot*sin(current_position.ang) + y_ref_bot*cos(current_position.ang);
+            //current_position.xpos += x_ref_bot;
+            //current_position.ypos += y_ref_bot;
 
-        current_position.ang  += rot_ref_bot;//*360/(2*PI);
-        //current_position.xpos += x_ref_bot;
-        //current_position.ypos += y_ref_bot;
-
-	      current_position.xpos += x_ref_bot*cos(current_position.ang) - y_ref_bot*sin(current_position.ang);
-        current_position.ypos += x_ref_bot*sin(current_position.ang) + y_ref_bot*cos(current_position.ang);
-
+            for(int i = 0; i < 4; i++){
+                current_encoder[i] += (instantaneous_encoder[i] - current_encoder[i]);
+            }
+        }
 
         #if ODOM_PLOT == 1
         compteur++;
@@ -92,17 +98,19 @@ void odometry_tick(){
           terminal_io()->print("Ang : ");
           terminal_io()->println(current_position.ang*360/(2*PI));
           terminal_io()->println("");
+          /*terminal_io()->print(instantaneous_encoder[0]);
+          terminal_io()->print(" | ");
+          terminal_io()->print(instantaneous_encoder[1]);
+          terminal_io()->print(" | ");
+          terminal_io()->print(instantaneous_encoder[2]);
+          terminal_io()->print(" | ");
+          terminal_io()->println(instantaneous_encoder[3]);*/
         }
 
         #endif
-
-        for(int i = 0; i < 4; i++){
-            current_encoder[i] += (instantaneous_encoder[i] - current_encoder[i]);
-        }
     }
   }
 }
-
 
 void odometry_tare(double _x, double _y, double _r){
   odom_enable = false;
