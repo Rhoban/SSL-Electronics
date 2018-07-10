@@ -38,7 +38,7 @@ struct packet_robot {
     #define STATUS_IR           (1<<2)  // The infrared barrier detects the ball
     uint8_t status;
 
-    uint8_t cap_volt;                  // Kick capcaitor voltage [V]
+    uint8_t cap_volt;                  // Kick capacitor voltage [V]
 
     uint8_t voltage;                  // Battery voltage [8th of V]
 } __attribute__((packed));
