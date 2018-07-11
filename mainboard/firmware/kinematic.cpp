@@ -16,6 +16,7 @@ extern bool odom_enable;
 extern bool tare_round;
 int compteur_odom=0;
 extern struct position current_position;
+extern double delta[4];
 
 bool kin_passiv = false;
 
@@ -34,7 +35,7 @@ bool kin_passiv = false;
 #define REAR_RIGHT_X     -sin(-ANGLE_REAR)
 #define REAR_RIGHT_Y     -cos(-ANGLE_REAR)
 
-#define DIVISION_ODOM    5
+#define DIVISION_ODOM    1
 
 #define MAX_ACCELERATION    (10*0.01)
 
@@ -178,16 +179,21 @@ TERMINAL_COMMAND(kin, "Kinematic")
             kinematic_set(x, y, t);
             kinematic_tick();
             watchdog_feed();
-            terminal_io()->print(x);
-            terminal_io()->print(" ");
-            terminal_io()->print(y);
-            terminal_io()->print(" ");
-            terminal_io()->print(t);
-            terminal_io()->print(" ");
             terminal_io()->print(front_left);
             terminal_io()->print(" ");
-            terminal_io()->print(driver_answers[0].pwm);
+            terminal_io()->print(delta[0]/(WHEEL_RADIUS*0.01));
             terminal_io()->print(" ");
+            terminal_io()->print(rear_left);
+            terminal_io()->print(" ");
+            terminal_io()->print(delta[1]/(WHEEL_RADIUS*0.01));
+            terminal_io()->print(" ");
+            terminal_io()->print(rear_right);
+            terminal_io()->print(" ");
+            terminal_io()->print(delta[2]/(WHEEL_RADIUS*0.01));
+            terminal_io()->print(" ");
+            terminal_io()->print(front_right);
+            terminal_io()->print(" ");
+            terminal_io()->print(delta[3]/(WHEEL_RADIUS*0.01));
             terminal_io()->println();
             delay(5);
         }
