@@ -5,9 +5,8 @@
 #define SIN15        0.2588
 #define ENC_TOUR     16438
 #define RADIUS       0.079
-#define DIST_TOUR    2*RADIUS
 #define PI           3.14159
-#define ODOM_PLOT    1
+#define ODOM_PLOT    0
 #define DIV_PLOT     10
 
 struct position current_position;
@@ -41,22 +40,20 @@ void odometry_tick(){
 
     if(odom_enable == true){
 
-      //struct driver_odom tmp;
-      if(tare_round == true){
+      if(tare_round == true){//This round is supposed to setup the initial encoders values
         for(int i = 0; i < 4; i++){
-          //tmp = drivers_ask_odom(i);
           current_encoder[i] = driver_answers[i].enc_cnt;
         }
 
-        tare_round = false;
+        tare_round = false;//It is only necessary once
       }
       else{
 
         for(int i = 0; i < 4; i++){
-          //tmp = drivers_ask_odom(i);
-          instantaneous_encoder[i] = driver_answers[i].enc_cnt;
+          instantaneous_encoder[i] = driver_answers[i].enc_cnt; //gathering the new encoders values
         }
 
+        //How much each wheel has moved since last tick
         delta[0] = ((instantaneous_encoder[0] - current_encoder[0])*2*WHEEL_RADIUS*PI)/(ENC_TOUR);
         delta[1] = ((instantaneous_encoder[1] - current_encoder[1])*2*WHEEL_RADIUS*PI)/(ENC_TOUR);
         delta[2] = ((instantaneous_encoder[2] - current_encoder[2])*2*WHEEL_RADIUS*PI)/(ENC_TOUR);
@@ -66,25 +63,25 @@ void odometry_tick(){
             terminal_io()->println("ORTIEEEE");
         }
         else{
-            /*
-            double x_ref_bot   = 1/(1 + COS15 + SIN15)*(delta[0]*COS15 - delta[3]*SIN15 - delta[2]); //Dist parcourue dans le sens du robot en m
-            double y_ref_bot   = 1/(1 + COS15 + SIN15)*(delta[0]*SIN15 - delta[3]*COS15 + delta[1]);
-            double rot_ref_bot = DIST_TOUR/(ENC_TOUR*4)*(delta[0] + delta[1] + delta[2] + delta[3]);
-            //double rot_ref_bot = 1/((4*DIAMETER))*(delta[0] + delta[1] + delta[2] + delta[3]);*/
 
+
+
+            //Processing of the deplacement on the robot coordinate system
             double x_ref_bot   = -0.34641*delta[0] - 0.28284*delta[1] + 0.28284*delta[2] + 0.34641*delta[3];//Dist parcourue dans le sens du robot en m
             double y_ref_bot   =  0.41421*delta[0] - 0.41421*delta[1] - 0.41421*delta[2] + 0.41421*delta[3];
             double rot_ref_bot =  3.70751*delta[0] + 2.62160*delta[1] + 2.62160*delta[2] + 3.70751*delta[3];
 
-            current_position.ang  += rot_ref_bot;//*360/(2*PI);
+            //Prrojection on the movement into the field coordinate system
+            current_position.ang  += rot_ref_bot;
     	      current_position.xpos += x_ref_bot*cos(current_position.ang) - y_ref_bot*sin(current_position.ang);
             current_position.ypos += x_ref_bot*sin(current_position.ang) + y_ref_bot*cos(current_position.ang);
-            //current_position.xpos += x_ref_bot;
-            //current_position.ypos += y_ref_bot;
 
+            //Update of the new encoders references values
             for(int i = 0; i < 4; i++){
                 current_encoder[i] += (instantaneous_encoder[i] - current_encoder[i]);
             }
+
+
         }
 
         #if ODOM_PLOT == 1
@@ -117,7 +114,7 @@ void odometry_tare(double _x, double _y, double _r){
   current_position.xpos = _x;
   current_position.ypos = _y;
   current_position.ang  = _r;
-  tare_round = true;
+  tare_round = true; //After a tare, a tare_round is necessary
 }
 
 struct position getOdometry(){
