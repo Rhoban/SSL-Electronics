@@ -15,6 +15,7 @@
 #include "infos.h"
 #include "ir.h"
 
+
 // Channels
 static int com_channels[3] = {0, 10, 60};
 
@@ -559,6 +560,9 @@ void com_send_status_to_master()
 
     packet.cap_volt = kicker_cap_voltage();
     packet.voltage = voltage_value()*8.0;
+    packet.xpos = getOdometry().xpos;
+    packet.ypos = getOdometry().ypos;
+    packet.ang = getOdometry().ang;
 
     for (size_t k=0; k<3; k++) {
         com_ce_disable(k);

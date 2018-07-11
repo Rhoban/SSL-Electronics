@@ -1,6 +1,7 @@
 #ifndef _COM_H
 #define _COM_H
 
+#include "odometry.h"
 #include <stdint.h>
 
 #define PACKET_SIZE                 8
@@ -21,7 +22,7 @@ struct packet_master {
     int16_t y_speed;
     int16_t t_speed;                // Rotation in [mrad/s]
 
-    uint8_t kickPower;             // Kick power (this is a duration in [x25 uS])
+    uint8_t kickPower;              // Kick power (this is a duration in [x25 uS])
 } __attribute__((packed));
 
 #define INSTRUCTION_PARAMS          0x01
@@ -41,6 +42,11 @@ struct packet_robot {
     uint8_t cap_volt;                  // Kick capacitor voltage [V]
 
     uint8_t voltage;                  // Battery voltage [8th of V]
+
+    double xpos;                      // Data planned by odometry
+    double ypos;
+    double ang;
+
 } __attribute__((packed));
 
 void com_init();
