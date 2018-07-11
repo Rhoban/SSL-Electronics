@@ -110,7 +110,7 @@ void odometry_tick(){
 }
 
 void odometry_tare(double _x, double _y, double _r){
-  odom_enable = false;
+  //odom_enable = false;
   current_position.xpos = _x;
   current_position.ypos = _y;
   current_position.ang  = _r;

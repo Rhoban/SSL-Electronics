@@ -61,6 +61,7 @@ void kinematic_set(float x, float y, float t)
     target_t = t;
     enabled = true;
     enabled_since = millis();
+    odom_enable = true;
 }
 
 void kinematic_stop()
@@ -69,6 +70,7 @@ void kinematic_stop()
     target_y = 0;
     target_t = 0;
     enabled = false;
+    odom_enable = false;
 }
 
 int16_t pwm_lut(float target)
@@ -91,7 +93,7 @@ void kinematic_tick()
                 odometry_stop();
             } else {
 
-                int time1 = micros();
+                //int time1 = micros();
                 float new_front_left, new_front_right, new_rear_left, new_rear_right;
                 kinematic_compute(target_x, target_y, target_t,
                     &new_front_left, &new_front_right, &new_rear_left, &new_rear_right);
@@ -143,7 +145,7 @@ void kinematic_tick()
                   compteur_odom = 0;
                 }
 
-                terminal_io()->println(micros()-time1);
+                //terminal_io()->println(micros()-time1);
 
             }
         } else {
