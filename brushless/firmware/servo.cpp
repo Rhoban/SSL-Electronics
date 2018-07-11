@@ -32,16 +32,19 @@ static int encoder_pos = 0;
 #define NBR_COEF 5
 #define ART_LIM  2500
 
-#define STEP 1
-#define STEP1 1
+
+#define RAMP  0    //ramp enable with sdb=1 command
+#define STEP  1    //step enable with sdb=1 command
+#define STEP1 1    //define first step value (tr/s)
 #define STEP2 3
 #define STEP3 5
-#define RAMP 0
 
-#define ASSERV_FPI 0
+
+#define ASSERV_FPI 0    //Fast PI regulator
 #define ASSERV_PI  1
-#define FF_95  1
-
+#define FF_95      1    //Feedforward with wx = 95 rad/s
+#define PRINT      0
+////////////////////////////////////////////////////////////////////////////////:
 
 fifo::fifo(){
 
@@ -86,14 +89,15 @@ void fifo::init(){
     data[i] = 0;
   }
 }
+////////////////////////////////////////////////////////////////////////////////:
 
-#if ASSERV_FPI == 1
+#if ASSERV_FPI
 // PI correct
 static double coef_err[NBR_COEF] = {0.0512, -0.0502, 0, 0, 0};//t  t-1   t-2  t-3
 static double coef_cmd[NBR_COEF] = {1, 0, 0, 0, 0}; //t-1 t-2 t-3 t-4
 #endif
 
-#if ASSERV_PI == 1
+#if ASSERV_PI
 //PI
 static double coef_err[NBR_COEF] = {0.05241, -0.05137, 0, 0, 0}; //t  t-1   t-2  t-3
 static double coef_cmd[NBR_COEF] = {1, 0, 0, 0, 0}; //t-1 t-2 t-3 t-4
@@ -113,7 +117,7 @@ static double coef_f_cns_f[NBR_COEF] = {3.6375, -4.9618, 3.0081, -0.6839, 0};
 //***********************************************************************//
 #endif
 
-
+////////////////////////////////////////////////////////////////////////////////:
 
 fifo fifo_error(NBR_COEF);
 fifo fifo_command(NBR_COEF);
@@ -312,8 +316,6 @@ void servo_tick()
 
 
                 double current_error = servo_filt_target - (servo_speed)*2*3.14159265359;
-                //current_error = (current_error >=  0.15) ? current_error : 0;
-                //current_error = (current_error <= -0.15) ? current_error : 0;
                 fifo_error.top(current_error);
 
                 //FeedForward et Regulation
@@ -334,6 +336,7 @@ void servo_tick()
                 fifo_command.top(current_command_v);
 
 
+                #if PRINT
                 terminal_io()->print(servo_speed);              //1
                 terminal_io()->print(" ");
                 terminal_io()->print(servo_target);             //2
@@ -347,7 +350,7 @@ void servo_tick()
                 terminal_io()->print(current_error);            //6
                 terminal_io()->print(" ");
                 terminal_io()->println(current_command_v);      //7
-
+                #endif
 
                 cpt++;
                 motor_set(true, -current_command);
