@@ -34,8 +34,7 @@ bool kin_passiv = false;
 #define REAR_RIGHT_X     -sin(-ANGLE_REAR)
 #define REAR_RIGHT_Y     -cos(-ANGLE_REAR)
 
-#define DIVISION_ODOM    1
-
+#define DIVISION_ODOM    5
 
 #define MAX_ACCELERATION    (10*0.01)
 
@@ -92,7 +91,7 @@ void kinematic_tick()
                 odometry_stop();
             } else {
 
-
+                int time1 = micros();
                 float new_front_left, new_front_right, new_rear_left, new_rear_right;
                 kinematic_compute(target_x, target_y, target_t,
                     &new_front_left, &new_front_right, &new_rear_left, &new_rear_right);
@@ -144,8 +143,7 @@ void kinematic_tick()
                   compteur_odom = 0;
                 }
 
-
-
+                terminal_io()->println(micros()-time1);
 
             }
         } else {
