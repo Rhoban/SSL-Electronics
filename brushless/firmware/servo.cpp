@@ -33,13 +33,15 @@ static int encoder_pos = 0;
 #define ART_LIM  2500
 
 #define STEP 1
-#define STEP1 2
-#define STEP2 10
-#define STEP3 50
+#define STEP1 1
+#define STEP2 3
+#define STEP3 5
 #define RAMP 0
 
 #define ASSERV_FPI 0
-#define ASSERV_TEST 1
+#define ASSERV_PI  1
+#define FF_95  1
+
 
 fifo::fifo(){
 
@@ -87,59 +89,38 @@ void fifo::init(){
 
 #if ASSERV_FPI == 1
 // PI correct
-
 static double coef_err[NBR_COEF] = {0.0512, -0.0502, 0, 0, 0};//t  t-1   t-2  t-3
 static double coef_cmd[NBR_COEF] = {1, 0, 0, 0, 0}; //t-1 t-2 t-3 t-4
-
-static double coef_ff_cns[NBR_COEF] = {0.001044, 0.001819, -0.005422, 0.001785, 0.00078};
-static double coef_ff_cmd[NBR_COEF] = {3.548, -4.72, 2.791, -0.6188, 0};
-
-static double coef_f_cns[NBR_COEF] = {0.000001596, 0.00003831, 0.00008979, 0.00003265, 0.000001159};
-static double coef_f_cns_f[NBR_COEF] = {3.548, -4.72, 2.791, -0.6188, 0};
-
-
-// wx = 40
-/*static double coef_ff_cns[NBR_COEF] = {0.00001396, 0.00002853, -0.00007848, 0.00002384, 0.00001224};
-static double coef_ff_cmd[NBR_COEF] = {3.843, -5.539, 3.548, -0.8521, 0};
-
-static double coef_f_cns[NBR_COEF] = {0.00000002077, 0.0000005259, 0.0000013, 0.0000004986, 0.00000001867};
-static double coef_f_cns_f[NBR_COEF] = {3.843, -5.539, 3.548, -0.8521, 0}; */
-
-//wx = 120
-/*static double coef_ff_cns[NBR_COEF] = {0.001044, 0.001819, -0.005422, 0.001785, 0.00078};
-static double coef_ff_cmd[NBR_COEF] = {3.548, -4.72, 2.791, -0.6188, 0};
-
-static double coef_f_cns[NBR_COEF] = {0.000001596, 0.00003831, 0.00008979, 0.00003265, 0.000001159};
-static double coef_f_cns_f[NBR_COEF] = {3.548, -4.72, 2.791, -0.6188, 0};*/
-
-
 #endif
 
-#if ASSERV_TEST == 1
+#if ASSERV_PI == 1
 //PI
 static double coef_err[NBR_COEF] = {0.05241, -0.05137, 0, 0, 0}; //t  t-1   t-2  t-3
 static double coef_cmd[NBR_COEF] = {1, 0, 0, 0, 0}; //t-1 t-2 t-3 t-4
-
-//FF wx = 30
-/*static double coef_ff_cns[NBR_COEF] = {0.000004462, 0.000009293, -0.00002533, 0.000007611, 0.000003989};
-static double coef_ff_cmd[NBR_COEF] = {3.882, -5.651, 3.656, -0.8869, 0};
-//F wx = 30
-static double coef_f_cns[NBR_COEF] = {0.00000006616, 0.0000001686, 0.0000004196, 0.000000162, 0.000000006108};
-static double coef_f_cns_f[NBR_COEF] = {3.882, -5.651, 3.656, -0.8869, 0};*/
-
-//FF wx = 20
-static double coef_ff_cns[NBR_COEF] = {0.0000008901, 0.000001889, -0.000005102, 0.000001516, 0.000000812};
-static double coef_ff_cmd[NBR_COEF] = {3.921, -5.765, 3.767, -0.9231, 0};
-//F wx = 20
-static double coef_f_cns[NBR_COEF] = {0.000000001316, 0.00000003376, 0.00000008455, 0.00000003287, 0.0000000001247};
-static double coef_f_cns_f[NBR_COEF] = {3.921, -5.765, 3.767, -0.9231, 0};
-
 #endif
+
+#if FF_95
+//***********************************************************************//
+//FeedForward et Prefiltre modèle charge wx = 95 rad/s
+/*
+     ne diverge pas, glissement léger
+*/
+static double coef_ff_cns[NBR_COEF] = {0.0016, 0.0030, -0.0086, 0.0027, 0.0013};
+static double coef_ff_cmd[NBR_COEF] = {3.6375, -4.9618, 3.0081, -0.6839, 0};
+
+static double coef_f_cns[NBR_COEF] = {0.000000637119, 0.000015555, 0.000037067, 0.000013704, 0.00000049459};
+static double coef_f_cns_f[NBR_COEF] = {3.6375, -4.9618, 3.0081, -0.6839, 0};
+//***********************************************************************//
+#endif
+
+
 
 fifo fifo_error(NBR_COEF);
 fifo fifo_command(NBR_COEF);
 fifo fifo_consigne(NBR_COEF);
 fifo fifo_filtred_consigne(NBR_COEF);
+fifo fifo_command_ff(NBR_COEF);
+fifo fifo_command_pid(NBR_COEF);
 static int cpt = 0;
 
 /////////////////////////////////////////////////////////////////
@@ -214,6 +195,8 @@ void servo_tick()
         fifo_command.init();
         fifo_consigne.init();
         fifo_filtred_consigne.init();
+        fifo_command_ff.init();
+        fifo_command_pid.init();
         motor_set(false, 0);
     } else {
         if (servo_flag) {
@@ -328,16 +311,20 @@ void servo_tick()
                 fifo_filtred_consigne.top(current_filtred_consigne);
 
 
-                double current_error = current_filtred_consigne - (servo_speed)*2*3.14159265359;
+                double current_error = servo_filt_target - (servo_speed)*2*3.14159265359;
+                //current_error = (current_error >=  0.15) ? current_error : 0;
+                //current_error = (current_error <= -0.15) ? current_error : 0;
                 fifo_error.top(current_error);
 
                 //FeedForward et Regulation
 
                 for(int i = 0; i < NBR_COEF; i++){
-                  current_command_ff_v += coef_ff_cmd[i]*fifo_command.get_Value(i) + coef_ff_cns[i]*fifo_consigne.get_Value(i);
-                  current_command_pid_v += coef_cmd[i]*fifo_command.get_Value(i) + coef_err[i]*fifo_error.get_Value(i);
+                  current_command_ff_v += coef_ff_cmd[i]*fifo_command_ff.get_Value(i) + coef_ff_cns[i]*fifo_consigne.get_Value(i);
+                  current_command_pid_v += coef_cmd[i]*fifo_command_pid.get_Value(i) + coef_err[i]*fifo_error.get_Value(i);
                 }
 
+                fifo_command_ff.top(current_command_ff_v);
+                fifo_command_pid.top(current_command_pid_v);
 
                 current_command_v = current_command_pid_v + current_command_ff_v;
 
@@ -462,6 +449,8 @@ TERMINAL_COMMAND(clean, "Clean fifo of asserv")
   fifo_command.init();
   fifo_consigne.init();
   fifo_filtred_consigne.init();
+  fifo_command_ff.init();
+  fifo_command_pid.init();
 }
 
 TERMINAL_COMMAND(set, "Set target speed")
@@ -471,6 +460,8 @@ TERMINAL_COMMAND(set, "Set target speed")
         fifo_command.init();
         fifo_consigne.init();
         fifo_filtred_consigne.init();
+        fifo_command_ff.init();
+        fifo_command_pid.init();
         servo_set(true, atof(argv[0]));
 
     } else {
