@@ -1,11 +1,12 @@
 #ifndef _COM_H
 #define _COM_H
 
+#include "odometry.h"
 #include <stdint.h>
 
 #define PACKET_SIZE                 8
 #define PACKET_INSTRUCTIONS         2
-#define MAX_ROBOTS                  16
+#define MAX_ROBOTS                  8
 
 #define INSTRUCTION_MASTER          0x00
 struct packet_master {
@@ -21,7 +22,7 @@ struct packet_master {
     int16_t y_speed;
     int16_t t_speed;                // Rotation in [mrad/s]
 
-    uint8_t kickPower;             // Kick power (this is a duration in [x25 uS])
+    uint8_t kickPower;              // Kick power (this is a duration in [x25 uS])
 } __attribute__((packed));
 
 #define INSTRUCTION_PARAMS          0x01
@@ -38,9 +39,14 @@ struct packet_robot {
     #define STATUS_IR           (1<<2)  // The infrared barrier detects the ball
     uint8_t status;
 
-    uint8_t cap_volt;                  // Kick capcaitor voltage [V]
+    uint8_t cap_volt;                  // Kick capacitor voltage [V]
 
     uint8_t voltage;                  // Battery voltage [8th of V]
+
+    double xpos;                      // Data planned by odometry
+    double ypos;
+    double ang;
+
 } __attribute__((packed));
 
 void com_init();

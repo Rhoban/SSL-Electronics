@@ -5,6 +5,7 @@
 #include "com.h"
 #include "servo.h"
 #include "security.h"
+#include "encoder.h"
 
 HardwareSPI slave(SLAVE_SPI);
 
@@ -12,11 +13,14 @@ TERMINAL_PARAMETER_INT(rcv, "Received byte", 0);
 TERMINAL_PARAMETER_INT(irqed, "IRQed", 0);
 TERMINAL_PARAMETER_INT(ssed, "Slave selected", 0);
 
+bool odom_received = false;
+
 static uint8_t frame_sizes[] = {
     sizeof(struct driver_packet_set),
-    sizeof(struct driver_packet_params)
-
+    sizeof(struct driver_packet_params),
+    sizeof(struct driver_odom)
 };
+
 #define INSTRUCTIONS sizeof(frame_size)
 static uint8_t frame[128];
 static int frame_size = 0;
@@ -37,12 +41,21 @@ void com_frame_received()
             // Setting the target speed
             COM_READ_PACKET(driver_packet_set)
             servo_set(packet->enable, packet->targetSpeed, packet->pwm);
+            odom_received = false;
         }
         break;
         case DRIVER_PACKET_PARAMS: {
             // Setting the PID parameters
             COM_READ_PACKET(driver_packet_params)
             servo_set_pid(packet->kp, packet->ki, packet->kd);
+            odom_received = false;
+        }
+        break;
+        case DRIVER_PACKET_ODOM: {
+            // Sending encoder value
+            COM_READ_PACKET(driver_odom)
+            odom_received = true;
+            //servo_set_pid(packet->kp, packet->ki, packet->kd);
         }
         break;
     }
@@ -50,6 +63,7 @@ void com_frame_received()
 
 // SPI answer
 static struct driver_packet_ans answer;
+static struct driver_odom answer_odom;
 uint8_t *answer_ptr;
 size_t answer_pos = 0;
 
@@ -61,6 +75,7 @@ void __irq_spi1()
     irqed += 1;
     rcv = SPI1->regs->SR;
 
+    //if ((spi_is_tx_empty(SPI1))&&(answer_pos < sizeof(driver_packet_ans))) {
     if (spi_is_tx_empty(SPI1)) {
         spi_tx_reg(SPI1, answer_ptr[answer_pos++]);
     }
@@ -98,7 +113,6 @@ static void slave_irq()
         frame_type = 0xff;
         slave.beginSlave(MSBFIRST, 0);
 
-        // Sending the status
         if (security_get_error() == SECURITY_NO_ERROR) {
             answer.status = 0x55;
         } else {
@@ -106,6 +120,7 @@ static void slave_irq()
         }
         answer.speed = servo_get_speed();
         answer.pwm = servo_get_pwm();
+        answer.enc_cnt = encoder_value();
         answer_ptr = (uint8_t*)&answer;
         answer_pos = 0;
 

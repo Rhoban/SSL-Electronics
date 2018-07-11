@@ -26,7 +26,7 @@ bool encoder_is_present()
 }
 
 // Instruction
-static uint16_t encoder_read_value()
+uint16_t encoder_read_value()
 {
     uint16_t result;
     digitalWrite(ENCODER_SELECT_PIN, LOW);
@@ -132,6 +132,7 @@ TERMINAL_COMMAND(eb, "Encoder benchmark")
 
 TERMINAL_COMMAND(cnt, "Cnt debug")
 {
-    terminal_io()->println(encoder_cnt);
+    terminal_io()->println((int32_t)encoder_cnt);
+    terminal_io()->println(encoder_read_value());
 }
 #endif

@@ -15,6 +15,7 @@
 #include "infos.h"
 #include "ir.h"
 
+
 // Channels
 static int com_channels[3] = {0, 10, 60};
 
@@ -559,6 +560,9 @@ void com_send_status_to_master()
 
     packet.cap_volt = kicker_cap_voltage();
     packet.voltage = voltage_value()*8.0;
+    packet.xpos = getOdometry().xpos;
+    packet.ypos = getOdometry().ypos;
+    packet.ang = getOdometry().ang;
 
     for (size_t k=0; k<3; k++) {
         com_ce_disable(k);
@@ -587,9 +591,9 @@ void com_process_master()
                  master_packet->t_speed/1000.0);
             actions = master_packet->actions;
 
-            //if ((master_packet->actions & ACTION_DRIBBLE) && (ir_present()) ) {
-            if ((master_packet->actions & ACTION_DRIBBLE)) {
-                drivers_set_safe(4, true, 0.5);
+            if ((master_packet->actions & ACTION_DRIBBLE) && (ir_present()) ) {
+            //if ((master_packet->actions & ACTION_DRIBBLE)) {
+                drivers_set_safe(4, true, 0.3);
             } else {
                 drivers_set(4, false, 0);
             }
