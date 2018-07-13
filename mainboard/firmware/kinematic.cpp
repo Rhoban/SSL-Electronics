@@ -178,7 +178,7 @@ TERMINAL_COMMAND(kin, "Kinematic")
             kinematic_set(x, y, t);
             kinematic_tick();
             watchdog_feed();
-            terminal_io()->print(x);
+            /*terminal_io()->print(x);
             terminal_io()->print(" ");
             terminal_io()->print(y);
             terminal_io()->print(" ");
@@ -188,7 +188,7 @@ TERMINAL_COMMAND(kin, "Kinematic")
             terminal_io()->print(" ");
             terminal_io()->print(driver_answers[0].pwm);
             terminal_io()->print(" ");
-            terminal_io()->println();
+            terminal_io()->println();*/
             delay(5);
         }
     }

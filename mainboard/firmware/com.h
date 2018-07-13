@@ -43,9 +43,9 @@ struct packet_robot {
 
     uint8_t voltage;                  // Battery voltage [8th of V]
 
-    double xpos;                      // Data planned by odometry
-    double ypos;
-    double ang;
+    /*int16_t xpos;                      // Data planned by odometry
+    int16_t ypos;
+    int16_t ang;*/
 
 } __attribute__((packed));
 

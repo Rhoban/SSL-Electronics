@@ -17,7 +17,6 @@ bool odom_enable;
 bool tare_round = true;
 int compteur = 0;
 
-
 void odometry_init(){
   odom_enable = false;
   current_position.xpos = 0.0;
@@ -80,8 +79,6 @@ void odometry_tick(){
             for(int i = 0; i < 4; i++){
                 current_encoder[i] += (instantaneous_encoder[i] - current_encoder[i]);
             }
-
-
         }
 
         #if ODOM_PLOT == 1
