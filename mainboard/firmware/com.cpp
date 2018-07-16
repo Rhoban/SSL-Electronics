@@ -559,10 +559,11 @@ void com_send_status_to_master()
     }
 
     packet.cap_volt = kicker_cap_voltage();
-    packet.voltage = voltage_value()*8.0;
-    /*packet.xpos = getOdometry().xpos*1000;
-    packet.ypos = getOdometry().ypos*1000;
-    packet.ang = getOdometry().ang*1000;*/
+    packet.voltage  = voltage_value()*8.0;
+
+    packet.xpos     = getOdometry().xpos*1000;
+    packet.ypos     = getOdometry().ypos*1000;
+    packet.ang      = getOdometry().ang*1000;
 
     for (size_t k=0; k<3; k++) {
         com_ce_disable(k);

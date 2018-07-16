@@ -29,7 +29,7 @@ void setup()
     pinMode(BOARD_LED_PIN, OUTPUT);
 
     // Can be used to set the robot id
-    //infos_set(3, false);
+    infos_set(7, false);
 
     // Multiplexer
     mux_init();
@@ -126,8 +126,6 @@ void loop()
     // Ticking the terminal
     terminal_tick();
 
-    // odometry
-    //odometry_tick();
 }
 
 TERMINAL_COMMAND(diag, "Diagnostic")
