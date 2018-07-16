@@ -279,14 +279,14 @@ void servo_tick()
                    servo_target = STEP2;
                  }
                  if(sdb_t >= 6000){
-                   sdb = false;
+                   //sdb = false;
                    //motor_set(false, 0);
                    servo_target = STEP3;
                  }
                  if(sdb_t >= 8000){
                    sdb = false;
                    servo_enable = false;
-                   //motor_set(false, 0);
+                   motor_set(false, 0);
                  }
                #endif
 
