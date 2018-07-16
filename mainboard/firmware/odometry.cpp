@@ -59,7 +59,7 @@ void odometry_tick(){
         delta[3] = ((instantaneous_encoder[3] - current_encoder[3])*2*WHEEL_RADIUS*PI)/(ENC_TOUR);
 
         if((fabs(delta[0]) >= 1)||(fabs(delta[1]) >= 1)||(fabs(delta[2]) >= 1)||(fabs(delta[3]) >= 1)){
-            terminal_io()->println("ORTIEEEE");
+            //terminal_io()->println("ORTIEEEE");
         }
         else{
 
@@ -72,6 +72,12 @@ void odometry_tick(){
 
             //Prrojection on the movement into the field coordinate system
             current_position.ang  += rot_ref_bot;
+            /*if(current_position.ang >= PI){
+              current_position.ang = -PI + (current_position.ang-PI);
+            }
+            else if(current_position.ang <= -PI){
+              current_position.ang = PI + (current_position.ang+PI);
+            }*/
     	      current_position.xpos += x_ref_bot*cos(current_position.ang) - y_ref_bot*sin(current_position.ang);
             current_position.ypos += x_ref_bot*sin(current_position.ang) + y_ref_bot*cos(current_position.ang);
 
