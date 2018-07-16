@@ -17,6 +17,7 @@ extern bool tare_round;
 int compteur_odom=0;
 extern struct position current_position;
 extern double delta[4];
+int timestep = 0;
 
 bool kin_passiv = false;
 
@@ -94,7 +95,7 @@ void kinematic_tick()
                 odometry_stop();
             } else {
 
-                //int time1 = micros();
+                int timeflag = micros();
                 float new_front_left, new_front_right, new_rear_left, new_rear_right;
                 kinematic_compute(target_x, target_y, target_t,
                     &new_front_left, &new_front_right, &new_rear_left, &new_rear_right);
@@ -143,10 +144,9 @@ void kinematic_tick()
                 compteur_odom++;
                 if(compteur_odom >= DIVISION_ODOM){
                   odometry_tick();
+                  timestep = micros()-timeflag;
                   compteur_odom = 0;
                 }
-
-                //terminal_io()->println(micros()-time1);
 
             }
         } else {
@@ -181,19 +181,19 @@ TERMINAL_COMMAND(kin, "Kinematic")
             watchdog_feed();
             terminal_io()->print(front_left);
             terminal_io()->print(" ");
-            terminal_io()->print(delta[0]/(WHEEL_RADIUS*0.01));
+            terminal_io()->print(delta[0]*10000/(WHEEL_RADIUS*(timestep))); //unit in 10000rad/us
             terminal_io()->print(" ");
             terminal_io()->print(rear_left);
             terminal_io()->print(" ");
-            terminal_io()->print(delta[1]/(WHEEL_RADIUS*0.01));
+            terminal_io()->print(delta[1]*10000/(WHEEL_RADIUS*(timestep)));
             terminal_io()->print(" ");
             terminal_io()->print(rear_right);
             terminal_io()->print(" ");
-            terminal_io()->print(delta[2]/(WHEEL_RADIUS*0.01));
+            terminal_io()->print(delta[2]*10000/(WHEEL_RADIUS*(timestep)));
             terminal_io()->print(" ");
             terminal_io()->print(front_right);
             terminal_io()->print(" ");
-            terminal_io()->print(delta[3]/(WHEEL_RADIUS*0.01));
+            terminal_io()->print(delta[3]*10000/(WHEEL_RADIUS*(timestep)));
             terminal_io()->println();
             delay(5);
         }
