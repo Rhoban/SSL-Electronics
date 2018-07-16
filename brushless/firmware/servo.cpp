@@ -314,7 +314,9 @@ void servo_tick()
                 }
                 fifo_filtred_consigne.top(current_filtred_consigne);
 
+                //Calcul de l'erreur
 
+                //double current_error = (current_filtred_consigne - servo_speed)*2*3.14159265359;
                 double current_error = servo_filt_target - (servo_speed)*2*3.14159265359;
                 fifo_error.top(current_error);
 
@@ -330,26 +332,28 @@ void servo_tick()
 
                 current_command_v = current_command_pid_v + current_command_ff_v;
 
+                //Saturation de la commande
+
                 current_command_v = (current_command_v >=  18) ?  18 : current_command_v;
                 current_command_v = (current_command_v <= -18) ? -18 : current_command_v;
-                current_command   = current_command_v*3000/VMAX;
+                current_command   = current_command_v*3000/VMAX; //commande en pwm
                 fifo_command.top(current_command_v);
 
 
                 #if PRINT
-                terminal_io()->print(servo_speed);              //1
+                terminal_io()->print(servo_speed);              //1 vitesse de rotation du moteur (tr/s)
                 terminal_io()->print(" ");
-                terminal_io()->print(servo_target);             //2
+                terminal_io()->print(servo_target);             //2 consigne de vitesse (tr/s)
                 terminal_io()->print(" ");
-                terminal_io()->print(current_command_ff_v);     //3
+                terminal_io()->print(current_command_ff_v);     //3 commande provenant du ff (V)
                 terminal_io()->print(" ");
-                terminal_io()->print(current_command_pid_v);    //4
+                terminal_io()->print(current_command_pid_v);    //4 commande provenant du pid (V)
                 terminal_io()->print(" ");
-                terminal_io()->print(current_filtred_consigne); //5
+                terminal_io()->print(current_filtred_consigne); //5 consigne après pré-filtre (tr/s)
                 terminal_io()->print(" ");
-                terminal_io()->print(current_error);            //6
+                terminal_io()->print(current_error);            //6 erreur (rad/s)
                 terminal_io()->print(" ");
-                terminal_io()->println(current_command_v);      //7
+                terminal_io()->println(current_command_v);      //7 commande envoyée au moteur (V)
                 #endif
 
                 cpt++;
