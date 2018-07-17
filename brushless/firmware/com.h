@@ -26,15 +26,6 @@ struct driver_packet_params {
     float kd;
 } __attribute__((packed));
 
-#define DRIVER_PACKET_ODOM   0x02
-struct driver_odom {
-    uint32_t enc_cnt;
-} __attribute__((packed));
-
-struct driver_ping {
-}__attribute__((packed));
-
-
 void com_init();
 
 void com_tick();

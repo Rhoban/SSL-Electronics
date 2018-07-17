@@ -29,7 +29,7 @@ void setup()
     pinMode(BOARD_LED_PIN, OUTPUT);
 
     // Can be used to set the robot id
-    infos_set(7, false);
+    //infos_set(5, false);
 
     // Multiplexer
     mux_init();

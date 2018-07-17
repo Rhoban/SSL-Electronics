@@ -7,7 +7,7 @@
 #define RADIUS       0.079
 #define PI           3.14159
 #define ODOM_PLOT    0
-#define DIV_PLOT     10
+#define DIV_PLOT     1
 
 struct position current_position;
 int32_t current_encoder[4];
@@ -59,7 +59,7 @@ void odometry_tick(){
         delta[3] = ((instantaneous_encoder[3] - current_encoder[3])*2*WHEEL_RADIUS*PI)/(ENC_TOUR);
 
         if((fabs(delta[0]) >= 1)||(fabs(delta[1]) >= 1)||(fabs(delta[2]) >= 1)||(fabs(delta[3]) >= 1)){
-            //terminal_io()->println("ORTIEEEE");
+            terminal_io()->println("ORTIEEEE");
         }
         else{
 
@@ -70,7 +70,7 @@ void odometry_tick(){
             double y_ref_bot   =  0.41421*delta[0] - 0.41421*delta[1] - 0.41421*delta[2] + 0.41421*delta[3];
             double rot_ref_bot =  3.70751*delta[0] + 2.62160*delta[1] + 2.62160*delta[2] + 3.70751*delta[3];
 
-            //Prrojection on the movement into the field coordinate system
+            //Projection on the movement into the field coordinate system
             current_position.ang  += rot_ref_bot;
             /*if(current_position.ang >= PI){
               current_position.ang = -PI + (current_position.ang-PI);
@@ -104,7 +104,14 @@ void odometry_tick(){
           terminal_io()->print(" | ");
           terminal_io()->print(instantaneous_encoder[2]);
           terminal_io()->print(" | ");
-          terminal_io()->println(instantaneous_encoder[3]);*/
+          terminal_io()->println(instantaneous_encoder[3]);
+          terminal_io()->print(current_encoder[0]);
+          terminal_io()->print(" - ");
+          terminal_io()->print(current_encoder[1]);
+          terminal_io()->print(" - ");
+          terminal_io()->print(current_encoder[2]);
+          terminal_io()->print(" - ");
+          terminal_io()->println(current_encoder[3]);*/
         }
 
         #endif
