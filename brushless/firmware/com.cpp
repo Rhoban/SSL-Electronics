@@ -18,7 +18,6 @@ bool odom_received = false;
 static uint8_t frame_sizes[] = {
     sizeof(struct driver_packet_set),
     sizeof(struct driver_packet_params),
-    sizeof(struct driver_odom)
 };
 
 #define INSTRUCTIONS sizeof(frame_size)
@@ -51,19 +50,12 @@ void com_frame_received()
             odom_received = false;
         }
         break;
-        case DRIVER_PACKET_ODOM: {
-            // Sending encoder value
-            COM_READ_PACKET(driver_odom)
-            odom_received = true;
-            //servo_set_pid(packet->kp, packet->ki, packet->kd);
-        }
-        break;
+    
     }
 }
 
 // SPI answer
 static struct driver_packet_ans answer;
-static struct driver_odom answer_odom;
 uint8_t *answer_ptr;
 size_t answer_pos = 0;
 
