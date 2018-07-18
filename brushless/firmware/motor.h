@@ -16,6 +16,8 @@ void motor_set(bool enable, int value);
 /**
  * Ticks the motor
  */
-void motor_tick();
+void motor_tick(bool irq = false);
+
+void motor_dbg();
 
 #endif

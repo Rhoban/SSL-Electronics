@@ -6,7 +6,7 @@
 /**
  * Get the sine from the LUT
  * 
- * x goes from 0 to 8095
+ * x goes from 0 to 8191
  * return value goes from 
  */
 uint16_t sin_lut(uint16_t x);

@@ -4,7 +4,7 @@
 
 int main()
 {
-    for (int k=0; k<8095; k++) {
+    for (int k=0; k<8191; k++) {
         printf("%d\n", sin_lut(k));
     }
 }

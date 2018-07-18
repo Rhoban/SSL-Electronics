@@ -47,7 +47,9 @@ void __irq_spi2()
             case 1: {
                 encoder_read_result |= SPI2->regs->DR;
                 GPIOB->regs->BSRR = (1U << 12);
+                delay_us(1);
                 GPIOB->regs->BSRR = (1U << 12) << 16;
+                delay_us(1);
                 SPI2->regs->DR = 0xff;
                 encoder_read_state++;
                 break;
