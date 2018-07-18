@@ -4,9 +4,10 @@
 #include <stdint.h>
 
 void encoder_init();
-bool encoder_read();
+void encoder_read();
 bool encoder_is_present();
 bool encoder_is_ok();
 uint32_t encoder_value();
+void encoder_tick();
 
 #endif
