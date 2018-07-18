@@ -6,7 +6,7 @@
 #define ENC_TOUR     16438
 #define RADIUS       0.079
 #define PI           3.14159
-#define ODOM_PLOT    0
+#define ODOM_PLOT    1
 #define DIV_PLOT     1
 
 struct position current_position;
@@ -59,7 +59,10 @@ void odometry_tick(){
         delta[3] = ((instantaneous_encoder[3] - current_encoder[3])*2*WHEEL_RADIUS*PI)/(ENC_TOUR);
 
         if((fabs(delta[0]) >= 1)||(fabs(delta[1]) >= 1)||(fabs(delta[2]) >= 1)||(fabs(delta[3]) >= 1)){
-            terminal_io()->println("ORTIEEEE");
+            delta[0] = 0;
+            delta[1] = 0;
+            delta[2] = 0;
+            delta[3] = 0;
         }
         else{
 
@@ -84,6 +87,7 @@ void odometry_tick(){
             //Update of the new encoders references values
             for(int i = 0; i < 4; i++){
                 current_encoder[i] += (instantaneous_encoder[i] - current_encoder[i]);
+                delta[i] = 0;
             }
         }
 
@@ -91,14 +95,14 @@ void odometry_tick(){
         compteur++;
         if(compteur >= DIV_PLOT){
           compteur = 0;
-          terminal_io()->print("x : ");
+          /*terminal_io()->print("x : ");
           terminal_io()->println(current_position.xpos);
           terminal_io()->print("y : ");
           terminal_io()->println(current_position.ypos);
           terminal_io()->print("Ang : ");
           terminal_io()->println(current_position.ang*360/(2*PI));
-          terminal_io()->println("");
-          /*terminal_io()->print(instantaneous_encoder[0]);
+          terminal_io()->println("");*/
+          terminal_io()->print(instantaneous_encoder[0]);
           terminal_io()->print(" | ");
           terminal_io()->print(instantaneous_encoder[1]);
           terminal_io()->print(" | ");
@@ -111,7 +115,7 @@ void odometry_tick(){
           terminal_io()->print(" - ");
           terminal_io()->print(current_encoder[2]);
           terminal_io()->print(" - ");
-          terminal_io()->println(current_encoder[3]);*/
+          terminal_io()->println(current_encoder[3]);
         }
 
         #endif

@@ -38,7 +38,7 @@ int drivers_ping(int index)
 static void drivers_send(int index, uint8_t instruction, uint8_t *data, size_t len, uint8_t *answer)
 {
     digitalWrite(drivers_pins[index], LOW);
-    delay_us(35);
+    delay_us(40);
 
     drivers.send(instruction);
 
@@ -49,8 +49,8 @@ static void drivers_send(int index, uint8_t instruction, uint8_t *data, size_t l
             *(answer++) = drivers.send(data[k]);
         }
     }
-    delay_us(5);
     digitalWrite(drivers_pins[index], HIGH);
+    delay_us(40);
 }
 
 struct driver_packet_ans drivers_set(int index, bool enable, float target, int16_t pwm)
@@ -84,7 +84,7 @@ void drivers_set_safe(int index, bool enable, float target, int16_t pwm)
     if (!drivers_is_error && drivers_present[index]) {
         struct driver_packet_ans tmp = drivers_set(index, enable, target, pwm);
 
-        if ((tmp.status & 0xf0) == 0x80) {
+        if (tmp.status != 0x55 && index != 4) {
             driver_answers[index] = tmp;
             for (int k=0; k<5; k++) {
                 drivers_set(k, false, 0.0);
@@ -92,13 +92,31 @@ void drivers_set_safe(int index, bool enable, float target, int16_t pwm)
 
             drivers_is_error = true;
             buzzer_play(MELODY_WARNING);
-            // terminal_io()->println("Error on driver:");
-            // terminal_io()->println(index);
-            // terminal_io()->println(driver_answers[index].status&0xf);
+            terminal_io()->println("Error on driver:");
+            terminal_io()->println(index);
+            terminal_io()->println(driver_answers[index].status);
         } else if (tmp.status == 0x55) {
             driver_answers[index] = tmp;
         }
     }
+}
+
+TERMINAL_COMMAND(tspi, "")
+{
+    int good = 0;
+    int bad = 0;
+    for (int k=0; k<1000; k++) {
+      watchdog_feed();
+      struct driver_packet_ans tmp = drivers_set(0, false, 0);
+      if (tmp.status == 133) good++;
+      else {
+        if (tmp.status != 0x00 && tmp.status != 0xff)
+          terminal_io()->println(tmp.status);
+        bad++;
+      }
+    }
+    terminal_io()->println(good);
+    terminal_io()->println(bad);
 }
 
 TERMINAL_COMMAND(pid, "PID")
@@ -115,7 +133,7 @@ void drivers_tick()
     if (drivers_is_error) {
         if (buzzer_is_playing()) {
             for (int k=0; k<5; k++) {
-                drivers_set(k, false, 0.0);
+                // drivers_set(k, false, 0.0);
             }
         } else {
             drivers_is_error = false;
@@ -126,7 +144,7 @@ void drivers_tick()
 void drivers_init()
 {
     // Initializing SPI
-    drivers.begin(SPI_281_250KHZ, MSBFIRST, 0);
+    drivers.begin(SPI_4_5MHZ, MSBFIRST, 0);
 
     // Initializing CS pins
     for (int k=0; k<5; k++) {

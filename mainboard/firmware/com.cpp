@@ -14,7 +14,7 @@
 #include "kicker.h"
 #include "infos.h"
 #include "ir.h"
-
+#include "odometry.h"
 
 // Channels
 static int com_channels[3] = {0, 10, 60};
@@ -563,7 +563,7 @@ void com_send_status_to_master()
 
     packet.xpos     = getOdometry().xpos*1000;
     packet.ypos     = getOdometry().ypos*1000;
-    packet.ang      = getOdometry().ang*1000;
+    packet.ang      = getOdometry().ang*10;
 
     for (size_t k=0; k<3; k++) {
         com_ce_disable(k);
@@ -604,6 +604,10 @@ void com_process_master()
                 kicker_boost_enable(true);
             } else {
                 kicker_boost_enable(false);
+            }
+            
+            if (master_packet->actions & ACTION_TARE_ODOM) {
+                odometry_tare(0.0,0.0,0.0);
             }
 
 
