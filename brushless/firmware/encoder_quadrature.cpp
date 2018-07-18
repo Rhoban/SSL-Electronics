@@ -1,3 +1,9 @@
+/**
+ *  WARNING:
+ * 
+ * The encoder API changed since this code was written and it should be updated now
+ * if we want to use it (using asynchronous reading of the encoder with SPI)
+ */
 #include "hardware.h"
 #ifdef ENCODER_QUADRATURE
 #include <stdlib.h>

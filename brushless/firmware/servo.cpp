@@ -34,9 +34,9 @@ static int encoder_pos = 0;
 #define PLOT 2
 #define PLOT_CURR 0
 #define STEP 1
-#define STEP1 2
-#define STEP2 10
-#define STEP3 50
+#define STEP1 1.5
+#define STEP2 2.5
+#define STEP3 0
 #define RAMP 0
 
 #define ASSERV_FPI 1
@@ -103,7 +103,7 @@ static double coef_cmd[NBR_COEF] = {1, 0, 0, 0}; //t-1 t-2 t-3 t-4
 #endif
 
 #if BO == 1
-static double coef_err[NBR_COEF] = {0, 0, 0, 0};//t  t-1   t-2  t-3
+static double coef_err[NBR_COEF] = {1, 0, 0, 0};//t  t-1   t-2  t-3
 static double coef_cmd[NBR_COEF] = {0, 0, 0, 0}; //t-1 t-2 t-3 t-4
 #endif
 
@@ -123,31 +123,17 @@ int aim = 0;
 
 static void servo_irq()
 {
-    if (encoder_read()) {
-        servo_flag = true;
-    }
+    // XXX: This should probably be moved in encoder
+    encoder_read();
 }
 
-static void init_timer()
+void servo_set_flag()
 {
-    HardwareTimer timer(4);
-
-    // Configuring timer
-    timer.pause();
-    timer.setPrescaleFactor(9);
-    timer.setOverflow(1000); // 8Khz
-
-    timer.setChannel4Mode(TIMER_OUTPUT_COMPARE);
-    timer.setCompare(TIMER_CH4, 1);
-    timer.attachCompare4Interrupt(servo_irq);
-
-    timer.refresh();
-    timer.resume();
+    servo_flag = true;
 }
 
 void servo_init()
 {
-    init_timer();
 }
 
 static int servo_pwm = 0;
@@ -230,7 +216,7 @@ void servo_tick()
             servo_speed = 0.95*servo_speed +  0.05*(1000.0/(double)SPEED_DT)*speed_pulse/(double)ENCODER_CPR;
 
             if (sdb) {
-                //terminal_io()->println(encoder_value());
+                //terminal_io()->println(sdb_t);
                 servo_enable = true;
                 #if RAMP == 1
                   timer++;
@@ -248,24 +234,24 @@ void servo_tick()
 
                 #if STEP == 1
                  sdb_t +=1;
-                 if ((sdb_t >= 0)&(sdb_t < 2000)) {
+                 if ((sdb_t >= 0)&(sdb_t < 1000)) {
                    //aim = STEP1;
                    //motor_set(true, aim);
                    servo_target = STEP1;
                  }
-                 if (sdb_t == 4000){
+                 if (sdb_t == 5000){
                    //aim = STEP2;
                    //motor_set(true, aim);
                    servo_target = STEP2;
                  }
-                 if(sdb_t >= 6000){
-                   sdb = false;
+                 if(sdb_t >= 12000){
+                   //sdb = false;
                    //motor_set(false, 0);
                    servo_target = STEP3;
                  }
-                 if(sdb_t >= 8000){
+                 if(sdb_t >= 12500){
                    sdb = false;
-                   servo_enable = false;
+                   servo_target = 0;
                    //motor_set(false, 0);
                  }
                #endif
@@ -313,6 +299,10 @@ void servo_tick()
                 double servo_filt_target = servo_target*2*3.1416;
                 double curr_error =  servo_filt_target - (servo_speed)*2*3.1416;
 
+                #if BO == 1
+                  curr_error = servo_target;
+                  #endif
+
 
                 //motor_set(true, curr_error*0.3162);
 
@@ -320,6 +310,7 @@ void servo_tick()
 
                 double new_cmd = 0;//insérer combinaison linéaire;
                 double new_cmd_V = 0;
+
 
                 for(int i = 0; i < NBR_COEF; i++){
                   new_cmd_V += coef_cmd[i]*cmd.get_Value(i) + coef_err[i]*error.get_Value(i);
@@ -333,7 +324,7 @@ void servo_tick()
                 }
 
                 new_cmd_V = (new_cmd_V >= 18)? 18: new_cmd_V;
-                new_cmd_V = (new_cmd_V <= -18)? 18 : new_cmd_V;
+                new_cmd_V = (new_cmd_V <= -18)? -18 : new_cmd_V;
                 new_cmd = new_cmd_V*3000/VMAX;
                 cmd.top(new_cmd_V);
 
@@ -361,7 +352,9 @@ void servo_tick()
 
                 #endif
 
-                // terminal_io()->println("");
+                // terminal_io()->print(servo_speed);
+                // terminal_io()->print(" ");
+                // terminal_io()->println(servo_target);
 
                 cpt++;
                 motor_set(true, -new_cmd);
