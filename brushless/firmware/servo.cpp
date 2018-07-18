@@ -123,31 +123,17 @@ int aim = 0;
 
 static void servo_irq()
 {
-    if (encoder_read()) {
-        servo_flag = true;
-    }
+    // XXX: This should probably be moved in encoder
+    encoder_read();
 }
 
-static void init_timer()
+void servo_set_flag()
 {
-    HardwareTimer timer(4);
-
-    // Configuring timer
-    timer.pause();
-    timer.setPrescaleFactor(9);
-    timer.setOverflow(1000); // 8Khz
-
-    timer.setChannel4Mode(TIMER_OUTPUT_COMPARE);
-    timer.setCompare(TIMER_CH4, 1);
-    timer.attachCompare4Interrupt(servo_irq);
-
-    timer.refresh();
-    timer.resume();
+    servo_flag = true;
 }
 
 void servo_init()
 {
-    init_timer();
 }
 
 static int servo_pwm = 0;
@@ -366,10 +352,9 @@ void servo_tick()
 
                 #endif
 
-                terminal_io()->print(servo_speed);
-                terminal_io()->print(" ");
-                terminal_io()->println(servo_target);
-
+                // terminal_io()->print(servo_speed);
+                // terminal_io()->print(" ");
+                // terminal_io()->println(servo_target);
 
                 cpt++;
                 motor_set(true, -new_cmd);

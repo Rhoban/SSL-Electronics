@@ -12,6 +12,7 @@ void servo_init();
  * Ticks servo
  */
 void servo_tick();
+void servo_set_flag();
 
 /**
  * Sets the servo value, enables or not the motor control, target speed is
