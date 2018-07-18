@@ -48,6 +48,36 @@ static int hall_phases[8] = {
     -1,                     // 0b111 (impossible)
 };
 
+TERMINAL_PARAMETER_INT(rotor_angle, "Rotor angle", 0);
+
+static int hall_angle(int prev_phase, int phase)
+{
+    if (phase < prev_phase) {
+        int tmp = phase;
+        phase = prev_phase;
+        prev_phase = tmp;
+    }
+
+    if (prev_phase == 1 && phase == 2) {
+        return 0;
+    }
+    if (prev_phase == 2 && phase == 3) {
+        return 1349;
+    }
+    if (prev_phase == 3 && phase == 4) {
+        return 2699;
+    }
+    if (prev_phase == 4 && phase == 5) {
+        return 4048;
+    }
+    if (prev_phase == 0 && phase == 5) {
+        return 5397;
+    }
+    if (prev_phase == 0 && phase == 1) {
+        return 6747;
+    }
+}
+
 static void _bc_load()
 {
     // digitalWrite(W_LOW_PIN, LOW);
@@ -248,6 +278,7 @@ void motor_tick()
     }
 
     if (phase != hall_current_phase) {
+        rotor_angle = hall_angle(phase, hall_current_phase);
         hall_last_change_moving = millis();
         hall_last_change = millis();
     }
