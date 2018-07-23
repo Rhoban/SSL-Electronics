@@ -59,7 +59,7 @@ void odometry_tick(){
         delta[3] = ((instantaneous_encoder[3] - current_encoder[3])*2*WHEEL_RADIUS*PI)/(ENC_TOUR);
 
         if((fabs(delta[0]) >= 1)||(fabs(delta[1]) >= 1)||(fabs(delta[2]) >= 1)||(fabs(delta[3]) >= 1)){
-            terminal_io()->println("ORTIEEEE");
+            //terminal_io()->println("ORTIEEEE");
         }
         else{
 
