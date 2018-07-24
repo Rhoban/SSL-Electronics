@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "rope": "cpp",
+        "condition_variable": "cpp",
+        "future": "cpp"
+    }
+}

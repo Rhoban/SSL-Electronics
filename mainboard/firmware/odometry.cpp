@@ -113,7 +113,6 @@ void odometry_tick(){
           terminal_io()->print(" - ");
           terminal_io()->println(current_encoder[3]);*/
         }
-
         #endif
     }
   }
