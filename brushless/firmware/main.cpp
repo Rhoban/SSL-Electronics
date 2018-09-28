@@ -55,6 +55,9 @@ void loop()
     // Ticking the terminal
     terminal_tick();
 
+    // Ticking encoder
+    encoder_tick();
+
     // Ticking servo
     servo_tick();
 

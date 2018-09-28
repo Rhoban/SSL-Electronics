@@ -596,7 +596,6 @@ void com_process_master()
             }
             actions = master_packet->actions;
 
-
             if ((master_packet->actions & ACTION_DRIBBLE) && (ir_present()) ) {
             //if ((master_packet->actions & ACTION_DRIBBLE)) {
                 drivers_set_safe(4, true, 0.3);
@@ -610,6 +609,7 @@ void com_process_master()
             } else {
                 kicker_boost_enable(false);
             }
+            
 
             /*if (master_packet->actions & ACTION_TARE_ODOM) {
                 odometry_tare((master_packet->x_speed)/1000.0, (master_packet->y_speed)/1000.0, (master_packet->t_speed)/10.0);

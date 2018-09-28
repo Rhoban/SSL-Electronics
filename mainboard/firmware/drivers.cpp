@@ -51,6 +51,7 @@ static void drivers_send(int index, uint8_t instruction, uint8_t *data, size_t l
     }
     delay_us(5);
     digitalWrite(drivers_pins[index], HIGH);
+
 }
 
 struct driver_packet_ans drivers_set(int index, bool enable, float target, int16_t pwm)
@@ -94,11 +95,29 @@ void drivers_set_safe(int index, bool enable, float target, int16_t pwm)
             buzzer_play(MELODY_WARNING);
             // terminal_io()->println("Error on driver:");
             // terminal_io()->println(index);
-            // terminal_io()->println(driver_answers[index].status&0xf);
+            // terminal_io()->println(driver_answers[index].status);
         } else if (tmp.status == 0x55) {
             driver_answers[index] = tmp;
         }
     }
+}
+
+TERMINAL_COMMAND(tspi, "")
+{
+    int good = 0;
+    int bad = 0;
+    for (int k=0; k<1000; k++) {
+      watchdog_feed();
+      struct driver_packet_ans tmp = drivers_set(0, false, 0);
+      if (tmp.status == 133) good++;
+      else {
+        if (tmp.status != 0x00 && tmp.status != 0xff)
+          terminal_io()->println(tmp.status);
+        bad++;
+      }
+    }
+    terminal_io()->println(good);
+    terminal_io()->println(bad);
 }
 
 TERMINAL_COMMAND(pid, "PID")
