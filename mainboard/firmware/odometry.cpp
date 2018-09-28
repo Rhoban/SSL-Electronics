@@ -98,7 +98,7 @@ void odometry_tick(){
           terminal_io()->print("Ang : ");
           terminal_io()->println(current_position.ang*360/(2*PI));
           terminal_io()->println("");
-          /*terminal_io()->print(instantaneous_encoder[0]);
+          terminal_io()->print(instantaneous_encoder[0]);
           terminal_io()->print(" | ");
           terminal_io()->print(instantaneous_encoder[1]);
           terminal_io()->print(" | ");
@@ -111,7 +111,7 @@ void odometry_tick(){
           terminal_io()->print(" - ");
           terminal_io()->print(current_encoder[2]);
           terminal_io()->print(" - ");
-          terminal_io()->println(current_encoder[3]);*/
+          terminal_io()->println(current_encoder[3]);
         }
         #endif
     }

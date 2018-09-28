@@ -18,7 +18,6 @@
 
 // Channels
 static int com_channels[3] = {0, 10, 60};
-
 // Only for master board
 static bool com_master = false;
 
@@ -562,7 +561,7 @@ void com_send_status_to_master()
     packet.voltage  = voltage_value()*8.0;
     packet.xpos     = getOdometry().xpos*1000;
     packet.ypos     = getOdometry().ypos*1000;
-    packet.ang      = getOdometry().ang*10;
+    packet.ang      = getOdometry().ang*1000;
 
     for (size_t k=0; k<3; k++) {
         com_ce_disable(k);
@@ -588,7 +587,7 @@ void com_process_master()
         // Driving wheels
         if ((master_packet->actions & ACTION_ON)) {
             if(master_packet->actions & ACTION_TARE_ODOM) {
-                odometry_tare((master_packet->x_speed)/1000.0, (master_packet->y_speed)/1000.0, (master_packet->t_speed)/10.0);
+                odometry_tare((master_packet->x_speed)/1000.0, (master_packet->y_speed)/1000.0, (master_packet->t_speed)/10000.0);
                 //odometry_tare(0.0, 0.0, 0.0);
 
             }else{
