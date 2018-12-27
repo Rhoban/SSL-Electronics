@@ -51,7 +51,6 @@ static int hall_phases[8] = {
 
 static int rotor_last_valid_phase = 0;
 static int rotor_angle = 0;
-TERMINAL_PARAMETER_INT(rotor_cnt, "Rotor CNT angle", 0);
 TERMINAL_PARAMETER_INT(rotor_pos, "Rotor angle", 0);
 
 static int hall_angle(int prev_phase, int phase)
@@ -282,10 +281,6 @@ TERMINAL_COMMAND(bdw, "Bdw")
 TERMINAL_PARAMETER_INT(fp, "Force phase", -1);
 TERMINAL_PARAMETER_INT(vel, "Velocity", 8);
 
-TERMINAL_PARAMETER_INT(sin_u, "s", 0);
-TERMINAL_PARAMETER_INT(sin_v, "s", 0);
-TERMINAL_PARAMETER_INT(sin_w, "s", 0);
-
 TERMINAL_PARAMETER_BOOL(mdb, "", false);
 
 void motor_tick_irq()
@@ -293,14 +288,13 @@ void motor_tick_irq()
     // motor_tick(true);
 }
 
-TERMINAL_PARAMETER_INT(sphase, "", 2731);
+TERMINAL_PARAMETER_INT(sphase, "", 0);
 TERMINAL_PARAMETER_INT(sphase_delta, "", 1);
 
 TERMINAL_PARAMETER_BOOL(rotor_enc, "", false);
 
 static int last_tmp = 0;
 static int phase = -1;
-static int rotor_pos_u=0, rotor_pos_v=0, rotor_pos_w=0;
 
 
 void compute_current_phase(){
@@ -309,6 +303,14 @@ void compute_current_phase(){
     if (fp >= 0) {
         phase = fp;
     }
+    if (phase != hall_current_phase) {
+        hall_last_change_moving = millis();
+        hall_last_change = millis();
+    }
+    if (abs(motor_pwm) < 300) {
+        hall_last_change_moving = millis();
+    }
+    hall_current_phase = phase;
 }
 
 void compute_rotor_angle_from_hall(){
@@ -320,28 +322,30 @@ void compute_rotor_angle_from_hall(){
     }
 }
 
+static bool old_angle_exists = false;
+static float old_angle;
+
+static float theta; // Angular position
+static float old_theta;
+
 void compute_rotor_position(){
-    static unsigned int v = 1;
-    if(millis()-last_tmp >= v){
-        rotor_pos = ( rotor_pos + vel )&8191;
-        last_tmp = millis();
+    old_theta = theta;
+    if (rotor_enc) {
+        float angle = encoder_value()/16384.0;
+        if( ! old_angle_exists ){
+            theta = angle;
+            old_angle_exists = true;
+        }else{
+            float delta = angle-old_angle;    
+            if( fabs(delta) < .5 ) {
+                delta = delta - 1.0;
+            }
+            theta += delta;
+        }
+        old_angle = angle;
+    } else {
+        theta = (rotor_angle&8191) / 8192.0;
     }
-    
-    // XXX: Some values are hard-coded here and should be parameters
-//    if (rotor_enc) {
-//        rotor_pos = (rotor_angle + 8192 - 4*(encoder_value()-rotor_cnt))&8191;
-//    } else {
-//        rotor_pos = rotor_angle&8191;
-//    }
-    if (phase != hall_current_phase) {
-        rotor_cnt = encoder_value();
-        hall_last_change_moving = millis();
-        hall_last_change = millis();
-    }
-    if (abs(motor_pwm) < 300) {
-        hall_last_change_moving = millis();
-    }
-    hall_current_phase = phase;
 }
 
 void display_some_message(bool irq){
@@ -349,11 +353,8 @@ void display_some_message(bool irq){
     if (((millis() - last_display_time) > 1) && mdb && !irq) {
         //sphase += sphase_delta;
         last_display_time = millis();
-        terminal_io()->print(rotor_pos);
+        terminal_io()->print(theta);
         terminal_io()->print(" ");
-        terminal_io()->print(rotor_pos_u);
-        terminal_io()->print(" ");
-        terminal_io()->print(sin_u);
         terminal_io()->println();
     }
 }
@@ -382,33 +383,166 @@ void make_safety_work(){
     }
 }
 
-void compute_phase_position(){
-    if (motor_pwm > 0) {
-        rotor_pos_u = (rotor_pos + 0x00 + sphase)&8191;
-        rotor_pos_v = (rotor_pos + 2731 + sphase)&8191;
-        rotor_pos_w = (rotor_pos + 5461 + sphase)&8191;
-    } else {
-        rotor_pos_u = (rotor_pos + 0x00 + 8192 - sphase)&8191;
-        rotor_pos_v = (rotor_pos + 2731 + 8192 - sphase)&8191;
-        rotor_pos_w = (rotor_pos + 5461 + 8192 - sphase)&8191;
-    }
+static float dt;
+static float speed;
+
+void compute_rotor_velocity(){
+    speed = (theta - old_theta)/dt; // To Improve !
 }
 
-void compute_phase_amplitude(){
-    sin_u = (sin_lut(rotor_pos_u)*abs(motor_pwm))/16384;
-    sin_v = (sin_lut(rotor_pos_v)*abs(motor_pwm))/16384;
-    sin_w = (sin_lut(rotor_pos_w)*abs(motor_pwm))/16384;
+TERMINAL_PARAMETER_FLOAT(k_pos_p, "Posiition P", 10.0);
+TERMINAL_PARAMETER_FLOAT(k_speed_ff, "Speed FF", 0.0);
+TERMINAL_PARAMETER_FLOAT(k_speed_p, "Speed P", 10.0);
+TERMINAL_PARAMETER_FLOAT(k_speed_i, "Speed I", 10.0);
+TERMINAL_PARAMETER_FLOAT(k_current_p, "Current P", 1.0);
+TERMINAL_PARAMETER_FLOAT(k_current_i, "Current I", 0.0);
+TERMINAL_PARAMETER_FLOAT(theta_c, "Angular position consign", 10.0);
+
+
+static float speed_ff; // Speed feedforward
+static float speed_p; // Speed proportional
+static float speed_c; // Speed consign
+
+void compute_velocity_consign(){
+    // w* = wff + pos_p * ( theta* - tetha )
+    speed_ff = k_speed_ff * (theta_c/dt);
+    speed_p = k_pos_p * ( theta_c - theta );
+    speed_c = speed_ff + speed_p ;
+}
+
+static float direct_current_c; // direct current consign
+static float quadrature_current_c; // quadrature current consign
+static float speed_error;
+static float integral_speed_error = 0.0;
+
+void compute_direct_quadrature_current_consign(){
+    speed_error = speed_c - speed;
+    integral_speed_error += ( dt * speed_error );
+
+    direct_current_c = 0; // direct current consign. Always equals to 0.
+    quadrature_current_c = (
+        k_speed_p * speed_error + k_speed_i * integral_speed_error
+    ); // quadrature current consign
+}
+
+static float direct_voltage_c; // direct current consign
+static float quadrature_voltage_c; // quadrature current consign
+static float direct_current_error;
+static float integral_direct_current_error = 0.0;
+static float direct_current;
+static float quadrature_current_error;
+static float integral_quadrature_current_error = 0.0;
+static float quadrature_current;
+
+void compute_direct_and_quadrature_voltage_consign(){
+    direct_current_error = direct_current_c - direct_current;
+    integral_direct_current_error += ( dt * direct_current_error );
+    
+    direct_voltage_c = (
+        k_current_p * direct_current_error
+        +
+        k_current_i * integral_quadrature_current_error
+    );
+
+    quadrature_current_error = quadrature_current_c - quadrature_current;
+    integral_quadrature_current_error += ( dt * quadrature_current_error );
+    
+    quadrature_voltage_c = (
+        k_current_p * quadrature_current_error
+        +
+        k_current_i * integral_quadrature_current_error
+    );
+}
+
+static float phase_voltage_u;
+static float phase_voltage_v;
+static float phase_voltage_w;
+
+void convert_direct_and_quadrature_voltage_to_phase_voltage(){
+    // ( vu )                ( c1 -s1 )
+    // ( vv ) = sqrt(2/3) .  ( c2 -s2 ) . ( vd )
+    // ( vw )                ( c3 -s3 )   ( vq )
+    //
+    // c1 = cos( theta )   s1 = cos( theta ) 
+    // c2 = cos( theta - 2pi/3 )   s2 = cos( theta - 2pi/3 ) 
+    // c3 = cos( theta + 2pi/3 )   s3 = cos( theta + 2pi/3 ) 
+
+    const float sqrt_2_3 = 0.816496580927726;
+
+    const int t1 = theta;
+    const int t2 = theta - 1.0/3.0;
+    const int t3 = theta + 1.0/3.0;
+
+    const float c1 = cos_t(t1);
+    const float s1 = sin_t(t1);
+    const float c2 = cos_t(t2);
+    const float s2 = sin_t(t2);
+    const float c3 = cos_t(t3);
+    const float s3 = sin_t(t3);
+
+	phase_voltage_u = sqrt_2_3 * (c1 * direct_voltage_c - s1 * quadrature_voltage_c);
+	phase_voltage_v = sqrt_2_3 * (c2 * direct_voltage_c - s2 * quadrature_voltage_c);
+	phase_voltage_w = sqrt_2_3 * (c3 * direct_voltage_c - s3 * quadrature_voltage_c);
+}
+
+static float time = 0;
+
+void update_dt(){
+    float new_time = millis();
+    dt = new_time - time;
+    time = new_time;
+    if( dt == 0 ) dt = 0.00001;
+}
+
+        
+void compute_phase_current(){
+    // TODO : to make in electronics
+    // Not present in electronic
+}
+        
+void convert_phase_current_to_direct_and_quadrature_current(){
+    // TODO : when phase current will be measured, we need to implement
+    // the conversion from pahse current to direct and quadrature current
+    direct_current = direct_current_c;
+    quadrature_current = quadrature_current_c;
+}
+
+static int phase_pwm_u = 0;
+static int phase_pwm_v = 0;
+static int phase_pwm_w = 0;
+
+        
+void convert_direct_and_quadrature_voltage_to_phase_pwm(){
+    phase_pwm_u = phase_voltage_u * abs(motor_pwm);
+    phase_pwm_v = phase_voltage_v * abs(motor_pwm);
+    phase_pwm_w = phase_voltage_w * abs(motor_pwm);
 }
 
 void motor_tick(bool irq)
 {
+    update_dt();
+    if( dt <= 0.0 ) return;
+
     compute_current_phase();
-    compute_rotor_angle_from_hall();
-    compute_rotor_position();
+
     if (phase >= 0 && phase < 6) {
-        compute_phase_position();
-        compute_phase_amplitude();
-        set_sin_phases( sin_u, sin_v, sin_w );
+        // Inputs
+        compute_rotor_angle_from_hall();
+        compute_rotor_position();
+        compute_rotor_velocity();
+        // compute_phase_current(); TODO when electronic is able to get current
+        convert_phase_current_to_direct_and_quadrature_current();
+
+        // Outputs
+        compute_velocity_consign();
+        compute_direct_quadrature_current_consign();
+        compute_direct_and_quadrature_voltage_consign();
+        convert_direct_and_quadrature_voltage_to_phase_voltage();
+        convert_direct_and_quadrature_voltage_to_phase_pwm();
+
+        // Apply control
+        set_sin_phases( phase_pwm_u, phase_pwm_v, phase_pwm_w );
+
         display_some_message(irq);
     } else {
         // XXX: This is not a normal state, not sure what should be done
