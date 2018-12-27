@@ -280,6 +280,7 @@ TERMINAL_COMMAND(bdw, "Bdw")
 }
 
 TERMINAL_PARAMETER_INT(fp, "Force phase", -1);
+TERMINAL_PARAMETER_INT(vel, "Velocity", 8);
 
 TERMINAL_PARAMETER_INT(sin_u, "s", 0);
 TERMINAL_PARAMETER_INT(sin_v, "s", 0);
@@ -297,36 +298,41 @@ TERMINAL_PARAMETER_INT(sphase_delta, "", 1);
 
 TERMINAL_PARAMETER_BOOL(rotor_enc, "", false);
 
-void motor_tick(bool irq)
-{
-    static int last = millis();
-    static bool motor_ticking = false;
+static int last_tmp = 0;
+static int phase = -1;
+static int rotor_pos_u=0, rotor_pos_v=0, rotor_pos_w=0;
 
-    // XXX: Some values are hard-coded here and should be parameters
-    if (rotor_enc) {
-        rotor_pos = (rotor_angle + 8192 - 4*(encoder_value()-rotor_cnt))&8191;
-    } else {
-        rotor_pos = rotor_angle&8191;
-    }
 
-    if (motor_ticking) {
-        return;
-    }
-    motor_ticking = true;
-
+void compute_current_phase(){
     // Current phase
-    int phase = hall_phases[hall_value()];
+    phase = hall_phases[hall_value()];
     if (fp >= 0) {
         phase = fp;
     }
+}
 
+void compute_rotor_angle_from_hall(){
     if (phase >= 0 && phase < 6) {
         if (phase != rotor_last_valid_phase) {
             rotor_angle = hall_angle(phase, rotor_last_valid_phase);
             rotor_last_valid_phase = phase;
         }
     }
+}
 
+void compute_rotor_position(){
+    static unsigned int v = 1;
+    if(millis()-last_tmp >= v){
+        rotor_pos = ( rotor_pos + vel )&8191;
+        last_tmp = millis();
+    }
+    
+    // XXX: Some values are hard-coded here and should be parameters
+//    if (rotor_enc) {
+//        rotor_pos = (rotor_angle + 8192 - 4*(encoder_value()-rotor_cnt))&8191;
+//    } else {
+//        rotor_pos = rotor_angle&8191;
+//    }
     if (phase != hall_current_phase) {
         rotor_cnt = encoder_value();
         hall_last_change_moving = millis();
@@ -336,53 +342,23 @@ void motor_tick(bool irq)
         hall_last_change_moving = millis();
     }
     hall_current_phase = phase;
+}
 
-    if (phase >= 0 && phase < 6) {
-        int rotor_pos_u, rotor_pos_v, rotor_pos_w;
-
-        rotor_pos = 0;
-
-        if (motor_pwm > 0) {
-            rotor_pos_u = (rotor_pos + 0x00 + sphase)&8191;
-            rotor_pos_v = (rotor_pos + 2731 + sphase)&8191;
-            rotor_pos_w = (rotor_pos + 5461 + sphase)&8191;
-        } else {
-            rotor_pos_u = (rotor_pos + 0x00 + 8192 - sphase)&8191;
-            rotor_pos_v = (rotor_pos + 2731 + 8192 - sphase)&8191;
-            rotor_pos_w = (rotor_pos + 5461 + 8192 - sphase)&8191;
-        }
-
-        sin_u = (sin_lut(rotor_pos_u)*abs(motor_pwm))/16384;
-        sin_v = (sin_lut(rotor_pos_v)*abs(motor_pwm))/16384;
-        sin_w = (sin_lut(rotor_pos_w)*abs(motor_pwm))/16384;
-
-        set_sin_phases(
-            sin_u, sin_v, sin_w
-        );
-
-        if (((millis() - last) > 1) && mdb && !irq) {
-            sphase += sphase_delta;
-            last = millis();
-            // terminal_io()->print(rotor_pos);
-            // terminal_io()->print(" ");
-            // terminal_io()->print(rotor_pos_u);
-            // terminal_io()->print(" ");
-            // terminal_io()->print(sin_u);
-            // terminal_io()->println();
-        }
-
-        // set_phases(
-        //     motor_phases[phase][0]*motor_pwm,
-        //     motor_phases[phase][1]*motor_pwm,
-        //     motor_phases[phase][2]*motor_pwm,
-        //     phase
-        // );
-    } else {
-        // XXX: This is not a normal state, not sure what should be done
-        // in this situation
-        set_phases(0, 0, 0, -1);
+void display_some_message(bool irq){
+    static int last_display_time = millis();
+    if (((millis() - last_display_time) > 1) && mdb && !irq) {
+        //sphase += sphase_delta;
+        last_display_time = millis();
+        terminal_io()->print(rotor_pos);
+        terminal_io()->print(" ");
+        terminal_io()->print(rotor_pos_u);
+        terminal_io()->print(" ");
+        terminal_io()->print(sin_u);
+        terminal_io()->println();
     }
+}
 
+void make_safety_work(){
     if ((millis() - hall_last_change) > 500 && hall_current_phase == -1) {
         security_set_error(SECURITY_HALL_MISSING);
     }
@@ -391,7 +367,6 @@ void motor_tick(bool irq)
         // Stop everything
         security_set_error(SECURITY_HALL_FREEZE);
     }
-
     if (safe_mode) {
         if (encoder_is_present() && encoder_is_ok()) {
             encoder_last_ok = millis();
@@ -405,12 +380,42 @@ void motor_tick(bool irq)
             }
         }
     }
+}
 
-    // if (!encoder_is_present()) {
-    //     security_set_error(ENCODER
-    // }
+void compute_phase_position(){
+    if (motor_pwm > 0) {
+        rotor_pos_u = (rotor_pos + 0x00 + sphase)&8191;
+        rotor_pos_v = (rotor_pos + 2731 + sphase)&8191;
+        rotor_pos_w = (rotor_pos + 5461 + sphase)&8191;
+    } else {
+        rotor_pos_u = (rotor_pos + 0x00 + 8192 - sphase)&8191;
+        rotor_pos_v = (rotor_pos + 2731 + 8192 - sphase)&8191;
+        rotor_pos_w = (rotor_pos + 5461 + 8192 - sphase)&8191;
+    }
+}
 
-    motor_ticking = false;
+void compute_phase_amplitude(){
+    sin_u = (sin_lut(rotor_pos_u)*abs(motor_pwm))/16384;
+    sin_v = (sin_lut(rotor_pos_v)*abs(motor_pwm))/16384;
+    sin_w = (sin_lut(rotor_pos_w)*abs(motor_pwm))/16384;
+}
+
+void motor_tick(bool irq)
+{
+    compute_current_phase();
+    compute_rotor_angle_from_hall();
+    compute_rotor_position();
+    if (phase >= 0 && phase < 6) {
+        compute_phase_position();
+        compute_phase_amplitude();
+        set_sin_phases( sin_u, sin_v, sin_w );
+        display_some_message(irq);
+    } else {
+        // XXX: This is not a normal state, not sure what should be done
+        // in this situation
+        set_phases(0, 0, 0, -1);
+    }
+    make_safety_work();
 }
 
 TERMINAL_COMMAND(safe, "Safe mode")
