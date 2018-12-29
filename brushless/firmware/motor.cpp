@@ -51,7 +51,6 @@ static int hall_phases[8] = {
 
 static int rotor_last_valid_phase = 0;
 static int rotor_angle = 0;
-TERMINAL_PARAMETER_INT(rotor_pos, "Rotor angle", 0);
 
 static int hall_angle(int prev_phase, int phase)
 {
@@ -121,96 +120,39 @@ static int hall_value()
 
 TERMINAL_PARAMETER_INT(dts, "", 0);
 
-static void set_sin_phases(int u, int v, int w)
-{
-    if (u < 0) u = 0;
-    if (u > PWM_MAX) u = PWM_MAX;
-    if (v < 0) v = 0;
-    if (v > PWM_MAX) v = PWM_MAX;
-    if (w < 0) v = 0;
-    if (w > PWM_MAX) w = PWM_MAX;
+#define PWM_MOTOR_MAX 8192
 
-    if (!motor_on) {
-        digitalWrite(U_LOW_PIN, LOW);
-        digitalWrite(V_LOW_PIN, LOW);
-        digitalWrite(W_LOW_PIN, LOW);
-    } else {
-        digitalWrite(U_LOW_PIN, HIGH);
-        digitalWrite(V_LOW_PIN, HIGH);
-        digitalWrite(W_LOW_PIN, HIGH);
 
-        pwmWrite(U_HIGH_PIN, u);
-        pwmWrite(V_HIGH_PIN, v);
-        pwmWrite(W_HIGH_PIN, w);
+void apply_pwm( int low_pin, int high_pin, int pwm ){
+    if( pwm >= 0 ){
+        pwmWrite(low_pin, 0);
+        pwmWrite(high_pin, pwm);
+    }else{
+        pwmWrite(low_pin, -pwm);
+        pwmWrite(high_pin, 0);
     }
 }
 
-static void set_phases(int u, int v, int w, int phase)
+static void set_pwm_on_all_phases(int u, int v, int w)
 {
-    bool stopped = false;
-    if (!motor_on || (u != 0 && v != 0 && w != 0)) {
-        u = v = w = 0;
-    }
-    if (u == 0 && v == 0 && w == 0) {
-        stopped = true;
-    }
-
-    static int last_phase = -8;
-    static bool last_stopped = true;
-    bool update = false;
-
-    // Checking if we should update the mos phase, and generate
-    // a deadtime
-    update = (last_phase != phase) || (stopped != last_stopped);
-    last_phase = phase;
-    last_stopped = stopped;
     if (!motor_on) {
-        last_phase = -2;
-    }
-
-    if (update) {
-        dts++;
-    }
-
-    if (update) {
-        // Setting every output to low
-        digitalWrite(U_LOW_PIN, LOW);
-        digitalWrite(V_LOW_PIN, LOW);
-        digitalWrite(W_LOW_PIN, LOW);
+        pwmWrite(U_LOW_PIN, 0);
+        pwmWrite(V_LOW_PIN, 0);
+        pwmWrite(W_LOW_PIN, 0);
 
         pwmWrite(U_HIGH_PIN, 0);
         pwmWrite(V_HIGH_PIN, 0);
         pwmWrite(W_HIGH_PIN, 0);
-    }
-
-    if (motor_on) {
-        if (u >= 0) {
-            pwmWrite(U_HIGH_PIN, u);
-        }
-
-        if (stopped || u != 0) {
-            if (update) digitalWrite(U_LOW_PIN, HIGH);
-        }
-
-        if (v >= 0) {
-            pwmWrite(V_HIGH_PIN, v);
-        }
-
-        if (stopped || v != 0) {
-            if (update) digitalWrite(V_LOW_PIN, HIGH);
-        }
-
-        if (w >= 0) {
-            pwmWrite(W_HIGH_PIN, w);
-        }
-
-        if (stopped || w != 0) {
-            if (update) digitalWrite(W_LOW_PIN, HIGH);
-        }
+    } else {
+        
+        apply_pwm(U_LOW_PIN, U_HIGH_PIN, u);
+        apply_pwm(V_LOW_PIN, V_HIGH_PIN, v);
+        apply_pwm(W_LOW_PIN, W_HIGH_PIN, w);
     }
 }
 
 void motor_tick_irq();
+void compute_encoder_value_when_rotor_is_at_origin();
 
 void motor_init()
 {
@@ -237,13 +179,15 @@ void motor_init()
     digitalWrite(V_LOW_PIN, LOW);
     digitalWrite(W_LOW_PIN, LOW);
 
-    pinMode(U_LOW_PIN, OUTPUT);
-    pinMode(V_LOW_PIN, OUTPUT);
-    pinMode(W_LOW_PIN, OUTPUT);
+    pinMode(U_LOW_PIN, PWM);
+    pinMode(V_LOW_PIN, PWM);
+    pinMode(W_LOW_PIN, PWM);
 
     pinMode(U_HIGH_PIN, PWM);
     pinMode(V_HIGH_PIN, PWM);
     pinMode(W_HIGH_PIN, PWM);
+
+    compute_encoder_value_when_rotor_is_at_origin();
 }
 
 TERMINAL_COMMAND(hall, "Test the hall sensors")
@@ -259,12 +203,9 @@ TERMINAL_COMMAND(hall, "Test the hall sensors")
 void motor_set(bool enable, int value)
 {
     motor_on = enable;
-
-    if (value > 0) value += PWM_MIN;
-    if (value < 0) value -= PWM_MIN;
-
-    if (value < -PWM_MAX) value = -PWM_MAX;
-    if (value > PWM_MAX) value = PWM_MAX;
+    
+    if (value > 100) value = 100;
+    if (value < 0 ) value = 0;
 
     motor_pwm = value;
 }
@@ -278,9 +219,6 @@ TERMINAL_COMMAND(bdw, "Bdw")
     terminal_io()->println(micros()-start);
 }
 
-TERMINAL_PARAMETER_INT(fp, "Force phase", -1);
-TERMINAL_PARAMETER_INT(vel, "Velocity", 8);
-
 TERMINAL_PARAMETER_BOOL(mdb, "", false);
 
 void motor_tick_irq()
@@ -289,7 +227,6 @@ void motor_tick_irq()
 }
 
 TERMINAL_PARAMETER_INT(sphase, "", 0);
-TERMINAL_PARAMETER_INT(sphase_delta, "", 1);
 
 TERMINAL_PARAMETER_BOOL(rotor_enc, "", false);
 
@@ -300,15 +237,9 @@ static int phase = -1;
 void compute_current_phase(){
     // Current phase
     phase = hall_phases[hall_value()];
-    if (fp >= 0) {
-        phase = fp;
-    }
     if (phase != hall_current_phase) {
         hall_last_change_moving = millis();
         hall_last_change = millis();
-    }
-    if (abs(motor_pwm) < 300) {
-        hall_last_change_moving = millis();
     }
     hall_current_phase = phase;
 }
@@ -327,13 +258,18 @@ static float old_angle;
 
 static float theta; // Angular position
 static float old_theta;
+static float theta_origin = 0;
+
+float encoder_to_angle(){
+    return encoder_value()/16384.0;
+}
 
 void compute_rotor_position(){
     old_theta = theta;
     if (rotor_enc) {
         float angle = encoder_value()/16384.0;
         if( ! old_angle_exists ){
-            theta = angle;
+            theta = angle - theta_origin;
             old_angle_exists = true;
         }else{
             float delta = angle-old_angle;    
@@ -351,7 +287,6 @@ void compute_rotor_position(){
 void display_some_message(bool irq){
     static int last_display_time = millis();
     if (((millis() - last_display_time) > 1) && mdb && !irq) {
-        //sphase += sphase_delta;
         last_display_time = millis();
         terminal_io()->print(theta);
         terminal_io()->print(" ");
@@ -359,12 +294,19 @@ void display_some_message(bool irq){
     }
 }
 
+static float dt;
+static float speed;
+
+
 void make_safety_work(){
     if ((millis() - hall_last_change) > 500 && hall_current_phase == -1) {
         security_set_error(SECURITY_HALL_MISSING);
     }
 
-    if (fp < 0 && (millis() - hall_last_change_moving) > 500 && abs(motor_pwm) >= 800) {
+    if(
+        speed != 0 && 
+        (millis() - hall_last_change_moving) > 1.0/fabs(speed)
+    ){
         // Stop everything
         security_set_error(SECURITY_HALL_FREEZE);
     }
@@ -383,11 +325,8 @@ void make_safety_work(){
     }
 }
 
-static float dt;
-static float speed;
-
 void compute_rotor_velocity(){
-    speed = (theta - old_theta)/dt; // To Improve !
+    speed = .9 * speed + .1 * (theta - old_theta)/dt; // To Improve !
 }
 
 TERMINAL_PARAMETER_FLOAT(k_pos_p, "Posiition P", 10.0);
@@ -403,11 +342,16 @@ static float speed_ff; // Speed feedforward
 static float speed_p; // Speed proportional
 static float speed_c; // Speed consign
 
+#define MAX_SPEED_CONSIGN 10.0 // Nb turn . s^-1
+
 void compute_velocity_consign(){
     // w* = wff + pos_p * ( theta* - tetha )
     speed_ff = k_speed_ff * (theta_c/dt);
     speed_p = k_pos_p * ( theta_c - theta );
     speed_c = speed_ff + speed_p ;
+    if( fabs(speed_c) > MAX_SPEED_CONSIGN ){
+        speed_c = ((speed_c<0)?-1:1) * MAX_SPEED_CONSIGN;
+    } 
 }
 
 static float direct_current_c; // direct current consign
@@ -434,6 +378,7 @@ static float quadrature_current_error;
 static float integral_quadrature_current_error = 0.0;
 static float quadrature_current;
 
+
 void compute_direct_and_quadrature_voltage_consign(){
     direct_current_error = direct_current_c - direct_current;
     integral_direct_current_error += ( dt * direct_current_error );
@@ -446,17 +391,22 @@ void compute_direct_and_quadrature_voltage_consign(){
 
     quadrature_current_error = quadrature_current_c - quadrature_current;
     integral_quadrature_current_error += ( dt * quadrature_current_error );
-    
+
     quadrature_voltage_c = (
         k_current_p * quadrature_current_error
         +
         k_current_i * integral_quadrature_current_error
     );
+    
+
 }
 
 static float phase_voltage_u;
 static float phase_voltage_v;
 static float phase_voltage_w;
+
+#define MAX_VOLTAGE 20
+#define HALF_MAX_VOLTAGE MAX_VOLTAGE/2 
 
 void convert_direct_and_quadrature_voltage_to_phase_voltage(){
     // ( vu )                ( c1 -s1 )
@@ -469,9 +419,14 @@ void convert_direct_and_quadrature_voltage_to_phase_voltage(){
 
     const float sqrt_2_3 = 0.816496580927726;
 
-    const int t1 = theta;
-    const int t2 = theta - 1.0/3.0;
-    const int t3 = theta + 1.0/3.0;
+    const int number_of_pair_of_pole = 7;
+    float theta_park = theta * number_of_pair_of_pole; 
+    theta_park -= ( (int) theta_park );
+    if( theta_park < 0 ) theta_park += 1;
+
+    const float t1 = theta_park;
+    const float t2 = theta_park - 1.0/3.0;
+    const float t3 = theta_park + 1.0/3.0;
 
     const float c1 = cos_t(t1);
     const float s1 = sin_t(t1);
@@ -480,10 +435,39 @@ void convert_direct_and_quadrature_voltage_to_phase_voltage(){
     const float c3 = cos_t(t3);
     const float s3 = sin_t(t3);
 
+    // Before computing phase voltage, we need to evaluate the maximum of the 
+    // voltage whe theta is going from 0 to  2pi.
+    // If that maximum it too important, then we scale the voltage in such a 
+    // way the maximum go to MAX_PHASE_VOLTAGE
+    // 
+    // MAX PHASE VOLTAGE
+    //  phase_coltage_u = sqrt_2_3 * (c1 * direct_voltage_c - s1 * quadrature_voltage_c);
+    //
+    // J = max( c * a - s * b ) ?
+    //
+    // max when  deriv( c*a - s*b ) = -s*a -c*b = 0
+    // so
+    // a * J = c * ( a^2 + b^2 )     and     c = a * J /(a^2+b^2)
+    // b * J = s * ( -a^2 -b^2 )     and     s = - b * J /(a^2+b^2)
+    //
+    // 1 = c^2 + s^2 = J^2 ( a^2 + b^2 )/(a^2+b^2)^2
+    // so
+    // J^2 = a^2 + b^2
+    static float max_voltage = sqrt_2_3 * sqrt(
+        direct_voltage_c * direct_voltage_c 
+        +
+        quadrature_voltage_c * quadrature_voltage_c 
+    );
+    if( max_voltage > HALF_MAX_VOLTAGE ){
+        direct_voltage_c = ( HALF_MAX_VOLTAGE / max_voltage ) * direct_voltage_c;
+        quadrature_voltage_c = ( HALF_MAX_VOLTAGE / max_voltage ) * quadrature_voltage_c;
+    }
+
 	phase_voltage_u = sqrt_2_3 * (c1 * direct_voltage_c - s1 * quadrature_voltage_c);
 	phase_voltage_v = sqrt_2_3 * (c2 * direct_voltage_c - s2 * quadrature_voltage_c);
 	phase_voltage_w = sqrt_2_3 * (c3 * direct_voltage_c - s3 * quadrature_voltage_c);
 }
+
 
 static float time = 0;
 
@@ -511,12 +495,41 @@ static int phase_pwm_u = 0;
 static int phase_pwm_v = 0;
 static int phase_pwm_w = 0;
 
-        
 void convert_direct_and_quadrature_voltage_to_phase_pwm(){
-    phase_pwm_u = phase_voltage_u * abs(motor_pwm);
-    phase_pwm_v = phase_voltage_v * abs(motor_pwm);
-    phase_pwm_w = phase_voltage_w * abs(motor_pwm);
+    /*
+    float min_voltage = phase_voltage_u;
+    if( min_voltage > phase_voltage_v) min_voltage = phase_voltage_v;
+    if( min_voltage > phase_voltage_w) min_voltage = phase_voltage_w;
+
+    int pwm_max = PWM_MAX * motor_pwm / 100 - PWM_MIN;
+    if( pwm_max < 0 ) pwm_max = 0;
+    */
+
+    float u = phase_voltage_u/MAX_VOLTAGE;
+    float v = phase_voltage_v/MAX_VOLTAGE;
+    float w = phase_voltage_w/MAX_VOLTAGE;
+
+    phase_pwm_u = u * PWM_MAX;
+    phase_pwm_v = v * PWM_MAX;
+    phase_pwm_w = w * PWM_MAX;
+
+    /*
+    // We center the sinusoide to have phase from 0V to MAX_VOLTAGE
+    phase_pwm_u = PWM_MIN + ((phase_voltage_u - min_voltage)/MAX_VOLTAGE) * pwm_max;
+    phase_pwm_v = PWM_MIN + ((phase_voltage_v - min_voltage)/MAX_VOLTAGE) * pwm_max;
+    phase_pwm_w = PWM_MIN + ((phase_voltage_w - min_voltage)/MAX_VOLTAGE) * pwm_max;
+    */
 }
+
+void compute_encoder_value_when_rotor_is_at_origin(){
+    theta = 0;
+    direct_voltage_c = HALF_MAX_VOLTAGE; 
+    quadrature_voltage_c = 0;
+    convert_direct_and_quadrature_voltage_to_phase_voltage();
+    set_pwm_on_all_phases( phase_pwm_u, phase_pwm_v, phase_pwm_w );
+    theta_origin = encoder_to_angle();
+}
+
 
 void motor_tick(bool irq)
 {
@@ -531,7 +544,7 @@ void motor_tick(bool irq)
         compute_rotor_position();
         compute_rotor_velocity();
         // compute_phase_current(); TODO when electronic is able to get current
-        convert_phase_current_to_direct_and_quadrature_current();
+        // convert_phase_current_to_direct_and_quadrature_current();
 
         // Outputs
         compute_velocity_consign();
@@ -541,13 +554,13 @@ void motor_tick(bool irq)
         convert_direct_and_quadrature_voltage_to_phase_pwm();
 
         // Apply control
-        set_sin_phases( phase_pwm_u, phase_pwm_v, phase_pwm_w );
+        set_pwm_on_all_phases( phase_pwm_u, phase_pwm_v, phase_pwm_w );
 
         display_some_message(irq);
     } else {
         // XXX: This is not a normal state, not sure what should be done
         // in this situation
-        set_phases(0, 0, 0, -1);
+        set_pwm_on_all_phases(0, 0, 0);
     }
     make_safety_work();
 }
@@ -561,12 +574,12 @@ TERMINAL_COMMAND(safe, "Safe mode")
     }
 }
 
-TERMINAL_COMMAND(pwm, "Motor set PWM")
+TERMINAL_COMMAND(pwm, "Motor set Maximal PWM")
 {
     if (argc > 0) {
         motor_set(true, atoi(argv[0]));
     } else {
-        terminal_io()->print("usage: pwm [0-3000] (current: ");
+        terminal_io()->print("usage: pwm [0-100] (current: ");
         terminal_io()->print(abs(motor_pwm));
         terminal_io()->print(")");
         terminal_io()->println();
