@@ -12,6 +12,13 @@
 uint16_t sin_lut(uint16_t x);
 
 /**
+ * Discrete sin
+ * Input : x in [-4095 to 4096]
+ * ouptu : y in [-8191 to 8192]
+ */
+int16_t discrete_sin(int16_t x);
+
+/**
  * Get the cosinus from angle in turn
  * 
  * turn goes from -1.0 to 1.0
