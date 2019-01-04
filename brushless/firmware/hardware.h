@@ -39,12 +39,14 @@
 #define CURRENT_PIN      4
 
 // Motors pins
-#define U_LOW_PIN        10
-#define U_HIGH_PIN       11
-#define V_LOW_PIN        8
-#define V_HIGH_PIN       9
-#define W_LOW_PIN        33
-#define W_HIGH_PIN       3
+// SD and IN pin are pin of the controllers
+// ir2104 .
+#define U_SD_PIN        10
+#define U_IN_PIN       11
+#define V_SD_PIN        8
+#define V_IN_PIN       9
+#define W_SD_PIN        33
+#define W_IN_PIN       3
 #define HALLU_PIN        7
 #define HALLV_PIN        6
 #define HALLW_PIN        5

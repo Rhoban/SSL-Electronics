@@ -9,9 +9,9 @@
 
 // Motor pins
 static int motor_pins[6] = {
-    U_LOW_PIN, U_HIGH_PIN,
-    V_LOW_PIN, V_HIGH_PIN,
-    W_LOW_PIN, W_HIGH_PIN
+    U_SD_PIN, U_IN_PIN,
+    V_SD_PIN, V_IN_PIN,
+    W_SD_PIN, W_IN_PIN
 };
 
 // Target PWM speed [0-3000]
@@ -84,8 +84,8 @@ static int hall_angle(int prev_phase, int phase)
 
 static void _bc_load()
 {
-    // digitalWrite(W_LOW_PIN, LOW);
-    // digitalWrite(W_LOW_PIN, HIGH);
+    // digitalWrite(W_SD_PIN, LOW);
+    // digitalWrite(W_SD_PIN, HIGH);
 }
 
 static void _init_timer(int number)
@@ -120,34 +120,42 @@ static int hall_value()
 
 TERMINAL_PARAMETER_INT(dts, "", 0);
 
-#define PWM_MOTOR_MAX 8192
-
-
 void apply_pwm( int low_pin, int high_pin, int pwm ){
-    if( pwm >= 0 ){
-        pwmWrite(low_pin, 0);
-        pwmWrite(high_pin, pwm);
-    }else{
-        pwmWrite(low_pin, -pwm);
+    //
+    // Commands for the ir2104 controller
+    //
+    // SD = 0 => HO = 0 and L0 = 0 
+    // SD = 1 and IN = 0 => HO = 0 and LO = 1
+    // SD = 1 and IN = 1 => HO = 1 and LO = 0
+    //
+    if( pwm == 0 ){
+        digitalWrite(low_pin, HIGH);
         pwmWrite(high_pin, 0);
+    }else{
+        digitalWrite(low_pin, HIGH);
+        pwmWrite(high_pin, pwm);
     }
 }
+
+void disable_all_motors(){
+    digitalWrite(U_SD_PIN, LOW);
+    digitalWrite(V_SD_PIN, LOW);
+    digitalWrite(W_SD_PIN, LOW);
+
+    pwmWrite(U_IN_PIN, 0);
+    pwmWrite(V_IN_PIN, 0);
+    pwmWrite(W_IN_PIN, 0);
+} 
+
 
 static void set_pwm_on_all_phases(int u, int v, int w)
 {
     if (!motor_on) {
-        pwmWrite(U_LOW_PIN, 0);
-        pwmWrite(V_LOW_PIN, 0);
-        pwmWrite(W_LOW_PIN, 0);
-
-        pwmWrite(U_HIGH_PIN, 0);
-        pwmWrite(V_HIGH_PIN, 0);
-        pwmWrite(W_HIGH_PIN, 0);
+        disable_all_motors();
     } else {
-        
-        apply_pwm(U_LOW_PIN, U_HIGH_PIN, u);
-        apply_pwm(V_LOW_PIN, V_HIGH_PIN, v);
-        apply_pwm(W_LOW_PIN, W_HIGH_PIN, w);
+        apply_pwm(U_SD_PIN, U_IN_PIN, u);
+        apply_pwm(V_SD_PIN, V_IN_PIN, v);
+        apply_pwm(W_SD_PIN, W_IN_PIN, w);
     }
 }
 
@@ -175,20 +183,20 @@ void motor_init()
 
     // Initalizing motor pins
     for (int k=0; k<6; k++)  pwmWrite(motor_pins[k], 0);
-    digitalWrite(U_HIGH_PIN, LOW);
-    digitalWrite(V_HIGH_PIN, LOW);
-    digitalWrite(W_HIGH_PIN, LOW);
-    digitalWrite(U_LOW_PIN, LOW);
-    digitalWrite(V_LOW_PIN, LOW);
-    digitalWrite(W_LOW_PIN, LOW);
+    digitalWrite(U_IN_PIN, LOW);
+    digitalWrite(V_IN_PIN, LOW);
+    digitalWrite(W_IN_PIN, LOW);
+    digitalWrite(U_SD_PIN, LOW);
+    digitalWrite(V_SD_PIN, LOW);
+    digitalWrite(W_SD_PIN, LOW);
 
-    pinMode(U_LOW_PIN, PWM);
-    pinMode(V_LOW_PIN, PWM);
-    pinMode(W_LOW_PIN, PWM);
+    pinMode(U_SD_PIN, OUTPUT);
+    pinMode(V_SD_PIN, OUTPUT);
+    pinMode(W_SD_PIN, OUTPUT);
 
-    pinMode(U_HIGH_PIN, PWM);
-    pinMode(V_HIGH_PIN, PWM);
-    pinMode(W_HIGH_PIN, PWM);
+    pinMode(U_IN_PIN, PWM);
+    pinMode(V_IN_PIN, PWM);
+    pinMode(W_IN_PIN, PWM);
 
 }
 
@@ -204,7 +212,7 @@ TERMINAL_COMMAND(hall, "Test the hall sensors")
 
 void motor_set(bool enable, int value)
 {
-    motor_on = eeable;
+    motor_on = enable;
     
     if (value > 100) value = 100;
     if (value < 0 ) value = 0;
@@ -216,7 +224,7 @@ TERMINAL_COMMAND(bdw, "Bdw")
 {
     int start = micros();
     for (int k=0; k<10000; k++) {
-        digitalWrite(U_LOW_PIN, LOW);
+        digitalWrite(U_SD_PIN, LOW);
     }
     terminal_io()->println(micros()-start);
 }
@@ -515,15 +523,14 @@ static int phase_pwm_v = 0;
 static int phase_pwm_w = 0;
 
 void convert_direct_and_quadrature_voltage_to_phase_pwm(){
-    /*
     float min_voltage = phase_voltage_u;
     if( min_voltage > phase_voltage_v) min_voltage = phase_voltage_v;
     if( min_voltage > phase_voltage_w) min_voltage = phase_voltage_w;
 
-    int pwm_max = PWM_MAX * motor_pwm / 100 - PWM_MIN;
+    int pwm_max = PWM_MAX * motor_pwm / 100;
     if( pwm_max < 0 ) pwm_max = 0;
-    */
 
+/*
     float u = phase_voltage_u/MAX_VOLTAGE;
     float v = phase_voltage_v/MAX_VOLTAGE;
     float w = phase_voltage_w/MAX_VOLTAGE;
@@ -531,13 +538,11 @@ void convert_direct_and_quadrature_voltage_to_phase_pwm(){
     phase_pwm_u = u * PWM_MAX;
     phase_pwm_v = v * PWM_MAX;
     phase_pwm_w = w * PWM_MAX;
-
-    /*
+*/
     // We center the sinusoide to have phase from 0V to MAX_VOLTAGE
-    phase_pwm_u = PWM_MIN + ((phase_voltage_u - min_voltage)/MAX_VOLTAGE) * pwm_max;
-    phase_pwm_v = PWM_MIN + ((phase_voltage_v - min_voltage)/MAX_VOLTAGE) * pwm_max;
-    phase_pwm_w = PWM_MIN + ((phase_voltage_w - min_voltage)/MAX_VOLTAGE) * pwm_max;
-    */
+    phase_pwm_u = ((phase_voltage_u - min_voltage)/MAX_VOLTAGE) * pwm_max;
+    phase_pwm_v = ((phase_voltage_v - min_voltage)/MAX_VOLTAGE) * pwm_max;
+    phase_pwm_w = ((phase_voltage_w - min_voltage)/MAX_VOLTAGE) * pwm_max;
 }
 
 static int phase_pwm_u_save = 0;
@@ -554,8 +559,6 @@ void compute_encoder_value_when_rotor_is_at_origin(){
     phase_pwm_u_save = phase_pwm_u;
     phase_pwm_v_save = phase_pwm_v;
     phase_pwm_w_save = phase_pwm_w;
-    
-    delay_us(10);
     theta_origin = encoder_to_angle();
 }
 
@@ -585,13 +588,14 @@ void motor_tick(bool irq)
     if( tare_is_set ){
         compute_encoder_value_when_rotor_is_at_origin();
         display_tare_information();
+        tare_is_set = false;
     }
     
     //if (phase >= 0 && phase < 6) {
         // Inputs
-        compute_rotor_angle_from_hall();
-        compute_rotor_position();
-        compute_rotor_velocity();
+        // compute_rotor_angle_from_hall();
+        // compute_rotor_position();
+        // compute_rotor_velocity();
         // compute_phase_current(); TODO when electronic is able to get current
         // convert_phase_current_to_direct_and_quadrature_current();
 
@@ -605,13 +609,17 @@ void motor_tick(bool irq)
         // Apply control
         // set_pwm_on_all_phases( phase_pwm_u, phase_pwm_v, phase_pwm_w );
 
-        display_some_message(irq);
+        // display_some_message(irq);
     //} else {
         // XXX: This is not a normal state, not sure what should be done
         // in this situation
     //    set_pwm_on_all_phases(0, 0, 0);
     //}
     //make_safety_work();
+        
+    if( !motor_on ){
+        disable_all_motors();
+    }
 }
 
 TERMINAL_COMMAND(safe, "Safe mode")
@@ -637,7 +645,7 @@ TERMINAL_COMMAND(pwm, "Motor set Maximal PWM")
 
 TERMINAL_COMMAND(tare, "Tare origin")
 {
-    if( tar_is_set ){
+    if( tare_is_set ){
         tare_is_set = false;
     }else{
         tare_is_set = true;
