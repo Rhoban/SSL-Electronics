@@ -239,7 +239,7 @@ void motor_tick_irq()
 
 TERMINAL_PARAMETER_INT(sphase, "", 0);
 
-TERMINAL_PARAMETER_BOOL(rotor_enc, "", false);
+TERMINAL_PARAMETER_BOOL(rotor_enc, "", true);
 
 static int last_tmp = 0;
 static int phase = -1;
@@ -267,46 +267,31 @@ void compute_rotor_angle_from_hall(){
 static bool old_angle_exists = false;
 static float old_angle;
 
-static float theta; // Angular position
-static float old_theta;
-static float theta_origin = 0;
-
-float encoder_to_angle(){
-    return encoder_value()/16384.0;
-}
+static float theta = 0.0; // Angular position
+static float old_theta = 0.0;
+static float angle_origin = 0;
 
 void compute_rotor_position(){
     old_theta = theta;
-    if (rotor_enc) {
-        float angle = encoder_value()/16384.0;
-        if( ! old_angle_exists ){
-            theta = angle - theta_origin;
-            old_angle_exists = true;
-        }else{
-            float delta = angle-old_angle;    
-            if( fabs(delta) < .5 ) {
-                delta = delta - 1.0;
-            }
-            theta += delta;
-        }
-        old_angle = angle;
-    } else {
-        theta = (rotor_angle&8191) / 8192.0;
-    }
+    theta = encoder_to_turn() - angle_origin;
 }
 
+static int last_display_time = 0;
+static float dt;
+static float speed;
+
+
 void display_some_message(bool irq){
-    static int last_display_time = millis();
-    if (((millis() - last_display_time) > 1) && mdb && !irq) {
+    if (((millis() - last_display_time) > 500) && mdb && !irq) {
         last_display_time = millis();
+        terminal_io()->print("theta : ");
         terminal_io()->print(theta);
-        terminal_io()->print(" ");
+        terminal_io()->print("velocity : ");
+        terminal_io()->print(speed);
+
         terminal_io()->println();
     }
 }
-
-static float dt;
-static float speed;
 
 
 void make_safety_work(){
@@ -574,8 +559,8 @@ static bool tare_is_done = false;
 static int last_tare_time = 0;
 
 void display_tare_information(){
-        terminal_io()->print("theta origin : ");
-        terminal_io()->print(theta_origin);
+        terminal_io()->print("angle origin : ");
+        terminal_io()->print(angle_origin);
         terminal_io()->print(", phase pwm u : ");
         terminal_io()->print(phase_pwm_u_save);
         terminal_io()->print(", phase pwm v : ");
@@ -587,7 +572,8 @@ void display_tare_information(){
 
 void compute_encoder_value_when_rotor_is_at_origin(){
     if( millis() - last_tare_time > 10 ){
-        theta_origin = encoder_to_angle();
+        angle_origin = encoder_to_turn();
+        theta = 0.0;
         display_tare_information();
         tare_is_done = true;
         tare_is_set = false;
@@ -607,12 +593,12 @@ void motor_tick(bool irq)
         compute_encoder_value_when_rotor_is_at_origin();
     }
 
-    if( tare_is_done){
+    if( tare_is_done ){
     //if (phase >= 0 && phase < 6) {
         // Inputs
         // compute_rotor_angle_from_hall();
-        // compute_rotor_position();
-        // compute_rotor_velocity();
+        compute_rotor_position();
+        compute_rotor_velocity();
         // compute_phase_current(); TODO when electronic is able to get current
         // convert_phase_current_to_direct_and_quadrature_current();
 
@@ -626,7 +612,7 @@ void motor_tick(bool irq)
         // Apply control
         // set_pwm_on_all_phases( phase_pwm_u, phase_pwm_v, phase_pwm_w );
 
-        // display_some_message(irq);
+        display_some_message(irq);
     //} else {
         // XXX: This is not a normal state, not sure what should be done
         // in this situation
