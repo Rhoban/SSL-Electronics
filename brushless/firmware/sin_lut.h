@@ -13,7 +13,7 @@ uint16_t sin_lut(uint16_t x);
 
 /**
  * Discrete sin
- * Input : x in [-4095 to 4096]
+ * Input : x in [0 to 8191]
  * ouptu : y in [-8191 to 8192]
  */
 int16_t discrete_sin(int16_t x);

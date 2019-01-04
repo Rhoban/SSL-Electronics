@@ -38,7 +38,11 @@ int16_t discrete_sin(int16_t x)
 
 
 float sin_t(float turn){
-    return discrete_sin( (int16_t) (turn*8192) )/8192.0;
+    if( turn < 0 ){
+        return - discrete_sin( (int16_t) (-turn*8192) )/8192.0;
+    }else{
+        return discrete_sin( (int16_t) (turn*8192) )/8192.0;
+    }
 }
 
 float cos_t(float turn){
