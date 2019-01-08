@@ -268,17 +268,36 @@ static bool old_angle_exists = false;
 static float old_angle;
 
 static float theta = 0.0; // Angular position
+static float theta_open_loop = 0.0; // Angular position
 static float old_theta = 0.0;
 static float angle_origin = 0;
 
 void compute_rotor_position(){
-    old_theta = theta;
-    theta = encoder_to_turn() - angle_origin;
+    theta = ( encoder_to_turn() - angle_origin );
 }
 
 static int last_display_time = 0;
 static float dt;
 static float speed;
+static float cumul_dt = 0.0;
+
+static float direct_current_c; // direct current consign
+static float quadrature_current_c; // quadrature current consign
+static float speed_error;
+static float integral_speed_error = 0.0;
+
+static float direct_voltage_c; // direct current consign
+static float quadrature_voltage_c; // quadrature current consign
+static float direct_current_error;
+static float integral_direct_current_error = 0.0;
+static float direct_current;
+static float quadrature_current_error;
+static float integral_quadrature_current_error = 0.0;
+static float quadrature_current;
+
+static float phase_voltage_u;
+static float phase_voltage_v;
+static float phase_voltage_w;
 
 
 void display_some_message(bool irq){
@@ -286,8 +305,25 @@ void display_some_message(bool irq){
         last_display_time = millis();
         terminal_io()->print("theta : ");
         terminal_io()->print(theta);
-        terminal_io()->print("velocity : ");
+        terminal_io()->print(", velocity : ");
         terminal_io()->print(speed);
+        terminal_io()->print(", cumul_dt : ");
+        terminal_io()->print(cumul_dt);
+        terminal_io()->print(", dt : ");
+        terminal_io()->print(dt);
+        terminal_io()->print(", speed_error : ");
+        terminal_io()->print(speed_error);
+        terminal_io()->print(", quad_volt : ");
+        terminal_io()->print(quadrature_voltage_c);
+
+        terminal_io()->print("phase_voltage_u : ");
+    terminal_io()->print( phase_voltage_u );
+    terminal_io()->print("phase_voltage_v : ");
+    terminal_io()->print( phase_voltage_v );
+    terminal_io()->print("phase_voltage_w : ");
+    terminal_io()->print( phase_voltage_w );
+    terminal_io()->println();
+
 
         terminal_io()->println();
     }
@@ -321,39 +357,49 @@ void make_safety_work(){
     }
 }
 
+
 void compute_rotor_velocity(){
-    speed = .9 * speed + .1 * (theta - old_theta)/dt; // To Improve !
+    cumul_dt += dt;
+    if( cumul_dt >= 50.0 ){
+        speed = (theta - old_theta)*1000.0/cumul_dt; // To Improve !
+        old_theta = theta;
+        cumul_dt = 0.0;
+    }
 }
 
 TERMINAL_PARAMETER_FLOAT(k_pos_p, "Posiition P", 10.0);
 TERMINAL_PARAMETER_FLOAT(k_speed_ff, "Speed FF", 0.0);
-TERMINAL_PARAMETER_FLOAT(k_speed_p, "Speed P", 10.0);
-TERMINAL_PARAMETER_FLOAT(k_speed_i, "Speed I", 10.0);
+TERMINAL_PARAMETER_FLOAT(k_speed_p, "Speed P", 0.5);
+TERMINAL_PARAMETER_FLOAT(k_speed_i, "Speed I", 0.0);
 TERMINAL_PARAMETER_FLOAT(k_current_p, "Current P", 1.0);
 TERMINAL_PARAMETER_FLOAT(k_current_i, "Current I", 0.0);
-TERMINAL_PARAMETER_FLOAT(theta_c, "Angular position consign", 10.0);
+TERMINAL_PARAMETER_FLOAT(theta_c, "Angular position consign", 0.5);
 
 
 static float speed_ff; // Speed feedforward
 static float speed_p; // Speed proportional
 static float speed_c; // Speed consign
 
-#define MAX_SPEED_CONSIGN 10.0 // Nb turn . s^-1
+#define MAX_SPEED_CONSIGN 5.0 // Nb turn . s^-1
+
+
+TERMINAL_PARAMETER_BOOL(manual_speed, "Enable manual Speed consign", true);
+TERMINAL_PARAMETER_FLOAT(speed_csg, "Speed consign", 1.0);
+
 
 void compute_velocity_consign(){
-    // w* = wff + pos_p * ( theta* - tetha )
-    speed_ff = k_speed_ff * (theta_c/dt);
-    speed_p = k_pos_p * ( theta_c - theta );
-    speed_c = speed_ff + speed_p ;
+    if(!manual_speed){
+        // w* = wff + pos_p * ( theta* - tetha )
+        speed_ff = k_speed_ff * (theta_c/dt);
+        speed_p = k_pos_p * ( theta_c - theta );
+        // speed_c = speed_ff + speed_p ;
+    }else{    
+        speed_c = speed_csg; // TODO
+    }
     if( fabs(speed_c) > MAX_SPEED_CONSIGN ){
         speed_c = ((speed_c<0)?-1:1) * MAX_SPEED_CONSIGN;
     } 
 }
-
-static float direct_current_c; // direct current consign
-static float quadrature_current_c; // quadrature current consign
-static float speed_error;
-static float integral_speed_error = 0.0;
 
 void compute_direct_quadrature_current_consign(){
     speed_error = speed_c - speed;
@@ -365,14 +411,6 @@ void compute_direct_quadrature_current_consign(){
     ); // quadrature current consign
 }
 
-static float direct_voltage_c; // direct current consign
-static float quadrature_voltage_c; // quadrature current consign
-static float direct_current_error;
-static float integral_direct_current_error = 0.0;
-static float direct_current;
-static float quadrature_current_error;
-static float integral_quadrature_current_error = 0.0;
-static float quadrature_current;
 
 
 void compute_direct_and_quadrature_voltage_consign(){
@@ -397,10 +435,6 @@ void compute_direct_and_quadrature_voltage_consign(){
 
 }
 
-static float phase_voltage_u;
-static float phase_voltage_v;
-static float phase_voltage_w;
-
 #define MAX_VOLTAGE 13
 #define HALF_MAX_VOLTAGE MAX_VOLTAGE/2 
 
@@ -415,8 +449,13 @@ void convert_direct_and_quadrature_voltage_to_phase_voltage(){
 
     const float sqrt_2_3 = 0.816496580927726;
 
-    const int number_of_pair_of_pole = 7;
-    float theta_park = theta * number_of_pair_of_pole; 
+    #define NB_POSITIVE_MAGNETS 8
+    #define NB_BOBINES 12
+    #define NB_PHASES 3
+    #define NB_BOBINES_BY_PHASE (NB_BOBINES/NB_PHASES) // 12/3
+    float r = theta - ( (int) ( theta / NB_POSITIVE_MAGNETS ) );
+    float theta_park = NB_POSITIVE_MAGNETS*r;
+
     theta_park -= ( (int) theta_park );
     if( theta_park < 0 ) theta_park += 1;
 
@@ -502,11 +541,13 @@ void convert_direct_and_quadrature_voltage_to_phase_voltage(){
 
 static float time = 0;
 
+
+#define DT_MIN 1.0
 void update_dt(){
     float new_time = millis();
     dt = new_time - time;
+    if( dt <= DT_MIN ) return; //dt = 0.00001;
     time = new_time;
-    if( dt == 0 ) dt = 0.00001;
 }
 
         
@@ -518,8 +559,8 @@ void compute_phase_current(){
 void convert_phase_current_to_direct_and_quadrature_current(){
     // TODO : when phase current will be measured, we need to implement
     // the conversion from pahse current to direct and quadrature current
-    direct_current = direct_current_c;
-    quadrature_current = quadrature_current_c;
+    direct_current = 0; //direct_current_c;
+    quadrature_current = 0; //quadrature_current_c;
 }
 
 static int phase_pwm_u = 0;
@@ -571,7 +612,7 @@ void display_tare_information(){
 }
 
 void compute_encoder_value_when_rotor_is_at_origin(){
-    if( millis() - last_tare_time > 10 ){
+    if( millis() - last_tare_time > 1000 ){
         angle_origin = encoder_to_turn();
         theta = 0.0;
         display_tare_information();
@@ -580,12 +621,10 @@ void compute_encoder_value_when_rotor_is_at_origin(){
     }
 }
 
-
-
 void motor_tick(bool irq)
 {
     update_dt();
-    if( dt <= 0.0 ) return;
+    if( dt <= DT_MIN ) return;
 
     compute_current_phase();
 
@@ -599,18 +638,42 @@ void motor_tick(bool irq)
         // compute_rotor_angle_from_hall();
         compute_rotor_position();
         compute_rotor_velocity();
+       
+        #define MAX_COUPLE 1
+        #define CLOSED_LOOP 0
+        #if CLOSED_LOOP
         // compute_phase_current(); TODO when electronic is able to get current
-        // convert_phase_current_to_direct_and_quadrature_current();
+        convert_phase_current_to_direct_and_quadrature_current();
 
         // Outputs
-        // compute_velocity_consign();
-        // compute_direct_quadrature_current_consign();
-        // compute_direct_and_quadrature_voltage_consign();
-        // convert_direct_and_quadrature_voltage_to_phase_voltage();
-        // convert_direct_and_quadrature_voltage_to_phase_pwm();
-
+        compute_velocity_consign();
+        compute_direct_quadrature_current_consign();
+        compute_direct_and_quadrature_voltage_consign();
+        convert_direct_and_quadrature_voltage_to_phase_voltage();
+        convert_direct_and_quadrature_voltage_to_phase_pwm();
+        
         // Apply control
-        // set_pwm_on_all_phases( phase_pwm_u, phase_pwm_v, phase_pwm_w );
+        set_pwm_on_all_phases( phase_pwm_u, phase_pwm_v, phase_pwm_w );
+        #else
+        // IN OPEN LOOP 
+        #if MAX_COUPLE != 1
+            float save_theta = theta;
+            theta_open_loop += (( speed_csg * dt)/1000.0 );
+            theta = theta_open_loop;
+        
+            direct_voltage_c = HALF_MAX_VOLTAGE; 
+            quadrature_voltage_c = 0;
+        #else
+            direct_voltage_c = 0.0;
+            quadrature_voltage_c = HALF_MAX_VOLTAGE; 
+        #endif
+        convert_direct_and_quadrature_voltage_to_phase_voltage();
+        convert_direct_and_quadrature_voltage_to_phase_pwm();
+        set_pwm_on_all_phases( phase_pwm_u, phase_pwm_v, phase_pwm_w );
+        #if MAX_COUPLE != 1
+            theta = save_theta;
+        #endif
+        #endif
 
         display_some_message(irq);
     //} else {
