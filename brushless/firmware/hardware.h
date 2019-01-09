@@ -2,11 +2,13 @@
 #define _HARDWARE_H
 
 // Defines the driver type (see below)
-#define DRIVER_TYPE     TYPE_70W
+// #define DRIVER_TYPE     TYPE_70W
+#define DRIVER_TYPE     TYPE_ELITE
 
 #define TYPE_30W        1
 #define TYPE_70W        2
 #define TYPE_DRIBBLER   3
+#define TYPE_ELITE      4
 
 #ifndef DRIVER_TYPE
 #error "You should set a value for DRIVER_TYPE"
@@ -18,11 +20,25 @@
 #define ENCODER_CPR      1024
 #endif
 
+#if DRIVER_TYPE == TYPE_ELITE
+#define ENCODER_MAGNETIC            // Magnetic AS5048 14bit encoder
+// #define ENCODER_CPR      1024
+#define ENCODER_CPR      16384
+// #define ENCODER_NONE                // No encoder
+#define REVERSE_SPEED
+#define REVERSE_PHASE
+
+#define MAX_ENCODER_SPEED 50.0  // in turn / s
+#endif
+
+
 #if DRIVER_TYPE == TYPE_70W
 #define ENCODER_MAGNETIC            // Magnetic AS5048 14bit encoder
 // #define ENCODER_CPR      1024
 #define ENCODER_CPR      16384
 // #define ENCODER_NONE                // No encoder
+
+#define MAX_ENCODER_SPEED 50.0  // turn / s
 #endif
 
 #if DRIVER_TYPE == TYPE_DRIBBLER
@@ -48,6 +64,8 @@
 #define HALLV_PIN        6
 #define HALLW_PIN        5
 
+
+
 // SPI slave pin
 #define SLAVE_SPI           1
 #define SLAVE_PIN           20
@@ -66,6 +84,12 @@
 
 // XXX: Limiting PWM
 #if DRIVER_TYPE == TYPE_70W
+#define CURRENT_DISABLE
+#define PWM_MIN             0     // 0-3000
+#define PWM_MAX             2500    // 0-3000
+#endif
+
+#if DRIVER_TYPE == TYPE_ELITE
 #define CURRENT_DISABLE
 #define PWM_MIN             0     // 0-3000
 #define PWM_MAX             2500    // 0-3000

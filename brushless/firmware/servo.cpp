@@ -162,10 +162,7 @@ float servo_lut(float target, float current)
     }
 }
 
-#define MAX_SPEED 50.0  // turn / s
-#define MAX_SPEED_STR "50.0"
-
-static float max_speed = MAX_SPEED/5.0;
+static float max_speed = MAX_ENCODER_SPEED/5.0;
 static float theta = 0.0; // Angular position
 static float speed_consign = 0.0; // Angular position
 bool origin_is_set = false;
@@ -183,7 +180,11 @@ TERMINAL_PARAMETER_FLOAT(pos_kd, "position PID d", 0.1);
 
 
 void compute_rotor_position(){
+    #ifdef REVERSE_SPEED
+    theta = -( encoder_to_turn() - angle_origin );
+    #else
     theta = ( encoder_to_turn() - angle_origin );
+    #endif
 }
 
 
@@ -272,8 +273,11 @@ void servo_tick()
 
             // Updating current speed estimation [pulse per SPEED_DT]
             // XXX: Is there a problem when we overflowed?
-            int speed_pulse = current_value - past_value;
-
+            #ifdef REVERSE_SPEED    
+                int speed_pulse = -( current_value - past_value );
+            #else
+                int speed_pulse = current_value - past_value;
+            #endif
             // Converting this into a speed [turn/s]
             // XXX: The discount was not tuned properly
             servo_speed = 0.95*servo_speed +  0.05*(1000.0/(double)SPEED_DT)*speed_pulse/(double)ENCODER_CPR;
@@ -442,6 +446,14 @@ void servo_tick()
         derivative_position_error = (theta_error - derivative_position_error)/dt;
         integral_position_error += ( dt * theta_error );
 
+        if( fabs(2 * integral_position_error * pos_ki) > max_speed ){
+            if( integral_position_error > 0 ){
+                integral_position_error = max_speed/2;
+            }else{
+                integral_position_error = -max_speed/2;
+            }
+        }
+
         speed_consign = (
             pos_kp * theta_error + 
             pos_ki * integral_position_error +
@@ -456,7 +468,7 @@ void servo_tick()
         if( theta < min_theta or theta > max_theta ){
             security_set_error(SECURITY_POSOTION_OUT_OF_LIMITS);
         }
-        if( servo_public_speed > MAX_SPEED ){
+        if( servo_public_speed > MAX_ENCODER_SPEED ){
             security_set_error(SECURITY_POSOTION_OUT_OF_LIMITS);
         }
 
@@ -638,8 +650,8 @@ TERMINAL_COMMAND(set_max_speed, "Set maximum speed")
         terminal_io()->println();
         return;
     }
-    if( value > MAX_SPEED ){
-        terminal_io()->print("Maximal speed should be lesser than "MAX_SPEED_STR);
+    if( value > MAX_ENCODER_SPEED ){
+        terminal_io()->print("Maximal speed should be lesser than MAX SPEED");
         terminal_io()->println();
         return;
     }
