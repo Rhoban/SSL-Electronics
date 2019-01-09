@@ -17,6 +17,10 @@ static inline const char *driver_error(int code)
         return "Encoder missing";
     } else if (code == SECURITY_ENCODER_FAILURE) {
         return "Encoder failure";
+    } else if (code == SECURITY_POSOTION_OUT_OF_LIMITS ){
+        return "Angulat position reachs the limits";
+    } else if (code == SECURITY_SPEED_LIMITS ){
+        return "Angular velocity reachs the limit";
     }
 
     return "?";

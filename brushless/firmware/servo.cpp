@@ -162,6 +162,69 @@ float servo_lut(float target, float current)
     }
 }
 
+#define MAX_SPEED 50.0  // turn / s
+#define MAX_SPEED_STR "50.0"
+
+static float max_speed = MAX_SPEED/5.0;
+static float theta = 0.0; // Angular position
+static float speed_consign = 0.0; // Angular position
+bool origin_is_set = false;
+static float max_theta = 0.0;
+static float min_theta = 0.0;
+        
+static float derivative_position_error = 0.0;
+static float theta_error = 0.0;
+static float integral_position_error = 0.0;
+static float angle_origin = 0.0;
+
+TERMINAL_PARAMETER_FLOAT(pos_kp, "position PID P", 5.0);
+TERMINAL_PARAMETER_FLOAT(pos_ki, "position PID I", 0.001);
+TERMINAL_PARAMETER_FLOAT(pos_kd, "position PID d", 0.1);
+
+
+void compute_rotor_position(){
+    theta = ( encoder_to_turn() - angle_origin );
+}
+
+
+void define_origin(){
+    angle_origin = encoder_to_turn();
+    theta = 0.0;
+    origin_is_set = true;
+    compute_rotor_position();
+}
+
+#define DT_MIN_FOR_POSTION_ASSERV 0.001
+static float dt = 0;
+static float time = 0;
+
+void update_dt_for_position_asserv(){
+    float new_time = micros();
+    dt = (new_time - time)/1000000.0;
+    if( dt <= DT_MIN_FOR_POSTION_ASSERV ) return; //dt = 0.00001;
+    time = new_time;
+}
+
+TERMINAL_PARAMETER_BOOL(dbg_pos, "", false);
+
+static float theta_consign = 0.0;
+bool position_asserv = false;
+
+static int last_time = 0;
+
+void display_msg(){
+    if (((millis() - last_time) > 500) && dbg_pos) {
+        last_time = millis();
+        terminal_io()->print("angle ");
+        terminal_io()->print(theta);
+        terminal_io()->print("Speed: ");
+        terminal_io()->println(servo_public_speed);
+        terminal_io()->println();
+    }
+}
+
+
+
 void servo_tick()
 {
     if (security_get_error() != SECURITY_NO_ERROR) {
@@ -364,15 +427,41 @@ void servo_tick()
         }
     }
 
-if(curr){
-
-}
-
-
     servo_public_pwm = servo_pwm_limited;
     servo_public_speed = servo_speed;
 
 
+    // Position asservissment
+    compute_rotor_position();
+    if( position_asserv ){
+        update_dt_for_position_asserv();
+        if( dt <= DT_MIN_FOR_POSTION_ASSERV ) return;
+        
+        derivative_position_error =  theta_error;
+        theta_error = theta_consign - theta;
+        derivative_position_error = (theta_error - derivative_position_error)/dt;
+        integral_position_error += ( dt * theta_error );
+
+        speed_consign = (
+            pos_kp * theta_error + 
+            pos_ki * integral_position_error +
+            pos_kd * derivative_position_error
+        );
+        if( fabs(speed_consign) > max_speed ){
+            speed_consign = ( (speed_consign >= 0 )? +1 : -1 ) * max_speed; 
+        }
+        servo_set(true, speed_consign);
+
+        //Security tests 
+        if( theta < min_theta or theta > max_theta ){
+            security_set_error(SECURITY_POSOTION_OUT_OF_LIMITS);
+        }
+        if( servo_public_speed > MAX_SPEED ){
+            security_set_error(SECURITY_POSOTION_OUT_OF_LIMITS);
+        }
+
+    }
+    display_msg();
 }
 
 TERMINAL_COMMAND(dbg, "Dbg servo")
@@ -383,6 +472,13 @@ TERMINAL_COMMAND(dbg, "Dbg servo")
     terminal_io()->println(servo_last_error);
     terminal_io()->println("Acc: ");
     terminal_io()->println(servo_acc);
+}
+
+void position_set(float consign)
+{
+    theta_consign = consign;
+    servo_set(true, 0.0);
+    position_asserv = true;
 }
 
 void servo_set(bool enable, float target, int16_t pwm)
@@ -411,6 +507,21 @@ void servo_set_pid(float kp_, float ki_, float kd_)
     kd = kd_;
 }
 
+void set_position_pid(float kp_, float ki_, float kd_)
+{
+    pos_kp = kp_;
+    pos_ki = ki_;
+    pos_kd = kd_;
+}
+
+float minimal_angle(){
+    return min_theta;
+}
+
+float maximal_angle(){
+    return max_theta;
+}
+
 float servo_get_speed()
 {
     return servo_public_speed;
@@ -421,9 +532,18 @@ TERMINAL_COMMAND(speed, "Speed estimation")
     terminal_io()->println(servo_get_speed()*100);
 }
 
+void reset_asserv(){
+    servo_set(false, 0.0);
+    theta_consign = 0.0;
+    position_asserv = false;
+    speed_consign = 0.0;
+}
+
+
 TERMINAL_COMMAND(em, "Emergency")
 {
     servo_set(false, 0);
+    reset_asserv();
     sdb = false;
 }
 
@@ -466,6 +586,139 @@ TERMINAL_COMMAND(set, "Set target speed")
     }
 }
 
+TERMINAL_COMMAND(set_origin, "Set position")
+{
+    reset_asserv();
+    define_origin();
+    min_theta = 0.0;
+    max_theta = 0.0;
+}
+
+TERMINAL_COMMAND(limits, "Print limits")
+{
+    terminal_io()->print("min angle : " );
+    terminal_io()->println(min_theta);
+    terminal_io()->print("max angle : " );
+    terminal_io()->println(max_theta);
+    terminal_io()->print("max speed : " );
+    terminal_io()->println(max_speed);
+    terminal_io()->println();
+}
+
+TERMINAL_COMMAND(set_min_angle, "Set minimum angle")
+{
+    reset_asserv();
+    if( !origin_is_set ){
+        terminal_io()->print("First define the origin by typing :" );
+        terminal_io()->println();
+        terminal_io()->println();
+        terminal_io()->print("    set_origin");
+        terminal_io()->println();
+        return;
+    }
+    if( theta > 0 ){
+        terminal_io()->print("Minimal angle should be negative.");
+        terminal_io()->println();
+        return;
+    }
+    min_theta = theta;
+}
+
+TERMINAL_COMMAND(set_max_speed, "Set maximum speed")
+{
+    char* endptr = NULL;
+    float value = strtod(argv[0], &endptr);
+    if( value == 0.0 and endptr == argv[0] ){
+        terminal_io()->print("Invalid parameter.");
+        terminal_io()->println();
+        return;
+    }
+    if( value < 0 ){
+        terminal_io()->print("Maximal speed should be positive.");
+        terminal_io()->println();
+        return;
+    }
+    if( value > MAX_SPEED ){
+        terminal_io()->print("Maximal speed should be lesser than "MAX_SPEED_STR);
+        terminal_io()->println();
+        return;
+    }
+    max_speed = value;
+}
+
+TERMINAL_COMMAND(set_max_angle, "Set maximum angle")
+{
+    reset_asserv();
+    if( !origin_is_set ){
+        terminal_io()->print("First define the origin by typing :" );
+        terminal_io()->println();
+        terminal_io()->println();
+        terminal_io()->print("    set_origin");
+        terminal_io()->println();
+        return;
+    }
+    if( theta < 0 ){
+        terminal_io()->print("Maximal angle should be positive.");
+        terminal_io()->println();
+        return;
+    }
+    max_theta = theta;
+}
+
+TERMINAL_COMMAND(set_position, "Set position")
+{
+    if( !origin_is_set ){
+        terminal_io()->print("First define the origin by typing :" );
+        terminal_io()->println();
+        terminal_io()->println();
+        terminal_io()->print("    set_origin");
+        terminal_io()->println();
+        return;
+    }
+    if( max_theta <= 0){
+        terminal_io()->print("First define maximal angle by typing :" );
+        terminal_io()->println();
+        terminal_io()->println();
+        terminal_io()->print("    set_max_angle");
+        terminal_io()->println();
+        return;
+    } 
+    if( min_theta >= 0){
+        terminal_io()->print("First define minimal angle by typing :" );
+        terminal_io()->println();
+        terminal_io()->println();
+        terminal_io()->print("    set_min_angle");
+        terminal_io()->println();
+        return;
+    } 
+    char* endptr = NULL;
+    float consign = strtod(argv[0], &endptr);
+    if( consign == 0.0 and endptr == argv[0] ){
+        terminal_io()->print("Invalid parameter.");
+        terminal_io()->println();
+        return;
+    }
+    if( consign < minimal_angle() ){
+        terminal_io()->print("Angle is too small." );
+        terminal_io()->println();
+        return;
+    }
+    if( consign > maximal_angle() ){
+        terminal_io()->print("Angle is too big." );
+        terminal_io()->println();
+        return;
+    }
+
+    if (argc > 0) {
+        position_set(consign);
+        error.init();
+        cmd.init();
+    } else {
+        terminal_io()->println("Usage: set [turn/s]");
+    }
+}
+
+
 int servo_get_pwm()
 {
     return servo_public_pwm;
@@ -473,10 +726,16 @@ int servo_get_pwm()
 
 TERMINAL_COMMAND(servo, "Servo status")
 {
+    terminal_io()->print("Target angle : ");
+    terminal_io()->println(theta_consign);
     terminal_io()->print("Target speed: ");
     terminal_io()->println(servo_target);
     terminal_io()->print("Prior PWM: ");
     terminal_io()->println(servo_prior_pwm);
+    terminal_io()->print("Target speed: ");
+    terminal_io()->println(servo_target);
+    terminal_io()->print("Angle: ");
+    terminal_io()->println(theta);
     terminal_io()->print("Speed: ");
     terminal_io()->println(servo_public_speed);
     terminal_io()->print("PWM: ");

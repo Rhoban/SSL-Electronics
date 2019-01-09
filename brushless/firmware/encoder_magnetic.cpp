@@ -198,6 +198,16 @@ uint32_t encoder_value()
     return encoder_cnt;
 }
 
+#define MAX_ENCODER_CNT 0x100000000
+#define HALF_MAX_ENCODER_CNT 0x80000000
+float encoder_to_turn(){
+    if( encoder_cnt >= HALF_MAX_ENCODER_CNT ){
+        return (encoder_cnt - MAX_ENCODER_CNT)/16384.0;
+    }else{
+        return encoder_cnt/16384.0; 
+    }
+}
+
 TERMINAL_COMMAND(eb, "Encoder benchmark")
 {
     int start = micros();

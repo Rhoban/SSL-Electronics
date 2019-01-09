@@ -9,6 +9,8 @@ typedef enum {
     SECURITY_HALL_MISSING = 4,
     SECURITY_ENCODER_MISSING = 5,
     SECURITY_ENCODER_FAILURE = 6,
+    SECURITY_POSOTION_OUT_OF_LIMITS = 7,
+    SECURITY_SPEED_LIMITS = 8,
 } SecurityError;
 
 void security_set_error(SecurityError type);
