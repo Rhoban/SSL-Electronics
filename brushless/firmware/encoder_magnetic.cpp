@@ -189,6 +189,7 @@ void encoder_tick()
             encoder_deltas = 0;
             encoder_delta_pos = 0;
             servo_set_flag();
+            servo_set_flag_1();
         }
     }
 }

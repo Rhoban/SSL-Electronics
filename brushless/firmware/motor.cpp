@@ -7,6 +7,14 @@
 #include "security.h"
 #include "sin_lut.h"
 
+// Number of values stored in the speed ring buffer
+#define SPEED_RB        (((SPEED_DT)/SERVO_DT)+1)
+static int encoder_rb_1[SPEED_RB] = {0};
+static int encoder_pos_1 = 0;
+////////////////////////////////////////////////////////////////////////////////:
+
+static bool servo_flag_1 = false;
+
 // Motor pins
 static int motor_pins[6] = {
     U_SD_PIN, U_IN_PIN,
@@ -267,7 +275,7 @@ void compute_rotor_angle_from_hall(){
 static bool old_angle_exists = false;
 static float old_angle;
 
-static float theta = 0.0; // Angular position
+TERMINAL_PARAMETER_FLOAT(theta, "Angle", 0.0);
 static float theta_open_loop = 0.0; // Angular position
 static float old_theta = 0.0;
 static float angle_origin = 0;
@@ -283,7 +291,7 @@ static float cumul_dt = 0.0;
 
 static float direct_current_c; // direct current consign
 static float quadrature_current_c; // quadrature current consign
-static float speed_error = 0.0;
+TERMINAL_PARAMETER_FLOAT(speed_error, "Speed error", 0.0);
 static float position_error = 0.0;
 static float integral_speed_error = 0.0;
 static float derivative_speed_error = 0.0;
@@ -364,31 +372,43 @@ void make_safety_work(){
 
 
 void compute_rotor_velocity(){
-    cumul_dt += dt;
-    if( cumul_dt >= 50.0 ){
-        speed = (theta - old_theta)*1000.0/cumul_dt; // To Improve !
-        old_theta = theta;
-        cumul_dt = 0.0;
-    }
+
+            // Storing current value
+            int current_value = encoder_value();
+            encoder_rb_1[encoder_pos_1] = current_value;
+            encoder_pos_1++;
+            if (encoder_pos_1 >= SPEED_RB) {
+                encoder_pos_1 = 0;
+            }
+            int past_value = encoder_rb_1[encoder_pos_1];
+
+            // Updating current speed estimation [pulse per SPEED_DT]
+            // XXX: Is there a problem when we overflowed?
+            int speed_pulse = current_value - past_value;
+
+            // Converting this into a speed [turn/s]
+            // XXX: The discount was not tuned properly
+            speed = 0.95*speed +  0.05*(1000.0/(double)SPEED_DT)*speed_pulse/(double)ENCODER_CPR;
+
 }
 
-TERMINAL_PARAMETER_FLOAT(k_pos_p, "Posiition P", 4.0);
-TERMINAL_PARAMETER_FLOAT(k_pos_i, "Posiition I", 0.000);
-TERMINAL_PARAMETER_FLOAT(k_pos_d, "Posiition D", 1.0);
+TERMINAL_PARAMETER_FLOAT(k_pos_p, "Posiition P", 3.0);
+TERMINAL_PARAMETER_FLOAT(k_pos_i, "Posiition I", 0.01);
+TERMINAL_PARAMETER_FLOAT(k_pos_d, "Posiition D", 0.0);
 TERMINAL_PARAMETER_FLOAT(k_speed_ff, "Speed FF", 0.0);
-TERMINAL_PARAMETER_FLOAT(k_speed_p, "Speed P", 0.4);
-TERMINAL_PARAMETER_FLOAT(k_speed_d, "Speed d", 0.03);
-TERMINAL_PARAMETER_FLOAT(k_speed_i, "Speed I", 0.001);
+TERMINAL_PARAMETER_FLOAT(k_speed_p, "Speed P", 0.6);
+TERMINAL_PARAMETER_FLOAT(k_speed_d, "Speed d", 0.00);
+TERMINAL_PARAMETER_FLOAT(k_speed_i, "Speed I", 0.0001);
 TERMINAL_PARAMETER_FLOAT(k_current_p, "Current P", 1.0);
 TERMINAL_PARAMETER_FLOAT(k_current_i, "Current I", 0.0);
-TERMINAL_PARAMETER_FLOAT(theta_c, "Angular position consign", 10.33);
+TERMINAL_PARAMETER_FLOAT(theta_c, "Angular position consign", 0.0);
 
 
 static float speed_ff; // Speed feedforward
 static float speed_p; // Speed proportional
 static float speed_c; // Speed consign
 
-#define MAX_SPEED_CONSIGN 8.0 // Nb turn . s^-1
+#define MAX_SPEED_CONSIGN 10.0 // Nb turn . s^-1
 
 
 TERMINAL_PARAMETER_BOOL(manual_speed, "Enable manual Speed consign", false);
@@ -403,9 +423,18 @@ void compute_velocity_consign(){
         position_error = theta_c - theta;
         derivative_position_error = (position_error - derivative_position_error)/dt;
         speed_p = k_pos_p * position_error;
-        integral_position_error += ( dt * position_error );
+        integral_position_error += k_pos_i * ( dt * position_error );
+
+        if( fabs(integral_position_error) > MAX_SPEED_CONSIGN/2.0 ){
+            if( integral_position_error > 0.0 ){
+                integral_position_error = MAX_SPEED_CONSIGN/2.0;
+            }else{
+                integral_position_error = - MAX_SPEED_CONSIGN/2.0;
+            } 
+        }
+
         speed_c = speed_ff + speed_p + 
-        k_pos_i * integral_position_error + 
+        integral_position_error + 
         k_pos_d * derivative_position_error;
     }else{    
         speed_c = speed_csg; // TODO
@@ -415,16 +444,29 @@ void compute_velocity_consign(){
     } 
 }
 
+TERMINAL_PARAMETER_FLOAT(alpha, "alpha", 0.9);
+
+
 void compute_direct_quadrature_current_consign(){
 
     derivative_speed_error = speed_error;
     speed_error = speed_c - speed;
     derivative_speed_error = (speed_error - derivative_speed_error)/dt;
-    integral_speed_error += ( dt * speed_error );
+    integral_speed_error += k_speed_i * ( dt * speed_error );
+
+    if( integral_speed_error > fabs(alpha * speed_c/2.0) ){
+        if(integral_speed_error >= 0){
+            integral_speed_error = fabs(alpha * speed_c/2.0);
+       }else{
+            integral_speed_error = - fabs(alpha * speed_c/2.0);
+       }
+    }
+
 
     direct_current_c = 0; // direct current consign. Always equals to 0.
-    quadrature_current_c = (
-        k_speed_p * speed_error + k_speed_i * integral_speed_error
+    quadrature_current_c = alpha * speed_c + (
+        k_speed_p * speed_error 
+        + integral_speed_error
         + k_speed_d * derivative_speed_error
     ); // quadrature current consign
 }
@@ -560,7 +602,7 @@ void convert_direct_and_quadrature_voltage_to_phase_voltage(){
 static float time = 0;
 
 
-#define DT_MIN 1.0
+#define DT_MIN .1
 void update_dt(){
     float new_time = millis();
     dt = new_time - time;
@@ -639,8 +681,18 @@ void compute_encoder_value_when_rotor_is_at_origin(){
     }
 }
 
+void servo_set_flag_1()
+{
+    servo_flag_1 = true;
+}
+
 void motor_tick(bool irq)
 {
+    if( ! servo_flag_1 ) return;
+   
+    servo_flag_1 = false; 
+    compute_rotor_velocity();
+    
     update_dt();
     if( dt <= DT_MIN ) return;
 
@@ -655,9 +707,8 @@ void motor_tick(bool irq)
         // Inputs
         // compute_rotor_angle_from_hall();
         compute_rotor_position();
-        compute_rotor_velocity();
        
-        #define MAX_COUPLE 1
+        #define MAX_COUPLE 0
         #define CLOSED_LOOP 1
         #if CLOSED_LOOP
         // compute_phase_current(); TODO when electronic is able to get current
@@ -726,6 +777,13 @@ TERMINAL_COMMAND(pwm, "Motor set Maximal PWM")
         terminal_io()->println();
     }
 }
+
+TERMINAL_COMMAND(spd, "get speed")
+{
+    terminal_io()->print(speed);
+    terminal_io()->println();
+}
+
 
 TERMINAL_COMMAND(tare, "Tare origin")
 {

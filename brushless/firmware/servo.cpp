@@ -164,6 +164,7 @@ float servo_lut(float target, float current)
 
 void servo_tick()
 {
+    return;
     if (security_get_error() != SECURITY_NO_ERROR) {
         error.init();
         cmd.init();

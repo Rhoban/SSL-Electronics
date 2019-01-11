@@ -8,6 +8,8 @@
  */
 void motor_init();
 
+void servo_set_flag_1();
+
 /**
  * Sets the target PWM value for the motor [0-3000]
  */
