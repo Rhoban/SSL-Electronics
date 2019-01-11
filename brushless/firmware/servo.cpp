@@ -121,11 +121,6 @@ static int sdb_t = 0;
 int timer = 0;
 int aim = 0;
 
-static void servo_irq()
-{
-    // XXX: This should probably be moved in encoder
-    encoder_read();
-}
 
 void servo_set_flag()
 {
