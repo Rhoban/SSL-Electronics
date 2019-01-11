@@ -2,8 +2,8 @@
 #define _HARDWARE_H
 
 // Defines the driver type (see below)
-#define DRIVER_TYPE     TYPE_70W
-// #define DRIVER_TYPE     TYPE_ELITE
+// #define DRIVER_TYPE     TYPE_70W
+#define DRIVER_TYPE     TYPE_ELITE
 
 #define TYPE_30W        1
 #define TYPE_70W        2

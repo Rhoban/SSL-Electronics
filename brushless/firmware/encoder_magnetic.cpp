@@ -110,9 +110,39 @@ TERMINAL_COMMAND(erv, "Encoder Read Value")
     }
 }
 
+
+static uint32_t angle = 0;
+static int32_t speed = 0;
+
+static uint32_t filtered_encoder_cnt = 0;
+
+// Timer frequence set to 8Kh
+#define FREQUENCY_HZ 8000 
+#define SAMPLE_FACTOR 10 
+ 
+void low_pass_filter(){
+    filtered_encoder_cnt = encoder_cnt;
+}
+
+static uint32_t sub_sample_cnt = 0;
+
+void sub_sample_angle_and_speed(){
+    if( sub_sample_cnt % SAMPLE_FACTOR ){
+        sub_sample_cnt++;
+        return;
+    }
+    sub_sample_cnt = 0;
+
+    speed = angle;
+    angle = filtered_encoder_cnt;
+    speed = (angle - speed)*( FREQUENCY_HZ/SAMPLE_FACTOR );
+}
+
 void encoder_irq()
 {
     encoder_read();
+    low_pass_filter();
+    sub_sample_angle_and_speed();
 }
 
 static void init_timer()
@@ -121,8 +151,13 @@ static void init_timer()
 
     // Configuring timer
     timer.pause();
-    timer.setPrescaleFactor(9);
-    timer.setOverflow(1000); // 8Khz
+
+    // Timer frequence set to FREQUENCY_HZ
+    #define TIMER_OVERFLOW 1000
+    timer.setPrescaleFactor(
+        (CYCLES_PER_MICROSECOND*TIMER_OVERFLOW)/FREQUENCY_HZ
+    );
+    timer.setOverflow(TIMER_OVERFLOW);
 
     timer.setChannel4Mode(TIMER_OUTPUT_COMPARE);
     timer.setCompare(TIMER_CH4, 1);
@@ -201,10 +236,18 @@ uint32_t encoder_value()
 #define MAX_ENCODER_CNT 0x100000000
 #define HALF_MAX_ENCODER_CNT 0x80000000
 float encoder_to_turn(){
-    if( encoder_cnt >= HALF_MAX_ENCODER_CNT ){
-        return (encoder_cnt - MAX_ENCODER_CNT)/16384.0;
+    if( filtered_encoder_cnt >= HALF_MAX_ENCODER_CNT ){
+        return (angle - MAX_ENCODER_CNT)/16384.0;
     }else{
-        return encoder_cnt/16384.0; 
+        return angle/16384.0; 
+    }
+}
+
+float encoder_to_speed(){
+    if( filtered_encoder_cnt >= HALF_MAX_ENCODER_CNT ){
+        return (speed - MAX_ENCODER_CNT)/16384.0;
+    }else{
+        return speed/16384.0; 
     }
 }
 
