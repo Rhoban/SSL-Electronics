@@ -7,11 +7,15 @@
 #include "security.h"
 #include "sin_lut.h"
 
+#define REVERSE_PHASE
+
 // Number of values stored in the speed ring buffer
 #define SPEED_RB        (((SPEED_DT)/SERVO_DT)+1)
 static int encoder_rb_1[SPEED_RB] = {0};
 static int encoder_pos_1 = 0;
 ////////////////////////////////////////////////////////////////////////////////:
+static float max_theta = 4.0;
+static float min_theta = -4.0;
 
 static bool servo_flag_1 = false;
 
@@ -219,12 +223,16 @@ TERMINAL_COMMAND(hall, "Test the hall sensors")
     terminal_io()->println();
 }
 
+
+void reset_coef_asserv();
+
 void motor_set(bool enable, int value)
 {
-    motor_on = enable;
-    
+    reset_coef_asserv();
     if (value > 100) value = 100;
     if (value < 0 ) value = 0;
+    
+    motor_on = enable && value>0;
 
     motor_pwm = value;
 }
@@ -281,7 +289,11 @@ static float old_theta = 0.0;
 static float angle_origin = 0;
 
 void compute_rotor_position(){
+#ifdef REVERSE_PHASE
+    theta = - ( encoder_to_turn() - angle_origin ); // REVERSE SPEED
+#else
     theta = ( encoder_to_turn() - angle_origin );
+#endif
 }
 
 static int last_display_time = 0;
@@ -384,7 +396,12 @@ void compute_rotor_velocity(){
 
             // Updating current speed estimation [pulse per SPEED_DT]
             // XXX: Is there a problem when we overflowed?
-            int speed_pulse = current_value - past_value;
+            #ifdef REVERSE_PHASE
+            int speed_pulse = -( current_value - past_value );  //REVERSE !
+            #else
+            int speed_pulse = ( current_value - past_value );  //REVERSE !
+            #endif
+            // int speed_pulse = ( current_value - past_value );
 
             // Converting this into a speed [turn/s]
             // XXX: The discount was not tuned properly
@@ -392,13 +409,13 @@ void compute_rotor_velocity(){
 
 }
 
-TERMINAL_PARAMETER_FLOAT(k_pos_p, "Posiition P", 3.0);
-TERMINAL_PARAMETER_FLOAT(k_pos_i, "Posiition I", 0.01);
+TERMINAL_PARAMETER_FLOAT(k_pos_p, "Posiition P", 100.0);
+TERMINAL_PARAMETER_FLOAT(k_pos_i, "Posiition I", 0.0);
 TERMINAL_PARAMETER_FLOAT(k_pos_d, "Posiition D", 0.0);
 TERMINAL_PARAMETER_FLOAT(k_speed_ff, "Speed FF", 0.0);
-TERMINAL_PARAMETER_FLOAT(k_speed_p, "Speed P", 0.6);
+TERMINAL_PARAMETER_FLOAT(k_speed_p, "Speed P", 0.06);
 TERMINAL_PARAMETER_FLOAT(k_speed_d, "Speed d", 0.00);
-TERMINAL_PARAMETER_FLOAT(k_speed_i, "Speed I", 0.0001);
+TERMINAL_PARAMETER_FLOAT(k_speed_i, "Speed I", 0.000);
 TERMINAL_PARAMETER_FLOAT(k_current_p, "Current P", 1.0);
 TERMINAL_PARAMETER_FLOAT(k_current_i, "Current I", 0.0);
 TERMINAL_PARAMETER_FLOAT(theta_c, "Angular position consign", 0.0);
@@ -444,7 +461,7 @@ void compute_velocity_consign(){
     } 
 }
 
-TERMINAL_PARAMETER_FLOAT(alpha, "alpha", 0.9);
+TERMINAL_PARAMETER_FLOAT(alpha, "alpha", 1.0);
 
 
 void compute_direct_quadrature_current_consign(){
@@ -471,6 +488,13 @@ void compute_direct_quadrature_current_consign(){
     ); // quadrature current consign
 }
 
+float minimal_angle(){
+    return min_theta;
+}
+
+float maximal_angle(){
+    return max_theta;
+}
 
 
 void compute_direct_and_quadrature_voltage_consign(){
@@ -509,7 +533,8 @@ void convert_direct_and_quadrature_voltage_to_phase_voltage(){
 
     const float sqrt_2_3 = 0.816496580927726;
 
-    #define NB_POSITIVE_MAGNETS 8
+    //#define NB_POSITIVE_MAGNETS 8
+    #define NB_POSITIVE_MAGNETS 7
     #define NB_BOBINES 12
     #define NB_PHASES 3
     #define NB_BOBINES_BY_PHASE (NB_BOBINES/NB_PHASES) // 12/3
@@ -703,12 +728,15 @@ void motor_tick(bool irq)
     }
 
     if( tare_is_done ){
+        if( theta < min_theta or theta > max_theta ){
+            motor_set( false, 0 );
+        }
     //if (phase >= 0 && phase < 6) {
         // Inputs
         // compute_rotor_angle_from_hall();
         compute_rotor_position();
        
-        #define MAX_COUPLE 0
+        #define MAX_COUPLE 1
         #define CLOSED_LOOP 1
         #if CLOSED_LOOP
         // compute_phase_current(); TODO when electronic is able to get current
@@ -834,3 +862,125 @@ TERMINAL_COMMAND(itest, "Interference test")
         }
     }
 }
+
+void reset_asserv(){
+    theta_c = 0.0;
+    speed_c = 0.0;
+}
+
+
+TERMINAL_COMMAND(set_min_angle, "Set minimum angle")
+{
+    reset_asserv();
+    if( !tare_is_done and motor_pwm!=0.0){
+        terminal_io()->print("First define the origin by typing :" );
+        terminal_io()->println();
+        terminal_io()->println();
+        terminal_io()->print("    set_origin");
+        terminal_io()->println();
+        return;
+    }
+    if( theta > 0 ){
+        terminal_io()->print("Minimal angle should be negative.");
+        terminal_io()->println();
+        return;
+    }
+    min_theta = theta;
+}
+
+
+TERMINAL_COMMAND(set_max_angle, "Set maximum angle")
+{
+    reset_asserv();
+    if( !tare_is_done and motor_pwm!=0){
+        terminal_io()->print("First define the origin by typing :" );
+        terminal_io()->println();
+        terminal_io()->println();
+        terminal_io()->print("    set_origin");
+        terminal_io()->println();
+        return;
+    }
+    if( theta < 0 ){
+        terminal_io()->print("Maximal angle should be positive.");
+        terminal_io()->println();
+        return;
+    }
+    max_theta = theta;
+}
+
+TERMINAL_COMMAND(set_position, "Set position")
+{
+    if( !tare_is_done and motor_pwm!=0 ){
+        terminal_io()->print("First define the origin by typing :" );
+        terminal_io()->println();
+        terminal_io()->println();
+        terminal_io()->print("    pwm 50");
+        terminal_io()->print("    tare");
+        terminal_io()->print("    pwm 0");
+        terminal_io()->println();
+        return;
+    }
+    if( max_theta <= 0){
+        terminal_io()->print("First define maximal angle by typing :" );
+        terminal_io()->println();
+        terminal_io()->println();
+        terminal_io()->print("    set_max_angle");
+        terminal_io()->println();
+        return;
+    } 
+    if( min_theta >= 0){
+        terminal_io()->print("First define minimal angle by typing :" );
+        terminal_io()->println();
+        terminal_io()->println();
+        terminal_io()->print("    set_min_angle");
+        terminal_io()->println();
+        return;
+    } 
+    char* endptr = NULL;
+    float consign = strtod(argv[0], &endptr);
+    if( consign == 0.0 and endptr == argv[0] ){
+        terminal_io()->print("Invalid parameter.");
+        terminal_io()->println();
+        return;
+    }
+    if( consign < minimal_angle() ){
+        terminal_io()->print("Angle is too small." );
+        terminal_io()->println();
+        return;
+    }
+    if( consign > maximal_angle() ){
+        terminal_io()->print("Angle is too big." );
+        terminal_io()->println();
+        return;
+    }
+
+    if (argc > 0) {
+        theta_c = consign;
+    } else {
+        terminal_io()->println("Usage: set_position angle");
+    }
+}
+
+TERMINAL_COMMAND(limits, "Print limits")
+{
+    terminal_io()->print("min angle : " );
+    terminal_io()->println(min_theta);
+    terminal_io()->print("max angle : " );
+    terminal_io()->println(max_theta);
+    terminal_io()->println();
+}
+void reset_coef_asserv(){
+    position_error = 0.0;
+    integral_speed_error = 0.0;
+    derivative_speed_error = 0.0;
+    integral_position_error = 0.0;
+    derivative_position_error = 0.0;
+    direct_voltage_c = 0.0; // direct current consign
+    quadrature_voltage_c = 0.0; // quadrature current consign
+    direct_current_error = 0.0;
+    integral_direct_current_error = 0.0;
+    direct_current = 0.0;
+    quadrature_current_error = 0.0;
+    integral_quadrature_current_error = 0.0;
+    quadrature_current = 0.0;
+} 
