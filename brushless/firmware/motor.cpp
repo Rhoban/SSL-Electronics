@@ -812,6 +812,12 @@ TERMINAL_COMMAND(spd, "get speed")
     terminal_io()->println();
 }
 
+void reset_asserv(){
+    theta_c = 0.0;
+    speed_c = 0.0;
+}
+
+
 
 TERMINAL_COMMAND(tare, "Tare origin")
 {
@@ -834,6 +840,7 @@ TERMINAL_COMMAND(tare, "Tare origin")
         phase_pwm_v_save = phase_pwm_v;
         phase_pwm_w_save = phase_pwm_w;
         tare_is_set = true;
+        reset_asserv();
     }
 }
 
@@ -862,12 +869,6 @@ TERMINAL_COMMAND(itest, "Interference test")
         }
     }
 }
-
-void reset_asserv(){
-    theta_c = 0.0;
-    speed_c = 0.0;
-}
-
 
 TERMINAL_COMMAND(set_min_angle, "Set minimum angle")
 {
@@ -914,7 +915,7 @@ TERMINAL_COMMAND(set_position, "Set position")
         terminal_io()->print("First define the origin by typing :" );
         terminal_io()->println();
         terminal_io()->println();
-        terminal_io()->print("    pwm 50");
+        terminal_io()->print("    pwm 60");
         terminal_io()->print("    tare");
         terminal_io()->print("    pwm 0");
         terminal_io()->println();
@@ -969,6 +970,19 @@ TERMINAL_COMMAND(limits, "Print limits")
     terminal_io()->println(max_theta);
     terminal_io()->println();
 }
+
+void reset(){
+    motor_set(false, 0);
+    tare_is_done = false;
+    tare_is_set = false;
+}
+
+
+TERMINAL_COMMAND(em, "Emergency")
+{
+    reset();
+}
+
 void reset_coef_asserv(){
     position_error = 0.0;
     integral_speed_error = 0.0;

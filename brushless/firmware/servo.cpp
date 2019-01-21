@@ -376,15 +376,15 @@ if(curr){
 
 }
 
-TERMINAL_COMMAND(dbg, "Dbg servo")
-{
-    terminal_io()->println("PWM: ");
-    terminal_io()->println(servo_pwm);
-    terminal_io()->println("Error: ");
-    terminal_io()->println(servo_last_error);
-    terminal_io()->println("Acc: ");
-    terminal_io()->println(servo_acc);
-}
+//TERMINAL_COMMAND(dbg, "Dbg servo")
+//{
+//    terminal_io()->println("PWM: ");
+//    terminal_io()->println(servo_pwm);
+//    terminal_io()->println("Error: ");
+//    terminal_io()->println(servo_last_error);
+//    terminal_io()->println("Acc: ");
+//    terminal_io()->println(servo_acc);
+//}
 
 void servo_set(bool enable, float target, int16_t pwm)
 {
@@ -417,69 +417,69 @@ float servo_get_speed()
     return servo_public_speed;
 }
 
-TERMINAL_COMMAND(speed, "Speed estimation")
-{
-    terminal_io()->println(servo_get_speed()*100);
-}
+//TERMINAL_COMMAND(speed, "Speed estimation")
+//{
+//    terminal_io()->println(servo_get_speed()*100);
+//}
 
-TERMINAL_COMMAND(em, "Emergency")
-{
-    servo_set(false, 0);
-    sdb = false;
-}
+//TERMINAL_COMMAND(em, "Emergency")
+//{
+//    servo_set(false, 0);
+//    sdb = false;
+//}
 
-TERMINAL_COMMAND(st, "Stop")
-{
-    servo_set(false, 0);
-    motor_set(true, 0);
-    sdb = false;
-}
-
-TERMINAL_COMMAND(step, "Step")
-{
-  if (argc > 0) {
-    if(servo_enable){
-      servo_target = atof(argv[0]); // cmd en tour par secondes
-    }
-  }
-  else{
-    terminal_io()->println("Usage: step [turn/s]");
-  }
-    //do nothing, use sdb=1 to avoid the servo impact
-}
-TERMINAL_COMMAND(clean, "Clean fifo of asserv")
-{
-  servo_set(false, 0);
-  motor_set(true, 0);
-  sdb = false;
-  error.init();
-  cmd.init();
-}
-
-TERMINAL_COMMAND(set, "Set target speed")
-{
-    if (argc > 0) {
-        servo_set(true, atof(argv[0]));
-        error.init();
-        cmd.init();
-    } else {
-        terminal_io()->println("Usage: set [turn/s]");
-    }
-}
+//TERMINAL_COMMAND(st, "Stop")
+//{
+//    servo_set(false, 0);
+//    motor_set(true, 0);
+//    sdb = false;
+//}
+//
+//TERMINAL_COMMAND(step, "Step")
+//{
+//  if (argc > 0) {
+//    if(servo_enable){
+//      servo_target = atof(argv[0]); // cmd en tour par secondes
+//    }
+//  }
+//  else{
+//    terminal_io()->println("Usage: step [turn/s]");
+//  }
+//    //do nothing, use sdb=1 to avoid the servo impact
+//}
+//TERMINAL_COMMAND(clean, "Clean fifo of asserv")
+//{
+//  servo_set(false, 0);
+//  motor_set(true, 0);
+//  sdb = false;
+//  error.init();
+//  cmd.init();
+//}
+//
+//TERMINAL_COMMAND(set, "Set target speed")
+//{
+//    if (argc > 0) {
+//        servo_set(true, atof(argv[0]));
+//        error.init();
+//        cmd.init();
+//    } else {
+//        terminal_io()->println("Usage: set [turn/s]");
+//    }
+//}
 
 int servo_get_pwm()
 {
     return servo_public_pwm;
 }
 
-TERMINAL_COMMAND(servo, "Servo status")
-{
-    terminal_io()->print("Target speed: ");
-    terminal_io()->println(servo_target);
-    terminal_io()->print("Prior PWM: ");
-    terminal_io()->println(servo_prior_pwm);
-    terminal_io()->print("Speed: ");
-    terminal_io()->println(servo_public_speed);
-    terminal_io()->print("PWM: ");
-    terminal_io()->println(servo_public_pwm);
-}
+//TERMINAL_COMMAND(servo, "Servo status")
+//{
+//    terminal_io()->print("Target speed: ");
+//    terminal_io()->println(servo_target);
+//    terminal_io()->print("Prior PWM: ");
+//    terminal_io()->println(servo_prior_pwm);
+//    terminal_io()->print("Speed: ");
+//    terminal_io()->println(servo_public_speed);
+//    terminal_io()->print("PWM: ");
+//    terminal_io()->println(servo_public_pwm);
+//}
