@@ -6,8 +6,9 @@
 #include "motor.h"
 #include "security.h"
 #include "sin_lut.h"
+#include "ssl.h"
 
-#define REVERSE_PHASE
+//#define REVERSE_PHASE
 
 // Number of values stored in the speed ring buffer
 #define SPEED_RB        (((SPEED_DT)/SERVO_DT)+1)
@@ -36,6 +37,7 @@ static int hall_last_change = 0;
 static int hall_last_change_moving = 0;
 static int encoder_last_ok = 0;
 static bool safe_mode = true;
+
 
 // Consecutive phases
 static int motor_phases[6][3] = {
@@ -174,6 +176,10 @@ static void set_pwm_on_all_phases(int u, int v, int w)
 void motor_tick_irq();
 void compute_encoder_value_when_rotor_is_at_origin();
 
+#define SIZE_INTEGRAL 256  //128
+static float integral_value[SIZE_INTEGRAL];
+static unsigned int cpt_integral = 0; 
+
 
 
 
@@ -210,8 +216,11 @@ void motor_init()
     pinMode(V_IN_PIN, PWM);
     pinMode(W_IN_PIN, PWM);
 
-
+    for( unsigned int i=0; i<SIZE_INTEGRAL; i++ ){
+        integral_value[i] = 0.0;
+    }
 }
+
 
 TERMINAL_COMMAND(hall, "Test the hall sensors")
 {
@@ -229,12 +238,19 @@ void reset_coef_asserv();
 void motor_set(bool enable, int value)
 {
     reset_coef_asserv();
-    if (value > 100) value = 100;
-    if (value < 0 ) value = 0;
-    
+    //if (value > 100) value = 100;
+    //if (value < 0 ) value = 0;
+    if( value != 0 ){
+        value = CONFIG_PWM;
+    }
+
     motor_on = enable && value>0;
 
     motor_pwm = value;
+}
+
+bool motor_is_set(){
+    return motor_on;
 }
 
 TERMINAL_COMMAND(bdw, "Bdw")
@@ -409,13 +425,13 @@ void compute_rotor_velocity(){
 
 }
 
-TERMINAL_PARAMETER_FLOAT(k_pos_p, "Posiition P", 100.0);
-TERMINAL_PARAMETER_FLOAT(k_pos_i, "Posiition I", 0.0);
-TERMINAL_PARAMETER_FLOAT(k_pos_d, "Posiition D", 0.0);
+TERMINAL_PARAMETER_FLOAT(k_pos_p, "Posiition P", K_POS_P);
+TERMINAL_PARAMETER_FLOAT(k_pos_i, "Posiition I", K_POS_I);
+TERMINAL_PARAMETER_FLOAT(k_pos_d, "Posiition D", K_POS_D);
 TERMINAL_PARAMETER_FLOAT(k_speed_ff, "Speed FF", 0.0);
-TERMINAL_PARAMETER_FLOAT(k_speed_p, "Speed P", 0.06);
-TERMINAL_PARAMETER_FLOAT(k_speed_d, "Speed d", 0.00);
-TERMINAL_PARAMETER_FLOAT(k_speed_i, "Speed I", 0.000);
+TERMINAL_PARAMETER_FLOAT(k_speed_p, "Speed P", K_SPEED_P);
+TERMINAL_PARAMETER_FLOAT(k_speed_d, "Speed d", K_SPEED_D);
+TERMINAL_PARAMETER_FLOAT(k_speed_i, "Speed I", K_SPEED_I);
 TERMINAL_PARAMETER_FLOAT(k_current_p, "Current P", 1.0);
 TERMINAL_PARAMETER_FLOAT(k_current_i, "Current I", 0.0);
 TERMINAL_PARAMETER_FLOAT(theta_c, "Angular position consign", 0.0);
@@ -428,9 +444,15 @@ static float speed_c; // Speed consign
 #define MAX_SPEED_CONSIGN 10.0 // Nb turn . s^-1
 
 
-TERMINAL_PARAMETER_BOOL(manual_speed, "Enable manual Speed consign", false);
-TERMINAL_PARAMETER_FLOAT(speed_csg, "Speed consign", 1.0);
+TERMINAL_PARAMETER_BOOL(manual_speed, "Enable manual Speed consign", MANUAL_SPEED);
+TERMINAL_PARAMETER_FLOAT(speed_csg, "Speed consign", INITIAL_SPEED);
 
+
+
+void set_motor_speed_consign( float speed ){
+    manual_speed = true;
+    speed_csg = speed;
+}
 
 void compute_velocity_consign(){
     if(!manual_speed){
@@ -440,50 +462,86 @@ void compute_velocity_consign(){
         position_error = theta_c - theta;
         derivative_position_error = (position_error - derivative_position_error)/dt;
         speed_p = k_pos_p * position_error;
-        integral_position_error += k_pos_i * ( dt * position_error );
+        integral_position_error += ( dt * position_error );
 
-        if( fabs(integral_position_error) > MAX_SPEED_CONSIGN/2.0 ){
+
+        if( fabs(k_pos_i * integral_position_error) > MAX_SPEED_CONSIGN/2.0 ){
             if( integral_position_error > 0.0 ){
-                integral_position_error = MAX_SPEED_CONSIGN/2.0;
+                integral_position_error = MAX_SPEED_CONSIGN/(2.0*k_pos_i);
             }else{
-                integral_position_error = - MAX_SPEED_CONSIGN/2.0;
+                integral_position_error = - MAX_SPEED_CONSIGN/(2.0*k_pos_i);
             } 
         }
 
         speed_c = speed_ff + speed_p + 
-        integral_position_error + 
+        k_pos_i * integral_position_error + 
         k_pos_d * derivative_position_error;
     }else{    
         speed_c = speed_csg; // TODO
     }
+    
     if( fabs(speed_c) > MAX_SPEED_CONSIGN ){
         speed_c = ((speed_c<0)?-1:1) * MAX_SPEED_CONSIGN;
     } 
 }
 
-TERMINAL_PARAMETER_FLOAT(alpha, "alpha", 1.0);
+TERMINAL_PARAMETER_FLOAT(alpha, "alpha", ALPHA);
 
+
+#define MAX_VOLTAGE 12
+#define HALF_MAX_VOLTAGE MAX_VOLTAGE/2 
 
 void compute_direct_quadrature_current_consign(){
 
     derivative_speed_error = speed_error;
     speed_error = speed_c - speed;
     derivative_speed_error = (speed_error - derivative_speed_error)/dt;
-    integral_speed_error += k_speed_i * ( dt * speed_error );
 
-    if( integral_speed_error > fabs(alpha * speed_c/2.0) ){
+    #if 0
+    cpt_integral = ( cpt_integral + 1 )%SIZE_INTEGRAL; // dernier et nouvel index
+
+    integral_speed_error -= integral_value[cpt_integral]; // Enlève la dernière valeure
+    integral_value[cpt_integral] = ( dt * speed_error );
+    integral_speed_error += integral_value[cpt_integral]; // Ajoute la nouvelle valeure
+
+    #else
+    integral_speed_error += ( dt * speed_error );
+    #endif
+
+    #define EPSILON_SPEED 0.05
+    float k_speed_i_c = k_speed_i;
+    //if( fabs( speed_c ) < 1.0 ){
+    //    if(fabs(speed_c) < EPSILON_SPEED ){
+    //        k_speed_i_c /= EPSILON_SPEED;
+    //    }else{
+    //        k_speed_i_c /= fabs(speed_c);
+    //    }
+    //}
+
+    if( fabs(k_speed_i_c*integral_speed_error) > (float) HALF_MAX_VOLTAGE ){
+        //terminal_io()->println("Limits integral");
         if(integral_speed_error >= 0){
-            integral_speed_error = fabs(alpha * speed_c/2.0);
+            integral_speed_error = (float) HALF_MAX_VOLTAGE / k_speed_i_c;
        }else{
-            integral_speed_error = - fabs(alpha * speed_c/2.0);
+            integral_speed_error = - (float) HALF_MAX_VOLTAGE / k_speed_i_c;
        }
     }
 
-
+#if 0
+    float speed_voltage = alpha * speed; 
+    if( fabs(speed_voltage) > 2* fabs(alpha * speed_c) ){
+        if( speed_voltage > 0 ){
+            speed_voltage = 2* alpha * speed_c;
+        }else{
+            speed_voltage = - 2* alpha * speed_c;
+        } 
+    }
+#endif
     direct_current_c = 0; // direct current consign. Always equals to 0.
-    quadrature_current_c = alpha * speed_c + (
+    quadrature_current_c = alpha * speed + 
+    (
         k_speed_p * speed_error 
-        + integral_speed_error
+        + k_speed_i_c * integral_speed_error
         + k_speed_d * derivative_speed_error
     ); // quadrature current consign
 }
@@ -519,9 +577,6 @@ void compute_direct_and_quadrature_voltage_consign(){
 
 }
 
-#define MAX_VOLTAGE 13
-#define HALF_MAX_VOLTAGE MAX_VOLTAGE/2 
-
 void convert_direct_and_quadrature_voltage_to_phase_voltage(){
     // ( vu )                ( c1 -s1 )
     // ( vv ) = sqrt(2/3) .  ( c2 -s2 ) . ( vd )
@@ -533,8 +588,8 @@ void convert_direct_and_quadrature_voltage_to_phase_voltage(){
 
     const float sqrt_2_3 = 0.816496580927726;
 
-    //#define NB_POSITIVE_MAGNETS 8
-    #define NB_POSITIVE_MAGNETS 7
+    #define NB_POSITIVE_MAGNETS 8
+    //#define NB_POSITIVE_MAGNETS 7
     #define NB_BOBINES 12
     #define NB_PHASES 3
     #define NB_BOBINES_BY_PHASE (NB_BOBINES/NB_PHASES) // 12/3
@@ -713,13 +768,26 @@ void servo_set_flag_1()
 
 void motor_tick(bool irq)
 {
-    if( ! servo_flag_1 ) return;
+    static bool motor_ticking = false;
+
+    if (motor_ticking) {
+        return;
+    }
+    motor_ticking = true;
+
+    if( ! servo_flag_1 ){
+        motor_ticking = false;
+        return;
+    }
    
     servo_flag_1 = false; 
     compute_rotor_velocity();
     
     update_dt();
-    if( dt <= DT_MIN ) return;
+    if( dt <= DT_MIN ){
+        motor_ticking = false;
+        return;
+    } 
 
     compute_current_phase();
 
@@ -729,7 +797,7 @@ void motor_tick(bool irq)
 
     if( tare_is_done ){
         if( theta < min_theta or theta > max_theta ){
-            motor_set( false, 0 );
+            //motor_set( false, 0 );
         }
     //if (phase >= 0 && phase < 6) {
         // Inputs
@@ -772,7 +840,7 @@ void motor_tick(bool irq)
         #endif
         #endif
 
-        display_some_message(irq);
+        //display_some_message(irq);
     //} else {
         // XXX: This is not a normal state, not sure what should be done
         // in this situation
@@ -783,6 +851,8 @@ void motor_tick(bool irq)
     if( !motor_on ){
         disable_all_motors();
     }
+
+    motor_ticking = false;
 }
 
 TERMINAL_COMMAND(safe, "Safe mode")
@@ -796,14 +866,17 @@ TERMINAL_COMMAND(safe, "Safe mode")
 
 TERMINAL_COMMAND(pwm, "Motor set Maximal PWM")
 {
-    if (argc > 0) {
-        motor_set(true, atoi(argv[0]));
-    } else {
-        terminal_io()->print("usage: pwm [0-100] (current: ");
-        terminal_io()->print(abs(motor_pwm));
-        terminal_io()->print(")");
-        terminal_io()->println();
-    }
+    terminal_io()->print("pwm set to ");
+    terminal_io()->println(CONFIG_PWM);
+    motor_set(true, CONFIG_PWM);
+//    if (argc > 0) {
+//        motor_set(true, atoi(argv[0]));
+//    } else {
+//        terminal_io()->print("usage: pwm [0-100] (current: ");
+//        terminal_io()->print(abs(motor_pwm));
+//        terminal_io()->print(")");
+//        terminal_io()->println();
+//    }
 }
 
 TERMINAL_COMMAND(spd, "get speed")
@@ -815,20 +888,13 @@ TERMINAL_COMMAND(spd, "get speed")
 void reset_asserv(){
     theta_c = 0.0;
     speed_c = 0.0;
+    for( unsigned int i=0; i<SIZE_INTEGRAL; i++ ){
+        integral_value[i] = 0.0;
+    }
 }
 
-
-
-TERMINAL_COMMAND(tare, "Tare origin")
-{
-    tare_is_set = false;
-    if( ! motor_on or motor_pwm <= 0 ){
-        terminal_io()->print("First enable motors by defining a pwm. For example :" );
-        terminal_io()->println();
-        terminal_io()->println();
-        terminal_io()->print("    pwm 10");
-        terminal_io()->println();
-    }else{
+void start_to_tare_motor(){
+    if(!tare_is_set){
         last_tare_time = millis();
         theta = 0;
         direct_voltage_c = HALF_MAX_VOLTAGE; 
@@ -845,6 +911,25 @@ TERMINAL_COMMAND(tare, "Tare origin")
 }
 
 
+TERMINAL_COMMAND(tare, "Tare origin")
+{
+    tare_is_set = false;
+    if( ! motor_on or motor_pwm <= 0 ){
+        terminal_io()->print("First enable motors by defining a pwm. For example :" );
+        terminal_io()->println();
+        terminal_io()->println();
+        terminal_io()->print("    pwm");
+        terminal_io()->println();
+    }else{
+        start_to_tare_motor();
+    }
+}
+
+void set_motor_speed_pid( float speed_p, float speed_i, float speed_d ){
+    k_speed_p = speed_p;
+    k_speed_i = speed_i;
+    k_speed_d = speed_d;
+}
 
 TERMINAL_COMMAND(itest, "Interference test")
 {
@@ -977,11 +1062,46 @@ void reset(){
     tare_is_set = false;
 }
 
+void reset_motor(){
+    reset();
+}
 
 TERMINAL_COMMAND(em, "Emergency")
 {
     reset();
 }
+
+TERMINAL_COMMAND(debu, "Deug")
+{
+    terminal_io()->print(speed_error);
+    terminal_io()->print(" ");
+    terminal_io()->print(speed_c);
+    terminal_io()->print(" ");
+    terminal_io()->print(dt);
+    terminal_io()->print(" ");
+    terminal_io()->println();
+}
+
+TERMINAL_COMMAND(info, "Info motor")
+{
+    terminal_io()->print("  motor name : ");
+    terminal_io()->println(MOTOR_NAME);
+    terminal_io()->print("  alpha*10 : ");
+    terminal_io()->println(ALPHA*10);
+    terminal_io()->print("  k speed p : ");
+    terminal_io()->println(K_SPEED_P);
+    terminal_io()->print("  k speed i : ");
+    terminal_io()->println(K_SPEED_I);
+    terminal_io()->print("  k speed d : ");
+    terminal_io()->println(K_SPEED_D);
+    terminal_io()->print("  k pos p : ");
+    terminal_io()->println(K_POS_P);
+    terminal_io()->print("  k pos i : ");
+    terminal_io()->println(K_POS_I);
+    terminal_io()->print("  k pos d : ");
+    terminal_io()->println(K_POS_D);
+}
+
 
 void reset_coef_asserv(){
     position_error = 0.0;
@@ -997,4 +1117,15 @@ void reset_coef_asserv(){
     quadrature_current_error = 0.0;
     integral_quadrature_current_error = 0.0;
     quadrature_current = 0.0;
-} 
+}
+
+float motor_get_speed(){
+    return speed;
+}
+
+
+
+int motor_get_pwm(){
+    return motor_pwm;
+}
+ 
