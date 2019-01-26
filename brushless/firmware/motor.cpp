@@ -501,29 +501,19 @@ void compute_direct_quadrature_current_consign(){
     cpt_integral = ( cpt_integral + 1 )%SIZE_INTEGRAL; // dernier et nouvel index
 
     integral_speed_error -= integral_value[cpt_integral]; // Enlève la dernière valeure
-    integral_value[cpt_integral] = ( dt * speed_error );
+    integral_value[cpt_integral] = k_speed_i *( dt * speed_error );
     integral_speed_error += integral_value[cpt_integral]; // Ajoute la nouvelle valeure
 
     #else
-    integral_speed_error += ( dt * speed_error );
+    integral_speed_error += k_speed_i *( dt * speed_error );
     #endif
 
-    #define EPSILON_SPEED 0.05
-    float k_speed_i_c = k_speed_i;
-    //if( fabs( speed_c ) < 1.0 ){
-    //    if(fabs(speed_c) < EPSILON_SPEED ){
-    //        k_speed_i_c /= EPSILON_SPEED;
-    //    }else{
-    //        k_speed_i_c /= fabs(speed_c);
-    //    }
-    //}
-
-    if( fabs(k_speed_i_c*integral_speed_error) > (float) HALF_MAX_VOLTAGE ){
+    if( fabs(integral_speed_error) > (float) HALF_MAX_VOLTAGE ){
         //terminal_io()->println("Limits integral");
         if(integral_speed_error >= 0){
-            integral_speed_error = (float) HALF_MAX_VOLTAGE / k_speed_i_c;
+            integral_speed_error = (float) HALF_MAX_VOLTAGE;
        }else{
-            integral_speed_error = - (float) HALF_MAX_VOLTAGE / k_speed_i_c;
+            integral_speed_error = - (float) HALF_MAX_VOLTAGE;
        }
     }
 
@@ -538,10 +528,11 @@ void compute_direct_quadrature_current_consign(){
     }
 #endif
     direct_current_c = 0; // direct current consign. Always equals to 0.
+    
     quadrature_current_c = alpha * speed + 
     (
         k_speed_p * speed_error 
-        + k_speed_i_c * integral_speed_error
+        + integral_speed_error
         + k_speed_d * derivative_speed_error
     ); // quadrature current consign
 }
@@ -1087,19 +1078,19 @@ TERMINAL_COMMAND(info, "Info motor")
     terminal_io()->print("  motor name : ");
     terminal_io()->println(MOTOR_NAME);
     terminal_io()->print("  alpha*10 : ");
-    terminal_io()->println(ALPHA*10);
+    terminal_io()->println(alpha*10);
     terminal_io()->print("  k speed p : ");
-    terminal_io()->println(K_SPEED_P);
+    terminal_io()->println(k_speed_p);
     terminal_io()->print("  k speed i : ");
-    terminal_io()->println(K_SPEED_I);
+    terminal_io()->println(k_speed_i);
     terminal_io()->print("  k speed d : ");
-    terminal_io()->println(K_SPEED_D);
+    terminal_io()->println(k_speed_d);
     terminal_io()->print("  k pos p : ");
-    terminal_io()->println(K_POS_P);
+    terminal_io()->println(k_pos_p);
     terminal_io()->print("  k pos i : ");
-    terminal_io()->println(K_POS_I);
+    terminal_io()->println(k_pos_i);
     terminal_io()->print("  k pos d : ");
-    terminal_io()->println(K_POS_D);
+    terminal_io()->println(k_pos_d);
 }
 
 
