@@ -757,6 +757,13 @@ void servo_set_flag_1()
     servo_flag_1 = true;
 }
 
+enum {
+    LOW_SPEED,
+    HIGH_SPEED
+};
+
+unsigned int mode = LOW_SPEED;
+
 void motor_tick(bool irq)
 {
     static bool motor_ticking = false;
@@ -795,9 +802,7 @@ void motor_tick(bool irq)
         // compute_rotor_angle_from_hall();
         compute_rotor_position();
        
-        #define MAX_COUPLE 1
-        #define CLOSED_LOOP 1
-        #if CLOSED_LOOP
+
         // compute_phase_current(); TODO when electronic is able to get current
         convert_phase_current_to_direct_and_quadrature_current();
 
@@ -805,32 +810,42 @@ void motor_tick(bool irq)
         compute_velocity_consign();
         compute_direct_quadrature_current_consign();
         compute_direct_and_quadrature_voltage_consign();
-        convert_direct_and_quadrature_voltage_to_phase_voltage();
-        convert_direct_and_quadrature_voltage_to_phase_pwm();
+    
+        if( mode == LOW_SPEED and fabs(speed_c) >= MAX_SPEED_HYST ){
+            mode = HIGH_SPEED;
+            motor_pwm = CONFIG_PWM;
+        }
+
+        if(
+            mode == HIGH_SPEED and 
+            fabs(speed_c) <= MIN_SPEED_HYST and 
+            fabs(speed) <= MIN_SPEED_HYST
+        ){
+            mode = LOW_SPEED;
+            motor_pwm = CONFIG_LOW_SPEED_PWM;
+            theta_open_loop = theta;
+        }
         
-        // Apply control
-        set_pwm_on_all_phases( phase_pwm_u, phase_pwm_v, phase_pwm_w );
-        #else
-        // IN OPEN LOOP 
-        #if MAX_COUPLE != 1
+        if( mode == HIGH_SPEED ){
+            convert_direct_and_quadrature_voltage_to_phase_voltage();
+            convert_direct_and_quadrature_voltage_to_phase_pwm();
+            set_pwm_on_all_phases( phase_pwm_u, phase_pwm_v, phase_pwm_w );
+        }else{
             float save_theta = theta;
             theta_open_loop += (( speed_csg * dt)/1000.0 );
             theta = theta_open_loop;
         
             direct_voltage_c = HALF_MAX_VOLTAGE; 
             quadrature_voltage_c = 0;
-        #else
-            direct_voltage_c = 0.0;
-            quadrature_voltage_c = HALF_MAX_VOLTAGE; 
-        #endif
-        convert_direct_and_quadrature_voltage_to_phase_voltage();
-        convert_direct_and_quadrature_voltage_to_phase_pwm();
-        set_pwm_on_all_phases( phase_pwm_u, phase_pwm_v, phase_pwm_w );
-        #if MAX_COUPLE != 1
-            theta = save_theta;
-        #endif
-        #endif
+            // MAX COUPLE 
+            // direct_voltage_c = 0.0;
+            //quadrature_voltage_c = HALF_MAX_VOLTAGE; 
+            convert_direct_and_quadrature_voltage_to_phase_voltage();
+            convert_direct_and_quadrature_voltage_to_phase_pwm();
+            set_pwm_on_all_phases( phase_pwm_u, phase_pwm_v, phase_pwm_w );
 
+            theta = save_theta;
+        }
         //display_some_message(irq);
     //} else {
         // XXX: This is not a normal state, not sure what should be done
@@ -1062,8 +1077,25 @@ TERMINAL_COMMAND(em, "Emergency")
     reset();
 }
 
+TERMINAL_COMMAND(mode, "Emergency")
+{
+    switch( mode ){
+        case HIGH_SPEED :
+            terminal_io()->println("HIGH_SPEED");
+            break;
+        case LOW_SPEED :
+            terminal_io()->println("LOW_SPEED");
+            break;
+        default:
+            terminal_io()->println("UNKNOWN");
+    }
+}
+
+
 TERMINAL_COMMAND(debu, "Deug")
 {
+    terminal_io()->print("mode ");
+    terminal_io()->print(mode);
     terminal_io()->print(speed_error);
     terminal_io()->print(" ");
     terminal_io()->print(speed_c);
@@ -1113,6 +1145,7 @@ void reset_coef_asserv(){
 float motor_get_speed(){
     return speed;
 }
+
 
 
 
