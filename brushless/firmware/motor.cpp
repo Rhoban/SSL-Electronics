@@ -29,6 +29,7 @@ static int motor_pins[6] = {
 
 // Target PWM speed [0-3000]
 static int motor_pwm = 0;
+static int low_speed_motor_pwm = CONFIG_LOW_SPEED_PWM;
 static bool motor_on = false;
 
 // Hall current phase
@@ -760,9 +761,10 @@ void servo_set_flag_1()
 enum {
     LOW_SPEED,
     HIGH_SPEED
+    //,ZERO_SPEED
 };
 
-unsigned int mode = LOW_SPEED;
+unsigned int mode = LOW_SPEED; //ZERO_SPEED;
 
 void motor_tick(bool irq)
 {
@@ -810,21 +812,31 @@ void motor_tick(bool irq)
         compute_velocity_consign();
         compute_direct_quadrature_current_consign();
         compute_direct_and_quadrature_voltage_consign();
-    
-        if( mode == LOW_SPEED and fabs(speed_c) >= MAX_SPEED_HYST ){
-            mode = HIGH_SPEED;
-            motor_pwm = CONFIG_PWM;
-        }
 
-        if(
-            mode == HIGH_SPEED and 
-            fabs(speed_c) <= MIN_SPEED_HYST and 
-            fabs(speed) <= MIN_SPEED_HYST
-        ){
-            mode = LOW_SPEED;
-            motor_pwm = CONFIG_LOW_SPEED_PWM;
-            theta_open_loop = theta;
-        }
+        // if( mode == ZERO_SPEED and fabs(speed_c) >= 0 ){
+        //     mode = LOW_SPEED;
+        //     motor_pwm = CONFIG_PWM;
+        //     theta_open_loop = theta;
+        // }
+        // if( speed_c == 0.0 ){
+        //     mode = ZERO_SPEED;
+        //     motor_pwm = 0;
+        // }else{
+            if( mode == LOW_SPEED and fabs(speed_c) >= MAX_SPEED_HYST ){
+                mode = HIGH_SPEED;
+                motor_pwm = CONFIG_PWM;
+            }
+
+            if(
+                mode == HIGH_SPEED and 
+                fabs(speed_c) <= MIN_SPEED_HYST and 
+                fabs(speed) <= MIN_SPEED_HYST
+            ){
+                mode = LOW_SPEED;
+                motor_pwm = low_speed_motor_pwm;
+                theta_open_loop = theta;
+            }
+        // }
         
         if( mode == HIGH_SPEED ){
             convert_direct_and_quadrature_voltage_to_phase_voltage();
@@ -885,6 +897,25 @@ TERMINAL_COMMAND(pwm, "Motor set Maximal PWM")
 //    }
 }
 
+TERMINAL_COMMAND(low_speed_pwm, "Low speed PWM")
+{
+    if (argc > 0) {
+        int value = atoi(argv[0]);
+        if( value < 0 ){
+            value = 0;
+        }
+        if( value > MAXIMAL_LOW_SPEED_PWM ){
+            value = MAXIMAL_LOW_SPEED_PWM;
+        }
+        low_speed_motor_pwm = value;
+    } else {
+        terminal_io()->print("usage: pwm [0-100] (current: ");
+        terminal_io()->print(abs(motor_pwm));
+        terminal_io()->print(")");
+        terminal_io()->println();
+    }
+}
+
 TERMINAL_COMMAND(spd, "get speed")
 {
     terminal_io()->print(speed);
@@ -902,6 +933,7 @@ void reset_asserv(){
 void start_to_tare_motor(){
     if(!tare_is_set){
         last_tare_time = millis();
+        motor_pwm = CONFIG_PWM;
         theta = 0;
         direct_voltage_c = HALF_MAX_VOLTAGE; 
         quadrature_voltage_c = 0;
@@ -912,6 +944,8 @@ void start_to_tare_motor(){
         phase_pwm_v_save = phase_pwm_v;
         phase_pwm_w_save = phase_pwm_w;
         tare_is_set = true;
+        // motor_pwm = 0;
+        mode = LOW_SPEED; // ZERO_SPEED;
         reset_asserv();
     }
 }
@@ -1077,8 +1111,7 @@ TERMINAL_COMMAND(em, "Emergency")
     reset();
 }
 
-TERMINAL_COMMAND(mode, "Emergency")
-{
+void print_mode(){
     switch( mode ){
         case HIGH_SPEED :
             terminal_io()->println("HIGH_SPEED");
@@ -1086,9 +1119,17 @@ TERMINAL_COMMAND(mode, "Emergency")
         case LOW_SPEED :
             terminal_io()->println("LOW_SPEED");
             break;
+        // case ZERO_SPEED :
+        //     terminal_io()->println("ZERO_SPEED");
+        //     break;
         default:
             terminal_io()->println("UNKNOWN");
     }
+}
+
+TERMINAL_COMMAND(mode, "Emergency")
+{
+    print_mode();
 }
 
 
@@ -1123,6 +1164,14 @@ TERMINAL_COMMAND(info, "Info motor")
     terminal_io()->println(k_pos_i);
     terminal_io()->print("  k pos d : ");
     terminal_io()->println(k_pos_d);
+    terminal_io()->print("  low speed pwm : ");
+    terminal_io()->println(low_speed_motor_pwm);
+    terminal_io()->print("  high speed pwm : ");
+    terminal_io()->println(CONFIG_PWM);
+    terminal_io()->print("  current pwm : ");
+    terminal_io()->println(motor_pwm);
+    terminal_io()->print("  current mode : ");
+    print_mode();
 }
 
 
