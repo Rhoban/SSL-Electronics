@@ -173,6 +173,47 @@ void encoder_read()
     encoder_read_value();
 }
 
+#define MAX_ENCODER_CNT 0x100000000
+#define HALF_MAX_ENCODER_CNT 0x8000000
+
+//
+// We want to use motor whose velocity < 200 tr/s so 
+// velocity from [-200, 200] should be mapped in [-0x8000000,0x8000000] 
+//
+#define MAX_SPEED_ENCODER_CNT 0x8000000
+#define MAX_MOTOR_SPEED 200.0 
+#define SPEED_NOMRALISATION (MAX_SPEED_ENCODER_CNT/MAX_MOTOR_SPEED)
+#define SPEED_FACTOR ( ( ( MAX_SPEED_ENCODER_CNT/ENCODER_CPR ) * (1000/SPEED_DT) * 5 ) / MAX_MOTOR_SPEED )
+
+// Number of values stored in the speed ring buffer
+#define SPEED_RB        (((SPEED_DT)/SERVO_DT)+1)
+static int encoder_rb_1[SPEED_RB] = {0};
+static int encoder_pos_1 = 0;
+static int encoder_speed = 0;
+
+void compute_rotor_velocity(){
+    // Storing current value
+    int current_value = encoder_value();
+    encoder_rb_1[encoder_pos_1] = current_value;
+    encoder_pos_1++;
+    if (encoder_pos_1 >= SPEED_RB) {
+        encoder_pos_1 = 0;
+    }
+    int past_value = encoder_rb_1[encoder_pos_1];
+
+    // Updating current speed estimation [pulse per SPEED_DT]
+    // XXX: Is there a problem when we overflowed?
+    #ifdef REVERSE_PHASE
+    int speed_pulse = -( current_value - past_value );  //REVERSE !
+    #else
+    int speed_pulse = ( current_value - past_value );  //REVERSE !
+    #endif
+
+    // Converting this into a speed [turn/s]
+    // XXX: The discount was not tuned properly
+    encoder_speed = ( 95 * encoder_speed + SPEED_FACTOR * speed_pulse )/100;
+}
+
 void encoder_tick()
 {
     if (encoder_has_new_value) {
@@ -185,6 +226,8 @@ void encoder_tick()
             magnetic_value = (magnetic_value + encoder_deltas + 0x4000)%(0x4000);
 
             encoder_cnt -= encoder_deltas;
+        
+            compute_rotor_velocity();
 
             encoder_deltas = 0;
             encoder_delta_pos = 0;
@@ -211,5 +254,14 @@ TERMINAL_COMMAND(eb, "Encoder benchmark")
 TERMINAL_COMMAND(cnt, "Cnt debug")
 {
     terminal_io()->println(encoder_cnt);
+}
+
+TERMINAL_COMMAND(spd, "Speed debug")
+{
+    float result = encoder_speed / ( (double) SPEED_NOMRALISATION );
+    terminal_io()->print("speed cnt : ");
+    terminal_io()->println(encoder_speed);
+    terminal_io()->print("speed : ");
+    terminal_io()->println(result);
 }
 #endif
