@@ -67,6 +67,8 @@
 #define CURRENT_DURATION    500
 #define CURRENT_MAX         8
 
+#define PWM_SUPREMUM        3000
+
 // XXX: Limiting PWM
 #if DRIVER_TYPE == TYPE_70W
 #define CURRENT_DISABLE

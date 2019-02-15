@@ -14,8 +14,8 @@
 static int encoder_rb_1[SPEED_RB] = {0};
 static int encoder_pos_1 = 0;
 ////////////////////////////////////////////////////////////////////////////////:
-static float max_theta = 4.0;
-static float min_theta = -4.0;
+static float max_theta = MAX_THETA_LIMIT;
+static float min_theta = MIN_THETA_LIMIT;
 
 static bool servo_flag_1 = false;
 
@@ -142,13 +142,29 @@ void apply_pwm( int low_pin, int high_pin, int pwm ){
     // SD = 1 and IN = 0 => HO = 0 and LO = 1
     // SD = 1 and IN = 1 => HO = 1 and LO = 0
     //
-    if( pwm == 0 ){
-        digitalWrite(low_pin, HIGH);
-        pwmWrite(high_pin, 0);
-    }else{
-        digitalWrite(low_pin, HIGH);
-        pwmWrite(high_pin, pwm);
+
+    int pwm_max = ( PWM_SUPREMUM * motor_pwm )/ 100;
+    if( pwm > pwm_max ){
+        terminal_io()->print("PWM ");
+        terminal_io()->print(pwm);
+        terminal_io()->print(" -> ");
+        terminal_io()->println(pwm_max);
+        pwm = pwm_max;
     }
+
+    // Last security check ! Do not remove !
+    if( pwm < PWM_MIN ){
+        pwm = PWM_MIN; 
+        terminal_io()->println( "LIMIT PWM ! " );
+    }
+    if( pwm > PWM_MAX ){
+        pwm = PWM_MAX;
+        terminal_io()->println( "LIMIT PWM ! " );
+    }
+
+    // We apply pwm
+    digitalWrite(low_pin, HIGH);
+    pwmWrite(high_pin, pwm);
 }
 
 void disable_all_motors(){
@@ -161,9 +177,39 @@ void disable_all_motors(){
     pwmWrite(W_IN_PIN, 0);
 } 
 
+static int phase_pwm_u = 0;
+static int phase_pwm_v = 0;
+static int phase_pwm_w = 0;
+
+static float phase_voltage_u;
+static float phase_voltage_v;
+static float phase_voltage_w;
 
 static void set_pwm_on_all_phases(int u, int v, int w)
 {
+    int pwm_max = (PWM_SUPREMUM * motor_pwm) / 100;
+    if( u > pwm_max ){
+
+        terminal_io()->println("=");
+        terminal_io()->print("U ");
+        terminal_io()->print(u);
+        terminal_io()->print(" -> ");
+        terminal_io()->println(pwm_max);
+        terminal_io()->print("PU ");
+        terminal_io()->println(phase_pwm_u);
+        terminal_io()->print("PV ");
+        terminal_io()->println(phase_pwm_v);
+        terminal_io()->print("PW ");
+        terminal_io()->println(phase_pwm_w);
+        terminal_io()->print("vU ");
+        terminal_io()->println(phase_voltage_u);
+        terminal_io()->print("vV ");
+        terminal_io()->println(phase_voltage_v);
+        terminal_io()->print("vW ");
+        terminal_io()->println(phase_voltage_w);
+    }
+
+
     if (!motor_on) {
         disable_all_motors();
     } else {
@@ -336,9 +382,6 @@ static float quadrature_current_error;
 static float integral_quadrature_current_error = 0.0;
 static float quadrature_current;
 
-static float phase_voltage_u;
-static float phase_voltage_v;
-static float phase_voltage_w;
 
 
 void display_some_message(bool irq){
@@ -577,8 +620,8 @@ void convert_direct_and_quadrature_voltage_to_phase_voltage(){
 
     const float sqrt_2_3 = 0.816496580927726;
 
-    float r = theta - ( (int) ( theta / NB_POSITIVE_MAGNETS ) );
-    float theta_park = NB_POSITIVE_MAGNETS*r;
+    // float r = theta - ( (int) ( theta / NB_POSITIVE_MAGNETS ) );
+    float theta_park = NB_POSITIVE_MAGNETS*theta;
 
     theta_park -= ( (int) theta_park );
     if( theta_park < 0 ) theta_park += 1;
@@ -618,34 +661,49 @@ void convert_direct_and_quadrature_voltage_to_phase_voltage(){
 //    terminal_io()->print(s3);
 //    terminal_io()->println();
 
-    // Before computing phase voltage, we need to evaluate the maximum of the 
-    // voltage whe theta is going from 0 to  2pi.
+    // Before computing phase voltage, we need to evaluate the maximum volue
+    // of the difference of two phase voltage when theta is going from 0 to 
+    // 2 pi.
     // If that maximum it too important, then we scale the voltage in such a 
-    // way the maximum go to MAX_PHASE_VOLTAGE
+    // way tha difference is borned by MAX_PHASE_VOLTAGE
     // 
-    // MAX PHASE VOLTAGE
-    //  phase_coltage_u = sqrt_2_3 * (c1 * direct_voltage_c - s1 * quadrature_voltage_c);
+    // MAX diffrence PHASE VOLTAGE : 
+    // 
+    //  phase_voltage_u - phase_voltage_v = sqrt_2_3 * (
+    //     (c1-c2) * direct_voltage_c
+    //   - (s1-s2) * quadrature_voltage_c
+    //  );
     //
-    // J = max( c * a - s * b ) ?
+    // Let J = max( a*(c1-c2) - b*(s1-s2) )
     //
-    // max when  deriv( c*a - s*b ) = -s*a -c*b = 0
+    // max occurs
+    // when deriv( a*(c1-c2) - b*(s1-s2) ) = -a*(s1-s2) - b*(c1-c2) = 0
     // so
-    // a * J = c * ( a^2 + b^2 )     and     c = a * J /(a^2+b^2)
-    // b * J = s * ( -a^2 -b^2 )     and     s = - b * J /(a^2+b^2)
+    // a * J = (c1-c2) * ( a^2 + b^2 )     and     c1-c2 = a * J /(a^2+b^2)
+    // b * J = (s1-s2) * ( -a^2 -b^2 )     and     s1-s2 = - b * J /(a^2+b^2)
     //
-    // 1 = c^2 + s^2 = J^2 ( a^2 + b^2 )/(a^2+b^2)^2
-    // so
-    // J^2 = a^2 + b^2
-    static float max_voltage = sqrt_2_3 * sqrt(
+    // (c1-c2)^2 + (s1-s2)^2 = 2 - 2 (c1*c2+s1*s2) = 
+    // 2 - 2*cos( theta - (theta +- 2pi/3) ) = 2 - 2 cos(2pi/3) = 3
+    //
+    // 3 = ( a^2 + b^2 ) * J^2 / (a^2 + b^2)^2
+    // 
+    // J = sqrt(3) * sqrt( a^2 + b^2 ) 
+    //
+    // So the maximal difference voltage is equal to 
+    // sqrt(2/3) * sqrt(3) * sqrt(a^2 + b^2) = sqrt(2) * sqrt(a^2+b^2)
+
+    const float sqrt_2 = 1.4142135623730951;
+
+    float max_voltage = sqrt_2 * sqrt(
         direct_voltage_c * direct_voltage_c 
         +
         quadrature_voltage_c * quadrature_voltage_c 
     );
-    if( max_voltage > HALF_MAX_VOLTAGE ){
-        terminal_io()->print( "MAX VOLTAGE !" );
-        terminal_io()->println();
-        direct_voltage_c = ( HALF_MAX_VOLTAGE / max_voltage ) * direct_voltage_c;
-        quadrature_voltage_c = ( HALF_MAX_VOLTAGE / max_voltage ) * quadrature_voltage_c;
+    if( max_voltage > MAX_VOLTAGE ){
+        //terminal_io()->println( "M" ); //AX VOLTAGE !" );
+        //terminal_io()->println();
+        direct_voltage_c = ( MAX_VOLTAGE / max_voltage ) * direct_voltage_c;
+        quadrature_voltage_c = ( MAX_VOLTAGE / max_voltage ) * quadrature_voltage_c;
     }
 
 	phase_voltage_u = sqrt_2_3 * (c1 * direct_voltage_c - s1 * quadrature_voltage_c);
@@ -687,27 +745,14 @@ void convert_phase_current_to_direct_and_quadrature_current(){
     quadrature_current = 0; //quadrature_current_c;
 }
 
-static int phase_pwm_u = 0;
-static int phase_pwm_v = 0;
-static int phase_pwm_w = 0;
-
 void convert_direct_and_quadrature_voltage_to_phase_pwm(){
     float min_voltage = phase_voltage_u;
     if( min_voltage > phase_voltage_v) min_voltage = phase_voltage_v;
     if( min_voltage > phase_voltage_w) min_voltage = phase_voltage_w;
 
-    int pwm_max = PWM_MAX * motor_pwm / 100;
+    int pwm_max = ( PWM_SUPREMUM * motor_pwm ) / 100;
     if( pwm_max < 0 ) pwm_max = 0;
 
-/*
-    float u = phase_voltage_u/MAX_VOLTAGE;
-    float v = phase_voltage_v/MAX_VOLTAGE;
-    float w = phase_voltage_w/MAX_VOLTAGE;
-
-    phase_pwm_u = u * PWM_MAX;
-    phase_pwm_v = v * PWM_MAX;
-    phase_pwm_w = w * PWM_MAX;
-*/
     // We center the sinusoide to have phase from 0V to MAX_VOLTAGE
     phase_pwm_u = ((phase_voltage_u - min_voltage)/MAX_VOLTAGE) * pwm_max;
     phase_pwm_v = ((phase_voltage_v - min_voltage)/MAX_VOLTAGE) * pwm_max;
@@ -941,7 +986,7 @@ void start_to_tare_motor(){
         last_tare_time = millis();
         motor_pwm = CONFIG_PWM;
         theta = 0;
-        direct_voltage_c = HALF_MAX_VOLTAGE; 
+        direct_voltage_c = HALF_MAX_VOLTAGE/2.0; 
         quadrature_voltage_c = 0;
         convert_direct_and_quadrature_voltage_to_phase_voltage();
         convert_direct_and_quadrature_voltage_to_phase_pwm();
@@ -1181,6 +1226,8 @@ TERMINAL_COMMAND(info, "Info motor")
     terminal_io()->println(low_speed_motor_pwm);
     terminal_io()->print("  high speed pwm : ");
     terminal_io()->println(CONFIG_PWM);
+    terminal_io()->print("  manual speed : ");
+    terminal_io()->println(manual_speed);
     terminal_io()->print("  motor on : ");
     terminal_io()->println(motor_on);
     terminal_io()->print("  current pwm : ");
