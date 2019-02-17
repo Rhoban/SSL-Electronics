@@ -6,6 +6,7 @@
 #include "errors.h"
 
 static SecurityError security_error = SECURITY_NO_ERROR;
+static SecurityWarning security_warning = SECURITY_NO_WARNING;
 
 void security_set_error(SecurityError type)
 {
@@ -20,6 +21,16 @@ SecurityError security_get_error()
     return security_error;
 }
 
+void security_set_warning(SecurityWarning type)
+{
+    security_warning = type;
+}
+
+SecurityWarning security_get_warning()
+{
+    return security_warning;
+}
+
 TERMINAL_COMMAND(err, "Error")
 {
     if (security_error == SECURITY_NO_ERROR) {
@@ -27,5 +38,11 @@ TERMINAL_COMMAND(err, "Error")
     } else {
         terminal_io()->print("Error: ");
         terminal_io()->println(driver_error(security_error));
+    }
+    if (security_warning == SECURITY_NO_WARNING) {
+        terminal_io()->println("No warning");
+    } else {
+        terminal_io()->print("Warning: ");
+        terminal_io()->println(driver_warning(security_warning));
     }
 }

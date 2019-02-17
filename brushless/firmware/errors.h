@@ -17,8 +17,21 @@ static inline const char *driver_error(int code)
         return "Encoder missing";
     } else if (code == SECURITY_ENCODER_FAILURE) {
         return "Encoder failure";
+    } else if ( code == SECURITY_PWM_MIN ){
+        return "PWM command too small";
+    } else if ( code == SECURITY_PWM_MAX ){
+        return "PWM command too big";
     }
+    return "?";
+}
 
+static inline const char *driver_warning(int code)
+{
+    if ( code == WARNING_MOTOR_LAG ){
+        return "PWM motor LAG";
+    } else if( code == WARNING_INVALID_RANGE ){
+        return "Invalide range";
+    }
     return "?";
 }
 

@@ -38,12 +38,12 @@
 #define CURRENT_PIN      4
 
 // Motors pins
-#define U_LOW_PIN        10
-#define U_HIGH_PIN       11
-#define V_LOW_PIN        8
-#define V_HIGH_PIN       9
-#define W_LOW_PIN        33
-#define W_HIGH_PIN       3
+#define U_SD_PIN        10
+#define U_IN_PIN       11
+#define V_SD_PIN        8
+#define V_IN_PIN       9
+#define W_SD_PIN        33
+#define W_IN_PIN       3
 #define HALLU_PIN        7
 #define HALLV_PIN        6
 #define HALLW_PIN        5
@@ -63,6 +63,10 @@
 #define CURRENT_LIMIT       2.5
 #define CURRENT_DURATION    500
 #define CURRENT_MAX         8
+
+#define MAX_MOTOR_VOLTAGE 12
+#define HALF_MAX_MOTOR_VOLTAGE MAX_MOTOR_VOLTAGE/2 
+#define PWM_SUPREMUM 3000
 
 // XXX: Limiting PWM
 #if DRIVER_TYPE == TYPE_70W

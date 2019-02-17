@@ -264,4 +264,13 @@ TERMINAL_COMMAND(spd, "Speed debug")
     terminal_io()->print("speed : ");
     terminal_io()->println(result);
 }
+
+float encoder_to_turn(){
+    if( encoder_cnt >= HALF_MAX_ENCODER_CNT ){
+        return (encoder_cnt - MAX_ENCODER_CNT)/16384.0;
+    }else{
+        return encoder_cnt/16384.0; 
+    }
+}
+
 #endif

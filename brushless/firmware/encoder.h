@@ -9,5 +9,6 @@ bool encoder_is_present();
 bool encoder_is_ok();
 uint32_t encoder_value();
 void encoder_tick();
+float encoder_to_turn();
 
 #endif

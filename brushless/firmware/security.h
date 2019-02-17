@@ -9,10 +9,20 @@ typedef enum {
     SECURITY_HALL_MISSING = 4,
     SECURITY_ENCODER_MISSING = 5,
     SECURITY_ENCODER_FAILURE = 6,
+    SECURITY_PWM_MIN = 7,
+    SECURITY_PWM_MAX = 8,
 } SecurityError;
 
+typedef enum {
+    SECURITY_NO_WARNING = 0,
+    WARNING_MOTOR_LAG = 1,
+    WARNING_INVALID_RANGE = 2,
+} SecurityWarning;
+
 void security_set_error(SecurityError type);
+void security_set_warning(SecurityWarning type);
 
 SecurityError security_get_error();
+SecurityWarning security_get_warning();
 
 #endif
