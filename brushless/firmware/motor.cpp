@@ -12,7 +12,8 @@
 #define REFERENCE_VOLTAGE 12
 #define HALF_REFERENCE_VOLTAGE REFERENCE_VOLTAGE/2 
 
-void display();
+void display(bool);
+void display_warning();
 
 enum Motor_mode {
     PHASE_MODE,
@@ -330,23 +331,48 @@ void direct_quadrature_voltage_set(float vd, float vq ){
     }
 }
 
+enum TareProcess {
+    TARE_NOT_SET,
+    TODO_TARE,
+    DEFINE_ORIGIN,
+    TARE_ANGLE,
+    COMPUTE_ANGLE,
+    TARE_IS_DONE
+};
+
 static int last_tare_time = 0;
 static int tare_is_set = false;
-static int tare_is_done = false;
+static TareProcess tare_state = TARE_NOT_SET;
+
+static float theta_c;
+static bool go_theta = false;
+
+void reset_vectorial();
+
+TERMINAL_COMMAND(go_theta, "Set theta")
+{
+    if (argc == 1) {
+        reset_vectorial();
+        theta_c = atof(argv[0]);
+        direct_quadrature_voltage_set( HALF_REFERENCE_VOLTAGE, 0);
+        go_theta = true;
+    }
+}
 
 TERMINAL_COMMAND(dqv, "Set direct and quadrature voltage")
 {
     if (argc == 2) {
-        if( ! tare_is_done ){
+        if( tare_state != TARE_IS_DONE ){
             terminal_io()->println("Please tare the motor first, by typing : ");
             terminal_io()->println("  tare");
             return;
         }
 
-        float vd = atoi(argv[0]);
-        float vq = atoi(argv[1]);
+        float vd = atof(argv[0]);
+        float vq = atof(argv[1]);
         float max_voltage = compute_maximal_voltage(vd, vq);
         if( max_voltage <= REFERENCE_VOLTAGE ){
+            reset_vectorial();
             direct_quadrature_voltage_set(vd, vq);
         }else{
             terminal_io()->print(  "    Fail : sqrt(2)*sqrt(d^2 + q^2) !< " );
@@ -437,6 +463,19 @@ static float angle_origin = 0.0;
 static int vectorial_pwm = CONFIG_PWM;
 static int save_vectorial_pwm = CONFIG_PWM;
 
+static float theta_park; //D/
+static float theta_s; //D/
+
+static float t1; //D/
+static float t2; //D/
+static float t3; //D/
+static float c1; //D/
+static float s1; //D/
+static float c2; //D/
+static float s2; //D/
+static float c3; //D/
+static float s3; //D/
+
 void control_motor_with_vectorial( float theta ){
 
     ///////////////////////////////////////////////////////////////////////////
@@ -452,8 +491,9 @@ void control_motor_with_vectorial( float theta ){
 
     const float sqrt_2_3 = 0.816496580927726;
 
-    // float r = theta - ( (int) ( theta / NB_POSITIVE_MAGNETS ) );
-    float theta_park = NB_POSITIVE_MAGNETS*theta;
+    //float r = theta - ( (int) ( theta / NB_POSITIVE_MAGNETS ) );
+    //float theta_park = NB_POSITIVE_MAGNETS*r; //theta;
+    theta_park = NB_POSITIVE_MAGNETS*theta; //D/
 
     theta_park -= ( (int) theta_park );
     if( theta_park < 0 ) theta_park += 1;
@@ -463,16 +503,16 @@ void control_motor_with_vectorial( float theta ){
         security_set_warning( WARNING_MOTOR_LAG );
     }
 
-    const float t1 = theta_park;
-    const float t2 = theta_park - 1.0/3.0;
-    const float t3 = theta_park + 1.0/3.0;
+    t1 = theta_park; //D/
+    t2 = theta_park - 1.0/3.0; //D/
+    t3 = theta_park + 1.0/3.0; //D/
     
-    const float c1 = cos_t(t1);
-    const float s1 = sin_t(t1);
-    const float c2 = cos_t(t2);
-    const float s2 = sin_t(t2);
-    const float c3 = cos_t(t3);
-    const float s3 = sin_t(t3);
+    c1 = cos_t(t1); //D/
+    s1 = sin_t(t1); //D/
+    c2 = cos_t(t2); //D/
+    s2 = sin_t(t2); //D/
+    c3 = cos_t(t3); //D/
+    s3 = sin_t(t3); //D/
 
 //    terminal_io()->print("t1 : ");
 //    terminal_io()->print( t1 );
@@ -561,6 +601,109 @@ void update_dt(){
     time = new_time;
 }
 
+int nb_pass = 0;
+
+#define RESOLUTION 1024
+static int tare_cnt;
+//static float max_error_angle = 0.0;
+//static float error_angle = 0.0;
+static float all_angle[RESOLUTION];
+static int precision = 4;
+static int nb_turn = 0;
+
+float tare_process(){
+    float theta;
+    switch( tare_state ){
+        case TARE_NOT_SET:
+            break;
+        case TODO_TARE:
+            theta = 0.0;
+            motor_on = true,
+            last_tare_time = millis();
+            direct_voltage_c = HALF_REFERENCE_VOLTAGE; 
+            quadrature_voltage_c = 0.0;
+            save_vectorial_pwm = vectorial_pwm;
+            vectorial_pwm = CONFIG_PWM;
+            mode = VECTORIAL_MODE;
+            tare_is_set = true;
+            tare_state = DEFINE_ORIGIN;
+            break;
+        case DEFINE_ORIGIN:
+            theta = 0.0;
+            if( millis() - last_tare_time > 1000 ){
+                angle_origin = encoder_to_turn();
+                tare_state = TARE_ANGLE;
+            }
+            break;
+        case TARE_ANGLE:
+            for( tare_cnt = 0; tare_cnt<RESOLUTION; tare_cnt ++ ){
+                all_angle[tare_cnt] = (1.0*tare_cnt)/RESOLUTION;
+            }
+            tare_cnt = 0;
+            tare_state = COMPUTE_ANGLE;
+            last_tare_time = millis();
+            nb_turn = 0;
+            nb_pass = 0;
+            precision = 10;
+        case COMPUTE_ANGLE:
+            if( millis() - last_tare_time > 10 ){
+                float mesure = rotor_angle();
+                float error = (1.0*tare_cnt)/RESOLUTION + nb_turn - mesure;
+                if( fabs(error) < 1.0/(2*RESOLUTION)){
+                    tare_cnt ++;
+                }else{
+                    all_angle[tare_cnt] = all_angle[tare_cnt] + error/precision;
+                }
+                last_tare_time = millis();
+                if( tare_cnt == RESOLUTION ){
+                    tare_cnt = 0;
+                    nb_turn ++;
+                    nb_pass ++ ;
+                    switch( nb_pass ){
+                        case 1:
+                            precision = 10;
+                            break;
+//                        case 2:
+//                            precision = 8;
+//                            break;
+//                        case 3:
+//                            precision = 8;
+//                            break;
+                        default:
+                            tare_state = TARE_IS_DONE;
+                    }
+                }
+            }
+            theta = all_angle[tare_cnt%RESOLUTION];
+            break;
+        case TARE_IS_DONE:
+            //terminal_io()->print("Err : ");
+            //terminal_io()->print(max_error_angle*1000);
+            //terminal_io()->print(" at : ");
+            //terminal_io()->println(error_angle*1000);
+            
+            theta = rotor_angle(); 
+            terminal_io()->println("Tare is done.");
+            vectorial_pwm = save_vectorial_pwm;
+            direct_voltage_c = 0.0;
+            quadrature_voltage_c = 0.0;
+            tare_is_set = false;
+            break;
+        default:;
+    }
+    return theta;
+}
+
+    
+void dispatch_display();
+
+float filter(float angle){
+    if(tare_is_set) return angle;
+    float tmp = angle - ((int) angle);
+    if( tmp < 0.0 ) tmp = -tmp;
+    return all_angle[ ( (int) (tmp*RESOLUTION) )%RESOLUTION ];
+}
+
 void motor_tick()
 {
     static bool motor_ticking = false;
@@ -582,29 +725,27 @@ void motor_tick()
     }
     motor_flag = false;
     
-    display();
+    display_warning();
+    dispatch_display();
 
     if( mode == PHASE_MODE ){
         control_motor_with_phases();
         phase_security_check();
     }else{
-        float theta;
+        //D/ float theta;
         if( tare_is_set ){
-            theta = 0.0;
-            if( millis() - last_tare_time > 1000 ){
-                angle_origin = encoder_to_turn();
-                terminal_io()->println("Tare is done.");
-                tare_is_done = true;
-                tare_is_set = false;
-                vectorial_pwm = save_vectorial_pwm;
-                direct_voltage_c = 0.0;
-                quadrature_voltage_c = 0.0;
-            }
+            theta_s = tare_process();
         }else{
-            theta = rotor_angle();
+            theta_s = rotor_angle();
         }
-        if( tare_is_done || tare_is_set ){
-            control_motor_with_vectorial(theta);
+        if( tare_state == TARE_IS_DONE || tare_is_set ){
+            if( go_theta ){
+                //display(false);
+                control_motor_with_vectorial(filter(theta_c));
+            }else{
+                //display(false);
+                control_motor_with_vectorial(filter(theta_s));
+            }
         }else{
             disable_all_motors();
         }
@@ -615,17 +756,13 @@ void motor_tick()
     motor_ticking = false;
 }
 
+void reset_vectorial(){
+    go_theta = false;
+}
+
 void start_to_tare_motor(){
-    if(!tare_is_set){
-        motor_on = true,
-        last_tare_time = millis();
-        direct_voltage_c = HALF_REFERENCE_VOLTAGE/2.0; 
-        quadrature_voltage_c = 0.0;
-        save_vectorial_pwm = vectorial_pwm;
-        vectorial_pwm = CONFIG_PWM;
-        mode = VECTORIAL_MODE;
-        tare_is_set = true;
-    }
+    tare_state = TODO_TARE;
+    tare_process();
 }
 
 TERMINAL_COMMAND(info_motor, "Info on motor")
@@ -748,17 +885,63 @@ TERMINAL_COMMAND(itest, "Interference test")
     }
 }
 
+static int last_warning = 0;
+
+void display_warning(){
+    int warning = security_get_warning();  
+    int error = security_get_error();  
+    if( warning != SECURITY_NO_WARNING || error != SECURITY_NO_ERROR ){
+        int val = millis();
+        if( val - last_warning > 4000 ){
+            if( warning != SECURITY_NO_WARNING ){
+                terminal_io()->print("W ");
+                terminal_io()->println( driver_warning(warning) );
+                security_set_warning( SECURITY_NO_WARNING );
+            }
+            if( error != SECURITY_NO_ERROR ){
+                terminal_io()->print("E ");
+                terminal_io()->println( driver_error(error) );
+            }
+            last_warning = val;
+        }
+    }
+}
+
+
 static unsigned int cnt = 0;
 static int display_time = 0; 
 
 void display_data(){
-        terminal_io()->println( "" );
+    terminal_io()->print("theta : ");
+    terminal_io()->print( 1000 * theta_s );
+    terminal_io()->print(", theta park : ");
+    terminal_io()->print( 1000 *theta_park );
+    terminal_io()->print(", t1 : ");
+    terminal_io()->print( 1000 *t1 );
+    terminal_io()->print(", t2 : ");
+    terminal_io()->print( 1000 *t2 );
+    terminal_io()->print(", t3 : ");
+    terminal_io()->print( 1000 *t3 );
+    terminal_io()->print(", c1 : ");
+    terminal_io()->print(1000 * c1 );
+    terminal_io()->print(", c2 : ");
+    terminal_io()->print( 1000 *c2 );
+    terminal_io()->print(", c3 : ");
+    terminal_io()->println( 1000 *c3 );
+//    for(int i = 15; i<31; i++ ){
+//        terminal_io()->print( 1000*i/30.0 );
+//        terminal_io()->print( " " );
+//        terminal_io()->println( cos_t(i/30.0)*1000 );
+//    }
+
 }
 
-void display(){
+void display( bool force ){
     cnt ++;
     int val = millis();
-    if( val  -  display_time > 4000 ){
+    int warning = security_get_warning();
+    int error = security_get_error();
+    if( force || val  -  display_time > 4000 ){
         int dt = val - display_time;
         terminal_io()->print("D(");
         terminal_io()->print(cnt);
@@ -767,20 +950,47 @@ void display(){
         terminal_io()->print("Hz - ");
         terminal_io()->print( dt/1000 );
         terminal_io()->print("s");
-        int error = security_get_error();  
-        if( error != SECURITY_NO_ERROR ){
-            terminal_io()->print(" - ");
-            terminal_io()->print( driver_error(error) );
-        }
-        int warning = security_get_warning();  
-        if( warning != SECURITY_NO_WARNING ){
-            terminal_io()->print(" - ");
-            terminal_io()->print( driver_warning(warning) );
-            security_set_warning( SECURITY_NO_WARNING );
-        }
         terminal_io()->print(") ");
         display_data();
         display_time = val;
         cnt = 0;
     }
+}
+
+static int dispatch_cnt = 0;
+int last_dispatch = 0;
+bool dispatch_display_b = false;
+
+void dispatch_display(){
+    if( ! dispatch_display_b ) return;
+    int val = millis();
+    if( val  -  last_dispatch > 1000 ){
+        last_dispatch = val;
+        int current = dispatch_cnt;
+        for( ; dispatch_cnt < current + 20 and dispatch_cnt < RESOLUTION; dispatch_cnt++ ){
+            terminal_io()->print("A ");
+            terminal_io()->print( (1000.0*dispatch_cnt)/RESOLUTION );
+            terminal_io()->print( " M " );
+            terminal_io()->println( 1000.0* all_angle[dispatch_cnt] );
+        }
+        if( dispatch_cnt >= RESOLUTION ){
+            dispatch_display_b = false;
+        }
+    }
+}
+
+TERMINAL_COMMAND(rot, "Rotor angle")
+{
+    terminal_io()->println( 1000.0* rotor_angle() );
+}
+
+TERMINAL_COMMAND(disp_f, "Dispaly")
+{
+    dispatch_cnt = 0;
+    dispatch_display_b = true;
+}
+
+TERMINAL_COMMAND(disp, "Dispaly")
+{
+    display( true );
 }
