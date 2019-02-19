@@ -37,7 +37,7 @@ int16_t discrete_sin(int16_t x)
 }
 
 int16_t discrete_cos(int16_t x){
-    return discrete_sin( x + 4096 );
+    return discrete_sin( x + 2048 );
 }
 
 float sin_t(float turn){

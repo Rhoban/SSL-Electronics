@@ -9,12 +9,16 @@
 #include "security.h"
 #include "errors.h"
 
-#define REFERENCE_VOLTAGE 12
-#define HALF_REFERENCE_VOLTAGE REFERENCE_VOLTAGE/2 
+#define IS_POW_2(x) (x && ((x & (x - 1)) == 0))
+
+#define REFERENCE_VOLTAGE 1024 // Do not change
+#define HALF_REFERENCE_VOLTAGE 512 // Do not change
+_Static_assert( IS_POW_2(REFERENCE_VOLTAGE), "");
+_Static_assert( REFERENCE_VOLTAGE == 2*HALF_REFERENCE_VOLTAGE , "");
 
 inline int mod(int n, int d){
     int r = n%d;
-    return (r>0) ? r : -r;
+    return (r>=0) ? r : r+d;
 }
 
 void display(bool);
@@ -76,6 +80,7 @@ static void _bc_load()
 }
 
 #define MOTOR_SUB_SAMPLE 10
+_Static_assert( MOTOR_SUB_SAMPLE>=2, "Shanon !");
 static unsigned int count_irq = 0;
 static bool motor_flag = false;
 
@@ -285,10 +290,17 @@ void motor_set(bool enable, int value)
     motor_pwm = value;
 }
 
-static float direct_voltage_c = 0.0;
-static float quadrature_voltage_c = 0.0;
+static int direct_voltage_c = 0;
+static int quadrature_voltage_c = 0;
 
-float compute_maximal_voltage(float vd, float vq){
+/*
+ * vd [-REFERENCE_VOLTAGE, REFERENCE_VOLTAGE]
+ * vq in [-REFERENCE_VOLTAGE, REFERENCE_VOLTAGE]
+ * 
+ * returns maximal difference beetween two phase volge. Result is in 
+ * [0, REFERENCE_VOLTAGE * REFERENCE_VOLTAGE] 
+ */
+int32_t compute_maximal_voltage_2(int32_t vd, int32_t vq){
     // We need to evaluate the maximum value
     // of the difference between two phases voltages when theta is going from 
     // 0 to 2 pi.
@@ -320,19 +332,23 @@ float compute_maximal_voltage(float vd, float vq){
     // So the maximal difference voltage is equal to 
     // sqrt(2/3) * sqrt(3) * sqrt(a^2 + b^2) = sqrt(2) * sqrt(a^2+b^2)
 
-    const float sqrt_2 = 1.4142135623730951;
-    return sqrt_2 * sqrt( vd * vd + vq * vq );
+    return 2 * ( vd * vd + vq * vq );
 }
 
-void direct_quadrature_voltage_set(float vd, float vq ){
-    float max_voltage = compute_maximal_voltage(vd, vq);
+void direct_quadrature_voltage_set(int vd, int vq ){
+    int max_voltage_2 = compute_maximal_voltage_2(vd, vq);
     direct_voltage_c = vd;
     quadrature_voltage_c = vq;
-    if( max_voltage > REFERENCE_VOLTAGE ){
+    if( max_voltage_2 > REFERENCE_VOLTAGE * REFERENCE_VOLTAGE ){
         //terminal_io()->println( "M" ); //AX VOLTAGE !" );
         //terminal_io()->println();
-        direct_voltage_c = ( REFERENCE_VOLTAGE / max_voltage ) * direct_voltage_c;
-        quadrature_voltage_c = ( REFERENCE_VOLTAGE / max_voltage ) * quadrature_voltage_c;
+        int max_voltage = (int) ( sqrt(max_voltage_2) );
+        direct_voltage_c = ( 
+            REFERENCE_VOLTAGE * direct_voltage_c 
+        )/ max_voltage;
+        quadrature_voltage_c = (
+            REFERENCE_VOLTAGE * quadrature_voltage_c
+        )/max_voltage;
     }
 }
 
@@ -349,16 +365,29 @@ static int last_tare_time = 0;
 static int tare_is_set = false;
 static TareProcess tare_state = TARE_NOT_SET;
 
-static float theta_c;
+/*
+ * Angle consign in turn
+ *
+ * VALUE : [INT_MIN/ONE_TURN_THETA, INT_MAX/ONE_TURN_THETA]
+ * SCALE : ONE_TURN_THETA
+ *
+ */
+static int theta_c;
 static bool go_theta = false;
 
 void reset_vectorial();
+
+/*
+ * 1 turn : [ 0 - 2^14 [ = [ 0 - 16384 [ 
+ */
+#define ONE_TURN_THETA 0x4000
 
 TERMINAL_COMMAND(go_theta, "Set theta")
 {
     if (argc == 1) {
         reset_vectorial();
-        theta_c = atof(argv[0]);
+        float val = atof(argv[0]);
+        theta_c = (int) ( val * ONE_TURN_THETA );
         direct_quadrature_voltage_set( HALF_REFERENCE_VOLTAGE, 0);
         go_theta = true;
     }
@@ -366,6 +395,7 @@ TERMINAL_COMMAND(go_theta, "Set theta")
 
 TERMINAL_COMMAND(dqv, "Set direct and quadrature voltage")
 {
+    bool in_err = true;
     if (argc == 2) {
         if( tare_state != TARE_IS_DONE ){
             terminal_io()->println("Please tare the motor first, by typing : ");
@@ -373,26 +403,24 @@ TERMINAL_COMMAND(dqv, "Set direct and quadrature voltage")
             return;
         }
 
-        float vd = atof(argv[0]);
-        float vq = atof(argv[1]);
-        float max_voltage = compute_maximal_voltage(vd, vq);
-        if( max_voltage <= REFERENCE_VOLTAGE ){
-            reset_vectorial();
-            direct_quadrature_voltage_set(vd, vq);
-        }else{
-            terminal_io()->print(  "    Fail : sqrt(2)*sqrt(d^2 + q^2) !< " );
-            terminal_io()->println(REFERENCE_VOLTAGE);
+        int vd = atoi(argv[0]);
+        int vq = atoi(argv[1]);
+        if( 0 <= vd and 0<= vq and vd <= 100 and vq <= 100 ){
+            vd = (REFERENCE_VOLTAGE*vd)/100;
+            vq = (REFERENCE_VOLTAGE*vq)/100;
+            int max_voltage_2 = compute_maximal_voltage_2(vd, vq);
+            if( max_voltage_2 <= REFERENCE_VOLTAGE*REFERENCE_VOLTAGE ){
+                reset_vectorial();
+                direct_quadrature_voltage_set(vd, vq);
+                in_err = false;
+            }
         }
-    } else {
-        terminal_io()->print("usage: dqv [0-");
-        terminal_io()->print(REFERENCE_VOLTAGE);
-        terminal_io()->print("] [0-");
-        terminal_io()->print(REFERENCE_VOLTAGE);
-        terminal_io()->println("]");
+    }
+    if( in_err ){
+        terminal_io()->print("usage: dqv [0-100] [0-100]");
         terminal_io()->println("  first parameter d : direct voltage");
         terminal_io()->println("  second parameter q : quadrature voltage");
-        terminal_io()->print(  "  sqrt(2)*sqrt(d^2 + q^2) < " );
-        terminal_io()->print(REFERENCE_VOLTAGE);
+        terminal_io()->print(  "  sqrt(2)*sqrt(d^2 + q^2) <= 1.0" );
         terminal_io()->println(".");
     }
 }
@@ -470,24 +498,52 @@ static int save_vectorial_pwm = CONFIG_PWM;
 
 static int theta_park; //D/
 
-
 /*
- * 1 turn : [ 0 - 2^14 [ = [ 0 - 16384 [ 
+ * Angle in turn,
+ * 
+ * VALUE : [INT_MIN/ONE_TURN_THETA, INT_MAX/ONE_TURN_THETA]
+ * SCALE :  ONE_TURN_THETA 
  */
-#define ONE_TURN_THETA 0x4000
 static int theta_s; //D/
 
-
+/*
+ * Angle of each phase in turn.
+ *
+ * VALUE : [INT_MIN/ONE_TURN_THETA, INT_MAX/ONE_TURN_THETA]
+ * SCALE :  ONE_TURN_THETA 
+ */
 static int16_t t1; //D/
 static int16_t t2; //D/
 static int16_t t3; //D/
-static float c1; //D/
-static float s1; //D/
-static float c2; //D/
-static float s2; //D/
-static float c3; //D/
-static float s3; //D/
 
+/*
+ * Cos and sinus 
+ *
+ * Value : [0, 1]
+ * SCALE : SIN_OUPUT_MAX 
+ */
+static int c1; //D/
+static int s1; //D/
+static int c2; //D/
+static int s2; //D/
+static int c3; //D/
+static int s3; //D/
+
+static int phase_voltage_u; //D/
+static int phase_voltage_v; //D/
+static int phase_voltage_w; //D/
+
+static int phase_pwm_u; //D/
+static int phase_pwm_v; //D/
+static int phase_pwm_w; //D/
+
+/*
+ * Apply control command on motors.
+ *
+ * theta : angle of the rotor in turn
+ *   VALUE : [INT_MIN/ONE_TURN_THETA, INT_MAX/ONE_TURN_THETA]
+ *   SCALE : ONE_TURN_THETA
+ */
 void control_motor_with_vectorial( int theta ){
 
     ///////////////////////////////////////////////////////////////////////////
@@ -503,22 +559,38 @@ void control_motor_with_vectorial( int theta ){
 
     //int r = theta % NB_POSITIVE_MAGNETS;
     //int theta_park = NB_POSITIVE_MAGNETS*r;
-    theta_park = NB_POSITIVE_MAGNETS * ( theta % ONE_TURN_THETA ); //D/
 
+    // VALUE : [0, NB_POSITIVE_MAGNETS]
+    // SCALE : ONE_TURN_THETA
+    theta_park = NB_POSITIVE_MAGNETS * mod( theta, ONE_TURN_THETA ); //D/
+
+    // VALUE : [0, NB_POSITIVE_MAGNETS]
+    // SCALE : ONE_TURN_THETA
     t1 = theta_park; //D/
+    // VALUE : [-1/3, NB_POSITIVE_MAGNETS-1/3]
+    // SCALE : ONE_TURN_THETA
     t2 = theta_park - ONE_TURN_THETA/3; //D/
+    // VALUE : [+1/3, NB_POSITIVE_MAGNETS+1/3]
+    // SCALE : ONE_TURN_THETA
     t3 = theta_park + ONE_TURN_THETA/3; //D/
 
+    // VALUE : [0, 1]
+    // SCALE : SIN_INPUT_RESOLUTION
+    _Static_assert( SIN_INPUT_RESOLUTION <  ONE_TURN_THETA , "");
     t1 = mod(t1, ONE_TURN_THETA)/(ONE_TURN_THETA/SIN_INPUT_RESOLUTION);
     t2 = mod(t2, ONE_TURN_THETA)/(ONE_TURN_THETA/SIN_INPUT_RESOLUTION);
     t3 = mod(t3, ONE_TURN_THETA)/(ONE_TURN_THETA/SIN_INPUT_RESOLUTION);
     
-    c1 = ((float) discrete_cos((t1)) )/SIN_OUPUT_MAX; //D/
-    s1 = ((float) discrete_sin((t1)) )/SIN_OUPUT_MAX; //D/
-    c2 = ((float) discrete_cos((t2)) )/SIN_OUPUT_MAX; //D/
-    s2 = ((float) discrete_sin((t2)) )/SIN_OUPUT_MAX; //D/
-    c3 = ((float) discrete_cos((t3)) )/SIN_OUPUT_MAX; //D/
-    s3 = ((float) discrete_sin((t3)) )/SIN_OUPUT_MAX; //D/
+    // display(false);
+
+    // VALUE : [-1, 1]
+    // SCALE : SIN_OUPUT_MAX
+    c1 = discrete_cos(t1);
+    s1 = discrete_sin(t1);
+    c2 = discrete_cos(t2);
+    s2 = discrete_sin(t2);
+    c3 = discrete_cos(t3);
+    s3 = discrete_sin(t3);
 
 //    terminal_io()->print("t1 : ");
 //    terminal_io()->print( t1 );
@@ -544,11 +616,24 @@ void control_motor_with_vectorial( int theta ){
 //    terminal_io()->print(s3);
 //    terminal_io()->println();
 
-    const float sqrt_2_3 = 0.816496580927726;
-	float phase_voltage_u = sqrt_2_3 * (c1 * direct_voltage_c - s1 * quadrature_voltage_c);
-	float phase_voltage_v = sqrt_2_3 * (c2 * direct_voltage_c - s2 * quadrature_voltage_c);
-	float phase_voltage_w = sqrt_2_3 * (c3 * direct_voltage_c - s3 * quadrature_voltage_c);
+    // MAX phase_voltage is scaled by REFERENCE_VOLTAGE * SIN_OUPUT_MAX
+    const int sqrt_2_3__256 = 209; // sqrt_2_3 * 256
 
+    // VALUE : [-1, 1]
+    // REFERENCE_VOLTAGE * SIN_OUPUT_MAX
+    _Static_assert( REFERENCE_VOLTAGE * SIN_OUPUT_MAX <= 2147483648, "" );
+	
+    phase_voltage_u = sqrt_2_3__256 * ( //D/
+        (c1 * direct_voltage_c - s1 * quadrature_voltage_c)/256
+    );
+	phase_voltage_v = sqrt_2_3__256 * ( //D/
+        (c2 * direct_voltage_c - s2 * quadrature_voltage_c)/256
+    );
+	phase_voltage_w = sqrt_2_3__256 * ( //D/
+        (c3 * direct_voltage_c - s3 * quadrature_voltage_c)/256
+    );
+
+    //display(false);
 //    terminal_io()->print("phase_voltage_u : ");
 //    terminal_io()->print( phase_voltage_u );
 //    terminal_io()->print("phase_voltage_v : ");
@@ -561,18 +646,38 @@ void control_motor_with_vectorial( int theta ){
     // Convert phase voltage to phase PWM
     ///////////////////////////////////////////////////////////////////////////
 
-    float min_voltage = phase_voltage_u;
+    // VALUE : [-1, 1]
+    // REFERENCE_VOLTAGE * SIN_OUPUT_MAX
+    int min_voltage = phase_voltage_u;
     if( min_voltage > phase_voltage_v) min_voltage = phase_voltage_v;
     if( min_voltage > phase_voltage_w) min_voltage = phase_voltage_w;
 
+    // VALUE : [0, PWM_SUPREMUM]
+    // SCALE : 1
     int pwm_max = ( PWM_SUPREMUM * vectorial_pwm ) / 100;
     if( pwm_max < 0 ) pwm_max = 0;
 
-    // We center the sinusoide to have phase from 0V to REFERENCE_VOLTAGE
-    int phase_pwm_u = ((phase_voltage_u - min_voltage)/REFERENCE_VOLTAGE) * pwm_max;
-    int phase_pwm_v = ((phase_voltage_v - min_voltage)/REFERENCE_VOLTAGE) * pwm_max;
-    int phase_pwm_w = ((phase_voltage_w - min_voltage)/REFERENCE_VOLTAGE) * pwm_max;
+    #define POWER_GREATER_THAN_PWM_SUPREMUM 4096
+    #define SCALE 8192
+    _Static_assert( SCALE== 2*POWER_GREATER_THAN_PWM_SUPREMUM, "");
+    _Static_assert( POWER_GREATER_THAN_PWM_SUPREMUM > PWM_SUPREMUM, "");
 
+    // We center the sinusoide to have phase from 
+    // 0 to REFERENCE_VOLTAGE * SIN_OUPUT_MAX / SCALE
+    // VALUE : [-PWM_SUPREMUM, PWM_SUPREMUM]
+    // SCALE : REFERENCE_VOLTAGE * SIN_OUPUT_MAX / SCALE
+    phase_pwm_u = ( (phase_voltage_u - min_voltage)/SCALE ) * pwm_max; //D/
+    phase_pwm_v = ( (phase_voltage_v - min_voltage)/SCALE ) * pwm_max; //D/
+    phase_pwm_w = ( (phase_voltage_w - min_voltage)/SCALE ) * pwm_max; //D/
+
+    // We compute the pwm from 0 to PWM_SUPREMUM
+    // VALUE : [-PWM_SUPREMUM, PWM_SUPREMUM]
+    // SCALE : 1
+    phase_pwm_u = phase_pwm_u/( REFERENCE_VOLTAGE * SIN_OUPUT_MAX / SCALE );
+    phase_pwm_v = phase_pwm_v/( REFERENCE_VOLTAGE * SIN_OUPUT_MAX / SCALE );
+    phase_pwm_w = phase_pwm_w/( REFERENCE_VOLTAGE * SIN_OUPUT_MAX / SCALE );
+
+    // We center the sinusoide to have phase from 0V to REFERENCE_VOLTAGE
             
     ///////////////////////////////////////////////////////////////////////////
     // Set PWM 
@@ -611,14 +716,14 @@ void update_dt(){
 int nb_pass = 0;
 
 #define RESOLUTION 1024 // Should be a power of two lesser thant ONE_TURN_THETA 
+_Static_assert( RESOLUTION < ONE_TURN_THETA, "");
+
 static int tare_cnt;
-//static float max_error_angle = 0.0;
-//static float error_angle = 0.0;
 static int all_angle[RESOLUTION];
 static int precision = 4;
 static int nb_turn = 0;
 
-float tare_process(){
+int tare_process(){
     int theta;
     switch( tare_state ){
         case TARE_NOT_SET:
@@ -628,7 +733,7 @@ float tare_process(){
             motor_on = true,
             last_tare_time = millis();
             direct_voltage_c = HALF_REFERENCE_VOLTAGE; 
-            quadrature_voltage_c = 0.0;
+            quadrature_voltage_c = 0;
             save_vectorial_pwm = vectorial_pwm;
             vectorial_pwm = CONFIG_PWM;
             mode = VECTORIAL_MODE;
@@ -639,13 +744,14 @@ float tare_process(){
             theta = 0;
             if( millis() - last_tare_time > 1000 ){
                 angle_origin = encoder_to_int();
-                tare_state = TARE_ANGLE;
+                // tare_state = TARE_ANGLE;
+                tare_state = TARE_IS_DONE;
+                for( tare_cnt = 0; tare_cnt<RESOLUTION; tare_cnt ++ ){
+                    all_angle[tare_cnt] = (ONE_TURN_THETA/RESOLUTION)*tare_cnt;
+                }
             }
             break;
         case TARE_ANGLE:
-            for( tare_cnt = 0; tare_cnt<RESOLUTION; tare_cnt ++ ){
-                all_angle[tare_cnt] = (ONE_TURN_THETA/RESOLUTION)*tare_cnt;
-            }
             tare_cnt = 0;
             tare_state = COMPUTE_ANGLE;
             last_tare_time = millis();
@@ -688,16 +794,11 @@ float tare_process(){
             theta = all_angle[tare_cnt%RESOLUTION];
             break;
         case TARE_IS_DONE:
-            //terminal_io()->print("Err : ");
-            //terminal_io()->print(max_error_angle*1000);
-            //terminal_io()->print(" at : ");
-            //terminal_io()->println(error_angle*1000);
-            
             theta = rotor_angle(); 
             terminal_io()->println("Tare is done.");
             vectorial_pwm = save_vectorial_pwm;
-            direct_voltage_c = 0.0;
-            quadrature_voltage_c = 0.0;
+            direct_voltage_c = 0;
+            quadrature_voltage_c = 0;
             tare_is_set = false;
             break;
         default:;
@@ -741,7 +842,8 @@ void motor_tick()
         control_motor_with_phases();
         phase_security_check();
     }else{
-        //D/ float theta;
+        // display(false);
+        //D/ int theta;
         if( tare_is_set ){
             theta_s = tare_process();
         }else{
@@ -750,10 +852,12 @@ void motor_tick()
         if( tare_state == TARE_IS_DONE || tare_is_set ){
             if( go_theta ){
                 //display(false);
-                control_motor_with_vectorial(filter(theta_c));
+                //control_motor_with_vectorial(filter(theta_c));
+                control_motor_with_vectorial(theta_c);
             }else{
                 //display(false);
-                control_motor_with_vectorial(filter(theta_s));
+                //control_motor_with_vectorial(filter(theta_s));
+                control_motor_with_vectorial(theta_s);
             }
         }else{
             disable_all_motors();
@@ -924,25 +1028,40 @@ void display_data(){
     terminal_io()->print("theta : ");
     terminal_io()->print( (1000.0 * theta_s)/ONE_TURN_THETA );
     terminal_io()->print(", theta park : ");
-    terminal_io()->print( 1000 *theta_park );
+    terminal_io()->print( (1000.0 *theta_park)/ONE_TURN_THETA );
     terminal_io()->print(", t1 : ");
-    terminal_io()->print( 1000 *t1 );
+    terminal_io()->print( (1000.0 *t1) );
     terminal_io()->print(", t2 : ");
-    terminal_io()->print( 1000 *t2 );
+    terminal_io()->print( (1000.0 *t2) );
     terminal_io()->print(", t3 : ");
-    terminal_io()->print( 1000 *t3 );
+    terminal_io()->print( (1000.0 *t3) );
     terminal_io()->print(", c1 : ");
-    terminal_io()->print(1000 * c1 );
+    terminal_io()->print((1000.0 * c1)/SIN_OUPUT_MAX );
     terminal_io()->print(", c2 : ");
-    terminal_io()->print( 1000 *c2 );
+    terminal_io()->print( (1000.0 *c2)/SIN_OUPUT_MAX );
     terminal_io()->print(", c3 : ");
-    terminal_io()->println( 1000 *c3 );
-//    for(int i = 15; i<31; i++ ){
-//        terminal_io()->print( 1000*i/30.0 );
-//        terminal_io()->print( " " );
-//        terminal_io()->println( cos_t(i/30.0)*1000 );
-//    }
+    terminal_io()->println( (1000.0 *c3)/SIN_OUPUT_MAX );
 
+    terminal_io()->print(", V u : ");
+    terminal_io()->print( phase_voltage_u );
+    terminal_io()->print(", V v : ");
+    terminal_io()->print( phase_voltage_v );
+    terminal_io()->print(", V w : ");
+    terminal_io()->print( phase_voltage_w );
+
+    terminal_io()->print(", pwm u : ");
+    terminal_io()->print( phase_pwm_u );
+    terminal_io()->print(", pmw v : ");
+    terminal_io()->print( phase_pwm_v );
+    terminal_io()->print(", pmw w : ");
+    terminal_io()->print( phase_pwm_w );
+
+    
+    terminal_io()->print(", direct_v : ");
+    terminal_io()->print( direct_voltage_c );
+    terminal_io()->print(", quadrature_v : ");
+    terminal_io()->print( quadrature_voltage_c );
+    terminal_io()->println( "" );
 }
 
 void display( bool force ){
