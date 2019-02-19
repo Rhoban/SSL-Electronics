@@ -405,7 +405,7 @@ TERMINAL_COMMAND(dqv, "Set direct and quadrature voltage")
 
         int vd = atoi(argv[0]);
         int vq = atoi(argv[1]);
-        if( 0 <= vd and 0<= vq and vd <= 100 and vq <= 100 ){
+        if( -100 <= vd and -100 <= vq and vd <= 100 and vq <= 100 ){
             vd = (REFERENCE_VOLTAGE*vd)/100;
             vq = (REFERENCE_VOLTAGE*vq)/100;
             int max_voltage_2 = compute_maximal_voltage_2(vd, vq);
@@ -852,12 +852,12 @@ void motor_tick()
         if( tare_state == TARE_IS_DONE || tare_is_set ){
             if( go_theta ){
                 //display(false);
-                //control_motor_with_vectorial(filter(theta_c));
-                control_motor_with_vectorial(theta_c);
+                control_motor_with_vectorial(filter(theta_c));
+                //control_motor_with_vectorial(theta_c);
             }else{
                 //display(false);
-                //control_motor_with_vectorial(filter(theta_s));
-                control_motor_with_vectorial(theta_s);
+                control_motor_with_vectorial(filter(theta_s));
+                //control_motor_with_vectorial(theta_s);
             }
         }else{
             disable_all_motors();
