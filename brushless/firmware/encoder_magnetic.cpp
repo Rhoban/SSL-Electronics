@@ -273,4 +273,12 @@ float encoder_to_turn(){
     }
 }
 
+int encoder_to_int(){
+    if( encoder_cnt >= HALF_MAX_ENCODER_CNT ){
+        return (encoder_cnt - MAX_ENCODER_CNT);
+    }else{
+        return encoder_cnt;
+    }
+}
+
 #endif

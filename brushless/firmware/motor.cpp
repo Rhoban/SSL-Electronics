@@ -12,6 +12,11 @@
 #define REFERENCE_VOLTAGE 12
 #define HALF_REFERENCE_VOLTAGE REFERENCE_VOLTAGE/2 
 
+inline int mod(int n, int d){
+    int r = n%d;
+    return (r>0) ? r : -r;
+}
+
 void display(bool);
 void display_warning();
 
@@ -459,16 +464,23 @@ void encoder_security_check(){
     }
 }
 
-static float angle_origin = 0.0;
+static int angle_origin = 0;
 static int vectorial_pwm = CONFIG_PWM;
 static int save_vectorial_pwm = CONFIG_PWM;
 
-static float theta_park; //D/
-static float theta_s; //D/
+static int theta_park; //D/
 
-static float t1; //D/
-static float t2; //D/
-static float t3; //D/
+
+/*
+ * 1 turn : [ 0 - 2^14 [ = [ 0 - 16384 [ 
+ */
+#define ONE_TURN_THETA 0x4000
+static int theta_s; //D/
+
+
+static int16_t t1; //D/
+static int16_t t2; //D/
+static int16_t t3; //D/
 static float c1; //D/
 static float s1; //D/
 static float c2; //D/
@@ -476,7 +488,7 @@ static float s2; //D/
 static float c3; //D/
 static float s3; //D/
 
-void control_motor_with_vectorial( float theta ){
+void control_motor_with_vectorial( int theta ){
 
     ///////////////////////////////////////////////////////////////////////////
     // Compute phase voltage
@@ -489,30 +501,24 @@ void control_motor_with_vectorial( float theta ){
     // c2 = cos( theta - 2pi/3 )   s2 = cos( theta - 2pi/3 ) 
     // c3 = cos( theta + 2pi/3 )   s3 = cos( theta + 2pi/3 ) 
 
-    const float sqrt_2_3 = 0.816496580927726;
-
-    //float r = theta - ( (int) ( theta / NB_POSITIVE_MAGNETS ) );
-    //float theta_park = NB_POSITIVE_MAGNETS*r; //theta;
-    theta_park = NB_POSITIVE_MAGNETS*theta; //D/
-
-    theta_park -= ( (int) theta_park );
-    if( theta_park < 0 ) theta_park += 1;
-    
-    //DEBUG 
-    if( theta_park < 0.0 or theta_park >= 1.0 ){
-        security_set_warning( WARNING_MOTOR_LAG );
-    }
+    //int r = theta % NB_POSITIVE_MAGNETS;
+    //int theta_park = NB_POSITIVE_MAGNETS*r;
+    theta_park = NB_POSITIVE_MAGNETS * ( theta % ONE_TURN_THETA ); //D/
 
     t1 = theta_park; //D/
-    t2 = theta_park - 1.0/3.0; //D/
-    t3 = theta_park + 1.0/3.0; //D/
+    t2 = theta_park - ONE_TURN_THETA/3; //D/
+    t3 = theta_park + ONE_TURN_THETA/3; //D/
+
+    t1 = mod(t1, ONE_TURN_THETA)/(ONE_TURN_THETA/SIN_INPUT_RESOLUTION);
+    t2 = mod(t2, ONE_TURN_THETA)/(ONE_TURN_THETA/SIN_INPUT_RESOLUTION);
+    t3 = mod(t3, ONE_TURN_THETA)/(ONE_TURN_THETA/SIN_INPUT_RESOLUTION);
     
-    c1 = cos_t(t1); //D/
-    s1 = sin_t(t1); //D/
-    c2 = cos_t(t2); //D/
-    s2 = sin_t(t2); //D/
-    c3 = cos_t(t3); //D/
-    s3 = sin_t(t3); //D/
+    c1 = ((float) discrete_cos((t1)) )/SIN_OUPUT_MAX; //D/
+    s1 = ((float) discrete_sin((t1)) )/SIN_OUPUT_MAX; //D/
+    c2 = ((float) discrete_cos((t2)) )/SIN_OUPUT_MAX; //D/
+    s2 = ((float) discrete_sin((t2)) )/SIN_OUPUT_MAX; //D/
+    c3 = ((float) discrete_cos((t3)) )/SIN_OUPUT_MAX; //D/
+    s3 = ((float) discrete_sin((t3)) )/SIN_OUPUT_MAX; //D/
 
 //    terminal_io()->print("t1 : ");
 //    terminal_io()->print( t1 );
@@ -538,7 +544,7 @@ void control_motor_with_vectorial( float theta ){
 //    terminal_io()->print(s3);
 //    terminal_io()->println();
 
-
+    const float sqrt_2_3 = 0.816496580927726;
 	float phase_voltage_u = sqrt_2_3 * (c1 * direct_voltage_c - s1 * quadrature_voltage_c);
 	float phase_voltage_v = sqrt_2_3 * (c2 * direct_voltage_c - s2 * quadrature_voltage_c);
 	float phase_voltage_w = sqrt_2_3 * (c3 * direct_voltage_c - s3 * quadrature_voltage_c);
@@ -581,11 +587,12 @@ void control_motor_with_vectorial( float theta ){
     }
 }
 
-float rotor_angle(){
+
+int rotor_angle(){
     #ifdef REVERSE_PHASE
-        return - ( encoder_to_turn() - angle_origin ); // REVERSE SPEED
+        return - ( encoder_to_int() - angle_origin ); // REVERSE SPEED
     #else
-        return ( encoder_to_turn() - angle_origin );
+        return ( encoder_to_int() - angle_origin );
     #endif
 }
 
@@ -603,21 +610,21 @@ void update_dt(){
 
 int nb_pass = 0;
 
-#define RESOLUTION 1024
+#define RESOLUTION 1024 // Should be a power of two lesser thant ONE_TURN_THETA 
 static int tare_cnt;
 //static float max_error_angle = 0.0;
 //static float error_angle = 0.0;
-static float all_angle[RESOLUTION];
+static int all_angle[RESOLUTION];
 static int precision = 4;
 static int nb_turn = 0;
 
 float tare_process(){
-    float theta;
+    int theta;
     switch( tare_state ){
         case TARE_NOT_SET:
             break;
         case TODO_TARE:
-            theta = 0.0;
+            theta = 0;
             motor_on = true,
             last_tare_time = millis();
             direct_voltage_c = HALF_REFERENCE_VOLTAGE; 
@@ -629,15 +636,15 @@ float tare_process(){
             tare_state = DEFINE_ORIGIN;
             break;
         case DEFINE_ORIGIN:
-            theta = 0.0;
+            theta = 0;
             if( millis() - last_tare_time > 1000 ){
-                angle_origin = encoder_to_turn();
+                angle_origin = encoder_to_int();
                 tare_state = TARE_ANGLE;
             }
             break;
         case TARE_ANGLE:
             for( tare_cnt = 0; tare_cnt<RESOLUTION; tare_cnt ++ ){
-                all_angle[tare_cnt] = (1.0*tare_cnt)/RESOLUTION;
+                all_angle[tare_cnt] = (ONE_TURN_THETA/RESOLUTION)*tare_cnt;
             }
             tare_cnt = 0;
             tare_state = COMPUTE_ANGLE;
@@ -647,9 +654,13 @@ float tare_process(){
             precision = 10;
         case COMPUTE_ANGLE:
             if( millis() - last_tare_time > 10 ){
-                float mesure = rotor_angle();
-                float error = (1.0*tare_cnt)/RESOLUTION + nb_turn - mesure;
-                if( fabs(error) < 1.0/(2*RESOLUTION)){
+                int mesure = rotor_angle();
+                int error = (
+                    (ONE_TURN_THETA/RESOLUTION)*tare_cnt + 
+                    ONE_TURN_THETA*nb_turn 
+                    - mesure
+                );
+                if( 2*error < ONE_TURN_THETA/RESOLUTION ){
                     tare_cnt ++;
                 }else{
                     all_angle[tare_cnt] = all_angle[tare_cnt] + error/precision;
@@ -697,11 +708,9 @@ float tare_process(){
     
 void dispatch_display();
 
-float filter(float angle){
+int filter(int angle){
     if(tare_is_set) return angle;
-    float tmp = angle - ((int) angle);
-    if( tmp < 0.0 ) tmp = -tmp;
-    return all_angle[ ( (int) (tmp*RESOLUTION) )%RESOLUTION ];
+    return all_angle[mod(angle, ONE_TURN_THETA) / (ONE_TURN_THETA/RESOLUTION)];
 }
 
 void motor_tick()
@@ -913,7 +922,7 @@ static int display_time = 0;
 
 void display_data(){
     terminal_io()->print("theta : ");
-    terminal_io()->print( 1000 * theta_s );
+    terminal_io()->print( (1000.0 * theta_s)/ONE_TURN_THETA );
     terminal_io()->print(", theta park : ");
     terminal_io()->print( 1000 *theta_park );
     terminal_io()->print(", t1 : ");

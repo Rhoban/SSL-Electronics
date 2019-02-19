@@ -2,7 +2,7 @@
 
 #include "sin_samples.h"
 
-uint16_t sin_(uint16_t x)
+uint16_t sin_lut(uint16_t x)
 {
     if (x < 0 || x >= 8192) {
         return 0;
@@ -36,6 +36,9 @@ int16_t discrete_sin(int16_t x)
     }
 }
 
+int16_t discrete_cos(int16_t x){
+    return discrete_sin( x + 4096 );
+}
 
 float sin_t(float turn){
     if( turn < 0 ){

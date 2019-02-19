@@ -10,5 +10,6 @@ bool encoder_is_ok();
 uint32_t encoder_value();
 void encoder_tick();
 float encoder_to_turn();
+int encoder_to_int();
 
 #endif
