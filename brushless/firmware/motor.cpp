@@ -723,6 +723,8 @@ static int all_angle[RESOLUTION];
 static int precision = 4;
 static int nb_turn = 0;
 
+//#define FULL_TARE_PROCESS
+
 int tare_process(){
     int theta;
     switch( tare_state ){
@@ -744,8 +746,11 @@ int tare_process(){
             theta = 0;
             if( millis() - last_tare_time > 1000 ){
                 angle_origin = encoder_to_int();
-                // tare_state = TARE_ANGLE;
+                #ifdef FULL_TARE_PROCESS 
+                tare_state = TARE_ANGLE;
+                #else
                 tare_state = TARE_IS_DONE;
+                #endif
                 for( tare_cnt = 0; tare_cnt<RESOLUTION; tare_cnt ++ ){
                     all_angle[tare_cnt] = (ONE_TURN_THETA/RESOLUTION)*tare_cnt;
                 }
@@ -759,7 +764,7 @@ int tare_process(){
             nb_pass = 0;
             precision = 10;
         case COMPUTE_ANGLE:
-            if( millis() - last_tare_time > 10 ){
+            if( millis() - last_tare_time > 5 ){
                 int mesure = rotor_angle();
                 int error = (
                     (ONE_TURN_THETA/RESOLUTION)*tare_cnt + 
@@ -852,12 +857,18 @@ void motor_tick()
         if( tare_state == TARE_IS_DONE || tare_is_set ){
             if( go_theta ){
                 //display(false);
+                #ifdef FULL_TARE_PROCESS
                 control_motor_with_vectorial(filter(theta_c));
-                //control_motor_with_vectorial(theta_c);
+                #else
+                control_motor_with_vectorial(theta_c);
+                #endif
             }else{
                 //display(false);
+                #ifdef FULL_TARE_PROCESS
                 control_motor_with_vectorial(filter(theta_s));
-                //control_motor_with_vectorial(theta_s);
+                #else
+                control_motor_with_vectorial(theta_s);
+                #endif
             }
         }else{
             disable_all_motors();
