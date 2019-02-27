@@ -94,19 +94,53 @@ def number_of_bits(value, error):
     scale = error_digits(error)
     return [ scale, signed_integer_digits(abs(value))+scale ]
 
-class Variable:
-    def __init__( self, name, minimal, maximal, error, digits ):
+class Common:
+    def __repr__(self):
+        res = ""
+        res += "\n minimal : " + str(self.minimal)
+        res += "\n scaled minimal : " + str(int(self.minimal*(2**self.scale)))
+        res += "\n maximal : " + str(self.maximal)
+        res += "\n scaled maximal : " + str(int(self.maximal*(2**self.scale)))
+        res += "\n scaled error : " + str(self.error)
+        res += "\n scale : " + str(self.scale)
+        res += "\n error : " + str(self.final_error())
+        if( hasattr(self,'k') ):
+            res += "\n k : " + str(self.k)
+            if( hasattr(self,'i') ):
+                res += "\n  i : " + str(self.i)
+                res += "\n  j : " + str(self.j)
+        return res
+    def to_py(self, *args):
+        return self.to_c(*args).replace("?", 'and').replace(":", "or").replace('/', '//')
+    def final_error(self):
+        return self.error / (2**self.scale)
+
+
+class Input(Common):
+    def __init__( self, minimal, maximal, scale, digits ):
+        self.minimal = minimal
+        self.maximal = maximal
+        self.scale = scale
+        self.error = 1.0
+        self.digits = digits
+    def compute_error(self, value):
+        return self.error
+    def to_c(self, variable):
+        return "(%s)"%(variable)
+
+class Variable(Common):
+    def __init__( self, minimal, maximal, error, digits ):
         """
         >>> err = 0.001
         >>> mini = -2.1
         >>> maxi = 1.2
         >>> var = Variable(
-        ...    name='k', minimal=-2.1, maximal= 1.2, error=err, digits=32
+        ...    minimal=-2.1, maximal= 1.2, error=err, digits=32
         ... )
         >>> var.to_c('a')
-        'a * 1024'
+        '(a * 1024)'
         >>> var.to_py('a')
-        'a * 1024'
+        '(a * 1024)'
         >>> k = -2.01
         >>> int(eval(var.to_py(k)))/var.scale - k <= err
         True
@@ -115,7 +149,6 @@ class Variable:
         >>> var.maximal == maxi
         True
         """
-        self.name = name
         self.minimal = minimal
         self.maximal = maximal
         maxi = max( abs(minimal), abs(maximal) )
@@ -126,21 +159,18 @@ class Variable:
         [scale, minimal_nb_bits] = number_of_bits(maxi, error)
         assert( minimal_nb_bits <= digits )
         self.scale = scale
-        self.value = name
         self.error = 1.0
         self.digits = digits
         if( not( self.error <= error*(2**self.scale) ) ):
             raise ValueError('Impossible to make the constant with the expected error')
+    def compute_error(self, value):
+        return self.error
     def to_c(self, v1):
-        return "%s * %s"%(v1, 2**self.scale)
-    def to_py(self, v1):
-        return self.to_c(v1).replace('/', '//')
-    def final_error(self):
-        return self.error / (2**self.scale)
+        return "(%s * %s)"%(v1, 2**self.scale)
 
 
 
-class Constant:
+class Constant(Common):
     def __init__( self, constant, error, digits ):
         """
         >>> cst = Constant( constant=3.14, error=0.1, digits=32 )
@@ -161,9 +191,9 @@ class Constant:
         >>> cst.scale <= cst.digits
         True
         >>> cst.to_c()
-        '50'
+        '(50)'
         >>> cst.to_py()
-        '50'
+        '(50)'
 
         >>> cst = Constant( constant=3.14, error=0.01, digits=32 )
         >>> abs( cst.value/(2**cst.scale) - 3.14 ) < 0.01
@@ -183,9 +213,9 @@ class Constant:
         >>> cst.scale <= cst.digits
         True
         >>> cst.to_c()
-        '401'
+        '(401)'
         >>> cst.to_py()
-        '401'
+        '(401)'
 
         >>> cst = Constant( constant=3.14, error=None, digits=32 )
         >>> cst.constant * 2**(cst.scale+1) >= 2**(cst.digits-1)
@@ -201,9 +231,9 @@ class Constant:
         >>> cst.scale <= cst.digits
         True
         >>> cst.to_c()
-        '1685774663'
+        '(1685774663)'
         >>> cst.to_py()
-        '1685774663'
+        '(1685774663)'
         """
         self.constant = constant
         if error is None:
@@ -221,13 +251,29 @@ class Constant:
         if( not( self.error <= error*(2**self.scale) ) ):
             raise ValueError('Impossible to make the constant with the expected error')
     def to_c(self):
-        return "%s"%(self.value)
+        return "(%s)"%(self.value)
     def to_py(self):
         return self.to_c().replace('/', '//')
+    def compute_error(self):
+        return self.error
     def final_error(self):
         return self.error / (2**self.scale)
 
-class Add:
+class Neg(Common):
+    def __init__( self, term ):
+        self.term = term
+        self.minimal = - term.maximal
+        self.maximal = - term.minimal
+        self.error = term.error
+        self.scale = term.scale
+        self.digits = term.digits
+    def to_c(self, variable):
+        return "(-%s)"%(variable)
+    def compute_error(self, *args):
+        return self.term.compute_error(args)
+
+
+class Add(Common):
     def __init__( self, term_1, term_2, error, digits ):
         """
         >>> c1 = 3.14
@@ -239,9 +285,9 @@ class Add:
         >>> v_1 = cst_1.value
         >>> v_2 = cst_2.value
         >>> add.to_c('a', 'b')
-        'b/2 + a/4'
+        '(b/2 + a/4)'
         >>> add.to_py('a', 'b')
-        'b//2 + a//4'
+        '(b//2 + a//4)'
         >>> abs( eval(add.to_py(v_1, v_2))/(2**add.scale) - (c1+c2) ) <= err
         True
 
@@ -251,9 +297,9 @@ class Add:
         >>> v_1 = cst_1.value
         >>> v_2 = cst_2.value
         >>> add.to_c('a', 'b')
-        'b*1048576 + a/4'
+        '(b*1048576 + a/4)'
         >>> add.to_py('a', 'b')
-        'b*1048576 + a//4'
+        '(b*1048576 + a//4)'
         >>> abs( eval(add.to_py(v_1, v_2))/(2**add.scale) - (c1+c2) ) <= err
         True
 
@@ -262,7 +308,7 @@ class Add:
         >>> add = Add( term_1=cst_1, term_2=cst_2, error=err, digits=32)
         Traceback (most recent call last):
         ...
-        ValueError: Impossible to make the addition with the expected error
+        ValueError: Impossible to compute the addition with the expected error
 
         >>> cst_1 = Constant( constant=c1, error=None, digits=11 )
         >>> cst_2 = Constant( constant=c2, error=None, digits=32 )
@@ -270,9 +316,9 @@ class Add:
         >>> v_1 = cst_1.value
         >>> v_2 = cst_2.value
         >>> add.to_c('a', 'b')
-        'a*524288 + b/2'
+        '(a*524288 + b/2)'
         >>> add.to_py('a', 'b')
-        'a*524288 + b//2'
+        '(a*524288 + b//2)'
         >>> abs( eval(add.to_py(v_1, v_2))/(2**add.scale) - (c1+c2) ) <= err
         True
 
@@ -282,12 +328,14 @@ class Add:
         >>> v_1 = cst_1.value
         >>> v_2 = cst_2.value
         >>> add.to_c('a', 'b')
-        'a*131072 + b/8'
+        '(a*131072 + b/8)'
         >>> add.to_py('a', 'b')
-        'a*131072 + b//8'
+        '(a*131072 + b//8)'
         >>> abs( eval(add.to_py(v_1, v_2))/(2**add.scale) - (c1+c2) ) <= err
         True
         """
+        self.term_1 = term_1
+        self.term_2 = term_2
         self.digits = digits
         self.swap_terms = False
         if term_1.scale > term_2.scale :
@@ -307,12 +355,10 @@ class Add:
             ),
         )
         self.k = unsigned_integer_digits( max_value/2**(digits-1) )
-        self.error = (
-            (2**self.scale_diff) * term_1.error + term_2.error -1 
-        )/(2**self.k) + 1
+        self.error = self._compute_error( term_1.error, term_2.error )
         self.scale = term_2.scale - self.k
         if( not error is None and not( self.error <= error* (2**self.scale) ) ):
-            raise ValueError('Impossible to make the addition with the expected error')
+            raise ValueError('Impossible to compute the addition with the expected error')
     def to_c(self, variable_1, variable_2):
         if self.swap_terms:
             variable_1, variable_2 = variable_2, variable_1
@@ -321,15 +367,19 @@ class Add:
         num_a = 2**(self.scale_diff - min_scale)
         den_a = 2**(self.k - min_scale)
         if( num_a == 1 ):
-            return "%s/%s + %s/%s"%(variable_1, den_a, variable_2, den_b)
+            return "(%s/%s + %s/%s)"%(variable_1, den_a, variable_2, den_b)
         else:
-            return "%s*%s + %s/%s"%(variable_1, num_a, variable_2, den_b)
-    def to_py(self, variable_1, variable_2):
-        return self.to_c(variable_1, variable_2).replace('/', '//')
-    def final_error(self):
-        return self.error / (2**self.scale)
-
-class Mult:
+            return "(%s*%s + %s/%s)"%(variable_1, num_a, variable_2, den_b)
+    def _compute_error(self, u1, u2 ):
+        return (
+            (2**self.scale_diff) * u1 + u2 -1 
+        )/(2**self.k) + 1
+    def compute_error(self, *args):
+        return self._compute_error(
+            term_1.compute_error(args[0]) + 
+            term_2.compute_error(args[1])
+        )
+class Mult(Common):
     def __init__(self, term_1, term_2, error, digits):
         """
         >>> c1 = 3.14
@@ -338,54 +388,209 @@ class Mult:
         >>> cst_1 = Constant( constant=c1, error=None, digits=32 )
         >>> cst_2 = Constant( constant=c2, error=None, digits=32 )
         >>> mul = Mult( term_1=cst_1, term_2=cst_2, error=err, digits=32)
+        >>> abs( cst_1.minimal * cst_2.minimal - mul.minimal ) < 0.0000000000001
+        True
+        >>> abs( cst_1.maximal * cst_2.maximal - mul.maximal ) < 0.0000000000001
+        True
         >>> v_1 = cst_1.value
         >>> v_2 = cst_2.value
         >>> mul.to_c('a', 'b')
-        '(a/65536)*(b/32768)'
+        '((a/65536)*(b/32768))'
         >>> mul.to_py('a', 'b')
-        '(a//65536)*(b//32768)'
+        '((a//65536)*(b//32768))'
+        >>> abs( eval(mul.to_py(v_1, v_2))/(2**mul.scale) - (c1*c2) ) <= err
+        True
+
+        >>> cst_1 = Constant( constant=c1, error=None, digits=32 )
+        >>> cst_2 = Constant( constant=c2, error=None, digits=14 )
+        >>> mul = Mult( term_1=cst_1, term_2=cst_2, error=err, digits=32)
+        >>> v_1 = cst_1.value
+        >>> v_2 = cst_2.value
+        >>> mul.to_c('a', 'b')
+        '((a/4096)*(b/2))'
+        >>> mul.to_py('a', 'b')
+        '((a//4096)*(b//2))'
+        >>> abs( eval(mul.to_py(v_1, v_2))/(2**mul.scale) - (c1*c2) ) <= err
+        True
+
+        >>> cst_1 = Constant( constant=c1, error=None, digits=32 )
+        >>> cst_2 = Constant( constant=c2, error=None, digits=13 )
+        >>> mul = Mult( term_1=cst_1, term_2=cst_2, error=err, digits=32)
+        Traceback (most recent call last):
+        ...
+        ValueError: Impossible to compute the multiplication with the expected error
+
+        >>> cst_1 = Constant( constant=c1, error=None, digits=32 )
+        >>> cst_2 = Constant( constant=c2, error=None, digits=14 )
+        >>> mul = Mult( term_1=cst_1, term_2=cst_2, error=err, digits=27)
+        Traceback (most recent call last):
+        ...
+        ValueError: Impossible to compute the multiplication with the expected error
+
+        >>> cst_1 = Constant( constant=c1, error=None, digits=32 )
+        >>> cst_2 = Constant( constant=c2, error=None, digits=14 )
+        >>> mul = Mult( term_1=cst_1, term_2=cst_2, error=err, digits=28)
+        >>> v_1 = cst_1.value
+        >>> v_2 = cst_2.value
+        >>> mul.to_c('a', 'b')
+        '((a/65536)*(b/2))'
+        >>> mul.to_py('a', 'b')
+        '((a//65536)*(b//2))'
         >>> abs( eval(mul.to_py(v_1, v_2))/(2**mul.scale) - (c1*c2) ) <= err
         True
         """
+        self.term_1 = term_1
+        self.term_2 = term_2
         self.digits = digits
-        extremum_1 = [
-            term_1.maximal * 2**term_1.scale, term_1.minimal * 2**term_1.scale
+        extremum_1 = [ term_1.maximal , term_1.minimal ]
+        extremum_2 = [ term_2.maximal , term_2.minimal ]
+        support = [
+            (u1,u2) for u1 in extremum_1 for u2 in extremum_2
         ]
-        extremum_2 = [
-            term_2.maximal * 2**term_2.scale, term_2.minimal * 2**term_2.scale
+        support_scaled = [
+            (u1*(2**term_1.scale),u2*(2**term_2.scale))
+            for u1 in extremum_1 for u2 in extremum_2
         ]
-        support = [ (u1,u2) for u1 in extremum_1 for u2 in extremum_2 ]
         self.minimal = min( [ u1*u2 for (u1,u2) in support ] )
         self.maximal = max( [ u1*u2 for (u1,u2) in support ] )
-        max_value = max( [ abs(u1)*abs(u2) for (u1,u2) in support ] )
+        self.max_value = max( [ abs(u1)*abs(u2) for (u1,u2) in support_scaled ] )
 
-        self.k = unsigned_integer_digits( max_value/2**(digits-1) )
-        t_min = None
+        self.k = unsigned_integer_digits( self.max_value/(2**(digits-1)) )
+        self.t_min = None
         for i in range(self.k):
             j = self.k - i
             t_max = max( [
-                abs(int(u1))//2**i + abs(int(u2))//2**j 
-                for (u1, u2) in support
+                self._t(u1, u2, i, j)
+                for (u1, u2) in support_scaled
             ] )
-            if t_min is None or t_max < t_min:
-                t_min = t_max
+            if self.t_min is None or t_max < self.t_min:
+                self.t_min = t_max
                 self.i = i
                 self.j = j
         self.scale = term_1.scale + term_2.scale - self.k
-        max_error = max( [
+        self.max_error = max( [
                 term_1.error * int(u2) + term_2.error * int(u1) +
                 term_1.error * term_2.error
-                for (u1, u2) in support
-        ] )
-        self.error = t_min + max_error/2**self.k
+                for (u1, u2) in support_scaled
+        ] )/(2**self.k)
+        self.error = self.t_min + self.max_error
         if( not error is None and not( self.error <= error*(2**self.scale) ) ):
-            raise ValueError('Impossible to make the constant with the expected error')
+            raise ValueError('Impossible to compute the multiplication with the expected error')
+    def _t( self, u1, u2, i, j ):
+        return abs(int(u1))//(2**i) + abs(int(u2))//(2**j) + 1
+    def _compute_error(self, u1, u2 ):
+        return (
+            (2**self.scale_diff) * u1 + u2 -1 
+        )/(2**self.k) + 1
     def to_c(self, variable_1, variable_2):
-        return "(%s/%s)*(%s/%s)"%(
+        return "((%s/%s)*(%s/%s))"%(
             variable_1, 2**self.i, variable_2, 2**self.j
         )
-    def to_py(self, variable_1, variable_2):
-        return self.to_c(variable_1, variable_2).replace('/', '//')
+
+class Limit(Common):
+    def __init__(self, term, minimal, maximal):
+        self.term = term
+        self.error = term.error
+        self.maximal = maximal
+        self.minimal = minimal
+        self.digits = term.digits
+        self.scale = term.scale
+    def to_c(self, variable):
+        min_s = int( self.minimal * (2**self.scale) )
+        max_s = int( self.maximal * (2**self.scale) )
+        return "( (%s > %s) ? %s : ( (%s < %s) ? %s : %s ) )"%(
+            variable, max_s, max_s, variable, min_s, min_s, variable
+        )
+
+
+class Rescale(Common):
+    def __init__(self, term, scale, digits):
+        self.term = term
+        self.scale = scale
+        self.maximal = term.maximal
+        self.minimal = term.minimal
+        self.digits = digits
+        assert( 2**scale * abs(self.maximal) <= 2**(digits-1) )
+        assert( 2**scale * abs(self.minimal) <= 2**(digits-1) )
+        if scale >= term.scale:
+            self.k = self.scale - term.scale
+            self.error = 2**self.k * term.error
+        else:
+            self.k = term.scale - self.scale
+            self.error = (
+                term.error +
+                max(self.maximal, self.minimal) % 2**self.k
+            )/2**self.k
+    def to_c(self, variable):
+        if self.scale >= self.term.scale:
+            return "(%s*%s)"%(variable, 2**self.k)
+        else:
+            return "(%s/%s)"%(variable, 2**self.k)
+
+class Accumulator(Common):
+    def __init__(self, load, minimal, maximal, digits):
+        self.load = load
+        self.variable = Variable(
+            minimal=minimal, maximal=maximal, error=None, digits=digits
+        )
+        self.sum = Add(
+            term_1=self.variable, term_2=self.load,
+            error=None, digits=digits
+        )
+        self.limited_sum = Limit(
+            term=self.sum, minimal=minimal, maximal=maximal
+        )
+        self.accumulator = Rescale(
+            term=self.limited_sum, scale=self.variable.scale, digits=digits
+        )
+        self.error = self.accumulator.error
+        self.minimal = self.accumulator.minimal
+        self.maximal = self.accumulator.maximal
+        self.scale = self.accumulator.scale
+        self.digits = self.accumulator.digits
+    def to_c(self, variable_acc, variable_load):
+        return self.accumulator.to_c(
+            self.limited_sum.to_c(
+                self.sum.to_c(
+                    variable_acc,
+                    self.variable.to_c(variable_load),
+                )
+            )
+        )
+
+class Scale(Common):
+    def __init__(self, term, minimal, maximal, digits):
+        self.term = term
+        assert(term.maximal > term.minimal)
+        assert( maximal > minimal )
+        self.alpha = Constant(
+            (maximal - minimal)/(term.maximal - term.minimal),
+            error=None, digits=digits
+        )
+        self.beta = Constant(
+            minimal -
+            term.minimal * (maximal - minimal)/(term.maximal - term.minimal),
+            error=None, digits=digits
+        )
+        self.f1 = Mult(
+            term_1=self.alpha, term_2=term,
+            error=None, digits=digits
+        )
+        self.f2 = Add(
+            term_1=self.f1, term_2=self.beta,
+            error=None, digits=digits
+        )
+        self.error = self.f2.error
+        self.minimal = self.f2.minimal
+        self.maximal = self.f2.maximal
+        self.scale = self.f2.scale
+        self.digits = self.f2.digits
+    def to_c(self, variable):
+        return self.f2.to_c(
+            self.f1.to_c( self.alpha.to_c(), variable ),
+            self.beta.to_c()
+        )
+
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
