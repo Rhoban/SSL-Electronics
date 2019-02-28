@@ -17,6 +17,7 @@ typedef enum {
     SECURITY_NO_WARNING = 0,
     WARNING_MOTOR_LAG = 1,
     WARNING_INVALID_RANGE = 2,
+    WARNING_SERVO_LAG = 3
 } SecurityWarning;
 
 void security_set_error(SecurityError type);

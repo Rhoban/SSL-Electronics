@@ -16,10 +16,12 @@ maximal_theta_error=10.0
 maximal_k_pos_p = max(abs(maximal_speed), abs(minimal_speed)) / max(abs(maximal_theta_error),abs(minimal_theta_error))
 
 # Configure Voltage control
-reference_voltage = 1024
 
-minimal_speed_error = -40
-maximal_speed_error = 40
+nb_bits_refernece_voltage = 10
+reference_voltage = 2**nb_bits_refernece_voltage
+
+minimal_speed_error = -4
+maximal_speed_error = 4
 
 maximal_k_speed_p = reference_voltage / max(abs(maximal_speed_error),abs(minimal_speed_error))
 
@@ -106,7 +108,7 @@ speed_csg = Rescale(
     name="speed_c"
 )
 
-speed = Input( minimal=-50.0, maximal=50.0, scale=14, digits=digits, name="speed" )
+speed = Input( minimal=-128.0, maximal=128.0, scale=20, digits=digits, name="speed" )
 
 neg_speed = Neg(speed)
 
@@ -177,11 +179,19 @@ reference_voltage_q = Limit(
     name="reference_voltage_q"
 )
 
+output_voltage_q = Rescale(
+    term=reference_voltage_q,
+    scale = 0,
+    digits = digits,
+    name="output_voltage_q"
+)
+
+
 #reference_voltage_q = Scale(
 #    term=voltage_q, minimal=-reference_voltage, maximal=reference_voltage, 
 #    digits=digits, name="reference_voltage_q"
 #)
-assert( reference_voltage_q.final_error()< 0.5 );
+assert( reference_voltage_q.final_error()< 1.0 );
 
 
 print("===========================")
@@ -194,7 +204,7 @@ print("===========================")
 print("Complete program")
 print("===========================")
 
-print( reference_voltage_q.prog() )
+print( output_voltage_q.prog() )
 
 print("===========================")
 print("Input to by pass speed_c with the consign speed_csg")

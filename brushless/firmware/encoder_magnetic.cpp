@@ -173,16 +173,7 @@ void encoder_read()
     encoder_read_value();
 }
 
-#define MAX_ENCODER_CNT 0x100000000
-#define HALF_MAX_ENCODER_CNT 0x8000000
 
-//
-// We want to use motor whose velocity < 200 tr/s so 
-// velocity from [-200, 200] should be mapped in [-0x8000000,0x8000000] 
-//
-#define MAX_SPEED_ENCODER_CNT 0x8000000
-#define MAX_MOTOR_SPEED 200.0 
-#define SPEED_NOMRALISATION (MAX_SPEED_ENCODER_CNT/MAX_MOTOR_SPEED)
 #define SPEED_FACTOR ( ( ( MAX_SPEED_ENCODER_CNT/ENCODER_CPR ) * (1000/SPEED_DT) * 5 ) / MAX_MOTOR_SPEED )
 
 // Number of values stored in the speed ring buffer
@@ -271,6 +262,10 @@ float encoder_to_turn(){
     }else{
         return encoder_cnt/16384.0; 
     }
+}
+
+int encoder_to_speed(){
+    return encoder_speed;
 }
 
 int encoder_to_int(){

@@ -9,13 +9,6 @@
 #include "security.h"
 #include "errors.h"
 
-#define IS_POW_2(x) (x && ((x & (x - 1)) == 0))
-
-#define REFERENCE_VOLTAGE 1024 // Do not change
-#define HALF_REFERENCE_VOLTAGE 512 // Do not change
-_Static_assert( IS_POW_2(REFERENCE_VOLTAGE), "");
-_Static_assert( REFERENCE_VOLTAGE == 2*HALF_REFERENCE_VOLTAGE , "");
-
 inline int mod(int n, int d){
     int r = n%d;
     return (r>=0) ? r : r+d;
@@ -79,10 +72,17 @@ static void _bc_load()
     // digitalWrite(W_SD_PIN, HIGH);
 }
 
-#define MOTOR_SUB_SAMPLE 10
-_Static_assert( MOTOR_SUB_SAMPLE>=2, "Shanon !");
 static unsigned int count_irq = 0;
 static bool motor_flag = false;
+static bool serv_flag = false;
+
+void reset_serv_flag(){
+    serv_flag = false;
+}
+
+bool get_serv_flag(){
+    return serv_flag;
+}
 
 
 void motor_irq(){
@@ -91,7 +91,11 @@ void motor_irq(){
         if( motor_flag ){
             security_set_warning(WARNING_MOTOR_LAG);
         }
+        if( serv_flag ){
+            security_set_warning(WARNING_SERVO_LAG);
+        }
         motor_flag = true;
+        serv_flag = true;
     }
 }
 
@@ -376,11 +380,6 @@ static int theta_c;
 static bool go_theta = false;
 
 void reset_vectorial();
-
-/*
- * 1 turn : [ 0 - 2^14 [ = [ 0 - 16384 [ 
- */
-#define ONE_TURN_THETA 0x4000
 
 TERMINAL_COMMAND(go_theta, "Set theta")
 {
@@ -726,7 +725,7 @@ static int nb_turn = 0;
 //#define FULL_TARE_PROCESS
 
 int tare_process(){
-    int theta;
+    int theta = 0;
     switch( tare_state ){
         case TARE_NOT_SET:
             break;
@@ -1078,8 +1077,8 @@ void display_data(){
 void display( bool force ){
     cnt ++;
     int val = millis();
-    int warning = security_get_warning();
-    int error = security_get_error();
+    //int warning = security_get_warning();
+    //int error = security_get_error();
     if( force || val  -  display_time > 4000 ){
         int dt = val - display_time;
         terminal_io()->print("D(");
@@ -1132,4 +1131,8 @@ TERMINAL_COMMAND(disp_f, "Dispaly")
 TERMINAL_COMMAND(disp, "Dispaly")
 {
     display( true );
+}
+
+bool motor_is_tared(){
+    return tare_state == TARE_IS_DONE;
 }
