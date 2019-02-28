@@ -685,9 +685,14 @@ void control_motor_with_vectorial( int theta ){
     if (!motor_on) {
         disable_all_motors();
     } else {
-        apply_pwm(U_SD_PIN, U_IN_PIN, phase_pwm_u);
-        apply_pwm(V_SD_PIN, V_IN_PIN, phase_pwm_v);
-        apply_pwm(W_SD_PIN, W_IN_PIN, phase_pwm_w);
+        if(phase_pwm_u!=0 and phase_pwm_v!=0 and phase_pwm_w!=0){
+            security_set_error(SECURITY_NO_PHASE_IS_ON_THE_MASS);
+            disable_all_motors();
+        }else{
+            apply_pwm(U_SD_PIN, U_IN_PIN, phase_pwm_u);
+            apply_pwm(V_SD_PIN, V_IN_PIN, phase_pwm_v);
+            apply_pwm(W_SD_PIN, W_IN_PIN, phase_pwm_w);
+        }
     }
 }
 
@@ -874,7 +879,7 @@ void motor_tick()
         }
     }
     
-    //encoder_security_check();
+    encoder_security_check();
     
     motor_ticking = false;
 }
@@ -1022,7 +1027,8 @@ void display_warning(){
                 security_set_warning( SECURITY_NO_WARNING );
             }
             if( error != SECURITY_NO_ERROR ){
-                terminal_io()->print("E ");
+                //terminal_io()->print("E ");
+                terminal_io()->print(error);
                 terminal_io()->println( driver_error(error) );
             }
             last_warning = val;

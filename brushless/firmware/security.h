@@ -11,6 +11,7 @@ typedef enum {
     SECURITY_ENCODER_FAILURE = 6,
     SECURITY_PWM_MIN = 7,
     SECURITY_PWM_MAX = 8,
+    SECURITY_NO_PHASE_IS_ON_THE_MASS = 9
 } SecurityError;
 
 typedef enum {

@@ -4,16 +4,23 @@ from integer_calculus import *
 
 #set_debug_mode( configure_pid_coe_to_max = True )
 
+motor_frequence = 240.0
+motor_dt = 1/motor_frequence
+
 digits = 32
 
 # Configure speed control
-minimal_speed = -20.0
-maximal_speed = 20.0
+minimal_speed = -9.0
+maximal_speed = 9.0
 
-minimal_theta_error=-10.0
-maximal_theta_error=10.0
+minimal_theta_error=-5.0
+maximal_theta_error=5.0
 
-maximal_k_pos_p = max(abs(maximal_speed), abs(minimal_speed)) / max(abs(maximal_theta_error),abs(minimal_theta_error))
+k_pos_p_max = max(abs(maximal_speed), abs(minimal_speed)) / max(abs(maximal_theta_error),abs(minimal_theta_error))
+temps_reactivite = 1/10.0
+k_pos_i_max = max(abs(maximal_speed), abs(minimal_speed))/(
+    temps_reactivite*max(abs(maximal_theta_error),abs(minimal_theta_error))
+)
 
 # Configure Voltage control
 
@@ -25,15 +32,20 @@ maximal_speed_error = 4
 
 maximal_k_speed_p = reference_voltage / max(abs(maximal_speed_error),abs(minimal_speed_error))
 
-k_pos_p = Variable( minimal=0.0, maximal=maximal_k_pos_p, error=None, digits=digits, name="k_pos_p")
-k_pos_i = Variable( minimal=0.0, maximal=0.1, error=None, digits=digits, name="k_pos_i")
+k_pos_p = Variable( minimal=0.0, maximal=k_pos_p_max, error=None, digits=digits, name="k_pos_p")
+k_pos_i = Variable( minimal=0.0, maximal=k_pos_i_max, error=None, digits=digits, name="k_pos_i")
 #k_pos_d = Variable( minimal=0.1, maximal=10.0, error=None, digits=digits, name="k_pos_d")
 
 k_speed_p = Variable(
     minimal=0.0, maximal=maximal_k_speed_p,
     error=None, digits=digits, name="k_speed_p"
 )
-k_speed_i = Variable( minimal=0.0, maximal=0.1, error=None, digits=digits, name="k_speed_i")
+
+temps_reactivite = 1/10.0
+k_speed_i_max = reference_voltage/(
+    temps_reactivite*max(abs(maximal_speed_error),abs(minimal_speed_error))
+)
+k_speed_i = Variable( minimal=0.0, maximal=k_speed_i_max, error=None, digits=digits, name="k_speed_i")
 #k_speed_d = Variable( minimal=0.1, maximal=10.0, error=None, digits=digits, name="k_speed_d")
 
 k_fem = Variable(
@@ -42,8 +54,8 @@ k_fem = Variable(
     error=None, digits=digits, name="k_fem"
 )
 
-dt = Constant(constant=1.0/3000.0, error=None, digits=digits)
-inv_dt = Constant(constant=3000.0, error=None, digits=digits)
+dt = Constant(constant=1.0/motor_frequence, error=None, digits=digits)
+inv_dt = Constant(constant=motor_frequence, error=None, digits=digits)
 
 theta = Input( minimal=-6000.0, maximal=6000.0, scale=14, digits=digits, name="theta")
 theta_c = Variable( minimal=-6000.0, maximal=6000.0, error=None, digits=digits, name="theta_c")
