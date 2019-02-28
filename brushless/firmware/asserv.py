@@ -2,7 +2,7 @@
 
 from integer_calculus import *
 
-set_debug_mode( configure_pid_coe_to_max = True )
+#set_debug_mode( configure_pid_coe_to_max = True )
 
 digits = 32
 
