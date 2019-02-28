@@ -107,6 +107,7 @@ debug = False
 
 class Common:
     def __init__(self, name):
+        self.terms = []
         self.name = name
     def __repr__(self):
         res = ""
@@ -144,6 +145,12 @@ class Common:
             result = "\n\n// CALCULUS IN PROGRESS : "
             result += ('\n\n'+out)
         return result
+    def print_errors(self, yet_done={}):
+        for term in self.terms:
+            term.print_errors(yet_done)
+        if not self.name is None and not self.name in yet_done:
+            yet_done[self.name] = True
+            print( "%s error : %s"%(self.name, self.final_error()) );
     def debug(self, prog):
         global debug
         if not self.name is None and debug:
@@ -360,7 +367,7 @@ class Constant(Common):
 class Neg(Common):
     def __init__( self, term, name=None ):
         Common.__init__(self, name)
-        self.term = term
+        self.terms = [term]
         self.minimal = - term.maximal
         self.maximal = - term.minimal
         self.error = term.error
@@ -369,18 +376,18 @@ class Neg(Common):
     def to_c(self, variable):
         return "(-%s)"%(variable)
     def compute_error(self, *args):
-        return self.term.compute_error(args)
+        return self.terms[0].compute_error(args)
     def make_program(self, prog, inputs, yet_done):
         if self.name in yet_done:
             return
         if not self.name is None:
             yet_done[self.name] = True
         res = None
-        if self.term.name is None:
-            variable = self.term.make_program(prog, inputs, yet_done)
+        if self.terms[0].name is None:
+            variable = self.terms[0].make_program(prog, inputs, yet_done)
         else:
-            variable = self.term.name
-            self.term.make_program(prog, inputs, yet_done)
+            variable = self.terms[0].name
+            self.terms[0].make_program(prog, inputs, yet_done)
         if self.name is None:
             res = self.to_c(variable);
         else:
@@ -450,8 +457,7 @@ class Add(Common):
         True
         """
         Common.__init__(self, name)
-        self.term_1 = term_1
-        self.term_2 = term_2
+        self.terms = [term_1, term_2]
         self.digits = digits
         self.swap_terms = False
         if term_1.scale > term_2.scale :
@@ -492,8 +498,8 @@ class Add(Common):
         )/(2**self.k) + 1
     def compute_error(self, *args):
         return self._compute_error(
-            self.term_1.compute_error(args[0]) + 
-            self.term_2.compute_error(args[1])
+            self.terms[0].compute_error(args[0]) + 
+            self.terms[1].compute_error(args[1])
         )
     def make_program(self, prog, inputs, yet_done):
         if self.name in yet_done:
@@ -501,16 +507,16 @@ class Add(Common):
         if not self.name is None:
             yet_done[self.name] = True
         res = None
-        if self.term_1.name is None:
-            variable_1 = self.term_1.make_program(prog, inputs, yet_done)
+        if self.terms[0].name is None:
+            variable_1 = self.terms[0].make_program(prog, inputs, yet_done)
         else:
-            variable_1 = self.term_1.name
-            self.term_1.make_program(prog, inputs, yet_done)
-        if self.term_2.name is None:
-            variable_2 = self.term_2.make_program(prog, inputs, yet_done)
+            variable_1 = self.terms[0].name
+            self.terms[0].make_program(prog, inputs, yet_done)
+        if self.terms[1].name is None:
+            variable_2 = self.terms[1].make_program(prog, inputs, yet_done)
         else:
-            variable_2 = self.term_2.name
-            self.term_2.make_program(prog, inputs, yet_done)
+            variable_2 = self.terms[1].name
+            self.terms[1].make_program(prog, inputs, yet_done)
         if self.name is None:
             res = self.to_c(variable_1, variable_2);
         else:
@@ -580,8 +586,7 @@ class Mult(Common):
         True
         """
         Common.__init__(self, name)
-        self.term_1 = term_1
-        self.term_2 = term_2
+        self.terms = [term_1, term_2]
         self.digits = digits
         extremum_1 = [ term_1.maximal , term_1.minimal ]
         extremum_2 = [ term_2.maximal , term_2.minimal ]
@@ -633,16 +638,16 @@ class Mult(Common):
         if not self.name is None:
             yet_done[self.name] = True
         res = None
-        if self.term_1.name is None:
-            variable_1 = self.term_1.make_program(prog, inputs, yet_done)
+        if self.terms[0].name is None:
+            variable_1 = self.terms[0].make_program(prog, inputs, yet_done)
         else:
-            variable_1 = self.term_1.name
-            self.term_1.make_program(prog, inputs, yet_done)
-        if self.term_2.name is None:
-            variable_2 = self.term_2.make_program(prog, inputs, yet_done)
+            variable_1 = self.terms[0].name
+            self.terms[0].make_program(prog, inputs, yet_done)
+        if self.terms[1].name is None:
+            variable_2 = self.terms[1].make_program(prog, inputs, yet_done)
         else:
-            variable_2 = self.term_2.name
-            self.term_2.make_program(prog, inputs, yet_done)
+            variable_2 = self.terms[1].name
+            self.terms[1].make_program(prog, inputs, yet_done)
         if self.name is None:
             res = self.to_c(variable_1, variable_2);
         else:
@@ -653,7 +658,7 @@ class Mult(Common):
 class Limit(Common):
     def __init__(self, term, minimal, maximal, name=None):
         Common.__init__(self, name)
-        self.term = term
+        self.terms = [term]
         self.error = term.error
         self.maximal = maximal
         self.minimal = minimal
@@ -671,11 +676,11 @@ class Limit(Common):
         if not self.name is None:
             yet_done[self.name] = True
         res = None
-        if self.term.name is None:
-            variable = self.term.make_program(prog, inputs, yet_done)
+        if self.terms[0].name is None:
+            variable = self.terms[0].make_program(prog, inputs, yet_done)
         else:
-            variable = self.term.name
-            self.term.make_program(prog, inputs, yet_done)
+            variable = self.terms[0].name
+            self.terms[0].make_program(prog, inputs, yet_done)
         if self.name is None:
             res = self.to_c(variable)
         else:
@@ -687,7 +692,7 @@ class Limit(Common):
 class Rescale(Common):
     def __init__(self, term, scale, digits, name=None):
         Common.__init__(self, name)
-        self.term = term
+        self.terms = [term]
         self.scale = scale
         self.maximal = term.maximal
         self.minimal = term.minimal
@@ -704,7 +709,7 @@ class Rescale(Common):
                 max(self.maximal, self.minimal) % 2**self.k
             )/2**self.k
     def to_c(self, variable):
-        if self.scale >= self.term.scale:
+        if self.scale >= self.terms[0].scale:
             return "(%s*%s)"%(variable, 2**self.k)
         else:
             return "(%s/%s)"%(variable, 2**self.k)
@@ -714,11 +719,11 @@ class Rescale(Common):
         if not self.name is None:
             yet_done[self.name] = True
         res = None
-        if self.term.name is None:
-            variable = self.term.make_program(prog, inputs, yet_done)
+        if self.terms[0].name is None:
+            variable = self.terms[0].make_program(prog, inputs, yet_done)
         else:
-            variable = self.term.name
-            self.term.make_program(prog, inputs, yet_done)
+            variable = self.terms[0].name
+            self.terms[0].make_program(prog, inputs, yet_done)
         if self.name is None:
             res = self.to_c(variable)
         else:
@@ -729,7 +734,7 @@ class Rescale(Common):
 class Accumulator(Common):
     def __init__(self, load, minimal, maximal, digits, name=None):
         Common.__init__(self, name)
-        self.load = load
+        self.terms = [load]
         self.variable = Variable(
             minimal=minimal, maximal=maximal, error=None, digits=digits,
             name = name, have_an_input=False
@@ -739,7 +744,7 @@ class Accumulator(Common):
         else:
             name_sum = name + '__acc_sum'
         self.sum = Add(
-            term_1=self.variable, term_2=self.load,
+            term_1=self.variable, term_2=load,
             error=None, digits=digits,
             name = name_sum
         )
@@ -770,7 +775,7 @@ class Accumulator(Common):
 class Scale(Common):
     def __init__(self, term, minimal, maximal, digits, name=None):
         Common.__init__(self, name)
-        self.term = term
+        self.terms = [term]
         assert(term.maximal > term.minimal)
         assert( maximal > minimal )
         self.alpha = Constant(
@@ -806,11 +811,11 @@ class Scale(Common):
         if not self.name is None:
             yet_done[self.name] = True
         res = None
-        if self.term.name is None:
-            variable = self.term.make_program(prog, inputs, yet_done)
+        if self.terms[0].name is None:
+            variable = self.terms[0].make_program(prog, inputs, yet_done)
         else:
-            variable = self.term.name
-            self.term.make_program(prog, inputs, yet_done)
+            variable = self.terms[0].name
+            self.terms[0].make_program(prog, inputs, yet_done)
         if self.name is None:
             res = self.to_c(variable)
         else:
