@@ -57,7 +57,6 @@ extern "C"
 {
 void __irq_spi1()
 {
-    static uint8_t n = 0;
     irqed += 1;
     rcv = SPI1->regs->SR;
 

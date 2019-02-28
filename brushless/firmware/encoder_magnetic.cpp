@@ -91,8 +91,6 @@ static uint16_t encoder_read_value()
 
 TERMINAL_COMMAND(erv, "Encoder Read Value")
 {
-    int start = millis();
-
     while (!SerialUSB.available()) {
         encoder_read_value();
         while (encoder_read_state != -1) {

@@ -6,23 +6,23 @@
 static inline const char *driver_error(int code)
 {
     if (code == SECURITY_CURRENT_MAX) {
-        return "1Current max";
+        return "Current max";
     } else if (code == SECURITY_CURRENT_LIMIT) {
-        return "2Current limit";
+        return "Current limit";
     } else if (code == SECURITY_HALL_FREEZE) {
-        return "3Hall freeze";
+        return "Hall freeze";
     } else if (code == SECURITY_HALL_MISSING) {
-        return "4Hall missing";
+        return "Hall missing";
     } else if (code == SECURITY_ENCODER_MISSING) {
-        return "5Encoder missing";
+        return "Encoder missing";
     } else if (code == SECURITY_ENCODER_FAILURE) {
-        return "6Encoder failure";
+        return "Encoder failure";
     } else if ( code == SECURITY_PWM_MIN ){
-        return "7PWM command too small";
+        return "PWM command too small";
     } else if ( code == SECURITY_PWM_MAX ){
-        return "8PWM command too big";
-    }else if ( code=SECURITY_NO_PHASE_IS_ON_THE_MASS ){
-        return "9No phase is on the mass";
+        return "PWM command too big";
+    }else if ( code == SECURITY_NO_PHASE_IS_ON_THE_MASS ){
+        return "No phase is on the mass";
     }
     return "?";
 }

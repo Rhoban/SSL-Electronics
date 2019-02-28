@@ -244,9 +244,9 @@ void motor_init()
     pinMode(HALLW_PIN, INPUT_PULLUP);
 
     // Attach interrupts on phase change
-    attachInterrupt(HALLU_PIN, motor_tick, CHANGE);
-    attachInterrupt(HALLV_PIN, motor_tick, CHANGE);
-    attachInterrupt(HALLW_PIN, motor_tick, CHANGE);
+    //attachInterrupt(HALLU_PIN, motor_tick, CHANGE);
+    //attachInterrupt(HALLV_PIN, motor_tick, CHANGE);
+    //attachInterrupt(HALLW_PIN, motor_tick, CHANGE);
 
     // Configuring timers
     _init_timer(2);
@@ -879,7 +879,7 @@ void motor_tick()
         }
     }
     
-    encoder_security_check();
+    //encoder_security_check();
     
     motor_ticking = false;
 }
