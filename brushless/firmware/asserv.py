@@ -95,6 +95,17 @@ speed_c = Add(
     name="speed_c"
 )
 
+speed_csg = Rescale(
+    term=Variable(
+        minimal=speed_c.minimal, maximal=speed_c.maximal, 
+        error=None,
+        digits=digits,
+        name = "speed_csg"
+    ), scale = speed_c.scale,
+    digits = digits,
+    name="speed_c"
+)
+
 speed = Input( minimal=-50.0, maximal=50.0, scale=14, digits=digits, name="speed" )
 
 neg_speed = Neg(speed)
@@ -185,3 +196,7 @@ print("===========================")
 
 print( reference_voltage_q.prog() )
 
+print("===========================")
+print("Input to by pass speed_c with the consign speed_csg")
+print("===========================")
+print( speed_csg.prog() )
