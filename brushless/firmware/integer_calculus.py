@@ -2,6 +2,15 @@
 
 import numpy as np
 
+debug = False
+set_pid_coef_to_max = False 
+
+def set_debug_mode(configure_pid_coe_to_max = False):
+    global debug
+    global set_pid_coef_to_max
+    debug = True
+    set_pid_coef_to_max = configure_pid_coe_to_max
+
 def unsigned_integer_digits(value):
     """
     Compute the minimal number of bits needed to encode a positive integer.
@@ -94,9 +103,15 @@ def number_of_bits(value, error):
     scale = error_digits(error)
     return [ scale, signed_integer_digits(abs(value))+scale ]
 
+debug = False
+
 class Common:
+    def __init__(self, name):
+        self.name = name
     def __repr__(self):
         res = ""
+        if not self.name is None:
+            res += "\n name : " + str(self.name)
         res += "\n minimal : " + str(self.minimal)
         res += "\n scaled minimal : " + str(int(self.minimal*(2**self.scale)))
         res += "\n maximal : " + str(self.maximal)
@@ -114,10 +129,43 @@ class Common:
         return self.to_c(*args).replace("?", 'and').replace(":", "or").replace('/', '//')
     def final_error(self):
         return self.error / (2**self.scale)
-
+    def prog(self):
+        prog = []
+        inputs = []
+        yet_done = {}
+        out = self.make_program(prog, inputs, yet_done)
+        result = "// INPUTS : "
+        for line in inputs:
+            result += line
+        result += "\n\n// PROGRAM : "
+        for line in prog:
+            result += line
+        if not out is None:
+            result = "\n\n// CALCULUS IN PROGRESS : "
+            result += ('\n\n'+out)
+        return result
+    def debug(self, prog):
+        global debug
+        if not self.name is None and debug:
+            prog.append(
+                "\nstd::cout << \"%s\" << \" : \" << ((double)%s)/%s << \" (\" << %s << \"/2**\" << %s << \")\" << std::endl;"%(
+                    self.name, self.name, 2**self.scale, self.name, self.scale
+                )
+            )
+            prog.append(
+                "\nassert(%s<=%s);"%(
+                    self.name, 2**self.scale * self.maximal
+                )
+            )
+            prog.append(
+                "\nassert(%s>=%s);"%(
+                    self.name, 2**self.scale * self.minimal
+                )
+            )
 
 class Input(Common):
-    def __init__( self, minimal, maximal, scale, digits ):
+    def __init__( self, minimal, maximal, scale, digits, name=None ):
+        Common.__init__(self, name)
         self.minimal = minimal
         self.maximal = maximal
         self.scale = scale
@@ -127,9 +175,16 @@ class Input(Common):
         return self.error
     def to_c(self, variable):
         return "(%s)"%(variable)
+    def make_program(self, prog, inputs, yet_done):
+        assert(not self.name is None)
+        if self.name in yet_done:
+            return
+        if not self.name is None:
+            yet_done[self.name] = True
+        return None
 
 class Variable(Common):
-    def __init__( self, minimal, maximal, error, digits ):
+    def __init__( self, minimal, maximal, error, digits, name=None, have_an_input=True ):
         """
         >>> err = 0.001
         >>> mini = -2.1
@@ -149,6 +204,8 @@ class Variable(Common):
         >>> var.maximal == maxi
         True
         """
+        Common.__init__(self, name)
+        self.have_an_input = have_an_input
         self.minimal = minimal
         self.maximal = maximal
         maxi = max( abs(minimal), abs(maximal) )
@@ -167,11 +224,39 @@ class Variable(Common):
         return self.error
     def to_c(self, v1):
         return "(%s * %s)"%(v1, 2**self.scale)
-
-
+    def make_program(self, prog, inputs, yet_done):
+        assert(not self.name is None)
+        if self.name in yet_done:
+            return
+        if not self.name is None:
+            yet_done[self.name] = True
+        if self.have_an_input :
+            name_input = self.name+'_input'
+            global set_pid_coef_to_max
+            if set_pid_coef_to_max :
+                val = self.maximal;
+            else:
+                val = self.minimal;
+            inputs.append(
+                "\n\nfloat %s = %s;"%(
+                    name_input, val
+                )
+            )
+            inputs.append(
+                "\nif(%s < %s) %s = %s;"%(
+                    name_input, self.minimal, name_input, self.minimal
+                )
+            )
+            inputs.append(
+                "\nif(%s > %s) %s = %s;"%(
+                    name_input, self.maximal, name_input, self.maximal
+                )
+            )
+            inputs.append( "\nint %s = (int) %s;"%(self.name, self.to_c(name_input)) )
+        return None
 
 class Constant(Common):
-    def __init__( self, constant, error, digits ):
+    def __init__( self, constant, error, digits, name=None ):
         """
         >>> cst = Constant( constant=3.14, error=0.1, digits=32 )
         >>> abs( cst.value/(2**cst.scale) - 3.14 ) < 0.1
@@ -235,6 +320,7 @@ class Constant(Common):
         >>> cst.to_py()
         '(1685774663)'
         """
+        Common.__init__(self, name)
         self.constant = constant
         if error is None:
             nb_bits_for_constant = signed_integer_digits(int(constant))
@@ -258,9 +344,22 @@ class Constant(Common):
         return self.error
     def final_error(self):
         return self.error / (2**self.scale)
+    def make_program(self, prog, inputs, yet_done):
+        if self.name in yet_done:
+            return
+        if not self.name is None:
+            yet_done[self.name] = True
+        res = None
+        if self.name is None:
+            res = self.to_c();
+        else:
+            prog.append( "\nint %s = %s;"%(self.name, self.to_c()) )
+            self.debug(prog)
+        return res
 
 class Neg(Common):
-    def __init__( self, term ):
+    def __init__( self, term, name=None ):
+        Common.__init__(self, name)
         self.term = term
         self.minimal = - term.maximal
         self.maximal = - term.minimal
@@ -271,10 +370,26 @@ class Neg(Common):
         return "(-%s)"%(variable)
     def compute_error(self, *args):
         return self.term.compute_error(args)
-
+    def make_program(self, prog, inputs, yet_done):
+        if self.name in yet_done:
+            return
+        if not self.name is None:
+            yet_done[self.name] = True
+        res = None
+        if self.term.name is None:
+            variable = self.term.make_program(prog, inputs, yet_done)
+        else:
+            variable = self.term.name
+            self.term.make_program(prog, inputs, yet_done)
+        if self.name is None:
+            res = self.to_c(variable);
+        else:
+            prog.append( "\nint %s = %s;"%(self.name, self.to_c(variable)) )
+            self.debug(prog)
+        return res
 
 class Add(Common):
-    def __init__( self, term_1, term_2, error, digits ):
+    def __init__( self, term_1, term_2, error, digits, name=None ):
         """
         >>> c1 = 3.14
         >>> c2 = 6.0
@@ -334,6 +449,7 @@ class Add(Common):
         >>> abs( eval(add.to_py(v_1, v_2))/(2**add.scale) - (c1+c2) ) <= err
         True
         """
+        Common.__init__(self, name)
         self.term_1 = term_1
         self.term_2 = term_2
         self.digits = digits
@@ -376,11 +492,35 @@ class Add(Common):
         )/(2**self.k) + 1
     def compute_error(self, *args):
         return self._compute_error(
-            term_1.compute_error(args[0]) + 
-            term_2.compute_error(args[1])
+            self.term_1.compute_error(args[0]) + 
+            self.term_2.compute_error(args[1])
         )
+    def make_program(self, prog, inputs, yet_done):
+        if self.name in yet_done:
+            return
+        if not self.name is None:
+            yet_done[self.name] = True
+        res = None
+        if self.term_1.name is None:
+            variable_1 = self.term_1.make_program(prog, inputs, yet_done)
+        else:
+            variable_1 = self.term_1.name
+            self.term_1.make_program(prog, inputs, yet_done)
+        if self.term_2.name is None:
+            variable_2 = self.term_2.make_program(prog, inputs, yet_done)
+        else:
+            variable_2 = self.term_2.name
+            self.term_2.make_program(prog, inputs, yet_done)
+        if self.name is None:
+            res = self.to_c(variable_1, variable_2);
+        else:
+            prog.append( "\nint %s = %s;"%(self.name, self.to_c(variable_1, variable_2)) )
+            self.debug(prog)
+        return res
+
+
 class Mult(Common):
-    def __init__(self, term_1, term_2, error, digits):
+    def __init__(self, term_1, term_2, error, digits, name=None):
         """
         >>> c1 = 3.14
         >>> c2 = 6.0
@@ -439,6 +579,7 @@ class Mult(Common):
         >>> abs( eval(mul.to_py(v_1, v_2))/(2**mul.scale) - (c1*c2) ) <= err
         True
         """
+        Common.__init__(self, name)
         self.term_1 = term_1
         self.term_2 = term_2
         self.digits = digits
@@ -486,9 +627,32 @@ class Mult(Common):
         return "((%s/%s)*(%s/%s))"%(
             variable_1, 2**self.i, variable_2, 2**self.j
         )
+    def make_program(self, prog, inputs, yet_done):
+        if self.name in yet_done:
+            return
+        if not self.name is None:
+            yet_done[self.name] = True
+        res = None
+        if self.term_1.name is None:
+            variable_1 = self.term_1.make_program(prog, inputs, yet_done)
+        else:
+            variable_1 = self.term_1.name
+            self.term_1.make_program(prog, inputs, yet_done)
+        if self.term_2.name is None:
+            variable_2 = self.term_2.make_program(prog, inputs, yet_done)
+        else:
+            variable_2 = self.term_2.name
+            self.term_2.make_program(prog, inputs, yet_done)
+        if self.name is None:
+            res = self.to_c(variable_1, variable_2);
+        else:
+            prog.append( "\nint %s = %s;"%(self.name, self.to_c(variable_1, variable_2)) )
+            self.debug(prog)
+        return res
 
 class Limit(Common):
-    def __init__(self, term, minimal, maximal):
+    def __init__(self, term, minimal, maximal, name=None):
+        Common.__init__(self, name)
         self.term = term
         self.error = term.error
         self.maximal = maximal
@@ -501,10 +665,28 @@ class Limit(Common):
         return "( (%s > %s) ? %s : ( (%s < %s) ? %s : %s ) )"%(
             variable, max_s, max_s, variable, min_s, min_s, variable
         )
+    def make_program(self, prog, inputs, yet_done):
+        if self.name in yet_done:
+            return
+        if not self.name is None:
+            yet_done[self.name] = True
+        res = None
+        if self.term.name is None:
+            variable = self.term.make_program(prog, inputs, yet_done)
+        else:
+            variable = self.term.name
+            self.term.make_program(prog, inputs, yet_done)
+        if self.name is None:
+            res = self.to_c(variable)
+        else:
+            prog.append( "\nint %s = %s;"%(self.name, self.to_c(variable)) )
+            self.debug(prog)
+        return res
 
 
 class Rescale(Common):
-    def __init__(self, term, scale, digits):
+    def __init__(self, term, scale, digits, name=None):
+        Common.__init__(self, name)
         self.term = term
         self.scale = scale
         self.maximal = term.maximal
@@ -526,22 +708,47 @@ class Rescale(Common):
             return "(%s*%s)"%(variable, 2**self.k)
         else:
             return "(%s/%s)"%(variable, 2**self.k)
+    def make_program(self, prog, inputs, yet_done):
+        if self.name in yet_done:
+            return
+        if not self.name is None:
+            yet_done[self.name] = True
+        res = None
+        if self.term.name is None:
+            variable = self.term.make_program(prog, inputs, yet_done)
+        else:
+            variable = self.term.name
+            self.term.make_program(prog, inputs, yet_done)
+        if self.name is None:
+            res = self.to_c(variable)
+        else:
+            prog.append( "\nint %s = %s;"%(self.name, self.to_c(variable)) )
+            self.debug(prog)
+        return res
 
 class Accumulator(Common):
-    def __init__(self, load, minimal, maximal, digits):
+    def __init__(self, load, minimal, maximal, digits, name=None):
+        Common.__init__(self, name)
         self.load = load
         self.variable = Variable(
-            minimal=minimal, maximal=maximal, error=None, digits=digits
+            minimal=minimal, maximal=maximal, error=None, digits=digits,
+            name = name, have_an_input=False
         )
+        if name is None:
+            name_sum = None
+        else:
+            name_sum = name + '__acc_sum'
         self.sum = Add(
             term_1=self.variable, term_2=self.load,
-            error=None, digits=digits
+            error=None, digits=digits,
+            name = name_sum
         )
         self.limited_sum = Limit(
             term=self.sum, minimal=minimal, maximal=maximal
         )
         self.accumulator = Rescale(
-            term=self.limited_sum, scale=self.variable.scale, digits=digits
+            term=self.limited_sum, scale=self.variable.scale, digits=digits,
+            name = name
         )
         self.error = self.accumulator.error
         self.minimal = self.accumulator.minimal
@@ -557,9 +764,12 @@ class Accumulator(Common):
                 )
             )
         )
+    def make_program(self, prog, inputs, yet_done):
+        return self.accumulator.make_program(prog, inputs, yet_done)
 
 class Scale(Common):
-    def __init__(self, term, minimal, maximal, digits):
+    def __init__(self, term, minimal, maximal, digits, name=None):
+        Common.__init__(self, name)
         self.term = term
         assert(term.maximal > term.minimal)
         assert( maximal > minimal )
@@ -590,6 +800,23 @@ class Scale(Common):
             self.f1.to_c( self.alpha.to_c(), variable ),
             self.beta.to_c()
         )
+    def make_program(self, prog, inputs, yet_done):
+        if self.name in yet_done:
+            return
+        if not self.name is None:
+            yet_done[self.name] = True
+        res = None
+        if self.term.name is None:
+            variable = self.term.make_program(prog, inputs, yet_done)
+        else:
+            variable = self.term.name
+            self.term.make_program(prog, inputs, yet_done)
+        if self.name is None:
+            res = self.to_c(variable)
+        else:
+            prog.append( "\nint %s = %s;"%(self.name, self.to_c(variable)) )
+            self.debug(prog)
+        return res
 
 if __name__ == "__main__":
     import doctest
