@@ -1,6 +1,8 @@
 #define MOTEUR_BANC_60
 //#define CYCLOIDE_30
 
+//#define DO_NOT_USE_HALL
+
 #ifdef CYCLOIDE_30
     #define STOP_OUTSIDE_LIMITS 
     #define MOTOR_NAME "CYCLOIDE_30"
