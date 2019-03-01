@@ -203,6 +203,16 @@ output_voltage_q = Rescale(
 )
 
 
+theta_csg = Rescale(
+    term=Input(
+        minimal=theta.minimal, maximal=theta.maximal, scale=theta.scale, 
+        digits=digits, 
+        name="theta_csg"
+    ), scale = theta_c.scale,
+    digits = digits,
+    name="theta_c"
+)
+
 #reference_voltage_q = Scale(
 #    term=voltage_q, minimal=-reference_voltage, maximal=reference_voltage, 
 #    digits=digits, name="reference_voltage_q"
@@ -226,3 +236,8 @@ print("===========================")
 print("Input to by pass speed_c with the consign speed_csg")
 print("===========================")
 print( speed_csg.prog() )
+
+print("===========================")
+print("Input to by pass speed_c with the consign speed_csg")
+print("===========================")
+print( theta_csg.prog() )

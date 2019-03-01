@@ -49,4 +49,6 @@ void reset_serv_flag();
 bool get_serv_flag();
 
 void motor_foc_set(bool enable, int value);
+
+bool motor_foc_is_on();
 #endif

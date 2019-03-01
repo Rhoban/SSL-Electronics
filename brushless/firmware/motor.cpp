@@ -2,6 +2,13 @@
 #include "motor_foc.h"
 #include "motor_hall.h"
 
+bool motor_is_on(){
+    #ifndef DO_NOT_USE_HALL
+    return motor_hall_is_on();
+    #else
+    return motor_foc_is_on();
+    #endif
+}
 
 void motor_init()
 {

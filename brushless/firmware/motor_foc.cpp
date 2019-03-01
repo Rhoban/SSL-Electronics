@@ -18,7 +18,6 @@ void display(bool);
 void display_warning();
 
 // Target PWM speed [0-3000]
-static int motor_pwm = 0;
 static bool motor_on = false;
 
 static unsigned int count_irq = 0;
@@ -126,14 +125,9 @@ void motor_foc_init()
 void motor_foc_set(bool enable, int value)
 {
     motor_on = enable;
-
-    if (value > 0) value += PWM_MIN;
-    if (value < 0) value -= PWM_MIN;
-
-    if (value < -PWM_MAX) value = -PWM_MAX;
-    if (value > PWM_MAX) value = PWM_MAX;
-
-    motor_pwm = value;
+    if(!motor_on){
+        direct_quadrature_voltage_set(0,0);
+    }
 }
 
 static int direct_voltage_c = 0;
@@ -460,13 +454,23 @@ void control_motor_with_vectorial( int theta ){
     if (!motor_on) {
         disable_all_motors();
     } else {
-        if(phase_pwm_u!=0 and phase_pwm_v!=0 and phase_pwm_w!=0){
-            security_set_error(SECURITY_NO_PHASE_IS_ON_THE_MASS);
-            disable_all_motors();
-        }else{
+        // We always want to have a phase on the mass, so we control, first, 
+        // the phase going to the mass.
+        if( phase_pwm_u==0 ){
             apply_pwm(U_SD_PIN, U_IN_PIN, phase_pwm_u);
             apply_pwm(V_SD_PIN, V_IN_PIN, phase_pwm_v);
             apply_pwm(W_SD_PIN, W_IN_PIN, phase_pwm_w);
+        } else if( phase_pwm_v==0 ){
+            apply_pwm(V_SD_PIN, V_IN_PIN, phase_pwm_v);
+            apply_pwm(W_SD_PIN, W_IN_PIN, phase_pwm_w);
+            apply_pwm(U_SD_PIN, U_IN_PIN, phase_pwm_u);
+        } else if( phase_pwm_w==0 ){
+            apply_pwm(W_SD_PIN, W_IN_PIN, phase_pwm_w);
+            apply_pwm(U_SD_PIN, U_IN_PIN, phase_pwm_u);
+            apply_pwm(V_SD_PIN, V_IN_PIN, phase_pwm_v);
+        } else {
+            security_set_error(SECURITY_NO_PHASE_IS_ON_THE_MASS);
+            disable_all_motors();
         }
     }
 }
@@ -830,4 +834,8 @@ TERMINAL_COMMAND(disp, "Display")
 
 bool motor_is_tared(){
     return tare_state == TARE_IS_DONE;
+}
+
+bool motor_foc_is_on(){
+    return motor_on;
 }

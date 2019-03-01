@@ -18,4 +18,5 @@ void motor_hall_set(bool enable, int value);
  */
 void motor_hall_tick();
 
+bool motor_hall_is_on();
 #endif

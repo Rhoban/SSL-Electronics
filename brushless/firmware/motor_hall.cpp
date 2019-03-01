@@ -330,3 +330,7 @@ TERMINAL_COMMAND(itest, "Interference test")
         }
     }
 }
+
+bool motor_hall_is_on(){
+    return motor_on;
+}
