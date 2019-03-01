@@ -845,7 +845,7 @@ void motor_tick()
     motor_flag = false;
     
     display_warning();
-    dispatch_display();
+    //dispatch_display();
 
     if( mode == PHASE_MODE ){
         control_motor_with_phases();

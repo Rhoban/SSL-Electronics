@@ -4,7 +4,7 @@ from integer_calculus import *
 
 #set_debug_mode( configure_pid_coe_to_max = True )
 
-motor_frequence = 240.0
+motor_frequence = 800.0
 motor_dt = 1/motor_frequence
 
 digits = 32
@@ -102,11 +102,15 @@ speed_i = Accumulator(
 #    inv_dt, error=None, digits=digits 
 #)
 
-speed_c = Add(
-    term_1 = speed_p,
-    term_2 = speed_i,
-    error=None, digits=digits,
-    name="speed_c"
+speed_c = Limit(
+    term = Add(
+        term_1 = speed_p,
+        term_2 = speed_i,
+        error=None, digits=digits,
+    ),
+    minimal = minimal_speed,
+    maximal = maximal_speed,
+    name = "speed_c"
 )
 
 speed_csg = Rescale(

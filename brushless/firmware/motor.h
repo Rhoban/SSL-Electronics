@@ -18,9 +18,9 @@ _Static_assert( REFERENCE_VOLTAGE == 2*HALF_REFERENCE_VOLTAGE , "");
 // SCALE : 1
 #define PWM_FREQUENCE 2400 // Hz
 // SCALE : 1
-#define MOTOR_FREQUENCE 240 
+#define MOTOR_FREQUENCE 800 
 // SCALE : 1
-#define MOTOR_SUB_SAMPLE 10
+#define MOTOR_SUB_SAMPLE 3
 _Static_assert( MOTOR_SUB_SAMPLE>=2, "Shanon !");
 _Static_assert(
     PWM_FREQUENCE == MOTOR_FREQUENCE*MOTOR_SUB_SAMPLE, ""
