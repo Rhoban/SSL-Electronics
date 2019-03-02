@@ -175,6 +175,7 @@ int32_t compute_maximal_voltage_2(int32_t vd, int32_t vq){
     return 2 * ( vd * vd + vq * vq );
 }
 
+// TODO : Ce n'est pas mieux de multiplier systématiquement par sqrt(2) ? 
 void direct_quadrature_voltage_set(int vd, int vq ){
     int max_voltage_2 = compute_maximal_voltage_2(vd, vq);
     direct_voltage_c = vd;
@@ -477,11 +478,7 @@ void control_motor_with_vectorial( int theta ){
 
 
 int rotor_angle(){
-    #ifdef REVERSE_PHASE
-        return - ( encoder_to_int() - angle_origin ); // REVERSE SPEED
-    #else
-        return ( encoder_to_int() - angle_origin );
-    #endif
+    return encoder_to_int() - angle_origin;
 }
 
 int nb_pass = 0;
@@ -505,7 +502,7 @@ int tare_process(){
             theta = 0;
             motor_on = true,
             last_tare_time = millis();
-            direct_voltage_c = HALF_REFERENCE_VOLTAGE; 
+            direct_voltage_c = HALF_REFERENCE_VOLTAGE/2; 
             quadrature_voltage_c = 0;
             save_vectorial_pwm = vectorial_pwm;
             vectorial_pwm = CONFIG_PWM;
@@ -825,6 +822,24 @@ TERMINAL_COMMAND(disp_f, "Display")
 {
     dispatch_cnt = 0;
     dispatch_display_b = true;
+}
+
+TERMINAL_COMMAND(motor_info, "Display")
+{
+    terminal_io()->print("q v : ");
+    terminal_io()->println(quadrature_voltage_c);
+    terminal_io()->print("d v : ");
+    terminal_io()->println(direct_voltage_c);
+    terminal_io()->print("u pwm : ");
+    terminal_io()->println(phase_pwm_u);
+    terminal_io()->print("v pwm : ");
+    terminal_io()->println(phase_pwm_v);
+    terminal_io()->print("w pwm : ");
+    terminal_io()->println(phase_pwm_w);
+    terminal_io()->print("theta park : ");
+    terminal_io()->println(theta_park);
+    terminal_io()->print("theta park mod 3: ");
+    terminal_io()->println(mod( theta_park, ONE_TURN_THETA/3 ));
 }
 
 TERMINAL_COMMAND(disp, "Display")

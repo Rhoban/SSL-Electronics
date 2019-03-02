@@ -1,6 +1,8 @@
 #ifndef _HARDWARE_H
 #define _HARDWARE_H
 
+#include "ssl.h"
+
 // Defines the driver type (see below)
 #define DRIVER_TYPE     TYPE_70W
 
@@ -38,12 +40,29 @@
 #define CURRENT_PIN      4
 
 // Motors pins
-#define U_SD_PIN        10
-#define U_IN_PIN       11
-#define V_SD_PIN        8
-#define V_IN_PIN       9
-#define W_SD_PIN        33
-#define W_IN_PIN       3
+
+#ifdef REVERSE_PHASE
+    #define U_SD_PIN        10  //use Timer 2 (Maple Mini)
+    #define U_IN_PIN       11  //use Timer 2 (Maple Mini)
+
+    #define V_SD_PIN        33  //use Timer 3 (Maple Mini)
+    #define V_IN_PIN       3  //use Timer 2 (Maple Mini)
+    
+    #define W_SD_PIN        8 //use Timer 2 (Maple Mini)
+    #define W_IN_PIN       9 //use Timer 2 (Maple Mini)
+#else
+    #define U_SD_PIN        10 //use Timer 2 (Maple Mini)
+    #define U_IN_PIN       11 //use Timer 2 (Maple Mini)
+
+    #define V_SD_PIN        8 //use Timer 2 (Maple Mini)
+    #define V_IN_PIN       9 //use Timer 2 (Maple Mini)
+
+    #define W_SD_PIN        33  //use Timer 3 (Maple Mini)
+    #define W_IN_PIN       3 //use Timer 2 (Maple Mini)
+#endif
+
+
+
 #define HALLU_PIN        7
 #define HALLV_PIN        6
 #define HALLW_PIN        5

@@ -192,11 +192,7 @@ void compute_rotor_velocity(){
 
     // Updating current speed estimation [pulse per SPEED_DT]
     // XXX: Is there a problem when we overflowed?
-    #ifdef REVERSE_PHASE
-    int speed_pulse = -( current_value - past_value );  //REVERSE !
-    #else
-    int speed_pulse = ( current_value - past_value );  //REVERSE !
-    #endif
+    int speed_pulse = ( current_value - past_value );
 
     // Converting this into a speed [turn/s]
     // XXX: The discount was not tuned properly
