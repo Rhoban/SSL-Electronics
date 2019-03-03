@@ -9,7 +9,7 @@ motor_dt = 1/motor_frequence
 
 digits = 32
 
-# Configure speed control
+# Configure speed control
 minimal_speed = -9.0
 maximal_speed = 9.0
 
@@ -22,7 +22,7 @@ k_pos_i_max = max(abs(maximal_speed), abs(minimal_speed))/(
     temps_reactivite*max(abs(maximal_theta_error),abs(minimal_theta_error))
 )
 
-# Configure Voltage control
+# Configure Voltage control
 
 nb_bits_refernece_voltage = 10
 reference_voltage = 2**nb_bits_refernece_voltage
@@ -217,27 +217,30 @@ theta_csg = Rescale(
 #    term=voltage_q, minimal=-reference_voltage, maximal=reference_voltage, 
 #    digits=digits, name="reference_voltage_q"
 #)
-assert( reference_voltage_q.final_error()< 1.0 );
+if( not reference_voltage_q.final_error()< 1.0 ):
+    raise ValueError(
+        "Not enough precision : " + str(reference_voltage_q.final_error())
+    )
 
+if __name__=='__main__':
+    print("===========================")
+    print("Maximal errors")
+    print("===========================")
 
-print("===========================")
-print("Maximal errors")
-print("===========================")
+    reference_voltage_q.print_errors()
 
-reference_voltage_q.print_errors()
+    print("===========================")
+    print("Complete program")
+    print("===========================")
 
-print("===========================")
-print("Complete program")
-print("===========================")
+    print( output_voltage_q.prog() )
 
-print( output_voltage_q.prog() )
+    print("===========================")
+    print("Input to by pass speed_c with the consign speed_csg")
+    print("===========================")
+    print( speed_csg.prog() )
 
-print("===========================")
-print("Input to by pass speed_c with the consign speed_csg")
-print("===========================")
-print( speed_csg.prog() )
-
-print("===========================")
-print("Input to by pass speed_c with the consign speed_csg")
-print("===========================")
-print( theta_csg.prog() )
+    print("===========================")
+    print("Input to by pass speed_c with the consign speed_csg")
+    print("===========================")
+    print( theta_csg.prog() )

@@ -117,10 +117,13 @@ class Common:
             return 'global'
         else:
             return 'local'
+    def __getitem__(self, i):
+        return self.terms[i]
     def __repr__(self):
         res = ""
         if not self.name is None:
             res += "\n name : " + str(self.name)
+        res += "\n type : " + str( type(self) )
         res += "\n minimal : " + str(self.minimal)
         res += "\n scaled minimal : " + str(int(self.minimal*(2**self.scale)))
         res += "\n maximal : " + str(self.maximal)
@@ -425,6 +428,81 @@ class Neg(Common):
             self.debug(prog)
         return res
 
+class TrueLimits(Common):
+    def __init__(self, term, minimal, maximal):
+        Common.__init__(self, name=None)
+        assert( maximal-minimal >= 0 )
+        assert( term.maximal-term.minimal > 0 )
+        assert( maximal-minimal<term.maximal-term.minimal)
+
+        self.terms = [term]
+        self.maximal = maximal
+        self.minimal = minimal
+        self.error = (
+            (self.maximal-self.minimal)/(term.maximal-term.minimal)
+        ) * term.error
+        self.scale = term.scale
+        self.digits = term.digits
+    def to_c(self, *args):
+        return self.terms[0].to_c(*args)
+    def make_program(self, prog, inputs, declarations, yet_done):
+        if not self.name is None:
+            raise NotImplemented
+        if self.terms[0].name is None:
+            variable = self.terms[0].make_program(prog, inputs, declarations, yet_done)
+        else:
+            variable = self.terms[0].name
+            self.terms[0].make_program(prog, inputs, declarations, yet_done)
+        return "%s"%(variable)
+
+class Min(Common):
+    def __init__(self, term_1, term_2, digits, name=None):
+        Common.__init__(self, name=name)
+        self.terms = [term_1, term_2]
+        self.digits = digits
+        if term_1.digits > digits or term_2.digits > digits :
+            raise NotImplemented
+        self.minimal = min(term_1.minimal, term_2.minimal)
+        self.maximal = min(term_1.maximal, term_2.maximal)
+        self.scale = max(term_1.scale, term_2.scale)
+        if self.scale == 0:
+            self.error = max(term_1.error, term_2.error)
+        else:
+            self.error = max(
+                term_1.error*self.scale/term_1.scale, 
+                term_1.error*self.scale/term_2.scale, 
+            )
+    def to_c(self, variable_1, variable_2):
+        return "( (%s*%s < %s*%s) ? %s*%s : %s*%s )"%(
+            variable_1, self.scale/self.terms[0].scale,
+            variable_2, self.scale/self.terms[1].scale,
+            variable_1, self.scale/self.terms[0].scale,
+            variable_2, self.scale/self.terms[1].scale,
+        )
+    def make_program(self, prog, inputs, declarations, yet_done):
+        if self.name in yet_done:
+            return
+        if not self.name is None:
+            declarations[self.variable_type()].append( "\nint %s = 0;"%(self.name) );
+            yet_done[self.name] = True
+        res = None
+        if self.terms[0].name is None:
+            variable_1 = self.terms[0].make_program(prog, inputs, declarations, yet_done)
+        else:
+            variable_1 = self.terms[0].name
+            self.terms[0].make_program(prog, inputs, declarations, yet_done)
+        if self.terms[1].name is None:
+            variable_2 = self.terms[1].make_program(prog, inputs, declarations, yet_done)
+        else:
+            variable_2 = self.terms[1].name
+            self.terms[1].make_program(prog, inputs, declarations, yet_done)
+        if self.name is None:
+            res = self.to_c(variable_1, variable_2);
+        else:
+            prog.append( "\n%s = %s;"%(self.name, self.to_c(variable_1, variable_2)) )
+            self.debug(prog)
+        return res
+
 class Add(Common):
     def __init__( self, term_1, term_2, error, digits, name=None ):
         """
@@ -584,36 +662,58 @@ class Mult(Common):
         >>> v_1 = cst_1.value
         >>> v_2 = cst_2.value
         >>> mul.to_c('a', 'b')
-        '((a/4096)*(b/2))'
+        '((a/8192)*(b/1))'
         >>> mul.to_py('a', 'b')
-        '((a//4096)*(b//2))'
+        '((a//8192)*(b//1))'
         >>> abs( eval(mul.to_py(v_1, v_2))/(2**mul.scale) - (c1*c2) ) <= err
         True
 
         >>> cst_1 = Constant( constant=c1, error=None, digits=32 )
-        >>> cst_2 = Constant( constant=c2, error=None, digits=13 )
+        >>> cst_2 = Constant( constant=c2, error=None, digits=12 )
         >>> mul = Mult( term_1=cst_1, term_2=cst_2, error=err, digits=32)
         Traceback (most recent call last):
         ...
         ValueError: Impossible to compute the multiplication with the expected error
 
         >>> cst_1 = Constant( constant=c1, error=None, digits=32 )
+        >>> cst_2 = Constant( constant=c2, error=None, digits=13 )
+        >>> mul = Mult( term_1=cst_1, term_2=cst_2, error=err, digits=32)
+        >>> mul.to_c('a', 'b')
+        '((a/4096)*(b/1))'
+
+        >>> cst_1 = Constant( constant=c1, error=None, digits=32 )
         >>> cst_2 = Constant( constant=c2, error=None, digits=14 )
-        >>> mul = Mult( term_1=cst_1, term_2=cst_2, error=err, digits=27)
+        >>> mul = Mult( term_1=cst_1, term_2=cst_2, error=err, digits=25)
         Traceback (most recent call last):
         ...
         ValueError: Impossible to compute the multiplication with the expected error
 
         >>> cst_1 = Constant( constant=c1, error=None, digits=32 )
         >>> cst_2 = Constant( constant=c2, error=None, digits=14 )
-        >>> mul = Mult( term_1=cst_1, term_2=cst_2, error=err, digits=28)
+        >>> mul = Mult( term_1=cst_1, term_2=cst_2, error=err, digits=26)
         >>> v_1 = cst_1.value
         >>> v_2 = cst_2.value
         >>> mul.to_c('a', 'b')
-        '((a/65536)*(b/2))'
+        '((a/524288)*(b/1))'
         >>> mul.to_py('a', 'b')
-        '((a//65536)*(b//2))'
+        '((a//524288)*(b//1))'
         >>> abs( eval(mul.to_py(v_1, v_2))/(2**mul.scale) - (c1*c2) ) <= err
+        True
+
+        >>> in_1 = Input( minimal=-1024, maximal=1024, scale=0, digits=32)
+        >>> in_2 = Input( minimal=-1, maximal=1, scale=13, digits=32)
+        >>> i1 = 213.0
+        >>> i2 = 0.3
+        >>> i_1 = i1 * (2**in_1.scale)
+        >>> i_2 = i2 * (2**in_2.scale)
+        >>> mul = Mult( term_1=in_1, term_2=in_2, error=None, digits=32)
+        >>> mul.error == (
+        ...     in_1.error * in_2.maximal * 2**in_2.scale + 
+        ...     in_2.error * in_1.maximal * 2**in_1.scale +
+        ...     in_1.error * in_2.error
+        ... )
+        True
+        >>> abs( eval(mul.to_py(i_1, i_2))/(2**mul.scale) - (i1*i2) ) <= mul.final_error()
         True
         """
         Common.__init__(self, name)
@@ -634,7 +734,7 @@ class Mult(Common):
 
         self.k = unsigned_integer_digits( self.max_value/(2**(digits-1)) )
         self.t_min = None
-        for i in range(self.k):
+        for i in range(self.k+1):
             j = self.k - i
             t_max = max( [
                 self._t(u1, u2, i, j)
@@ -654,7 +754,12 @@ class Mult(Common):
         if( not error is None and not( self.error <= error*(2**self.scale) ) ):
             raise ValueError('Impossible to compute the multiplication with the expected error')
     def _t( self, u1, u2, i, j ):
-        return abs(int(u1))//(2**i) + abs(int(u2))//(2**j) + 1
+        #return abs(int(u1))//(2**i) + abs(int(u2))//(2**j) + 1
+        return (
+           ((2**j-1)/2**j) * abs(int(u1))//(2**i) +
+            ((2**i-1)/2**i) * abs(int(u2))//(2**j) +
+            ((2**i-1)/2**i) * ((2**j-1)/2**j)
+        )
     def _compute_error(self, u1, u2 ):
         return (
             (2**self.scale_diff) * u1 + u2 -1 
