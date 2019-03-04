@@ -10,11 +10,11 @@ motor_dt = 1/motor_frequence
 digits = 32
 
 # Configure speed control
-minimal_speed = -9.0
-maximal_speed = 9.0
+minimal_speed = -10.0
+maximal_speed = 10.0
 
-minimal_theta_error=-5.0
-maximal_theta_error=5.0
+minimal_theta_error=-1.5
+maximal_theta_error=1.5
 
 k_pos_p_max = max(abs(maximal_speed), abs(minimal_speed)) / max(abs(maximal_theta_error),abs(minimal_theta_error))
 temps_reactivite = 1/10.0
@@ -27,8 +27,8 @@ k_pos_i_max = max(abs(maximal_speed), abs(minimal_speed))/(
 nb_bits_refernece_voltage = 10
 reference_voltage = 2**nb_bits_refernece_voltage
 
-minimal_speed_error = -4
-maximal_speed_error = 4
+minimal_speed_error = -2
+maximal_speed_error = 2
 
 maximal_k_speed_p = reference_voltage / max(abs(maximal_speed_error),abs(minimal_speed_error))
 
@@ -57,8 +57,15 @@ k_fem = Variable(
 dt = Constant(constant=1.0/motor_frequence, error=None, digits=digits)
 inv_dt = Constant(constant=motor_frequence, error=None, digits=digits)
 
-theta = Input( minimal=-6000.0, maximal=6000.0, scale=14, digits=digits, name="theta")
-theta_c = Variable( minimal=-6000.0, maximal=6000.0, error=None, digits=digits, name="theta_c")
+maximal_number_of_turns=24000.0
+theta = Input(
+    minimal=-maximal_number_of_turns, maximal=maximal_number_of_turns,
+    scale=14, digits=digits, name="theta"
+)
+theta_c = Variable(
+    minimal=-maximal_number_of_turns, maximal=maximal_number_of_turns,
+    error=None, digits=digits, name="theta_c"
+)
 
 neg_theta = Neg(theta)
 
@@ -124,7 +131,7 @@ speed_csg = Rescale(
     name="speed_c"
 )
 
-speed = Input( minimal=-128.0, maximal=128.0, scale=20, digits=digits, name="speed" )
+speed = Input( minimal=-64.0, maximal=64.0, scale=20, digits=digits, name="speed" )
 
 neg_speed = Neg(speed)
 

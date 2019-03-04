@@ -78,7 +78,7 @@ GLOBAL_CFLAGS   := -Os -gdwarf-2 -nostdlib \
 		   -DMETABOT_VERSION="0.0" \
 		   -DUSB_DISC_INVERTED \
 		   -DSPI1_REMAPPED
-GLOBAL_CXXFLAGS := -std=c++11 -fno-rtti -fno-exceptions -Wall $(TARGET_FLAGS)
+GLOBAL_CXXFLAGS := -Os -std=c++11 -fno-rtti -fno-exceptions -Wall $(TARGET_FLAGS)
 GLOBAL_ASFLAGS  := -x assembler-with-cpp $(TARGET_FLAGS)
 LDFLAGS  = $(TARGET_LDFLAGS) $(TOOLCHAIN_LDFLAGS) -mcpu=cortex-m3 -mthumb \
            -Xlinker --gc-sections \

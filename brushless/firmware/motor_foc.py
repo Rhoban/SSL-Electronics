@@ -125,48 +125,62 @@ alpha_user_pwm = Mult(
     name = "alpha_user_pwm"
 )
 
-phase_pwm_u = Mult(
-    term_1 = alpha_user_pwm,
-    term_2 = TrueLimits( # We know the bounds of the difference voltages.
-        term=Add(
-            term_1=phase_voltage_u,
-            term_2=Neg(min_voltage),
-            error=None, digits=digits
+phase_pwm_u = Rescale(
+    term = Mult(
+        term_1 = alpha_user_pwm,
+        term_2 = TrueLimits( # We know the bounds of the difference voltages.
+            term=Add(
+                term_1=phase_voltage_u,
+                term_2=Neg(min_voltage),
+                error=None, digits=digits
+            ),
+            minimal = -max_phase_difference,
+            maximal = max_phase_difference
         ),
-        minimal = -max_phase_difference,
-        maximal = max_phase_difference
+        error=None, digits=digits
     ),
-    error=None, digits=digits, name="phase_pwm_u"
+    scale = 0,
+    digits = digits,
+    name="phase_pwm_u"
 )
 
-phase_pwm_v = Mult(
-    term_1 = alpha_user_pwm,
-    term_2 = TrueLimits( # We know the bounds of the difference voltages.
-        term=Add(
-            term_1=phase_voltage_v,
-            term_2=Neg(min_voltage),
-            error=None, digits=digits
+phase_pwm_v = Rescale(
+    term = Mult(
+        term_1 = alpha_user_pwm,
+        term_2 = TrueLimits( # We know the bounds of the difference voltages.
+            term=Add(
+                term_1=phase_voltage_v,
+                term_2=Neg(min_voltage),
+                error=None, digits=digits
+            ),
+            minimal = -max_phase_difference,
+            maximal = max_phase_difference
         ),
-        minimal = -max_phase_difference,
-        maximal = max_phase_difference
+        error=None, digits=digits
     ),
-    error=None, digits=digits, name="phase_pwm_v"
+    scale = 0,
+    digits = digits,
+    name="phase_pwm_v"
 )
 
-phase_pwm_w = Mult(
-    term_1 = alpha_user_pwm,
-    term_2 = TrueLimits( # We know the bounds of the difference voltages.
-        term=Add(
-            term_1=phase_voltage_w,
-            term_2=Neg(min_voltage),
-            error=None, digits=digits
+phase_pwm_w = Rescale(
+    term = Mult(
+        term_1 = alpha_user_pwm,
+        term_2 = TrueLimits( # We know the bounds of the difference voltages.
+            term=Add(
+                term_1=phase_voltage_w,
+                term_2=Neg(min_voltage),
+                error=None, digits=digits
+            ),
+            minimal = -max_phase_difference,
+            maximal = max_phase_difference
         ),
-        minimal = -max_phase_difference,
-        maximal = max_phase_difference
+        error=None, digits=digits
     ),
-    error=None, digits=digits, name="phase_pwm_w"
+    scale = 0,
+    digits = digits,
+    name="phase_pwm_w"
 )
-
 
 if __name__=="__main__":
     print( phase_pwm_u )

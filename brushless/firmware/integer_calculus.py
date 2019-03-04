@@ -148,12 +148,18 @@ class Common:
     def prog(self):
         prog = []
         inputs = []
+        defines = []
         declarations = {'local':[], 'global':[] }
         yet_done = {}
-        out = self.make_program(prog, inputs, declarations, yet_done)
+        out = self.make_program(prog, inputs, declarations, defines, yet_done)
         result = "// INPUTS : "
         result += self.default_start_comment()
         for line in inputs:
+            result += line
+        result += self.default_end_comment()
+        result += "\n\n// DEFINES : "
+        result += self.default_start_comment()
+        for line in defines:
             result += line
         result += self.default_end_comment()
         result += "\n\n// GLOBAL DECLARATIONS : "
@@ -212,7 +218,7 @@ class Input(Common):
         return self.error
     def to_c(self, variable):
         return "(%s)"%(variable)
-    def make_program(self, prog, inputs, declarations, yet_done):
+    def make_program(self, prog, inputs, declarations, defines, yet_done):
         assert(not self.name is None)
         if self.name in yet_done:
             return
@@ -260,11 +266,12 @@ class Variable(Common):
     def compute_error(self, value):
         return self.error
     def to_c(self, v1):
-        return "(%s * %s)"%(v1, 2**self.scale)
-    def make_program(self, prog, inputs, declarations, yet_done):
+        return "(%s * %s_SCALE)"%(v1, self.name.upper())
+    def make_program(self, prog, inputs, declarations, defines, yet_done):
         assert(not self.name is None)
         if self.name in yet_done:
             return
+        defines.append( "\n#define %s_SCALE %s"%(self.name.upper(), 2**self.scale) )
         if not self.name is None:
             yet_done[self.name] = True
         if self.have_an_input :
@@ -290,7 +297,9 @@ class Variable(Common):
                 )
             )
             inputs.append( "\n%s = (int) %s;"%(self.name, self.to_c(name_input)) )
-            declarations['global'].append( "\nint %s = 0;"%(self.name) )
+            declarations['global'].append(
+                "\nint %s = 0*%s_SCALE;"%(self.name, self.name.upper())
+            )
         return None
 
 class Constant(Common):
@@ -382,11 +391,14 @@ class Constant(Common):
         return self.error
     def final_error(self):
         return self.error / (2**self.scale)
-    def make_program(self, prog, inputs, declarations, yet_done):
+    def make_program(self, prog, inputs, declarations, defines, yet_done):
         if self.name in yet_done:
             return
         if not self.name is None:
-            declarations[self.variable_type()].append( "\nint %s = 0;"%(self.name) );
+            defines.append( "\n#define %s_SCALE %s"%(self.name.upper(), 2**self.scale) )
+            declarations[self.variable_type()].append(
+                "\nint %s = 0*%s_SCALE;"%(self.name, self.name.upper())
+            );
             yet_done[self.name] = True
         res = None
         if self.name is None:
@@ -409,18 +421,21 @@ class Neg(Common):
         return "(-%s)"%(variable)
     def compute_error(self, *args):
         return self.terms[0].compute_error(args)
-    def make_program(self, prog, inputs, declarations, yet_done):
+    def make_program(self, prog, inputs, declarations, defines, yet_done):
         if self.name in yet_done:
             return
         if not self.name is None:
-            declarations[self.variable_type()].append( "\nint %s = 0;"%(self.name) );
+            defines.append( "\n#define %s_SCALE %s"%(self.name.upper(), 2**self.scale) )
+            declarations[self.variable_type()].append(
+                "\nint %s = 0*%s_SCALE;"%(self.name, self.name.upper())
+            );
             yet_done[self.name] = True
         res = None
         if self.terms[0].name is None:
-            variable = self.terms[0].make_program(prog, inputs, declarations, yet_done)
+            variable = self.terms[0].make_program(prog, inputs, declarations, defines, yet_done)
         else:
             variable = self.terms[0].name
-            self.terms[0].make_program(prog, inputs, declarations, yet_done)
+            self.terms[0].make_program(prog, inputs, declarations, defines, yet_done)
         if self.name is None:
             res = self.to_c(variable);
         else:
@@ -445,14 +460,14 @@ class TrueLimits(Common):
         self.digits = term.digits
     def to_c(self, *args):
         return self.terms[0].to_c(*args)
-    def make_program(self, prog, inputs, declarations, yet_done):
+    def make_program(self, prog, inputs, declarations, defines, yet_done):
         if not self.name is None:
             raise NotImplemented
         if self.terms[0].name is None:
-            variable = self.terms[0].make_program(prog, inputs, declarations, yet_done)
+            variable = self.terms[0].make_program(prog, inputs, declarations, defines, yet_done)
         else:
             variable = self.terms[0].name
-            self.terms[0].make_program(prog, inputs, declarations, yet_done)
+            self.terms[0].make_program(prog, inputs, declarations, defines, yet_done)
         return "%s"%(variable)
 
 class Min(Common):
@@ -479,23 +494,26 @@ class Min(Common):
             variable_1, self.scale/self.terms[0].scale,
             variable_2, self.scale/self.terms[1].scale,
         )
-    def make_program(self, prog, inputs, declarations, yet_done):
+    def make_program(self, prog, inputs, declarations, defines, yet_done):
         if self.name in yet_done:
             return
         if not self.name is None:
-            declarations[self.variable_type()].append( "\nint %s = 0;"%(self.name) );
+            defines.append( "\n#define %s_SCALE %s"%(self.name.upper(), 2**self.scale) )
+            declarations[self.variable_type()].append(
+                "\nint %s = 0*%s_SCALE;"%(self.name, self.name.upper())
+            );
             yet_done[self.name] = True
         res = None
         if self.terms[0].name is None:
-            variable_1 = self.terms[0].make_program(prog, inputs, declarations, yet_done)
+            variable_1 = self.terms[0].make_program(prog, inputs, declarations, defines, yet_done)
         else:
             variable_1 = self.terms[0].name
-            self.terms[0].make_program(prog, inputs, declarations, yet_done)
+            self.terms[0].make_program(prog, inputs, declarations, defines, yet_done)
         if self.terms[1].name is None:
-            variable_2 = self.terms[1].make_program(prog, inputs, declarations, yet_done)
+            variable_2 = self.terms[1].make_program(prog, inputs, declarations, defines, yet_done)
         else:
             variable_2 = self.terms[1].name
-            self.terms[1].make_program(prog, inputs, declarations, yet_done)
+            self.terms[1].make_program(prog, inputs, declarations, defines, yet_done)
         if self.name is None:
             res = self.to_c(variable_1, variable_2);
         else:
@@ -609,23 +627,26 @@ class Add(Common):
             self.terms[0].compute_error(args[0]) + 
             self.terms[1].compute_error(args[1])
         )
-    def make_program(self, prog, inputs, declarations, yet_done):
+    def make_program(self, prog, inputs, declarations, defines, yet_done):
         if self.name in yet_done:
             return
         if not self.name is None:
-            declarations[self.variable_type()].append( "\nint %s = 0;"%(self.name) );
+            defines.append( "\n#define %s_SCALE %s"%(self.name.upper(), 2**self.scale) )
+            declarations[self.variable_type()].append(
+                "\nint %s = 0*%s_SCALE;"%(self.name, self.name.upper())
+            );
             yet_done[self.name] = True
         res = None
         if self.terms[0].name is None:
-            variable_1 = self.terms[0].make_program(prog, inputs, declarations, yet_done)
+            variable_1 = self.terms[0].make_program(prog, inputs, declarations, defines, yet_done)
         else:
             variable_1 = self.terms[0].name
-            self.terms[0].make_program(prog, inputs, declarations, yet_done)
+            self.terms[0].make_program(prog, inputs, declarations, defines, yet_done)
         if self.terms[1].name is None:
-            variable_2 = self.terms[1].make_program(prog, inputs, declarations, yet_done)
+            variable_2 = self.terms[1].make_program(prog, inputs, declarations, defines, yet_done)
         else:
             variable_2 = self.terms[1].name
-            self.terms[1].make_program(prog, inputs, declarations, yet_done)
+            self.terms[1].make_program(prog, inputs, declarations, defines, yet_done)
         if self.name is None:
             res = self.to_c(variable_1, variable_2);
         else:
@@ -768,23 +789,26 @@ class Mult(Common):
         return "((%s/%s)*(%s/%s))"%(
             variable_1, 2**self.i, variable_2, 2**self.j
         )
-    def make_program(self, prog, inputs, declarations, yet_done):
+    def make_program(self, prog, inputs, declarations, defines, yet_done):
         if self.name in yet_done:
             return
         if not self.name is None:
-            declarations[self.variable_type()].append( "\nint %s = 0;"%(self.name) );
+            defines.append( "\n#define %s_SCALE %s"%(self.name.upper(), 2**self.scale) )
+            declarations[self.variable_type()].append(
+                "\nint %s = 0*%s_SCALE;"%(self.name, self.name.upper())
+            );
             yet_done[self.name] = True
         res = None
         if self.terms[0].name is None:
-            variable_1 = self.terms[0].make_program(prog, inputs, declarations, yet_done)
+            variable_1 = self.terms[0].make_program(prog, inputs, declarations, defines, yet_done)
         else:
             variable_1 = self.terms[0].name
-            self.terms[0].make_program(prog, inputs, declarations, yet_done)
+            self.terms[0].make_program(prog, inputs, declarations, defines, yet_done)
         if self.terms[1].name is None:
-            variable_2 = self.terms[1].make_program(prog, inputs, declarations, yet_done)
+            variable_2 = self.terms[1].make_program(prog, inputs, declarations, defines, yet_done)
         else:
             variable_2 = self.terms[1].name
-            self.terms[1].make_program(prog, inputs, declarations, yet_done)
+            self.terms[1].make_program(prog, inputs, declarations, defines, yet_done)
         if self.name is None:
             res = self.to_c(variable_1, variable_2);
         else:
@@ -807,18 +831,21 @@ class Limit(Common):
         return "( (%s > %s) ? %s : ( (%s < %s) ? %s : %s ) )"%(
             variable, max_s, max_s, variable, min_s, min_s, variable
         )
-    def make_program(self, prog, inputs, declarations, yet_done):
+    def make_program(self, prog, inputs, declarations, defines, yet_done):
         if self.name in yet_done:
             return
         if not self.name is None:
-            declarations[self.variable_type()].append( "\nint %s = 0;"%(self.name) );
+            defines.append( "\n#define %s_SCALE %s"%(self.name.upper(), 2**self.scale) )
+            declarations[self.variable_type()].append(
+                "\nint %s = 0*%s_SCALE;"%(self.name, self.name.upper())
+            );
             yet_done[self.name] = True
         res = None
         if self.terms[0].name is None:
-            variable = self.terms[0].make_program(prog, inputs, declarations, yet_done)
+            variable = self.terms[0].make_program(prog, inputs, declarations, defines, yet_done)
         else:
             variable = self.terms[0].name
-            self.terms[0].make_program(prog, inputs, declarations, yet_done)
+            self.terms[0].make_program(prog, inputs, declarations, defines, yet_done)
         if self.name is None:
             res = self.to_c(variable)
         else:
@@ -851,18 +878,21 @@ class Rescale(Common):
             return "(%s*%s)"%(variable, 2**self.k)
         else:
             return "(%s/%s)"%(variable, 2**self.k)
-    def make_program(self, prog, inputs, declarations, yet_done):
+    def make_program(self, prog, inputs, declarations, defines, yet_done):
         if self.name in yet_done:
             return
         if not self.name is None:
             yet_done[self.name] = True
-            declarations[self.variable_type()].append( "\nint %s = 0;"%(self.name) );
+            defines.append( "\n#define %s_SCALE %s"%(self.name.upper(), 2**self.scale) )
+            declarations[self.variable_type()].append(
+                "\nint %s = 0*%s_SCALE;"%(self.name, self.name.upper())
+            );
         res = None
         if self.terms[0].name is None:
-            variable = self.terms[0].make_program(prog, inputs, declarations, yet_done)
+            variable = self.terms[0].make_program(prog, inputs, declarations, defines, yet_done)
         else:
             variable = self.terms[0].name
-            self.terms[0].make_program(prog, inputs, declarations, yet_done)
+            self.terms[0].make_program(prog, inputs, declarations, defines, yet_done)
         if self.name is None:
             res = self.to_c(variable)
         else:
@@ -909,8 +939,8 @@ class Accumulator(Common):
                 )
             )
         )
-    def make_program(self, prog, inputs, declarations, yet_done):
-        return self.accumulator.make_program(prog, inputs, declarations, yet_done)
+    def make_program(self, prog, inputs, declarations, defines, yet_done):
+        return self.accumulator.make_program(prog, inputs, declarations, defines, yet_done)
 
 class Scale(Common):
     def __init__(self, term, minimal, maximal, digits, name=None):
@@ -945,18 +975,19 @@ class Scale(Common):
             self.f1.to_c( self.alpha.to_c(), variable ),
             self.beta.to_c()
         )
-    def make_program(self, prog, inputs, declarations, yet_done):
+    def make_program(self, prog, inputs, declarations, defines, yet_done):
         if self.name in yet_done:
             return
         if not self.name is None:
+            defines.append( "\n#define %s_SCALE %s"%(self.name.upper(), 2**self.scale) )
             declarations[self.variable_type()].append( "\nint %s = 0;"%(self.name) );
             yet_done[self.name] = True
         res = None
         if self.terms[0].name is None:
-            variable = self.terms[0].make_program(prog, inputs, declarations, yet_done)
+            variable = self.terms[0].make_program(prog, inputs, declarations, defines, yet_done)
         else:
             variable = self.terms[0].name
-            self.terms[0].make_program(prog, inputs, declarations, yet_done)
+            self.terms[0].make_program(prog, inputs, declarations, defines, yet_done)
         if self.name is None:
             res = self.to_c(variable)
         else:
