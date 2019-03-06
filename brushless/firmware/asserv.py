@@ -4,7 +4,7 @@ from integer_calculus import *
 
 #set_debug_mode( configure_pid_coe_to_max = True )
 
-motor_frequence = 800.0
+motor_frequence = 1200.0
 motor_dt = 1/motor_frequence
 
 digits = 32

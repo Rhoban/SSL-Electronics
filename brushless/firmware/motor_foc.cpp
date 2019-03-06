@@ -22,6 +22,7 @@ void display_warning();
 static bool motor_on = false;
 
 static unsigned int count_irq = 0;
+static unsigned int count_irq_2 = 0;
 static bool motor_flag = false;
 static bool serv_flag = false;
 
@@ -33,48 +34,18 @@ bool get_serv_flag(){
     return serv_flag;
 }
 
-void motor_irq(){
-    count_irq = (count_irq + 1)%(MOTOR_SUB_SAMPLE);
-    if( ! count_irq ){
-        if( motor_flag ){
-            security_set_warning(WARNING_MOTOR_LAG);
-        }
-        if( serv_flag ){
-            security_set_warning(WARNING_SERVO_LAG);
-        }
-        motor_flag = true;
-        serv_flag = true;
-    }
-}
+static int sd_pin_1;
+static int in_pin_1;
+static int pwm_1;
 
-static void _init_timer(int number)
-{
-    HardwareTimer timer(number);
+static int sd_pin_2;
+static int in_pin_2;
+static int pwm_2;
 
-    // Configuring timer
-    timer.pause();
-    timer.setPrescaleFactor(1);
-    timer.setOverflow(3000); // 24Khz
-    timer.refresh();
+static int sd_pin_low;
+static int in_pin_low;
 
-    if (number == 3) {
-        timer.setMode(TIMER_CH2, TIMER_OUTPUT_COMPARE);
-        timer.setCompare(TIMER_CH2, 1);
-        timer.attachInterrupt(TIMER_CH2, motor_irq);
-    }
-
-    timer.resume();
-}
-
-void disable_all_motors(){
-    pwmWrite(U_IN_PIN, 0);
-    pwmWrite(V_IN_PIN, 0);
-    pwmWrite(W_IN_PIN, 0);
-    
-    digitalWrite(U_SD_PIN, LOW);
-    digitalWrite(V_SD_PIN, LOW);
-    digitalWrite(W_SD_PIN, LOW);
-} 
+static int lock=true;
 
 inline void apply_pwm( int low_pin, int high_pin, int pwm ){
     //
@@ -98,6 +69,154 @@ inline void apply_pwm( int low_pin, int high_pin, int pwm ){
     // We apply pwm
     digitalWrite(low_pin, HIGH);
     pwmWrite(high_pin, pwm);
+}
+
+void motor_irq(){
+    count_irq++;
+    if( count_irq == MOTOR_SUB_SAMPLE ) count_irq = 0;
+    count_irq_2++;
+    if( ! count_irq ){
+        if( motor_flag ){
+            security_set_warning(WARNING_MOTOR_LAG);
+        }
+        if( serv_flag ){
+            security_set_warning(WARNING_SERVO_LAG);
+        }
+        motor_flag = true;
+        serv_flag = true;
+    }
+    #define PWM_SHIFT 0
+    if(count_irq_2%SWAP_PWM_FREQUENCE == 0){
+        if(motor_on){
+            if( (count_irq_2/SWAP_PWM_FREQUENCE)%2 == 0 ){
+                if( !lock ){
+                    apply_pwm(sd_pin_low, in_pin_low, PWM_SHIFT);
+                    apply_pwm(sd_pin_1, in_pin_1, PWM_SHIFT);
+                    apply_pwm(sd_pin_2, in_pin_2, pwm_2);
+                }
+            }else{
+                if( !lock ){
+                    apply_pwm(sd_pin_low, in_pin_low, PWM_SHIFT);
+                    apply_pwm(sd_pin_2, in_pin_2, PWM_SHIFT);
+                    apply_pwm(sd_pin_1, in_pin_1, pwm_1);
+                }
+            }
+        }
+    }
+}
+
+void disable_all_motors(){
+    pwmWrite(U_IN_PIN, 0);
+    pwmWrite(V_IN_PIN, 0);
+    pwmWrite(W_IN_PIN, 0);
+    
+    digitalWrite(U_SD_PIN, LOW);
+    digitalWrite(V_SD_PIN, LOW);
+    digitalWrite(W_SD_PIN, LOW);
+} 
+
+void set_pwm(int phase_pwm_u, int phase_pwm_v, int phase_pwm_w){ 
+    // We always want to have a phase on the mass, so we control, first, 
+    // the phase going to the mass.
+    #define PWM_MAX_FOR_CENTER_ALIGNED_PWM 1733 // Max value of the pwm for a 
+        // phase.
+        // This value is computed to avoid that high levels of two different
+        // phases occur at the same time (the two pwms should be in
+        // phase opposition by using the center-alingned mode of the STM32FXXX).
+        // The complete calculus of this value is given in the comments of
+        // the function : void control_motor_with_vectorial( int theta ).
+        // This value should be round up because, it is used in the denominator
+        // for the calculus of the final pwm. And that value have to be lesser 
+        // than PWM_MAX.
+    static_assert(
+        PWM_MAX_FOR_CENTER_ALIGNED_PWM * PWM_MAX_FOR_CENTER_ALIGNED_PWM >= 
+        PWM_SUPREMUM*PWM_SUPREMUM/3, ""
+    );
+    static_assert(
+        (PWM_MAX_FOR_CENTER_ALIGNED_PWM-1)*(PWM_MAX_FOR_CENTER_ALIGNED_PWM-1)
+        < PWM_SUPREMUM*PWM_SUPREMUM/3, "" 
+    );
+    // TODO : Replace the following code by a code that use the center-aligned
+    // mode of the STM32FXXX . We can improve theneed to be replaced by using the mod
+    if( phase_pwm_u==0 ){
+        lock = true;
+        sd_pin_low = U_SD_PIN;
+        in_pin_low = U_IN_PIN;
+
+        sd_pin_1 = V_SD_PIN;
+        in_pin_1 = V_IN_PIN;
+        pwm_1 = (phase_pwm_v*(PWM_MAX-PWM_SHIFT))/PWM_MAX_FOR_CENTER_ALIGNED_PWM;
+
+        sd_pin_2 = W_SD_PIN;
+        in_pin_2 = W_IN_PIN;
+        pwm_2 = (phase_pwm_w*(PWM_MAX-PWM_SHIFT))/PWM_MAX_FOR_CENTER_ALIGNED_PWM;
+        lock = false;
+    } else if( phase_pwm_v==0 ){
+        lock = true;
+        sd_pin_low = V_SD_PIN;
+        in_pin_low = V_IN_PIN;
+
+        sd_pin_1 = U_SD_PIN;
+        in_pin_1 = U_IN_PIN;
+        pwm_1 = (phase_pwm_u*(PWM_MAX-PWM_SHIFT))/PWM_MAX_FOR_CENTER_ALIGNED_PWM;
+
+        sd_pin_2 = W_SD_PIN;
+        in_pin_2 = W_IN_PIN;
+        pwm_2 = (phase_pwm_w*(PWM_MAX-PWM_SHIFT))/PWM_MAX_FOR_CENTER_ALIGNED_PWM;
+        lock = false;
+    } else if( phase_pwm_w==0 ){
+        lock = true;
+        sd_pin_low = W_SD_PIN;
+        in_pin_low = W_IN_PIN;
+        
+        sd_pin_1 = U_SD_PIN;
+        in_pin_1 = U_IN_PIN;
+        pwm_1 = (phase_pwm_u*(PWM_MAX-PWM_SHIFT))/PWM_MAX_FOR_CENTER_ALIGNED_PWM;
+
+        sd_pin_2 = V_SD_PIN;
+        in_pin_2 = V_IN_PIN;
+        pwm_2 = (phase_pwm_v*(PWM_MAX-PWM_SHIFT))/PWM_MAX_FOR_CENTER_ALIGNED_PWM;
+        lock = false;
+    } else {
+        security_set_error(SECURITY_NO_PHASE_IS_ON_THE_MASS);
+        motor_on=false;
+        disable_all_motors();
+    }
+//    if( phase_pwm_u==0 ){
+//        apply_pwm(U_SD_PIN, U_IN_PIN, phase_pwm_u);
+//        apply_pwm(V_SD_PIN, V_IN_PIN, phase_pwm_v);
+//        apply_pwm(W_SD_PIN, W_IN_PIN, phase_pwm_w);
+//    } else if( phase_pwm_v==0 ){
+//        apply_pwm(V_SD_PIN, V_IN_PIN, phase_pwm_v);
+//        apply_pwm(W_SD_PIN, W_IN_PIN, phase_pwm_w);
+//        apply_pwm(U_SD_PIN, U_IN_PIN, phase_pwm_u);
+//    } else if( phase_pwm_w==0 ){
+//        apply_pwm(W_SD_PIN, W_IN_PIN, phase_pwm_w);
+//        apply_pwm(U_SD_PIN, U_IN_PIN, phase_pwm_u);
+//        apply_pwm(V_SD_PIN, V_IN_PIN, phase_pwm_v);
+//    } else {
+//        security_set_error(SECURITY_NO_PHASE_IS_ON_THE_MASS);
+//        disable_all_motors();
+//    }
+}
+
+static void _init_timer(int number)
+{
+    HardwareTimer timer(number);
+
+    // Configuring timer
+    timer.pause();
+    timer.setPrescaleFactor(PWM_PRESCALE_FACTOR);
+    timer.setOverflow(PWM_OVERFLOW); // 24Khz
+    timer.refresh();
+
+    if (number == 3) {
+        timer.setMode(TIMER_CH2, TIMER_OUTPUT_COMPARE);
+        timer.setCompare(TIMER_CH2, 1);
+        timer.attachInterrupt(TIMER_CH2, motor_irq);
+    }
+
+    timer.resume();
 }
 
 void motor_foc_init()
@@ -487,24 +606,7 @@ void control_motor_with_vectorial( int theta ){
     if (!motor_on) {
         disable_all_motors();
     } else {
-        // We always want to have a phase on the mass, so we control, first, 
-        // the phase going to the mass.
-        if( phase_pwm_u==0 ){
-            apply_pwm(U_SD_PIN, U_IN_PIN, phase_pwm_u);
-            apply_pwm(V_SD_PIN, V_IN_PIN, phase_pwm_v);
-            apply_pwm(W_SD_PIN, W_IN_PIN, phase_pwm_w);
-        } else if( phase_pwm_v==0 ){
-            apply_pwm(V_SD_PIN, V_IN_PIN, phase_pwm_v);
-            apply_pwm(W_SD_PIN, W_IN_PIN, phase_pwm_w);
-            apply_pwm(U_SD_PIN, U_IN_PIN, phase_pwm_u);
-        } else if( phase_pwm_w==0 ){
-            apply_pwm(W_SD_PIN, W_IN_PIN, phase_pwm_w);
-            apply_pwm(U_SD_PIN, U_IN_PIN, phase_pwm_u);
-            apply_pwm(V_SD_PIN, V_IN_PIN, phase_pwm_v);
-        } else {
-            security_set_error(SECURITY_NO_PHASE_IS_ON_THE_MASS);
-            disable_all_motors();
-        }
+        set_pwm(phase_pwm_u, phase_pwm_v, phase_pwm_w);
     }
 }
 
