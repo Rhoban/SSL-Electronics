@@ -13,8 +13,8 @@ digits = 32
 minimal_speed = -10.0
 maximal_speed = 10.0
 
-minimal_theta_error=-1.5
-maximal_theta_error=1.5
+minimal_theta_error=-.6
+maximal_theta_error=.6
 
 k_pos_p_max = max(abs(maximal_speed), abs(minimal_speed)) / max(abs(maximal_theta_error),abs(minimal_theta_error))
 temps_reactivite = 1/10.0
@@ -27,8 +27,8 @@ k_pos_i_max = max(abs(maximal_speed), abs(minimal_speed))/(
 nb_bits_refernece_voltage = 10
 reference_voltage = 2**nb_bits_refernece_voltage
 
-minimal_speed_error = -2
-maximal_speed_error = 2
+minimal_speed_error = -3
+maximal_speed_error = 3
 
 maximal_k_speed_p = reference_voltage / max(abs(maximal_speed_error),abs(minimal_speed_error))
 
