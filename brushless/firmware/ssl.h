@@ -15,11 +15,11 @@
     #define NB_POSITIVE_MAGNETS 7
     #define REVERSE_PHASE
     #define MANUAL_SPEED true
-    #define KFEM 0.0// //55.0 //29.6
-    #define K_SPEED_P 0.0 //200.0 //180
-    #define K_SPEED_I 0.0 //80.0 //150
-    #define K_POS_P 0.0// 6.66 //1.5 // 1.5
-    #define K_POS_I 0.0 //5.0 //0.1 // 0.1
+    #define KFEM 55.0 //29.6
+    #define K_SPEED_P 200.0 //180
+    #define K_SPEED_I 80.0 //150
+    #define K_POS_P 6.66 //1.5 // 1.5
+    #define K_POS_I 5.0 //0.1 // 0.1
 #endif
 
 #ifdef CYCLOIDE_OLD
