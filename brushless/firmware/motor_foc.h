@@ -22,9 +22,9 @@ static_assert(
     PWM_FREQUENCE * PWM_PRESCALE_FACTOR * PWM_OVERFLOW == CLOCK_FREQUENCE,
     ""
 );
-#define MOTOR_FREQUENCE 1200
+#define MOTOR_FREQUENCE 800
 #define SWAP_PWM_FREQUENCE 1
-#define MOTOR_SUB_SAMPLE 20
+#define MOTOR_SUB_SAMPLE 30
 
 
 static_assert( MOTOR_SUB_SAMPLE>=2, "Shanon !");

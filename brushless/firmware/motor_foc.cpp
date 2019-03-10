@@ -71,6 +71,7 @@ inline void apply_pwm( int low_pin, int high_pin, int pwm ){
     pwmWrite(high_pin, pwm);
 }
 
+
 void motor_irq(){
     count_irq++;
     if( count_irq == MOTOR_SUB_SAMPLE ) count_irq = 0;
@@ -85,24 +86,26 @@ void motor_irq(){
         motor_flag = true;
         serv_flag = true;
     }
-    #define PWM_SHIFT 0
-    if(count_irq_2%SWAP_PWM_FREQUENCE == 0){
-        if(motor_on){
-            if( (count_irq_2/SWAP_PWM_FREQUENCE)%2 == 0 ){
-                if( !lock ){
-                    apply_pwm(sd_pin_low, in_pin_low, PWM_SHIFT);
-                    apply_pwm(sd_pin_1, in_pin_1, PWM_SHIFT);
-                    apply_pwm(sd_pin_2, in_pin_2, pwm_2);
-                }
-            }else{
-                if( !lock ){
-                    apply_pwm(sd_pin_low, in_pin_low, PWM_SHIFT);
-                    apply_pwm(sd_pin_2, in_pin_2, PWM_SHIFT);
-                    apply_pwm(sd_pin_1, in_pin_1, pwm_1);
+    #define PWM_SHIFT 0 // 150
+    #ifdef PHASE_OPPOSITION 
+        if(count_irq_2%SWAP_PWM_FREQUENCE == 0){
+            if(motor_on){
+                if( (count_irq_2/SWAP_PWM_FREQUENCE)%2 == 0 ){
+                    if( !lock ){
+                        apply_pwm(sd_pin_low, in_pin_low, PWM_SHIFT);
+                        apply_pwm(sd_pin_1, in_pin_1, PWM_SHIFT);
+                        apply_pwm(sd_pin_2, in_pin_2, pwm_2);
+                    }
+                }else{
+                    if( !lock ){
+                        apply_pwm(sd_pin_low, in_pin_low, PWM_SHIFT);
+                        apply_pwm(sd_pin_2, in_pin_2, PWM_SHIFT);
+                        apply_pwm(sd_pin_1, in_pin_1, pwm_1);
+                    }
                 }
             }
         }
-    }
+    #endif
 }
 
 void disable_all_motors(){
@@ -136,68 +139,72 @@ void set_pwm(int phase_pwm_u, int phase_pwm_v, int phase_pwm_w){
         (PWM_MAX_FOR_CENTER_ALIGNED_PWM-1)*(PWM_MAX_FOR_CENTER_ALIGNED_PWM-1)
         < PWM_SUPREMUM*PWM_SUPREMUM/3, "" 
     );
-    // TODO : Replace the following code by a code that use the center-aligned
-    // mode of the STM32FXXX . We can improve theneed to be replaced by using the mod
-    if( phase_pwm_u==0 ){
-        lock = true;
-        sd_pin_low = U_SD_PIN;
-        in_pin_low = U_IN_PIN;
 
-        sd_pin_1 = V_SD_PIN;
-        in_pin_1 = V_IN_PIN;
-        pwm_1 = (phase_pwm_v*(PWM_MAX-PWM_SHIFT))/PWM_MAX_FOR_CENTER_ALIGNED_PWM;
+    #ifdef PHASE_OPPOSITION
+        // TODO : Replace the following code by a code that use the center-aligned
+        // mode of the STM32FXXX . We can improve theneed to be replaced by using the mod
+        if( phase_pwm_u==0 ){
+            lock = true;
+            sd_pin_low = U_SD_PIN;
+            in_pin_low = U_IN_PIN;
 
-        sd_pin_2 = W_SD_PIN;
-        in_pin_2 = W_IN_PIN;
-        pwm_2 = (phase_pwm_w*(PWM_MAX-PWM_SHIFT))/PWM_MAX_FOR_CENTER_ALIGNED_PWM;
-        lock = false;
-    } else if( phase_pwm_v==0 ){
-        lock = true;
-        sd_pin_low = V_SD_PIN;
-        in_pin_low = V_IN_PIN;
+            sd_pin_1 = V_SD_PIN;
+            in_pin_1 = V_IN_PIN;
+            pwm_1 = (phase_pwm_v*(PWM_MAX-PWM_SHIFT))/PWM_MAX_FOR_CENTER_ALIGNED_PWM;
 
-        sd_pin_1 = U_SD_PIN;
-        in_pin_1 = U_IN_PIN;
-        pwm_1 = (phase_pwm_u*(PWM_MAX-PWM_SHIFT))/PWM_MAX_FOR_CENTER_ALIGNED_PWM;
+            sd_pin_2 = W_SD_PIN;
+            in_pin_2 = W_IN_PIN;
+            pwm_2 = (phase_pwm_w*(PWM_MAX-PWM_SHIFT))/PWM_MAX_FOR_CENTER_ALIGNED_PWM;
+            lock = false;
+        } else if( phase_pwm_v==0 ){
+            lock = true;
+            sd_pin_low = V_SD_PIN;
+            in_pin_low = V_IN_PIN;
 
-        sd_pin_2 = W_SD_PIN;
-        in_pin_2 = W_IN_PIN;
-        pwm_2 = (phase_pwm_w*(PWM_MAX-PWM_SHIFT))/PWM_MAX_FOR_CENTER_ALIGNED_PWM;
-        lock = false;
-    } else if( phase_pwm_w==0 ){
-        lock = true;
-        sd_pin_low = W_SD_PIN;
-        in_pin_low = W_IN_PIN;
-        
-        sd_pin_1 = U_SD_PIN;
-        in_pin_1 = U_IN_PIN;
-        pwm_1 = (phase_pwm_u*(PWM_MAX-PWM_SHIFT))/PWM_MAX_FOR_CENTER_ALIGNED_PWM;
+            sd_pin_1 = U_SD_PIN;
+            in_pin_1 = U_IN_PIN;
+            pwm_1 = (phase_pwm_u*(PWM_MAX-PWM_SHIFT))/PWM_MAX_FOR_CENTER_ALIGNED_PWM;
 
-        sd_pin_2 = V_SD_PIN;
-        in_pin_2 = V_IN_PIN;
-        pwm_2 = (phase_pwm_v*(PWM_MAX-PWM_SHIFT))/PWM_MAX_FOR_CENTER_ALIGNED_PWM;
-        lock = false;
-    } else {
-        security_set_error(SECURITY_NO_PHASE_IS_ON_THE_MASS);
-        motor_on=false;
-        disable_all_motors();
-    }
-//    if( phase_pwm_u==0 ){
-//        apply_pwm(U_SD_PIN, U_IN_PIN, phase_pwm_u);
-//        apply_pwm(V_SD_PIN, V_IN_PIN, phase_pwm_v);
-//        apply_pwm(W_SD_PIN, W_IN_PIN, phase_pwm_w);
-//    } else if( phase_pwm_v==0 ){
-//        apply_pwm(V_SD_PIN, V_IN_PIN, phase_pwm_v);
-//        apply_pwm(W_SD_PIN, W_IN_PIN, phase_pwm_w);
-//        apply_pwm(U_SD_PIN, U_IN_PIN, phase_pwm_u);
-//    } else if( phase_pwm_w==0 ){
-//        apply_pwm(W_SD_PIN, W_IN_PIN, phase_pwm_w);
-//        apply_pwm(U_SD_PIN, U_IN_PIN, phase_pwm_u);
-//        apply_pwm(V_SD_PIN, V_IN_PIN, phase_pwm_v);
-//    } else {
-//        security_set_error(SECURITY_NO_PHASE_IS_ON_THE_MASS);
-//        disable_all_motors();
-//    }
+            sd_pin_2 = W_SD_PIN;
+            in_pin_2 = W_IN_PIN;
+            pwm_2 = (phase_pwm_w*(PWM_MAX-PWM_SHIFT))/PWM_MAX_FOR_CENTER_ALIGNED_PWM;
+            lock = false;
+        } else if( phase_pwm_w==0 ){
+            lock = true;
+            sd_pin_low = W_SD_PIN;
+            in_pin_low = W_IN_PIN;
+            
+            sd_pin_1 = U_SD_PIN;
+            in_pin_1 = U_IN_PIN;
+            pwm_1 = (phase_pwm_u*(PWM_MAX-PWM_SHIFT))/PWM_MAX_FOR_CENTER_ALIGNED_PWM;
+
+            sd_pin_2 = V_SD_PIN;
+            in_pin_2 = V_IN_PIN;
+            pwm_2 = (phase_pwm_v*(PWM_MAX-PWM_SHIFT))/PWM_MAX_FOR_CENTER_ALIGNED_PWM;
+            lock = false;
+        } else {
+            security_set_error(SECURITY_NO_PHASE_IS_ON_THE_MASS);
+            motor_on=false;
+            disable_all_motors();
+        }
+    #else
+        if( phase_pwm_u==0 ){
+            apply_pwm(U_SD_PIN, U_IN_PIN, phase_pwm_u+PWM_SHIFT);
+            apply_pwm(V_SD_PIN, V_IN_PIN, PWM_SHIFT+(phase_pwm_v*(PWM_MAX-PWM_SHIFT))/PWM_MAX_FOR_CENTER_ALIGNED_PWM);
+            apply_pwm(W_SD_PIN, W_IN_PIN, PWM_SHIFT+(phase_pwm_w*(PWM_MAX-PWM_SHIFT))/PWM_MAX_FOR_CENTER_ALIGNED_PWM);
+        } else if( phase_pwm_v==0 ){
+            apply_pwm(V_SD_PIN, V_IN_PIN, phase_pwm_v+PWM_SHIFT);
+            apply_pwm(W_SD_PIN, W_IN_PIN, PWM_SHIFT+(phase_pwm_w*(PWM_MAX-PWM_SHIFT))/PWM_MAX_FOR_CENTER_ALIGNED_PWM);
+            apply_pwm(U_SD_PIN, U_IN_PIN, PWM_SHIFT+(phase_pwm_u*(PWM_MAX-PWM_SHIFT))/PWM_MAX_FOR_CENTER_ALIGNED_PWM);
+        } else if( phase_pwm_w==0 ){
+            apply_pwm(W_SD_PIN, W_IN_PIN, phase_pwm_w+PWM_SHIFT);
+            apply_pwm(U_SD_PIN, U_IN_PIN, PWM_SHIFT+(phase_pwm_u*(PWM_MAX-PWM_SHIFT))/PWM_MAX_FOR_CENTER_ALIGNED_PWM);
+            apply_pwm(V_SD_PIN, V_IN_PIN, PWM_SHIFT+(phase_pwm_v*(PWM_MAX-PWM_SHIFT))/PWM_MAX_FOR_CENTER_ALIGNED_PWM);
+        } else {
+            security_set_error(SECURITY_NO_PHASE_IS_ON_THE_MASS);
+            disable_all_motors();
+        }
+    #endif
 }
 
 static void _init_timer(int number)
@@ -625,6 +632,9 @@ static int all_angle[RESOLUTION];
 static int precision = 4;
 static int nb_turn = 0;
 
+TERMINAL_PARAMETER_FLOAT(REF, "PID P", 0.0);
+
+
 //#define FULL_TARE_PROCESS
 
 int tare_process(){
@@ -637,6 +647,7 @@ int tare_process(){
             motor_on = true,
             last_tare_time = millis();
             direct_quadrature_voltage_set(REFERENCE_VOLTAGE, 0);
+            //direct_quadrature_voltage_set(REF, 0);
             save_user_pwm = user_pwm;
             user_pwm = CONFIG_PWM*USER_PWM_SCALE;
             tare_is_set = true;
@@ -963,12 +974,17 @@ TERMINAL_COMMAND(motor_info, "Display")
     terminal_io()->print("w pwm : ");
     terminal_io()->println(phase_pwm_w);
 
+    terminal_io()->print("pwm1 : ");
+    terminal_io()->println(pwm_1);
+    terminal_io()->print("pwm2 : ");
+    terminal_io()->println(pwm_2);
+
     terminal_io()->print("user pwm : ");
-    terminal_io()->print(user_pwm);
+    terminal_io()->println(user_pwm);
     terminal_io()->print("alpha pwm : ");
-    terminal_io()->print(alpha_pwm);
+    terminal_io()->println(alpha_pwm);
     terminal_io()->print("alpha pwm user : ");
-    terminal_io()->print(alpha_user_pwm);
+    terminal_io()->println(alpha_user_pwm);
 
     terminal_io()->print("theta park : ");
     terminal_io()->println(theta_park);
