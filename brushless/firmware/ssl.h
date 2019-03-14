@@ -1,6 +1,6 @@
-//#define MOTEUR_BANC
+#define MOTEUR_BANC
 //#define CYCLOIDE_PHASE_OPPOSITION
-#define CYCLOIDE
+//#define CYCLOIDE
 
 
 #define MAX_THETA_LIMIT 6.15
@@ -62,10 +62,10 @@
     #define DO_NOT_USE_HALL
     //#define STOP_OUTSIDE_LIMITS 
     #define MOTOR_NAME "MOTEUR_BANC"
-    #define CONFIG_PWM 80
+    #define CONFIG_PWM 30
     #define NB_POSITIVE_MAGNETS 8
     #define MANUAL_SPEED true //false
-    #define KFEM 61 // 44.1
+    #define KFEM 0 // 44.1
     #define K_SPEED_P 0 // 310
     #define K_SPEED_I 0 // 150
     #define K_POS_P 0 // 1.5

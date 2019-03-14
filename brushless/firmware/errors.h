@@ -35,6 +35,8 @@ static inline const char *driver_warning(int code)
         return "Invalide range";
     } else if( code == WARNING_SERVO_LAG ){
         return "PWM servo LAG";
+    } else if( code == WARNING_ENCODER_LAG ){
+        return "Encoder LAG";
     }
     return "?";
 }

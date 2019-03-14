@@ -619,7 +619,7 @@ void control_motor_with_vectorial( int theta ){
 
 
 int rotor_angle(){
-    return encoder_to_int() - angle_origin;
+    return encoder_position() - angle_origin;
 }
 
 int nb_pass = 0;
@@ -646,7 +646,7 @@ int tare_process(){
             theta = 0;
             motor_on = true,
             last_tare_time = millis();
-            direct_quadrature_voltage_set(REFERENCE_VOLTAGE, 0);
+            direct_quadrature_voltage_set(REFERENCE_VOLTAGE/4, 0);
             //direct_quadrature_voltage_set(REF, 0);
             save_user_pwm = user_pwm;
             user_pwm = CONFIG_PWM*USER_PWM_SCALE;
@@ -656,7 +656,7 @@ int tare_process(){
         case DEFINE_ORIGIN:
             theta = 0;
             if( millis() - last_tare_time > 1000 ){
-                angle_origin = encoder_to_int();
+                angle_origin = encoder_position();
                 #ifdef FULL_TARE_PROCESS 
                 tare_state = TARE_ANGLE;
                 #else

@@ -408,6 +408,45 @@ class Constant(Common):
             self.debug(prog)
         return res
 
+
+class Eq(Common):
+    def __init__( self, term, name=None ):
+        Common.__init__(self, name)
+        self.terms = [term]
+        self.minimal = term.minimal
+        self.maximal = term.maximal
+        self.error = term.error
+        self.scale = term.scale
+        self.digits = term.digits
+    def to_c(self, variable):
+        return "(%s)"%(variable)
+    def compute_error(self, *args):
+        return self.terms[0].compute_error(args)
+    def make_program(self, prog, inputs, declarations, defines, yet_done):
+        if self.name in yet_done:
+            return
+        if not self.name is None:
+            defines.append( "\n#define %s_SCALE %s"%(self.name.upper(), 2**self.scale) )
+            declarations[self.variable_type()].append(
+                "\nint %s = 0*%s_SCALE;"%(self.name, self.name.upper())
+            );
+            yet_done[self.name] = True
+        res = None
+        if self.terms[0].name is None:
+            variable = self.terms[0].make_program(prog, inputs, declarations, defines, yet_done)
+        else:
+            variable = self.terms[0].name
+            self.terms[0].make_program(prog, inputs, declarations, defines, yet_done)
+        if self.name is None:
+            res = self.to_c(variable);
+        else:
+            prog.append( "\n%s = %s;"%(self.name, self.to_c(variable)) )
+            self.debug(prog)
+        return res
+
+
+
+
 class Neg(Common):
     def __init__( self, term, name=None ):
         Common.__init__(self, name)
