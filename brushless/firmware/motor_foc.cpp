@@ -744,7 +744,7 @@ void motor_foc_tick()
     }
     motor_flag = false;
     
-    display_warning();
+    //display_warning();
     //dispatch_display();
 
     // display(false);

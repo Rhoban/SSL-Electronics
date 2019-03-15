@@ -11,11 +11,6 @@
 
 HardwareSPI encoder(ENCODER_SPI);
 
-
-}
-
-}
-
 // Counter value
 static int32_t encoder_cnt = 0;
 static uint16_t encoder_magnitude = 0;
