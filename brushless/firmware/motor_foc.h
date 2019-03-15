@@ -1,7 +1,7 @@
 #ifndef _MOTOR_FOC_H
 #define _MOTOR_FOC_H
 
-#define IS_POW_2(x) (x && ((x & (x - 1)) == 0))
+#include "tools.h"
 
 #define REFERENCE_VOLTAGE 1024 // Do not change
 #define HALF_REFERENCE_VOLTAGE 512 // Do not change

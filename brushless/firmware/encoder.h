@@ -1,6 +1,8 @@
 #ifndef _ENCODER_H
 #define _ENCODER_H
 
+#include "tools.h"
+
 #include <stdint.h>
 
 void encoder_init();
@@ -26,6 +28,11 @@ float encoder_to_turn();
 #define SPEED_SCALE 64
 static_assert( SPEED_SCALE*ENCODER_CNT_SCALE == SPEED_NOMRALISATION, "");
 
+#define ENCODER_FREQUENCE 8000
+#define SUB_SAMPLE_FREQUENCE 800
+#define SUB_SAMPLE_FACTOR 10
+static_assert( SUB_SAMPLE_FREQUENCE*SUB_SAMPLE_FACTOR == ENCODER_FREQUENCE, "Shanon version X10");
+// TODO Mettre la contrainte de shanon concerant le sous échantillonage !
 
 int encoder_position();
 int encoder_to_speed();

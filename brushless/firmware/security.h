@@ -19,7 +19,10 @@ typedef enum {
     WARNING_MOTOR_LAG = 1,
     WARNING_INVALID_RANGE = 2,
     WARNING_SERVO_LAG = 3,
-    WARNING_ENCODER_LAG = 4
+    WARNING_ENCODER_LAG = 4,
+    WARNING_DELTAS_MAGNETIC = 5,
+    WARNING_ERROR_FLAG_ENCODER = 6,
+    WARNING_ERROR_PARITY_ENCODER = 7
 } SecurityWarning;
 
 void security_set_error(SecurityError type);

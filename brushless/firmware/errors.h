@@ -37,6 +37,12 @@ static inline const char *driver_warning(int code)
         return "PWM servo LAG";
     } else if( code == WARNING_ENCODER_LAG ){
         return "Encoder LAG";
+    } else if( code == WARNING_DELTAS_MAGNETIC ){
+        return "Delta TOO LONG";
+    } else if( code == WARNING_ERROR_FLAG_ENCODER ){
+        return "Error Flag encoder";
+    } else if( code == WARNING_ERROR_PARITY_ENCODER ){
+        return "Error parity encoder";
     }
     return "?";
 }
