@@ -4,6 +4,8 @@
 #include "hardware.h"
 #include "com.h"
 #include "servo.h"
+#include "ssl.h"
+#include "motor.h"
 #include "security.h"
 
 HardwareSPI slave(SLAVE_SPI);
@@ -30,19 +32,33 @@ static bool controlling = false;
     struct type *packet;      \
     packet = (struct type *)frame;
 
+uint32_t save_pwm;
+
 void com_frame_received()
 {
     switch (frame_type) {
         case DRIVER_PACKET_SET: {
             // Setting the target speed
             COM_READ_PACKET(driver_packet_set)
-            servo_set(packet->enable, packet->targetSpeed, packet->pwm);
+            // servo_set(packet->enable, packet->targetSpeed, packet->pwm);
+            save_pwm = packet->pwm;
+            if(packet->enable){
+                if( !motor_is_on() ){
+                    motor_set(packet->enable, CONFIG_PWM);
+                    launch_tare_motor();
+                }
+            }else{
+                servo_set(false, 0);
+            }
+            servo_set_speed_consign( packet->targetSpeed );
         }
         break;
         case DRIVER_PACKET_PARAMS: {
             // Setting the PID parameters
             COM_READ_PACKET(driver_packet_params)
-            servo_set_pid(packet->kp, packet->ki, packet->kd);
+            //set_motor_speed_pid(packet->kp, packet->ki, packet->kd);
+            const float k_speed_d = 0;
+            servo_set_pid(K_SPEED_P, K_SPEED_I, k_speed_d);
         }
         break;
     }
@@ -104,7 +120,7 @@ static void slave_irq()
             answer.status = 0x80|security_get_error();
         }
         answer.speed = servo_get_speed();
-        answer.pwm = servo_get_pwm();
+        answer.pwm = save_pwm;//motor_get_pwm();
         answer_ptr = (uint8_t*)&answer;
         answer_pos = 0;
 

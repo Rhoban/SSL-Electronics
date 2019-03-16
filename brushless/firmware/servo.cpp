@@ -36,6 +36,13 @@ void servo_set(bool enable, float targetSpeed, int16_t pwm){
     #endif
 }
 
+void servo_set_speed_consign( float speed ){
+    #ifndef DO_NOT_USE_HALL
+    #else
+    servo_set_speed_consign_foc(speed);
+    #endif
+}
+
 float servo_get_speed(){
     #ifndef DO_NOT_USE_HALL
     return servo_hall_get_speed();

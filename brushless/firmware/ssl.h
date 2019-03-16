@@ -1,4 +1,5 @@
-#define MOTEUR_BANC
+//#define MOTEUR_BANC
+#define MOTEUR_ROBOT_4_0
 //#define CYCLOIDE_PHASE_OPPOSITION
 //#define CYCLOIDE
 
@@ -62,6 +63,23 @@
     #define DO_NOT_USE_HALL
     //#define STOP_OUTSIDE_LIMITS 
     #define MOTOR_NAME "MOTEUR_BANC"
+    #define CONFIG_PWM 30
+    #define NB_POSITIVE_MAGNETS 8
+    #define MANUAL_SPEED true //false
+    #define KFEM 115.0 // 44.1
+    #define K_SPEED_P 300 // 310
+    #define K_SPEED_I 3000 // 150
+    #define K_POS_P 0 // 1.5
+    #define K_POS_I 0 // 0.1
+#endif
+
+
+#define MOTEUR_ROBOT_4_0
+#ifdef MOTEUR_ROBOT_4_0
+    #define OPEN_LOOP_FOC false //true
+    #define DO_NOT_USE_HALL
+    //#define STOP_OUTSIDE_LIMITS 
+    #define MOTOR_NAME "MOTEUR_ROBOT_4_0"
     #define CONFIG_PWM 30
     #define NB_POSITIVE_MAGNETS 8
     #define MANUAL_SPEED true //false

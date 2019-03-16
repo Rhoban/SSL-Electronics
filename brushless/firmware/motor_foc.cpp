@@ -822,6 +822,11 @@ TERMINAL_COMMAND(tare, "Tare origin")
     start_to_tare_motor();
 }
 
+void launch_tare_motor_foc(){
+    tare_is_set = false;
+    start_to_tare_motor();
+}
+
 TERMINAL_COMMAND(user_pwm, "Force the phase to use a given pwm")
 {
     if (argc == 1) {

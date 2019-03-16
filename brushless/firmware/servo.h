@@ -36,5 +36,7 @@ int servo_get_pwm();
  */
 void servo_set_pid(float kp, float ki, float kd);
 
+void servo_set_speed_consign( float speed );
+
 void servo_set_flag();
 #endif

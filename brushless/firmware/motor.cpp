@@ -36,3 +36,10 @@ void motor_tick()
     motor_foc_tick();
     #endif
 }
+
+void launch_tare_motor(){
+    #ifndef DO_NOT_USE_HALL
+    #else
+    launch_tare_motor_foc();
+    #endif
+}
