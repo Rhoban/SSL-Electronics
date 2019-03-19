@@ -86,7 +86,7 @@ void motor_irq(){
         motor_flag = true;
         serv_flag = true;
     }
-    #define PWM_SHIFT 0 // 150
+    #define PWM_SHIFT 150
     #ifdef PHASE_OPPOSITION 
         if(count_irq_2%SWAP_PWM_FREQUENCE == 0){
             if(motor_on){
@@ -300,7 +300,11 @@ static TareProcess tare_state = TARE_NOT_SET;
  *
  */
 static int theta_c;
-static bool go_theta = false;
+static bool use_fixed_theta = false;
+
+void set_fixed_theta(bool value){
+    use_fixed_theta = value;
+}
 
 void reset_vectorial();
 
@@ -311,7 +315,7 @@ TERMINAL_COMMAND(go_theta, "Set theta")
         float val = atof(argv[0]);
         theta_c = (int) ( val * ONE_TURN_THETA );
         direct_quadrature_voltage_set( HALF_REFERENCE_VOLTAGE, 0);
-        go_theta = true;
+        use_fixed_theta = true;
     }
 }
 
@@ -728,6 +732,15 @@ int filter(int angle){
     if(tare_is_set) return angle;
     return all_angle[mod(angle, ONE_TURN_THETA) / (ONE_TURN_THETA/RESOLUTION)];
 }
+int default_update_theta(int angle){
+    return angle;
+}
+
+static int (* update_theta)(int angle) = default_update_theta;
+
+void register_update_theta( int (* fct)(int) ){
+    update_theta = fct;
+};
 
 void motor_foc_tick()
 {
@@ -744,7 +757,7 @@ void motor_foc_tick()
     }
     motor_flag = false;
     
-    //display_warning();
+    display_warning();
     //dispatch_display();
 
     // display(false);
@@ -755,8 +768,9 @@ void motor_foc_tick()
         theta_s = rotor_angle();
     }
     if( tare_state == TARE_IS_DONE || tare_is_set ){
-        if( go_theta ){
+        if( ! tare_is_set and use_fixed_theta ){
             //display(false);
+            theta_c = update_theta(theta_s);
             #ifdef FULL_TARE_PROCESS
             control_motor_with_vectorial(filter(theta_c));
             #else
@@ -778,7 +792,7 @@ void motor_foc_tick()
 }
 
 void reset_vectorial(){
-    go_theta = false;
+    use_fixed_theta = false;
 }
 
 void start_to_tare_motor(){
@@ -1003,7 +1017,7 @@ TERMINAL_COMMAND(disp, "Display")
 }
 
 bool motor_is_tared(){
-    return tare_state == TARE_IS_DONE;
+    return tare_state == TARE_IS_DONE and ! tare_is_set;
 }
 
 bool motor_foc_is_on(){

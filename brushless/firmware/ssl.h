@@ -1,7 +1,10 @@
+#ifndef _SSL_H
+#define _SSL_H
+
 //#define MOTEUR_BANC
-#define MOTEUR_ROBOT_4_0
+//#define MOTEUR_ROBOT_4_0
 //#define CYCLOIDE_PHASE_OPPOSITION
-//#define CYCLOIDE
+#define CYCLOIDE
 
 
 #define MAX_THETA_LIMIT 6.15
@@ -10,7 +13,7 @@
 
 #ifdef CYCLOIDE
     #define OPEN_LOOP_FOC false
-    #define DO_NOT_USE_HALL
+    #define USE_FOC
     #define STOP_OUTSIDE_LIMITS 
     #define MOTOR_NAME "CYCLOIDE"
     #define CONFIG_PWM 30
@@ -27,7 +30,7 @@
 #ifdef CYCLOIDE_PHASE_OPPOSITION
     #define PHASE_OPPOSITION 
     #define OPEN_LOOP_FOC false
-    #define DO_NOT_USE_HALL
+    #define USE_FOC
     #define STOP_OUTSIDE_LIMITS 
     #define MOTOR_NAME "CYCLOIDE"
     //#define CONFIG_PWM 100
@@ -44,7 +47,7 @@
 
 #ifdef CYCLOIDE_OLD
     #define OPEN_LOOP_FOC false
-    #define DO_NOT_USE_HALL
+    #define USE_FOC
     #define STOP_OUTSIDE_LIMITS 
     #define MOTOR_NAME "CYCLOIDE"
     #define CONFIG_PWM 80
@@ -60,7 +63,7 @@
 
 #ifdef MOTEUR_BANC
     #define OPEN_LOOP_FOC false //true
-    #define DO_NOT_USE_HALL
+    #define USE_FOC
     //#define STOP_OUTSIDE_LIMITS 
     #define MOTOR_NAME "MOTEUR_BANC"
     #define CONFIG_PWM 30
@@ -74,10 +77,11 @@
 #endif
 
 
-#define MOTEUR_ROBOT_4_0
 #ifdef MOTEUR_ROBOT_4_0
+    //#define PHASE_OPPOSITION 
     #define OPEN_LOOP_FOC false //true
-    #define DO_NOT_USE_HALL
+    //#define USE_HYBRID
+    #define USE_FOC
     //#define STOP_OUTSIDE_LIMITS 
     #define MOTOR_NAME "MOTEUR_ROBOT_4_0"
     #define CONFIG_PWM 30
@@ -88,4 +92,6 @@
     #define K_SPEED_I 3000 // 150
     #define K_POS_P 0 // 1.5
     #define K_POS_I 0 // 0.1
+#endif
+
 #endif

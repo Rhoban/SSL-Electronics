@@ -151,6 +151,8 @@ static void set_phases(int u, int v, int w, int phase)
     }
 }
 
+void motor_hall_tick();
+
 void motor_hall_init()
 {
     // Initializing hall sensors input
@@ -159,9 +161,9 @@ void motor_hall_init()
     pinMode(HALLW_PIN, INPUT_PULLUP);
 
     // Attach interrupts on phase change
-    attachInterrupt(HALLU_PIN, motor_tick, CHANGE);
-    attachInterrupt(HALLV_PIN, motor_tick, CHANGE);
-    attachInterrupt(HALLW_PIN, motor_tick, CHANGE);
+    attachInterrupt(HALLU_PIN, motor_hall_tick, CHANGE);
+    attachInterrupt(HALLV_PIN, motor_hall_tick, CHANGE);
+    attachInterrupt(HALLW_PIN, motor_hall_tick, CHANGE);
 
     // Configuring timers
     _init_timer(2);

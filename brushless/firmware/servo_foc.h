@@ -40,4 +40,8 @@ void servo_foc_stop();
 
 void servo_set_speed_consign_foc( float speed );
 
+void set_open_loop( bool value );
+bool is_open_loop();
+
+void reset_asservissement();
 #endif
