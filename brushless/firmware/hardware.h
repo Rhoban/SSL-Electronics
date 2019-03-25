@@ -91,7 +91,7 @@
 #if DRIVER_TYPE == TYPE_70W
 #define CURRENT_DISABLE
 #define PWM_MIN             0     // 0-3000
-#define PWM_MAX             2500    // 0-3000
+#define PWM_MAX             2800    // 0-3000
 #endif
 
 #if DRIVER_TYPE == TYPE_30W

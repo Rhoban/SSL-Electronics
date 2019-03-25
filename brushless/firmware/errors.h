@@ -43,6 +43,8 @@ static inline const char *driver_warning(int code)
         return "Error Flag encoder";
     } else if( code == WARNING_ERROR_PARITY_ENCODER ){
         return "Error parity encoder";
+    } else if( code == WARNING_INCOHERENT_PACKET_ENCODER ){
+        return "incoherent packet encoder";
     }
     return "?";
 }

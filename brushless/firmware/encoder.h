@@ -37,4 +37,12 @@ static_assert( SUB_SAMPLE_FREQUENCE*SUB_SAMPLE_FACTOR == ENCODER_FREQUENCE, "Sha
 int encoder_position();
 int encoder_to_speed();
 
+#define MAX_SPEED_MOTOR 50 // turn.s-1
+#define MAX_SPEED_SECURITY_FACTOR 4
+static_assert(
+    IS_POW_2(MAX_SPEED_SECURITY_FACTOR) && MAX_SPEED_SECURITY_FACTOR > 1, 
+    ""
+);
+
+void encoder_print_errors();
 #endif

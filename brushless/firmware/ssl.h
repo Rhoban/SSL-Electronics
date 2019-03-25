@@ -4,27 +4,66 @@
 //#define MOTEUR_BANC
 //#define MOTEUR_ROBOT_4_0
 //#define CYCLOIDE_PHASE_OPPOSITION
-#define CYCLOIDE
+//#define CYCLOIDE12
+//#define CYCLOIDE16
+#define CYCLOIDE16_PHASE_OPPOSITION
 
 
 #define MAX_THETA_LIMIT 6.15
 #define MIN_THETA_LIMIT -6.15
 
-
-#ifdef CYCLOIDE
+#ifdef CYCLOIDE16_PHASE_OPPOSITION
+    #define PHASE_OPPOSITION 
     #define OPEN_LOOP_FOC false
     #define USE_FOC
     #define STOP_OUTSIDE_LIMITS 
-    #define MOTOR_NAME "CYCLOIDE"
-    #define CONFIG_PWM 30
+    #define MOTOR_NAME "CYC. 16V PH. OP."
+    #define CONFIG_PWM 95
     #define NB_POSITIVE_MAGNETS 7
     #define REVERSE_PHASE
     #define MANUAL_SPEED false //true
-    #define KFEM 110.0// //55.0 //29.6
-    #define K_SPEED_P  270.0 //200.0 //180
-    #define K_SPEED_I 3011.0 //80.0 //150
-    #define K_POS_P 6.66 //1.5 // 1.5
+    // #define INITIAL_SPEED 1.0
+    #define KFEM 55.0 //29.0 //42.0 //55.0 //110.0// //55.0 //29.6
+    #define K_SPEED_P  180.0 //80.0 //270.0 //200.0 //180
+    #define K_SPEED_I 2000.0 //1000.0 //3011.0 //80.0 //150
+    #define K_POS_P 1.0 // 0.0 //6.66 //1.5 // 1.5
     #define K_POS_I 0.0 //5.0 //0.1 // 0.1
+#endif
+
+
+#ifdef CYCLOIDE16
+    #define OPEN_LOOP_FOC false
+    #define USE_FOC
+    #define STOP_OUTSIDE_LIMITS 
+    #define MOTOR_NAME "CYCLOIDE 16V"
+    #define CONFIG_PWM 90
+    #define NB_POSITIVE_MAGNETS 7
+    #define REVERSE_PHASE
+    #define MANUAL_SPEED false //true
+    // #define INITIAL_SPEED 1.0
+    #define KFEM 29.0 //42.0 //55.0 //110.0// //55.0 //29.6
+    #define K_SPEED_P  80.0 //270.0 //200.0 //180
+    #define K_SPEED_I 1000.0 //3011.0 //80.0 //150
+    #define K_POS_P 1.0 //6.66 //1.5 // 1.5
+    #define K_POS_I 0.0 //5.0 //0.1 // 0.1
+#endif
+
+
+#ifdef CYCLOIDE12
+    #define OPEN_LOOP_FOC false
+    #define USE_FOC
+    #define STOP_OUTSIDE_LIMITS 
+    #define MOTOR_NAME "CYCLOIDE 12V"
+    #define CONFIG_PWM 90
+    #define NB_POSITIVE_MAGNETS 7
+    #define REVERSE_PHASE
+    #define MANUAL_SPEED false //true
+    // #define INITIAL_SPEED 1.0
+    #define KFEM 35.0 //42.0 //55.0 //110.0// //55.0 //29.6
+    #define K_SPEED_P  110.0 //270.0 //200.0 //180
+    #define K_SPEED_I 3000.0 //3011.0 //80.0 //150
+    #define K_POS_P 10.0 //6.66 //1.5 // 1.5
+    #define K_POS_I 0.1 //5.0 //0.1 // 0.1
 #endif
 
 #ifdef CYCLOIDE_PHASE_OPPOSITION
@@ -92,6 +131,10 @@
     #define K_SPEED_I 3000 // 150
     #define K_POS_P 0 // 1.5
     #define K_POS_I 0 // 0.1
+#endif
+
+#ifndef INITIAL_SPEED
+    #define INITIAL_SPEED 0
 #endif
 
 #endif

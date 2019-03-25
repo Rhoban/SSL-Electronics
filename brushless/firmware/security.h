@@ -22,7 +22,8 @@ typedef enum {
     WARNING_ENCODER_LAG = 4,
     WARNING_DELTAS_MAGNETIC = 5,
     WARNING_ERROR_FLAG_ENCODER = 6,
-    WARNING_ERROR_PARITY_ENCODER = 7
+    WARNING_ERROR_PARITY_ENCODER = 7,
+    WARNING_INCOHERENT_PACKET_ENCODER=8
 } SecurityWarning;
 
 void security_set_error(SecurityError type);

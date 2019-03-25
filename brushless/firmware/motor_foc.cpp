@@ -86,7 +86,7 @@ void motor_irq(){
         motor_flag = true;
         serv_flag = true;
     }
-    #define PWM_SHIFT 150
+    #define PWM_SHIFT  150
     #ifdef PHASE_OPPOSITION 
         if(count_irq_2%SWAP_PWM_FREQUENCE == 0){
             if(motor_on){
@@ -650,7 +650,13 @@ int tare_process(){
             theta = 0;
             motor_on = true,
             last_tare_time = millis();
-            direct_quadrature_voltage_set(REFERENCE_VOLTAGE/4, 0);
+
+#ifdef PHASE_OPPOSITION
+            direct_quadrature_voltage_set(REFERENCE_VOLTAGE, 0);
+#else
+            direct_quadrature_voltage_set(REFERENCE_VOLTAGE/8, 0);
+#endif
+
             //direct_quadrature_voltage_set(REF, 0);
             save_user_pwm = user_pwm;
             user_pwm = CONFIG_PWM*USER_PWM_SCALE;
@@ -715,7 +721,7 @@ int tare_process(){
             break;
         case TARE_IS_DONE:
             theta = rotor_angle(); 
-            terminal_io()->println("Tare is done.");
+            //terminal_io()->println("Tare is done.");
             user_pwm = save_user_pwm;
             direct_quadrature_voltage_set(0, 0);
             tare_is_set = false;
@@ -871,6 +877,7 @@ void display_warning(){
                 terminal_io()->print("W ");
                 terminal_io()->println( driver_warning(warning) );
                 security_set_warning( SECURITY_NO_WARNING );
+                encoder_print_errors();
             }
             if( error != SECURITY_NO_ERROR ){
                 //terminal_io()->print("E ");

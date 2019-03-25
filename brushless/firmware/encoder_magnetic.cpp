@@ -15,6 +15,7 @@ HardwareSPI encoder(ENCODER_SPI);
 static int32_t encoder_cnt = 0;
 static uint16_t encoder_magnitude = 0;
 static bool encoder_present = true;
+static bool encoder_is_not_initialized = true;
 
 inline bool parity_16_check( uint16_t x ){
     x ^= x >> 8;
@@ -42,6 +43,17 @@ static int low_2_speed = 0*ENCODER_SPEED_SCALE;
 static int low_3_speed = 0*ENCODER_SPEED_SCALE;
 static int low_4_speed = 0*ENCODER_SPEED_SCALE;
 static int low_8_speed = 0*ENCODER_SPEED_SCALE;
+
+static int sum_speed = 0*ENCODER_SPEED_SCALE;
+static int speed_0 = 0*ENCODER_SPEED_SCALE;
+static int speed_1 = 0*ENCODER_SPEED_SCALE;
+static int speed_2 = 0*ENCODER_SPEED_SCALE;
+static int speed_3 = 0*ENCODER_SPEED_SCALE;
+static int speed_4 = 0*ENCODER_SPEED_SCALE;
+static int speed_5 = 0*ENCODER_SPEED_SCALE;
+static int speed_6 = 0*ENCODER_SPEED_SCALE;
+static int speed_7 = 0*ENCODER_SPEED_SCALE;
+
 
 bool encoder_is_ok()
 {
@@ -95,65 +107,164 @@ float den_d = 0.0;
 
 static bool is_writting = true;
 
+static bool error_spi_comunication = false;
 static bool error_flag = false;
+static uint16_t error_register = 0;
 
+static unsigned int error_flag_count = 0;
+static unsigned int error_parity_count = 0;
+static unsigned int error_value_count = 0;
+static unsigned int error_spi_count = 0;
+
+#define SCALE_TO_CLEAR_GPIO_PIN 16
+#define SCALE_TO_SET_GPIO_PIN 0
 
 extern "C"
 {
 void __irq_spi2()
 {
+    // We just have received 8 bits in the MISO pin.
+    // We need to get the data and send other ones in the MOSI pin.
     if (spi_is_tx_empty(SPI2)) {
         switch (encoder_read_state) {
             case 0: {
                 is_writting = true;
-                encoder_read_result = (SPI2->regs->DR << 8);
-                SPI2->regs->DR = 0xfe;
+                // We get the first 8 bits of the magnetic datas send by the 
+                // encoder in the MOSI interface.
+                encoder_read_magnitude = (SPI2->regs->DR << 8);
+                // We send the last 8 bits of the command to 
+                // request an angle (0xffff).
+                SPI2->regs->DR = 0xff;
                 encoder_read_state++;
                 break;
             }
             case 1: {
-                encoder_read_result |= SPI2->regs->DR;
-                GPIOB->regs->BSRR = (1U << 12);
+                // We get the last 8 bits of the magnetic datas send by the 
+                // encoder in the MOSI interface?
+                encoder_read_magnitude |= SPI2->regs->DR;
+                #define DATA_MASK 0x3fff
+                // We collect the magnitude data (the last 13 bits)
+                encoder_magnitude = encoder_read_magnitude & DATA_MASK;
+                
+                // We start a new communication for a new request 
+                GPIOB->regs->BSRR = (1U << ENCODER_INDEX_PIN) << SCALE_TO_SET_GPIO_PIN;
                 delay_us(1);
-                GPIOB->regs->BSRR = (1U << 12) << 16;
+                GPIOB->regs->BSRR = (1U << ENCODER_INDEX_PIN) << SCALE_TO_CLEAR_GPIO_PIN;
                 delay_us(1);
-                SPI2->regs->DR = 0xff;
+
+                // We want to ask for and magnetic value. The command is 
+                // 0x7ffe (P=0 to have a even number of bits, R=1 for a read 
+                // command and Address=x3FFE to ask for an magnetic value).
+                // we send the first 8bits of the command in the MOSI
+                SPI2->regs->DR = 0x7f;
                 encoder_read_state++;
                 break;
             }
             case 2: {
-                encoder_read_magnitude = (SPI2->regs->DR << 8);
-                SPI2->regs->DR = 0xff;
+                // We get the first 8 bits of the angle datas send by the 
+                // encoder in the MOSI interface.
+                encoder_read_result = (SPI2->regs->DR << 8);
+                // We send the last 8 bits of the command to 
+                // request a magnetic value (0x7ffe).
+                SPI2->regs->DR = 0xfe;
                 encoder_read_state++;
                 break;
             }
             case 3: {
-                encoder_read_magnitude |= SPI2->regs->DR;
+                // We get the last 8 bits of the angle datas send by the 
+                // encoder in the MOSI interface.
+                encoder_read_result |= SPI2->regs->DR;
                 
-                // TODO ! Check thet errors !
+                error_spi_comunication = false;
                 error_flag = false;
-                #if 0
-                if( encoder_read_magnitude & 0x4000 ){
-                    security_set_warning(WARNING_ERROR_FLAG_ENCODER );
-                    error_flag = true;
-                }
+                #if 1
+                // We check no error occurs when we sent all
+                // the previous commands (angle and magetic read commands)
+                // to the encoder
+                //if( encoder_read_result & 0x4000 ){
+                //    error_flag_count++;
+                //    security_set_warning(WARNING_ERROR_FLAG_ENCODER );
+                //    error_spi_comunication = true;
+                //    error_flag = true;
+                //}
                 #endif
+                // We check the parity of the received datas for the
+                // angle value. The magnetic value is not used.
                 if(
-                    ! parity_16_check(encoder_read_magnitude & 0x7FFF) xor 
-                    ( (encoder_read_magnitude & 0x8000) !=0 )
+                    ! parity_16_check(encoder_read_result & 0x7FFF) xor 
+                    ( (encoder_read_result & 0x8000) !=0 )
                 ){
+                    error_parity_count++;
                     security_set_warning(WARNING_ERROR_PARITY_ENCODER);
-                    error_flag = true;
+                    error_spi_comunication = true;
+                }
+                if( error_spi_comunication ){
+                      error_spi_count++;
                 }
 
-                encoder_magnitude = encoder_read_magnitude & 0x3fff;
-                encoder_read_result &= 0x3fff;
-                encoder_read_state = -1;
-                GPIOB->regs->BSRR = (1U << 12);
-                spi_irq_disable(SPI2, SPI_TXE_INTERRUPT);
+                // We collect the angle data (the last 13 bits)
+                encoder_read_result &= DATA_MASK;
                 is_writting = false;
+                
+//                if( error_flag ){
+//                    // We need to clear the error flag 
+//                    // We close the comunication
+//                    GPIOB->regs->BSRR = (1U << ENCODER_INDEX_PIN) << SCALE_TO_SET_GPIO_PIN;
+//                    delay_us(1);
+//                    // We start a new one :
+//                    GPIOB->regs->BSRR = (1U << ENCODER_INDEX_PIN) << SCALE_TO_CLEAR_GPIO_PIN;
+//                    delay_us(1);
+//                    // We send the first 8 bits of the Clear Error Flag Command 0x4000 
+//                    // (PAR=0, R=1, Add=x0001)
+//                    SPI2->regs->DR = 0x40;
+//                    encoder_read_state = 4;
+//                }else{
+                    encoder_read_state = -1;
+                    // We close the spi comunication
+                    GPIOB->regs->BSRR = (1U << ENCODER_INDEX_PIN) << SCALE_TO_SET_GPIO_PIN;
+                    spi_irq_disable(SPI2, SPI_TXE_INTERRUPT);
+//                }
 
                 encoder_has_new_value = true;
+                break;
+            }
+            case 4: {
+                // We received the 8 first bits of the magnetic command
+                encoder_read_magnitude = (SPI2->regs->DR << 8);
+                // We send the last 8 bits of the Clear Error Flag Command 
+                // (0x4000)
+                SPI2->regs->DR = 0x01;
+                encoder_read_state++;
+                break;
+            }
+            case 5: {
+                // We received the last 8 bits of the magentic command
+                encoder_read_magnitude |= SPI2->regs->DR;
+                // We collect the magnitude data (the last 13 bits)
+                encoder_magnitude = encoder_read_magnitude & DATA_MASK;
+                // We send the first 8 bits of the command to 
+                // request a magnetic value (0x7ffe).
+                SPI2->regs->DR = 0x7f;
+                encoder_read_state++;
+                break;
+            }
+            case 6: {
+                // We received the first 8 bits of the error datas send by the 
+                // encoder in the MOSI interface.
+                error_register = (SPI2->regs->DR << 8);
+                // We send the last 8 bits of the command to 
+                // request a magnetic value (0x7ffe).
+                SPI2->regs->DR = 0xfe;
+                encoder_read_state++;
+            }
+            case 7: {
+                // We received the last 8 bits of the error datas send by the 
+                // encoder in the MOSI interface.
+                error_register |= SPI2->regs->DR;
+                // We close the spi communication.
+                encoder_read_state = -1;
+                GPIOB->regs->BSRR = (1U << ENCODER_INDEX_PIN) << SCALE_TO_SET_GPIO_PIN;
+                spi_irq_disable(SPI2, SPI_TXE_INTERRUPT);
                 break;
             }
         }
@@ -168,13 +279,30 @@ unsigned int encoder_counter = 0;
 static uint16_t encoder_read_value()
 {
     if( encoder_flag ){
-        security_set_warning(WARNING_ENCODER_LAG);
+        // security_set_warning(WARNING_ENCODER_LAG);
     }
     encoder_flag = true;
     if (encoder_read_state == -1) {
         encoder_read_state = 0;
-        GPIOB->regs->BSRR = (1U << 12) << 16;
-        SPI2->regs->DR = 0x7f;
+        
+        // As described in the AS5048a datasheet 
+        // (cf Figure 16, page 16, version V1-09 2016-nov-15)
+        // To start the comunication, the Chip Select (CS) pin have to be set 
+        // to down.
+        GPIOB->regs->BSRR = (1U << ENCODER_INDEX_PIN) << SCALE_TO_CLEAR_GPIO_PIN;
+       
+        // We need to send a command to read an angle.
+        // As described in the AS5048a datasheet 
+        // (cf Figure 19 and 22, page 16, version V1-09 2016-nov-15)
+        // A read angle command is 0xffff (P=1 to have a even number of bits,
+        // R=1 for a read command and Address=x3fff to ask for an angle).
+        //
+        // As SPI is configured in 8 bits, we send the first 8bits of the
+        // command in the MOSI
+        SPI2->regs->DR = 0xFF;
+        // We now enable an interupption, when the first 8bits will be received
+        // from the MISO of the spi interface.
+        // The continuation of the comunication is now managed by __irq_spi2()
         spi_irq_enable(SPI2, SPI_TXE_INTERRUPT);
     }
 
@@ -229,13 +357,36 @@ void encoder_init()
     encoder.begin(SPI_9MHZ, MSBFIRST, SPI_MODE_LOW_FALLING);
     pinMode(ENCODER_SELECT_PIN, OUTPUT);
 
-    encoder_read_value();
-
     init_timer();
+    
+    encoder_is_not_initialized = true;
+    encoder_read_value();
 }
 
-
 static float theta_base_d = 0;
+
+enum Speed_state {
+    LOW_SPEED,
+    NORMAL_SPEED
+};
+static Speed_state speed_state;
+static float adaptative_encoder_speed = 0;
+
+int encoder_to_speed(){
+    //return encoder_speed; //adaptative_encoder_speed;
+    return adaptative_encoder_speed;
+}
+
+#define LOW_NORMAL_SPEED_MIN_FLOAT 1.0 
+#define LOW_NORMAL_SPEED_MAX_FLOAT 1.5
+
+#define LOW_NORMAL_SPEED_MIN 16384
+#define LOW_NORMAL_SPEED_MAX 24576
+
+static_assert( LOW_NORMAL_SPEED_MIN <= LOW_NORMAL_SPEED_MIN_FLOAT*ENCODER_SPEED_SCALE, "");
+static_assert( LOW_NORMAL_SPEED_MIN_FLOAT*ENCODER_SPEED_SCALE < LOW_NORMAL_SPEED_MIN+1, "");
+static_assert( LOW_NORMAL_SPEED_MAX <= LOW_NORMAL_SPEED_MAX_FLOAT*ENCODER_SPEED_SCALE, "");
+static_assert( LOW_NORMAL_SPEED_MAX_FLOAT*ENCODER_SPEED_SCALE < LOW_NORMAL_SPEED_MAX+1, "");
 
 void encoder_tick()
 {
@@ -245,9 +396,15 @@ void encoder_tick()
     if( is_writting ){
         return ;
     }else{
-        if( ! error_flag ){
+        if( ! error_spi_comunication ){
             er = encoder_read_result;
         }
+    }
+
+    if( encoder_is_not_initialized ){
+        if( error_spi_comunication ) return;
+        magnetic_value = er;
+        encoder_is_not_initialized = false;
     }
   
     // Sous échantillonage ! 
@@ -262,6 +419,7 @@ void encoder_tick()
         theta_out_2 = theta_out_1;
         theta_out_1 = theta_out_0;
         theta_out_0 = ( (int) (theta_0_d + theta_base_d)); // + theta_base;
+        
         
         encoder_speed = (SPEED_SCALE*SUB_SAMPLE_FREQUENCE)*(
             theta_out_0 - theta_out_1
@@ -278,12 +436,68 @@ void encoder_tick()
         low_8_speed = (SPEED_SCALE*SUB_SAMPLE_FREQUENCE/8)*(
             theta_out_0 - theta_out_8
         );
+
+        switch( speed_state ){
+            case LOW_SPEED :
+                if( encoder_speed >= LOW_NORMAL_SPEED_MAX ){
+                    speed_state = NORMAL_SPEED;
+                }
+                break;
+            case NORMAL_SPEED:
+            default:
+                if( encoder_speed <= LOW_NORMAL_SPEED_MIN ){
+                    speed_state = LOW_SPEED;
+                }
+                break;
+        }
+        switch( speed_state ){
+            case LOW_SPEED :
+                adaptative_encoder_speed  = low_8_speed;
+                break;
+            case NORMAL_SPEED:
+            default:
+                adaptative_encoder_speed  = encoder_speed;
+                break;
+        }
+
+        sum_speed -= speed_7;
+        speed_7 = speed_6;
+        speed_6 = speed_5;
+        speed_5 = speed_4;
+        speed_4 = speed_3;
+        speed_3 = speed_2;
+        speed_2 = speed_1;
+        speed_1 = speed_0;
+        speed_0 = encoder_to_speed();
+        sum_speed += speed_0;
+
+
         servo_set_flag();
         encoder_counter = 0;
     }
 
+
     encoder_deltas = encoder_compute_delta(magnetic_value, er);
+    
+    #define MAX_DELTA 410 
+    static_assert(
+        ENCODER_CNT_SCALE * MAX_SPEED_MOTOR * MAX_SPEED_SECURITY_FACTOR 
+        < ENCODER_FREQUENCE * MAX_DELTA,
+        ""
+    );
+    static_assert( 2 * MAX_DELTA < ENCODER_CNT_SCALE, "" );
+    if( abs(encoder_deltas) > MAX_DELTA ){
+        // The angular delta is too big for the motor velocity
+        security_set_warning(WARNING_INCOHERENT_PACKET_ENCODER);
+        error_value_count++;
+    }
+    if( error_spi_comunication or abs(encoder_deltas) > MAX_DELTA ){
+        // We guess an approximate value for delta using the speed.
+        //encoder_deltas = encoder_to_speed()/(ENCODER_FREQUENCE*SPEED_SCALE);
+        encoder_deltas = - encoder_to_speed()/(ENCODER_FREQUENCE*SPEED_SCALE);
+    }
     magnetic_value = (magnetic_value + encoder_deltas + 0x4000)%(0x4000);
+    // TODO Pourquoi -= ? 
     encoder_cnt -= encoder_deltas;
 
     const float d_0 = 2414.790782274951;
@@ -319,12 +533,6 @@ void encoder_tick()
     );
     theta_0_d = num_d + den_d;
 
-    #define MAX_SPEED_MOTOR 50 // turn.s-1
-    #define MAX_SPEED_SECURITY_FACTOR 4
-    static_assert(
-        IS_POW_2(MAX_SPEED_SECURITY_FACTOR) && MAX_SPEED_SECURITY_FACTOR > 1, 
-        ""
-    );
     #define ANGLE_LIMIT_FACTOR 4
     // We want that the angle of rotation after Te times is biger thatn 
     // then admited frame limits of theta_0_d.
@@ -383,37 +591,53 @@ TERMINAL_COMMAND(cnt, "Cnt debug")
 
 TERMINAL_COMMAND(spd, "Speed debug")
 {
-    float result = ( (float) encoder_speed) / SPEED_NOMRALISATION;
+    float result = ( (float) encoder_to_speed()) / SPEED_NOMRALISATION;
+    float average = ( (float) sum_speed) / ( 8*SPEED_NOMRALISATION);
 
-    terminal_io()->print("theta_0 : ");
-    terminal_io()->println( ((float)theta_out_0)/0x4000);
+//    terminal_io()->print("theta_0 : ");
+//    terminal_io()->println( ((float)theta_out_0)/0x4000);
 
-    terminal_io()->print("encoder_cnt : ");
-    terminal_io()->println(encoder_cnt);
-    terminal_io()->print("speed cnt : ");
-    terminal_io()->println(encoder_speed);
-    terminal_io()->print("speed : ");
+//    terminal_io()->print("encoder_cnt : ");
+//    terminal_io()->println(encoder_cnt);
+//    terminal_io()->print("speed cnt : ");
+//    terminal_io()->println(encoder_speed);
+//    terminal_io()->print("speed : ");
     terminal_io()->println(result);
-    terminal_io()->print("low 2 speed : ");
-    terminal_io()->println( ( (float) low_2_speed) / SPEED_NOMRALISATION );
-    terminal_io()->print("low 3 speed : ");
-    terminal_io()->println( ( (float) low_3_speed) / SPEED_NOMRALISATION );
-    terminal_io()->print("low 4 speed : ");
-    terminal_io()->println( ( (float) low_4_speed) / SPEED_NOMRALISATION );
-    terminal_io()->print("low 8 speed : ");
-    terminal_io()->println( ( (float) low_8_speed) / SPEED_NOMRALISATION );
+    terminal_io()->println(average);
+//    terminal_io()->print("low 2 speed : ");
+//    terminal_io()->println( ( (float) low_2_speed) / SPEED_NOMRALISATION );
+//    terminal_io()->print("low 3 speed : ");
+//    terminal_io()->println( ( (float) low_3_speed) / SPEED_NOMRALISATION );
+//    terminal_io()->print("low 4 speed : ");
+//    terminal_io()->println( ( (float) low_4_speed) / SPEED_NOMRALISATION );
+//    terminal_io()->print("low 8 speed : ");
+//    terminal_io()->println( ( (float) low_8_speed) / SPEED_NOMRALISATION );
 }
 
 float encoder_to_turn(){
     return encoder_cnt/16384.0; 
 }
 
-int encoder_to_speed(){
-    return encoder_speed;
-}
-
 int encoder_position(){
     return theta_out_0;
+}
+
+
+void encoder_print_errors(){
+    terminal_io()->print("f:");
+    terminal_io()->print(error_flag_count);
+    terminal_io()->print(" p:");
+    terminal_io()->print(error_parity_count);
+    terminal_io()->print(" v:");
+    terminal_io()->print(error_value_count);
+    terminal_io()->print(" s:");
+    terminal_io()->print(error_spi_count);
+}
+
+TERMINAL_COMMAND(ec_err, "Encoder error")
+{
+    encoder_print_errors();
+    terminal_io()->println("");
 }
 
 #endif
