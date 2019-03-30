@@ -47,6 +47,11 @@ static int in_pin_low;
 
 static int lock=true;
 
+inline void set_to_high_impedance( int low_pin, int high_pin ){
+    digitalWrite(low_pin, LOW);
+    pwmWrite(high_pin, 0);
+}
+
 inline void apply_pwm( int low_pin, int high_pin, int pwm ){
     //
     // Commands for the ir2104 controller
@@ -86,20 +91,29 @@ void motor_irq(){
         motor_flag = true;
         serv_flag = true;
     }
-    #define PWM_SHIFT  150
+    //#define PWM_SHIFT  150
+    #define PWM_SHIFT  0
     #ifdef PHASE_OPPOSITION 
         if(count_irq_2%SWAP_PWM_FREQUENCE == 0){
             if(motor_on){
                 if( (count_irq_2/SWAP_PWM_FREQUENCE)%2 == 0 ){
                     if( !lock ){
                         apply_pwm(sd_pin_low, in_pin_low, PWM_SHIFT);
-                        apply_pwm(sd_pin_1, in_pin_1, PWM_SHIFT);
+                        #ifndef HIGH_IMPEDENCE_MODE
+                            apply_pwm(sd_pin_1, in_pin_1, PWM_SHIFT);
+                        #else
+                            set_to_high_impedance(sd_pin_1, in_pin_1);
+                        #endif
                         apply_pwm(sd_pin_2, in_pin_2, pwm_2);
                     }
                 }else{
                     if( !lock ){
                         apply_pwm(sd_pin_low, in_pin_low, PWM_SHIFT);
-                        apply_pwm(sd_pin_2, in_pin_2, PWM_SHIFT);
+                        #ifndef HIGH_IMPEDENCE_MODE
+                            apply_pwm(sd_pin_2, in_pin_2, PWM_SHIFT);
+                        #else
+                            set_to_high_impedance(sd_pin_2, in_pin_2);
+                        #endif
                         apply_pwm(sd_pin_1, in_pin_1, pwm_1);
                     }
                 }
