@@ -90,19 +90,28 @@
 // XXX: Limiting PWM
 #if DRIVER_TYPE == TYPE_70W
 #define CURRENT_DISABLE
-#define PWM_MIN             0     // 0-3000
-#define PWM_MAX             2800    // 0-3000
+#define PWM_MIN_PERCENT 0
+#define PWM_MAX_PERCENT 95
 #endif
 
 #if DRIVER_TYPE == TYPE_30W
-#define PWM_MIN             600     // 0-3000
-#define PWM_MAX             2500    // 0-3000
+#define PWM_MIN_PERCENT 20
+#define PWM_MAX_PERCENT 83
 #endif
 
 #if DRIVER_TYPE == TYPE_DRIBBLER
-#define PWM_MIN             0       // 0-3000
-#define PWM_MAX             2700    // 0-3000
+#define PWM_MIN_PERCENT 0
+#define PWM_MAX_PERCENT 90
 #endif
+
+static_assert(0<=PWM_MIN_PERCENT, "");
+static_assert(PWM_MIN_PERCENT<PWM_MAX_PERCENT, "");
+static_assert(PWM_MAX_PERCENT<100, "");
+
+
+#define PWM_MIN ((PWM_MIN_PERCENT*PWM_SUPREMUM)/100)
+#define PWM_MAX ((PWM_MAX_PERCENT*PWM_SUPREMUM)/100)
+
 
 // Limitting acceleration
 #define ACC_MAX             10      // turn/s^2

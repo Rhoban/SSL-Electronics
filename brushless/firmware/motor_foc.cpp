@@ -91,8 +91,9 @@ void motor_irq(){
         motor_flag = true;
         serv_flag = true;
     }
-    //#define PWM_SHIFT  150
-    #define PWM_SHIFT  0
+    //#define PWM_SHIFT_PERCENT 5 
+    #define PWM_SHIFT_PERCENT 0 
+    #define PWM_SHIFT  ((PWM_SHIFT_PERCENT*PWM_SUPREMUM)/100)
     #ifdef PHASE_OPPOSITION 
         if(count_irq_2%SWAP_PWM_FREQUENCE == 0){
             if(motor_on){
