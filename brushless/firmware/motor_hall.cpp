@@ -4,6 +4,7 @@
 #include "encoder.h"
 #include "hardware.h"
 #include "motor.h"
+#include "motor_hall.h"
 #include "security.h"
 
 // Motor pins

@@ -118,20 +118,20 @@
 
 
 #ifdef MOTEUR_90_12V
-    #define PHASE_OPPOSITION 
-    #define HIGH_IMPEDENCE_MODE
+    //#define PHASE_OPPOSITION 
+    //#define HIGH_IMPEDENCE_MODE
     #define OPEN_LOOP_FOC false //true
     #define USE_FOC
     //#define STOP_OUTSIDE_LIMITS 
     #define MOTOR_NAME "MOTEUR_90_12V"
     #define CONFIG_PWM 90
     #define NB_POSITIVE_MAGNETS 8
-    #define MANUAL_SPEED true //false
-    #define KFEM 0.0 // 44.1
-    #define K_SPEED_P 0 // 310
-    #define K_SPEED_I 0 // 150
-    #define K_POS_P 0 // 1.5
-    #define K_POS_I 0 // 0.1
+    #define MANUAL_SPEED false
+    #define KFEM 65 //73.0 // 44.1
+    #define K_SPEED_P 450  // 310
+    #define K_SPEED_I 3000 // 150
+    #define K_POS_P 11 // 1.5
+    #define K_POS_I 0.1 // 0.1
 #endif
 
 

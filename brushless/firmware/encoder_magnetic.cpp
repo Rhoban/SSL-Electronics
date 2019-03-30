@@ -354,7 +354,7 @@ void encoder_init()
 {
     // Initializing pins
     digitalWrite(ENCODER_SELECT_PIN, HIGH);
-    encoder.begin(SPI_9MHZ, MSBFIRST, SPI_MODE_LOW_FALLING);
+    encoder.begin(SPI_18MHZ, MSBFIRST, SPI_MODE_LOW_FALLING);
     pinMode(ENCODER_SELECT_PIN, OUTPUT);
 
     init_timer();
@@ -373,8 +373,8 @@ static Speed_state speed_state;
 static float adaptative_encoder_speed = 0;
 
 int encoder_to_speed(){
-    //return encoder_speed; //adaptative_encoder_speed;
-    return adaptative_encoder_speed;
+    return encoder_speed; //adaptative_encoder_speed;
+    //return adaptative_encoder_speed;
 }
 
 #define LOW_NORMAL_SPEED_MIN_FLOAT 1.0 

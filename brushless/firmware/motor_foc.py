@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-from asserv import *
+from servo_foc import *
 
 sin_output_max = 13
 c1 = Input( minimal=-1.0, maximal=1.0, scale=sin_output_max, digits=digits, name="c1")
@@ -105,8 +105,8 @@ user_pwm = Variable(
     digits=digits, name="user_pwm"
 )
 
-OVERLAP_PWM = 0.0 # 2.0
-PWM_SUP = 3000.0
+OVERLAP_PWM = 1.0 # 2.0
+PWM_SUP = 750.0
 USER_PWM_SUP = 100
 INV_ALPHA = 3.0*reference_voltage
 ALPHA_PWM = (PWM_SUP-OVERLAP_PWM)/(USER_PWM_SUP*INV_ALPHA)

@@ -85,7 +85,6 @@
 
 #define MAX_MOTOR_VOLTAGE 12
 #define HALF_MAX_MOTOR_VOLTAGE MAX_MOTOR_VOLTAGE/2 
-#define PWM_SUPREMUM 3000
 
 // XXX: Limiting PWM
 #if DRIVER_TYPE == TYPE_70W
@@ -107,10 +106,6 @@
 static_assert(0<=PWM_MIN_PERCENT, "");
 static_assert(PWM_MIN_PERCENT<PWM_MAX_PERCENT, "");
 static_assert(PWM_MAX_PERCENT<100, "");
-
-
-#define PWM_MIN ((PWM_MIN_PERCENT*PWM_SUPREMUM)/100)
-#define PWM_MAX ((PWM_MAX_PERCENT*PWM_SUPREMUM)/100)
 
 
 // Limitting acceleration

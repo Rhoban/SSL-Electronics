@@ -3,6 +3,10 @@
 
 #include <stdint.h>
 
+#define PWM_SUPREMUM 3000
+#define PWM_MIN ((PWM_MIN_PERCENT*PWM_SUPREMUM)/100)
+#define PWM_MAX ((PWM_MAX_PERCENT*PWM_SUPREMUM)/100)
+
 /**
  * Initializes the motor pins
  */
