@@ -2,6 +2,7 @@
 #include <wirish/wirish.h>
 #include <terminal.h>
 #include "hardware.h"
+#include "encoder.h"
 #include "com.h"
 #include "servo.h"
 #include "ssl.h"
@@ -17,7 +18,6 @@ TERMINAL_PARAMETER_INT(ssed, "Slave selected", 0);
 static uint8_t frame_sizes[] = {
     sizeof(struct driver_packet_set),
     sizeof(struct driver_packet_params)
-
 };
 #define INSTRUCTIONS sizeof(frame_size)
 static uint8_t frame[128];
@@ -113,7 +113,6 @@ static void slave_irq()
         frame_type = 0xff;
         slave.beginSlave(MSBFIRST, 0);
 
-        // Sending the status
         if (security_get_error() == SECURITY_NO_ERROR) {
             answer.status = 0x55;
         } else {
@@ -121,6 +120,7 @@ static void slave_irq()
         }
         answer.speed = servo_get_speed();
         answer.pwm = save_pwm;//motor_get_pwm();
+        answer.enc_cnt = encoder_position();
         answer_ptr = (uint8_t*)&answer;
         answer_pos = 0;
 

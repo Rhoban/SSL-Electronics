@@ -5,13 +5,21 @@
 #include <watchdog.h>
 #include "drivers.h"
 #include "kinematic.h"
+#include "odometry.h"
+
 
 static float target_x = 0, target_y = 0, target_t = 0;
 static float front_left = 0, front_right = 0, rear_left = 0, rear_right = 0;
 static bool enabled = false;
 static int enabled_since = 0;
+extern bool odom_enable;
+extern bool tare_round;
+int compteur_odom=0;
+extern struct position current_position;
 
-#define DEG2RAD(deg) (deg*M_PI/180.0)
+bool kin_passiv = false;
+
+#define DEG2RAD(deg) (deg*PI/180.0)
 #define WHEEL_RADIUS (0.06/2.0)
 #define ROBOT_RADIUS (0.17/2.0)
 #define ANGLE_REAR   DEG2RAD(45)
@@ -26,20 +34,24 @@ static int enabled_since = 0;
 #define REAR_RIGHT_X     -sin(-ANGLE_REAR)
 #define REAR_RIGHT_Y     -cos(-ANGLE_REAR)
 
+#define DIVISION_ODOM    5
+
+#define MAX_ACCELERATION    (10*0.01)
+
 void kinematic_compute(float x, float y, float t,
     float *frontLeft, float *frontRight, float *rearLeft, float *rearRight)
 {
     *frontLeft = (FRONT_LEFT_X*x + FRONT_LEFT_Y*y +
-        ROBOT_RADIUS*t)/(2*M_PI*WHEEL_RADIUS);
+        ROBOT_RADIUS*t)/(2*PI*WHEEL_RADIUS);
 
     *frontRight = (FRONT_RIGHT_X*x + FRONT_RIGHT_Y*y +
-        ROBOT_RADIUS*t)/(2*M_PI*WHEEL_RADIUS);
+        ROBOT_RADIUS*t)/(2*PI*WHEEL_RADIUS);
 
     *rearLeft = (REAR_LEFT_X*x + REAR_LEFT_Y*y +
-        ROBOT_RADIUS*t)/(2*M_PI*WHEEL_RADIUS);
+        ROBOT_RADIUS*t)/(2*PI*WHEEL_RADIUS);
 
     *rearRight = (REAR_RIGHT_X*x + REAR_RIGHT_Y*y +
-        ROBOT_RADIUS*t)/(2*M_PI*WHEEL_RADIUS);
+        ROBOT_RADIUS*t)/(2*PI*WHEEL_RADIUS);
 }
 
 void kinematic_set(float x, float y, float t)
@@ -49,6 +61,7 @@ void kinematic_set(float x, float y, float t)
     target_t = t;
     enabled = true;
     enabled_since = millis();
+    odom_enable = true;
 }
 
 void kinematic_stop()
@@ -57,9 +70,8 @@ void kinematic_stop()
     target_y = 0;
     target_t = 0;
     enabled = false;
+    odom_enable = false;
 }
-
-#define MAX_ACCELERATION    (10*0.01)
 
 int16_t pwm_lut(float target)
 {
@@ -78,6 +90,7 @@ void kinematic_tick()
         if (enabled) {
             if (millis() - enabled_since > 100) {
                 kinematic_stop();
+                odometry_stop();
             } else {
                 float new_front_left, new_front_right, new_rear_left, new_rear_right;
                 kinematic_compute(target_x, target_y, target_t,
@@ -112,11 +125,25 @@ void kinematic_tick()
                 // terminal_io()->print(" ");
                 // terminal_io()->print(front_right);
                 // terminal_io()->println();
+                if(kin_passiv == false){
+                  drivers_set_safe(0, true, front_left, pwm_lut(front_left));
+                  drivers_set_safe(1, true, rear_left, pwm_lut(rear_left));
+                  drivers_set_safe(2, true, rear_right, pwm_lut(rear_right));
+                  drivers_set_safe(3, true, front_right, pwm_lut(front_right));
+                }else{
+                  drivers_set_safe(0, false, front_left, pwm_lut(front_left));
+                  drivers_set_safe(1, false, rear_left, pwm_lut(rear_left));
+                  drivers_set_safe(2, false, rear_right, pwm_lut(rear_right));
+                  drivers_set_safe(3, false, front_right, pwm_lut(front_right));
+                }
 
-                drivers_set_safe(0, true, front_left, pwm_lut(front_left));
-                drivers_set_safe(1, true, rear_left, pwm_lut(rear_left));
-                drivers_set_safe(2, true, rear_right, pwm_lut(rear_right));
-                drivers_set_safe(3, true, front_right, pwm_lut(front_right));
+                compteur_odom++;
+                if(compteur_odom >= DIVISION_ODOM){
+                  odometry_tick();
+                  compteur_odom = 0;
+                }
+
+
             }
         } else {
             front_left = 0;
@@ -132,12 +159,23 @@ TERMINAL_COMMAND(kin, "Kinematic")
     float x = atof(argv[0]);
     float y = atof(argv[1]);
     float t = atof(argv[2]);
+
+    odometry_tare(0.0,0.0,0.0);
+    odom_enable = true;
+
+    if((x == 0)&&(y == 0)&&(t == 0)){
+      kin_passiv = true;
+    }
+    else{
+      kin_passiv = false;
+    }
+
     if (argc >= 3) {
         while (!SerialUSB.available()) {
             kinematic_set(x, y, t);
             kinematic_tick();
             watchdog_feed();
-            terminal_io()->print(x);
+            /*terminal_io()->print(x);
             terminal_io()->print(" ");
             terminal_io()->print(y);
             terminal_io()->print(" ");
@@ -147,7 +185,7 @@ TERMINAL_COMMAND(kin, "Kinematic")
             terminal_io()->print(" ");
             terminal_io()->print(driver_answers[0].pwm);
             terminal_io()->print(" ");
-            terminal_io()->println();
+            terminal_io()->println();*/
             delay(5);
         }
     }

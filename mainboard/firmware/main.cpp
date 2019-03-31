@@ -15,6 +15,7 @@
 #include "kinematic.h"
 #include "mux.h"
 #include "infos.h"
+#include "odometry.h"
 
 /**
  * Setup function
@@ -67,6 +68,9 @@ void setup()
 
     // Reiniting com
     com_init();
+
+
+    odometry_init();
 }
 
 // Benchmaking main loop

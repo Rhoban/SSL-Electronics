@@ -558,7 +558,10 @@ void com_send_status_to_master()
     }
 
     packet.cap_volt = kicker_cap_voltage();
-    packet.voltage = voltage_value()*8.0;
+    packet.voltage  = voltage_value()*8.0;
+    packet.xpos     = getOdometry().xpos*1000;
+    packet.ypos     = getOdometry().ypos*1000;
+    packet.ang      = getOdometry().ang*1000;
 
     for (size_t k=0; k<3; k++) {
         com_ce_disable(k);
@@ -582,14 +585,24 @@ void com_process_master()
         master_packet = (struct packet_master*)(com_master_frame + 1);
 
         // Driving wheels
-        if (master_packet->actions & ACTION_ON) {
+        if ((master_packet->actions & ACTION_ON)) {
+            if(master_packet->actions & ACTION_TARE_ODOM) {
+                odometry_tare((master_packet->x_speed)/1000.0, (master_packet->y_speed)/1000.0, (master_packet->t_speed)/10000.0);
+                //odometry_tare(0.0, 0.0, 0.0);
+
+            }else{
             kinematic_set(master_packet->x_speed/1000.0, master_packet->y_speed/1000.0,
                  master_packet->t_speed/1000.0);
+            }
             actions = master_packet->actions;
 
+            // TODO !
+            // If we want to drible only when IR is activated, we need 
+            // to uncomment
+            // the following line
             //if ((master_packet->actions & ACTION_DRIBBLE) && (ir_present()) ) {
             if ((master_packet->actions & ACTION_DRIBBLE)) {
-                drivers_set_safe(4, true, 0.5);
+                drivers_set_safe(4, true, 0.3);
             } else {
                 drivers_set(4, false, 0);
             }

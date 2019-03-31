@@ -76,7 +76,7 @@ GLOBAL_CFLAGS   := -Os -gdwarf-2 -nostdlib \
 		   -DRC=Serial2 \
 		   -DBOOTLOADER_$(BOOTLOADER) \
 		   -DMETABOT_VERSION="0.0"
-GLOBAL_CXXFLAGS := -fno-rtti -fno-exceptions -Wall $(TARGET_FLAGS)
+GLOBAL_CXXFLAGS := -std=c++11 -fno-rtti -fno-exceptions -Wall $(TARGET_FLAGS)
 GLOBAL_ASFLAGS  := -x assembler-with-cpp $(TARGET_FLAGS)
 LDFLAGS  = $(TARGET_LDFLAGS) $(TOOLCHAIN_LDFLAGS) -mcpu=cortex-m3 -mthumb \
            -Xlinker --gc-sections \
