@@ -751,8 +751,6 @@ int tare_process(){
 }
 
     
-void dispatch_display();
-
 int filter(int angle){
     if(tare_is_set) return angle;
     return all_angle[mod(angle, ONE_TURN_THETA) / (ONE_TURN_THETA/RESOLUTION)];
@@ -783,9 +781,7 @@ void motor_foc_tick()
     motor_flag = false;
     
     display_warning();
-    //dispatch_display();
 
-    // display(false);
     //D/ int theta;
     if( tare_is_set ){
         theta_s = tare_process();
@@ -794,7 +790,6 @@ void motor_foc_tick()
     }
     if( tare_state == TARE_IS_DONE || tare_is_set ){
         if( ! tare_is_set and use_fixed_theta ){
-            //display(false);
             theta_c = update_theta(theta_s);
             #ifdef FULL_TARE_PROCESS
             control_motor_with_vectorial(filter(theta_c));
@@ -802,7 +797,6 @@ void motor_foc_tick()
             control_motor_with_vectorial(theta_c);
             #endif
         }else{
-            //display(false);
             #ifdef FULL_TARE_PROCESS
             control_motor_with_vectorial(filter(theta_s));
             #else
@@ -908,104 +902,6 @@ void display_warning(){
     }
 }
 
-
-static unsigned int cnt = 0;
-static int display_time = 0; 
-
-void display_data(){
-    terminal_io()->print("theta : ");
-    terminal_io()->print( (1000.0 * theta_s)/ONE_TURN_THETA );
-    terminal_io()->print(", theta park : ");
-    terminal_io()->print( (1000.0 *theta_park)/ONE_TURN_THETA );
-    terminal_io()->print(", t1 : ");
-    terminal_io()->print( (1000.0 *t1) );
-    terminal_io()->print(", t2 : ");
-    terminal_io()->print( (1000.0 *t2) );
-    terminal_io()->print(", t3 : ");
-    terminal_io()->print( (1000.0 *t3) );
-    terminal_io()->print(", c1 : ");
-    terminal_io()->print((1000.0 * c1)/SIN_OUPUT_MAX );
-    terminal_io()->print(", c2 : ");
-    terminal_io()->print( (1000.0 *c2)/SIN_OUPUT_MAX );
-    terminal_io()->print(", c3 : ");
-    terminal_io()->println( (1000.0 *c3)/SIN_OUPUT_MAX );
-
-    terminal_io()->print(", V u : ");
-    terminal_io()->print( phase_voltage_u );
-    terminal_io()->print(", V v : ");
-    terminal_io()->print( phase_voltage_v );
-    terminal_io()->print(", V w : ");
-    terminal_io()->print( phase_voltage_w );
-
-    terminal_io()->print(", pwm u : ");
-    terminal_io()->print( phase_pwm_u );
-    terminal_io()->print(", pmw v : ");
-    terminal_io()->print( phase_pwm_v );
-    terminal_io()->print(", pmw w : ");
-    terminal_io()->print( phase_pwm_w );
-
-    
-    terminal_io()->print(", direct_v : ");
-    terminal_io()->print( direct_voltage_c );
-    terminal_io()->print(", quadrature_v : ");
-    terminal_io()->print( quadrature_voltage_c );
-    terminal_io()->println( "" );
-}
-
-void display( bool force ){
-    cnt ++;
-    int val = millis();
-    //int warning = security_get_warning();
-    //int error = security_get_error();
-    if( force || val  -  display_time > 4000 ){
-        int dt = val - display_time;
-        terminal_io()->print("D(");
-        terminal_io()->print(cnt);
-        terminal_io()->print(" - ");
-        terminal_io()->print( (cnt*1000)/dt );
-        terminal_io()->print("Hz - ");
-        terminal_io()->print( dt/1000 );
-        terminal_io()->print("s");
-        terminal_io()->print(") ");
-        display_data();
-        display_time = val;
-        cnt = 0;
-    }
-}
-
-static int dispatch_cnt = 0;
-int last_dispatch = 0;
-bool dispatch_display_b = false;
-
-void dispatch_display(){
-    if( ! dispatch_display_b ) return;
-    int val = millis();
-    if( val  -  last_dispatch > 1000 ){
-        last_dispatch = val;
-        int current = dispatch_cnt;
-        for( ; dispatch_cnt < current + 20 and dispatch_cnt < RESOLUTION; dispatch_cnt++ ){
-            terminal_io()->print("A ");
-            terminal_io()->print( (1000.0*dispatch_cnt)/RESOLUTION );
-            terminal_io()->print( " M " );
-            terminal_io()->println( 1000.0* all_angle[dispatch_cnt] );
-        }
-        if( dispatch_cnt >= RESOLUTION ){
-            dispatch_display_b = false;
-        }
-    }
-}
-
-TERMINAL_COMMAND(rot, "Rotor angle")
-{
-    terminal_io()->println( 1000.0* rotor_angle() );
-}
-
-TERMINAL_COMMAND(disp_f, "Display")
-{
-    dispatch_cnt = 0;
-    dispatch_display_b = true;
-}
-
 TERMINAL_COMMAND(motor_info, "Display")
 {
     terminal_io()->print("q v : ");
@@ -1035,11 +931,6 @@ TERMINAL_COMMAND(motor_info, "Display")
     terminal_io()->println(theta_park);
     terminal_io()->print("theta park mod 3: ");
     terminal_io()->println(mod( theta_park, ONE_TURN_THETA/3 ));
-}
-
-TERMINAL_COMMAND(disp, "Display")
-{
-    display( true );
 }
 
 bool motor_is_tared(){
