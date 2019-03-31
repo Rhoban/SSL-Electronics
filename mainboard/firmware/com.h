@@ -1,6 +1,7 @@
 #ifndef _COM_H
 #define _COM_H
 
+#include "odometry.h"
 #include <stdint.h>
 
 #define PACKET_SIZE                 16
@@ -15,6 +16,7 @@ struct packet_master {
     #define ACTION_KICK2   (1<<2)   // Kick on kicker 2 - normal
     #define ACTION_DRIBBLE (1<<3)   // Enable/disable the dribbler
     #define ACTION_CHARGE  (1<<5)   // Enable/disable the capacitor charge
+    #define ACTION_TARE_ODOM (1<<7)   // Tare Odometry
     uint8_t actions;
 
     int16_t x_speed;                // Kinematic orders [mm/s]
@@ -38,9 +40,14 @@ struct packet_robot {
     #define STATUS_IR           (1<<2)  // The infrared barrier detects the ball
     uint8_t status;
 
-    uint8_t cap_volt;                  // Kick capcaitor voltage [V]
+    uint8_t cap_volt;                  // Kick capacitor voltage [V]
 
     uint8_t voltage;                  // Battery voltage [8th of V]
+
+    int16_t xpos;                     // Data planned by odometry
+    int16_t ypos;                     // In mm
+    int16_t ang;                      // In rad/10000
+
 } __attribute__((packed));
 
 void com_init();
