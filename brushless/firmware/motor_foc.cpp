@@ -759,6 +759,8 @@ void register_update_theta( int (* fct)(int) ){
     update_theta = fct;
 };
 
+TERMINAL_PARAMETER_INT(deph, "dephasage", 0);
+
 void motor_foc_tick()
 {
     static bool motor_ticking = false;
@@ -783,16 +785,19 @@ void motor_foc_tick()
     }else{
         #define SCALED_FREQ ((ENCODER_SPEED_SCALE/THETA_OUT_SCALE)*MOTOR_UPDATE_FREQUENCE)
         if( nb_motor_update_by_servo_update == 0 ){
-            const int delay = 0; // TODO
             speed_s = encoder_to_speed();
             // TODO : IMPROVE encoder_to_speed() !
             if( speed_s<(ENCODER_SPEED_SCALE*5/10) ){
               speed_s /= 2;
             }
-            speed_s /= SCALED_FREQ;
-            theta_s = delay*speed_s + rotor_angle();
+            // TODO
+            const int dephasage_for_delay = 0;
+            //const int dephasage_for_delay = (
+            //   deph*(speed_s/(ENCODER_SPEED_SCALE/THETA_OUT_SCALE))
+            //)/1000000;
+            theta_s = dephasage_for_delay + rotor_angle();
         }else{
-            theta_s += nb_motor_update_by_servo_update * speed_s;
+            theta_s += nb_motor_update_by_servo_update * (speed_s/SCALED_FREQ);
         }
     }
     if( tare_state == TARE_IS_DONE || tare_is_set ){
