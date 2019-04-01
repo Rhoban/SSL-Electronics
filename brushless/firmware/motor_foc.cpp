@@ -99,8 +99,12 @@ void motor_irq(){
         }
         motor_flag = true;
     }
-    #define PWM_SHIFT_PERCENT 25 
-    //#define PWM_SHIFT_PERCENT 0 
+    #ifdef HIGH_IMPEDENCE_MODE
+      #define PWM_SHIFT_PERCENT 0
+    #else
+      #define PWM_SHIFT_PERCENT 25 
+      //#define PWM_SHIFT_PERCENT 0 
+    #endif
     #define PWM_SHIFT  ((PWM_SHIFT_PERCENT*PWM_SUPREMUM)/100)
     #ifdef PHASE_OPPOSITION 
         if(count_irq_2%SWAP_PWM_FREQUENCE == 0){
@@ -780,7 +784,12 @@ void motor_foc_tick()
         #define SCALED_FREQ ((ENCODER_SPEED_SCALE/THETA_OUT_SCALE)*MOTOR_UPDATE_FREQUENCE)
         if( nb_motor_update_by_servo_update == 0 ){
             const int delay = 0; // TODO
-            speed_s = encoder_to_speed()/SCALED_FREQ;
+            speed_s = encoder_to_speed();
+            // TODO : IMPROVE encoder_to_speed() !
+            if( speed_s<(ENCODER_SPEED_SCALE*5/10) ){
+              speed_s /= 2;
+            }
+            speed_s /= SCALED_FREQ;
             theta_s = delay*speed_s + rotor_angle();
         }else{
             theta_s += nb_motor_update_by_servo_update * speed_s;
