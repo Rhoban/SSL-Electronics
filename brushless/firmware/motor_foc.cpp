@@ -102,7 +102,7 @@ void motor_irq(){
     #ifdef HIGH_IMPEDENCE_MODE
       #define PWM_SHIFT_PERCENT 0
     #else
-      #define PWM_SHIFT_PERCENT 25 
+      #define PWM_SHIFT_PERCENT 15 
       //#define PWM_SHIFT_PERCENT 0 
     #endif
     #define PWM_SHIFT  ((PWM_SHIFT_PERCENT*PWM_SUPREMUM)/100)
