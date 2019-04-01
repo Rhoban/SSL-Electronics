@@ -45,4 +45,9 @@ static_assert(
 );
 
 void encoder_print_errors();
+
+#define ENCODER_CNT_SCALE 16384
+#define THETA_OUT_SCALE 1638
+#define ENCODER_SPEED_SCALE 16384
+
 #endif

@@ -26,9 +26,7 @@ inline bool parity_16_check( uint16_t x ){
 }
 
 
-#define ENCODER_CNT_SCALE 16384
-#define THETA_OUT_SCALE 1638
-#define ENCODER_SPEED_SCALE 16384
+
 static int theta_out_0 = 0*THETA_OUT_SCALE;
 static int theta_out_1 = 0*THETA_OUT_SCALE;
 static int theta_out_2 = 0*THETA_OUT_SCALE;
@@ -373,8 +371,8 @@ static Speed_state speed_state;
 static float adaptative_encoder_speed = 0;
 
 int encoder_to_speed(){
-    return encoder_speed; //adaptative_encoder_speed;
-    //return adaptative_encoder_speed;
+    //return encoder_speed;
+    return adaptative_encoder_speed;
 }
 
 #define LOW_NORMAL_SPEED_MIN_FLOAT 1.0 

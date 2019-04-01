@@ -6,6 +6,9 @@
 #include "security.h"
 #include "terminal.h"
 #include <stdint.h>
+#include "encoder.h"
+#include "security.h"
+#include "errors.h"
 
 void servo_init()
 {
@@ -18,11 +21,36 @@ void servo_init()
     #endif
 }
 
+static int last_warning = 0;
+
+void display_warning(){
+    int warning = security_get_warning();  
+    int error = security_get_error();  
+    if( warning != SECURITY_NO_WARNING || error != SECURITY_NO_ERROR ){
+        int val = millis();
+        if( val - last_warning > 4000 ){
+            if( warning != SECURITY_NO_WARNING ){
+                terminal_io()->println( driver_warning(warning) );
+                security_set_warning( SECURITY_NO_WARNING );
+                // encoder_print_errors();
+            }
+            if( error != SECURITY_NO_ERROR ){
+                //terminal_io()->print("E ");
+                terminal_io()->print(error);
+                terminal_io()->println( driver_error(error) );
+            }
+            last_warning = val;
+        }
+    }
+}
+
 void servo_tick()
 {
     if (security_get_error() != SECURITY_NO_ERROR) {
         motor_set(false, 0);
     } else {
+        display_warning();
+
         #if defined(USE_HYBRID)
         servo_hybrid_tick();
         #elif defined(USE_HALL)

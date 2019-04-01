@@ -29,13 +29,18 @@ static_assert(
 );
 #define MOTOR_FREQUENCE 800
 #define SWAP_PWM_FREQUENCE 1
-#define MOTOR_SUB_SAMPLE 120
+#define SERVO_UPDATE 120
 
+#define MOTOR_UPDATE_FREQUENCE 2400
+#define MOTOR_UPDATE 40
+static_assert(MOTOR_UPDATE<=SERVO_UPDATE, "");
+static_assert(PWM_FREQUENCE == MOTOR_UPDATE_FREQUENCE*MOTOR_UPDATE, "");
+static_assert(SERVO_UPDATE%MOTOR_UPDATE == 0, "");
 
 static_assert(
-    PWM_FREQUENCE == MOTOR_FREQUENCE*MOTOR_SUB_SAMPLE, ""
+    PWM_FREQUENCE == MOTOR_FREQUENCE*SERVO_UPDATE, ""
 );
-static_assert( MOTOR_SUB_SAMPLE>=2, "Shanon !");
+static_assert( SERVO_UPDATE>=2, "Shanon !");
 
 
 /**

@@ -14,8 +14,6 @@ inline int mod(int n, int d){
     return (r>=0) ? r : r+d;
 }
 
-void display_warning();
-
 // Target PWM speed [0-3000]
 static bool motor_on = false;
 
@@ -72,22 +70,34 @@ inline void apply_pwm( int low_pin, int high_pin, int pwm ){
     pwmWrite(high_pin, pwm);
 }
 
+static unsigned int nb_motor_update_by_servo_update = 0;
 
 void motor_irq(){
-    static unsigned int count_irq = 0;
+    static unsigned int count_motor_irq = 0;
+    static unsigned int count_servo_irq = 0;
     static unsigned int count_irq_2 = 0;
-    count_irq++;
-    if( count_irq == MOTOR_SUB_SAMPLE ) count_irq = 0;
+    count_motor_irq++;
+    count_servo_irq++;
     count_irq_2++;
-    if( ! count_irq ){
-        if( motor_flag ){
-            security_set_warning(WARNING_MOTOR_LAG);
-        }
+    if(count_motor_irq == MOTOR_UPDATE){
+        count_motor_irq = 0;
+        nb_motor_update_by_servo_update++;
+    }
+    if(count_servo_irq == SERVO_UPDATE){
+        count_servo_irq = 0;
+        nb_motor_update_by_servo_update = 0;
+    }
+    if( ! count_servo_irq ){
         if( serv_flag ){
             security_set_warning(WARNING_SERVO_LAG);
         }
-        motor_flag = true;
         serv_flag = true;
+    }
+    if( ! count_motor_irq ){
+        if( motor_flag ){
+            security_set_warning(WARNING_MOTOR_LAG);
+        }
+        motor_flag = true;
     }
     #define PWM_SHIFT_PERCENT 25 
     //#define PWM_SHIFT_PERCENT 0 
@@ -760,15 +770,21 @@ void motor_foc_tick()
     }
     motor_flag = false;
     
-    display_warning();
-
     // VALUE : [INT_MIN/ONE_TURN_THETA, INT_MAX/ONE_TURN_THETA]
     // SCALE :  ONE_TURN_THETA 
-    int theta_s;
+    static int theta_s = 0;
+    static int speed_s = 0;
     if( tare_is_set ){
         theta_s = tare_process();
     }else{
-        theta_s = rotor_angle();
+        #define SCALED_FREQ ((ENCODER_SPEED_SCALE/THETA_OUT_SCALE)*MOTOR_UPDATE_FREQUENCE)
+        if( nb_motor_update_by_servo_update == 0 ){
+            const int delay = 0; // TODO
+            speed_s = encoder_to_speed()/SCALED_FREQ;
+            theta_s = delay*speed_s + rotor_angle();
+        }else{
+            theta_s += nb_motor_update_by_servo_update * speed_s;
+        }
     }
     if( tare_state == TARE_IS_DONE || tare_is_set ){
         if( ! tare_is_set and use_fixed_theta ){
@@ -855,30 +871,6 @@ TERMINAL_COMMAND(user_pwm, "Force the phase to use a given pwm")
             return;
         }
         terminal_io()->println("Usage: user_pwm [ -100.0 - 100 ]");
-    }
-}
-
-static int last_warning = 0;
-
-void display_warning(){
-    int warning = security_get_warning();  
-    int error = security_get_error();  
-    if( warning != SECURITY_NO_WARNING || error != SECURITY_NO_ERROR ){
-        int val = millis();
-        if( val - last_warning > 4000 ){
-            if( warning != SECURITY_NO_WARNING ){
-                terminal_io()->print("W ");
-                terminal_io()->println( driver_warning(warning) );
-                security_set_warning( SECURITY_NO_WARNING );
-                encoder_print_errors();
-            }
-            if( error != SECURITY_NO_ERROR ){
-                //terminal_io()->print("E ");
-                terminal_io()->print(error);
-                terminal_io()->println( driver_error(error) );
-            }
-            last_warning = val;
-        }
     }
 }
 
