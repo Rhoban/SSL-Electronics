@@ -75,7 +75,7 @@ static int32_t encoder_deltas = 0;
 
 inline int32_t encoder_compute_delta(uint16_t a, uint16_t b)
 {
-    int32_t delta = b - a;
+    int32_t delta = ((int32_t) b) - ((int32_t) a);
 
     if (delta > 0x1fff) {
         delta -= 0x4000;
@@ -437,13 +437,13 @@ void encoder_tick()
 
         switch( speed_state ){
             case LOW_SPEED :
-                if( encoder_speed >= LOW_NORMAL_SPEED_MAX ){
+                if( abs(encoder_speed) >= LOW_NORMAL_SPEED_MAX ){
                     speed_state = NORMAL_SPEED;
                 }
                 break;
             case NORMAL_SPEED:
             default:
-                if( encoder_speed <= LOW_NORMAL_SPEED_MIN ){
+                if( abs(encoder_speed) <= LOW_NORMAL_SPEED_MIN ){
                     speed_state = LOW_SPEED;
                 }
                 break;

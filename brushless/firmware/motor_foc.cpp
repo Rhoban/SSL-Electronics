@@ -603,7 +603,7 @@ inline void compute_vectorial_command(
     phase_voltage_u = (((c1/1)*(direct_voltage_c/1))/1 + (-((s1/1)*(quadrature_voltage_c/1)))/1);
     phase_voltage_v = (((c2/1)*(direct_voltage_c/1))/1 + (-((s2/1)*(quadrature_voltage_c/1)))/1);
     phase_voltage_w = (((c3/1)*(direct_voltage_c/1))/1 + (-((s3/1)*(quadrature_voltage_c/1)))/1);
-    min_voltage = ( (( (phase_voltage_u*1.0 < phase_voltage_v*1.0) ? phase_voltage_u*1.0 : phase_voltage_v*1.0 )*1.0 < phase_voltage_w*1.0) ? ( (phase_voltage_u*1.0 < phase_voltage_v*1.0) ? phase_voltage_u*1.0 : phase_voltage_v*1.0 )*1.0 : phase_voltage_w*1.0 );
+    min_voltage = ( (( (phase_voltage_u*1 < phase_voltage_v*1) ? phase_voltage_u*1 : phase_voltage_v*1 )*1 < phase_voltage_w*1) ? ( (phase_voltage_u*1 < phase_voltage_v*1) ? phase_voltage_u*1 : phase_voltage_v*1 )*1 : phase_voltage_w*1 );
     phase_pwm_u = (((alpha_user_pwm/65536)*((phase_voltage_u/1 + (-min_voltage)/1)/256))/4194304);
     phase_pwm_v = (((alpha_user_pwm/65536)*((phase_voltage_v/1 + (-min_voltage)/1)/256))/4194304);
     phase_pwm_w = (((alpha_user_pwm/65536)*((phase_voltage_w/1 + (-min_voltage)/1)/256))/4194304);
@@ -787,7 +787,7 @@ void motor_foc_tick()
         if( nb_motor_update_by_servo_update == 0 ){
             speed_s = encoder_to_speed();
             // TODO : IMPROVE encoder_to_speed() !
-            if( speed_s<(ENCODER_SPEED_SCALE*5/10) ){
+            if( abs(speed_s)<(ENCODER_SPEED_SCALE*5/10) ){
               speed_s /= 2;
             }
             // TODO
@@ -795,7 +795,7 @@ void motor_foc_tick()
             //const int dephasage_for_delay = (
             //   deph*(speed_s/(ENCODER_SPEED_SCALE/THETA_OUT_SCALE))
             //)/1000000;
-            theta_s = dephasage_for_delay + rotor_angle();
+            theta_s = dephasage_for_delay + rotor_angle() + (speed_s/(2*SCALED_FREQ));
         }else{
             theta_s += nb_motor_update_by_servo_update * (speed_s/SCALED_FREQ);
         }
