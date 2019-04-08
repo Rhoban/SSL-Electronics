@@ -2,13 +2,12 @@
 #define _SSL_H
 
 //#define MOTEUR_BANC
-#define MOTEUR_90_12V
+//#define MOTEUR_90_12V
 //#define MOTEUR_ROBOT_4_0
 //#define CYCLOIDE_PHASE_OPPOSITION
 //#define CYCLOIDE12
-//#define CYCLOIDE16
+#define CYCLOIDE16
 //#define CYCLOIDE16_PHASE_OPPOSITION
-
 
 #define MAX_THETA_LIMIT 6.15
 #define MIN_THETA_LIMIT -6.15
@@ -42,11 +41,11 @@
     #define REVERSE_PHASE
     #define MANUAL_SPEED false //true
     // #define INITIAL_SPEED 1.0
-    #define KFEM 29.0 //42.0 //55.0 //110.0// //55.0 //29.6
-    #define K_SPEED_P  80.0 //270.0 //200.0 //180
-    #define K_SPEED_I 1000.0 //3011.0 //80.0 //150
-    #define K_POS_P 1.0 //6.66 //1.5 // 1.5
-    #define K_POS_I 0.0 //5.0 //0.1 // 0.1
+    #define KFEM 81.0 //29.0 //42.0 //55.0 //110.0// //55.0 //29.6
+    #define K_SPEED_P  120.0 //270.0 //200.0 //180
+    #define K_SPEED_I 3000.0 //3011.0 //80.0 //150
+    #define K_POS_P 11.0 //6.66 //1.5 // 1.5
+    #define K_POS_I 0.1 //5.0 //0.1 // 0.1
 #endif
 
 
