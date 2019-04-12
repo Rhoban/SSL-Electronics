@@ -5,14 +5,27 @@
 #include <terminal.h>
 
 static float speed_csg_float = 0;
-static int theta_consign = 0;
+static int theta_origin = 0;
+static bool reset_theta_origin = false;
+static unsigned int theta_update_cnt = 0;
 static int delta_theta;
 
 static int cnt = 0;
 
 int update_angle(int angle){
-    theta_consign += delta_theta;
-    return theta_consign;
+    if(reset_theta_origin){
+        reset_theta_origin = false;
+        theta_update_cnt = 0;
+        theta_origin = rotor_angle();
+    }else{
+       theta_update_cnt ++;
+    }
+    // return theta_origin + theta_update_cnt * delta_theta;
+    return theta_origin + (int) (
+        theta_update_cnt * speed_csg_float * 
+        ONE_TURN_THETA
+    ) / MOTOR_UPDATE_FREQUENCE;
+
 }
 
 void servo_hybrid_init(){
@@ -84,7 +97,7 @@ void change_motor_mode(){
         case LOW_SPEED:
             set_open_loop(true);
             set_fixed_theta(true);
-            theta_consign = rotor_angle();
+            reset_theta_origin = true;
             direct_quadrature_voltage_set( REFERENCE_VOLTAGE/2, 0);
             break;
         case NORMAL_SPEED:
@@ -107,7 +120,8 @@ void servo_hybrid_tick(){
 }
 void servo_hybrid_set(bool enable, float targetSpeed, int16_t pwm){
     speed_csg_float = targetSpeed;
-    delta_theta = (int)( ( targetSpeed * ENCODER_CNT_SCALE) / MOTOR_FREQUENCE );
+    reset_theta_origin = true;
+    delta_theta = ( (int)( targetSpeed * ONE_TURN_THETA ) / MOTOR_UPDATE_FREQUENCE );
     servo_foc_set(enable, targetSpeed, pwm);
 }
 float servo_hybrid_get_speed(){

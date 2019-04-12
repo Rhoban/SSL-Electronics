@@ -579,7 +579,7 @@ inline void compute_vectorial_command(
 
     // VALUE : [0, 1]
     // SCALE : SIN_INPUT_RESOLUTION
-    static_assert( SIN_INPUT_RESOLUTION <  ONE_TURN_THETA , "");
+    static_assert( SIN_INPUT_RESOLUTION <=  ONE_TURN_THETA , "");
     t1 = mod(t1, ONE_TURN_THETA)/(ONE_TURN_THETA/SIN_INPUT_RESOLUTION);
     t2 = mod(t2, ONE_TURN_THETA)/(ONE_TURN_THETA/SIN_INPUT_RESOLUTION);
     t3 = mod(t3, ONE_TURN_THETA)/(ONE_TURN_THETA/SIN_INPUT_RESOLUTION);
@@ -664,11 +664,11 @@ int tare_process(){
             motor_on = true,
             last_tare_time = millis();
 
-#ifdef PHASE_OPPOSITION
-            direct_quadrature_voltage_set(REFERENCE_VOLTAGE/2, 0);
-#else
-            direct_quadrature_voltage_set(REFERENCE_VOLTAGE/2, 0);
-#endif
+            if( CONFIG_PWM > 50){
+              direct_quadrature_voltage_set(REFERENCE_VOLTAGE/2, 0);
+            }else{
+              direct_quadrature_voltage_set(REFERENCE_VOLTAGE, 0);
+            }
 
             //direct_quadrature_voltage_set(REF, 0);
             save_user_pwm = user_pwm;
