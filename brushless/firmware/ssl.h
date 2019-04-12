@@ -137,7 +137,7 @@
 #ifdef MOTEUR_ROBOT_4_0
     //#define PHASE_OPPOSITION 
     #define OPEN_LOOP_FOC false //true
-    #define USE_HYBRID
+    //#define USE_HYBRID
     #define HYBRID_DIRECT_VOLTAGE 7*REFERENCE_VOLTAGE/8
     #define USE_FOC
     //#define STOP_OUTSIDE_LIMITS 
