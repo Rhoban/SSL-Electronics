@@ -98,7 +98,7 @@ void change_motor_mode(){
             set_open_loop(true);
             set_fixed_theta(true);
             reset_theta_origin = true;
-            direct_quadrature_voltage_set( REFERENCE_VOLTAGE/2, 0);
+            direct_quadrature_voltage_set( REFERENCE_VOLTAGE, 0);
             break;
         case NORMAL_SPEED:
         case HIGH_SPEED:

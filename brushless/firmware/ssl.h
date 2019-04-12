@@ -141,7 +141,7 @@
     //#define USE_FOC
     //#define STOP_OUTSIDE_LIMITS 
     #define MOTOR_NAME "MOTEUR_ROBOT_4_0"
-    #define CONFIG_PWM 40
+    #define CONFIG_PWM 35
     #define NB_POSITIVE_MAGNETS 8
     #define MANUAL_SPEED true //false //true //false
     #define KFEM 122 //115.0 // 44.1
