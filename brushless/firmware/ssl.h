@@ -156,4 +156,11 @@
     #define INITIAL_SPEED 0
 #endif
 
+#if defined(USE_FOC) && defined(USE_HYBRID)
+  static_assert(
+    false,
+    "It is not possible to have USE_FOC and USE_HYBRID at same time."
+  );
+#endif
+
 #endif
