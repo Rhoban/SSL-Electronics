@@ -16,8 +16,10 @@ void servo_init()
     servo_hybrid_init();
     #elif defined(USE_HALL)
     servo_hall_init();
-    #else
+    #elif defined(USE_FOC)
     servo_foc_init();
+    #else
+    static_assert(false,"");
     #endif
 }
 
@@ -57,6 +59,8 @@ void servo_tick()
         servo_hall_tick();
         #elif defined(USE_FOC)
         servo_foc_tick();
+        #else
+        static_assert(false,"");
         #endif
     }
 }
@@ -68,6 +72,8 @@ void servo_set(bool enable, float targetSpeed, int16_t pwm){
     servo_hall_set(enable, targetSpeed, pwm);
     #elif defined(USE_FOC)
     servo_foc_set(enable, targetSpeed, pwm);
+    #else
+    static_assert(false,"");
     #endif
 }
 
@@ -77,6 +83,8 @@ void servo_set_speed_consign( float speed ){
     #elif defined(USE_HALL)
     #elif defined(USE_FOC)
     servo_set_speed_consign_foc(speed);
+    #else
+    static_assert(false,"");
     #endif
 }
 
@@ -87,6 +95,8 @@ float servo_get_speed(){
     return servo_hall_get_speed();
     #elif defined(USE_FOC)
     return servo_foc_get_speed();
+    #else
+    static_assert(false,"");
     #endif
 }
 
@@ -97,6 +107,8 @@ int servo_get_pwm(){
     return servo_hall_get_pwm();
     #elif defined(USE_FOC)
     return servo_foc_get_pwm();
+    #else
+    static_assert(false,"");
     #endif
 }
 
@@ -107,6 +119,8 @@ void servo_set_pid(float kp, float ki, float kd){
     servo_hall_set_pid(kp, ki, kd);
     #elif defined(USE_FOC)
     servo_foc_set_pid(kp, ki, kd);
+    #else
+    static_assert(false,"");
     #endif
 }
 
@@ -116,6 +130,8 @@ void servo_set_flag(){
     #elif defined(USE_HALL)
     servo_hall_set_flag();
     #elif defined(USE_FOC)
+    #else
+    static_assert(false,"");
     #endif
 }
 
@@ -126,6 +142,8 @@ void servo_emergency(){
     servo_hall_emergency();
     #elif defined(USE_FOC)
     servo_foc_emergency();
+    #else
+    static_assert(false,"");
     #endif
 }
 
@@ -136,6 +154,8 @@ void servo_stop(){
     servo_hall_stop();
     #elif defined(USE_FOC)
     servo_foc_stop();
+    #else
+    static_assert(false,"");
     #endif
 }
 

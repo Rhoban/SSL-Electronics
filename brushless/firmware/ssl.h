@@ -137,19 +137,18 @@
 #ifdef MOTEUR_ROBOT_4_0
     //#define PHASE_OPPOSITION 
     #define OPEN_LOOP_FOC false //true
-    //#define USE_HYBRID
-    #define HYBRID_DIRECT_VOLTAGE 7*REFERENCE_VOLTAGE/8
-    #define USE_FOC
+    #define USE_HYBRID
+    //#define USE_FOC
     //#define STOP_OUTSIDE_LIMITS 
     #define MOTOR_NAME "MOTEUR_ROBOT_4_0"
     #define CONFIG_PWM 40
     #define NB_POSITIVE_MAGNETS 8
     #define MANUAL_SPEED true //false //true //false
-    #define KFEM 120 //122 //115.0 // 44.1
-    #define K_SPEED_P 425 //450 //300 // 310
+    #define KFEM 122 //122 //115.0 // 44.1
+    #define K_SPEED_P 400 //450 //300 // 310
     #define K_SPEED_I 3000 // 3000 // 3000 // 150
-    #define K_POS_P 0.0 //11.0 // 1.5
-    #define K_POS_I 0.0 //0.1 // 0.1
+    #define K_POS_P 11.11 //11.0 // 1.5
+    #define K_POS_I 4.0 //0.1 // 0.1
 #endif
 
 #ifndef INITIAL_SPEED

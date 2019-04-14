@@ -43,5 +43,19 @@ void servo_set_speed_consign_foc( float speed );
 void set_open_loop( bool value );
 bool is_open_loop();
 
+void servo_foc_set_manual_speed(bool value);
 void reset_asservissement();
+
+/*
+ * Set angular position
+ *
+ * input : angular
+ * scale : ONE_TURN_THETA
+ */
+void set_foc_angular_position(int theta_csg);
+
+void servo_foc_register_get_theta_csg(
+    int (*fct)( int update_frequence)
+);
+
 #endif
