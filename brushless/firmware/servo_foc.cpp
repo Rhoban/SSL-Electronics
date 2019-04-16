@@ -248,6 +248,7 @@ void set_speed_csg( float speed_csg_input );
 void servo_foc_set(bool enable, float target, int16_t pwm)
 {
     if (!enable) {
+        set_speed_csg( 0 );
         motor_foc_set(false, 0);
         security_set_error(SECURITY_NO_ERROR);
     }else{

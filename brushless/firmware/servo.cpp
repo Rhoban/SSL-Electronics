@@ -51,8 +51,7 @@ void servo_tick()
     if (security_get_error() != SECURITY_NO_ERROR) {
         motor_set(false, 0);
     } else {
-        display_warning();
-
+        // display_warning();
         #if defined(USE_HYBRID)
         servo_hybrid_tick();
         #elif defined(USE_HALL)

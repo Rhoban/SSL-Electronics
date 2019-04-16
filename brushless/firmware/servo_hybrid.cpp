@@ -13,14 +13,27 @@ void init_position(){
     theta_update_cnt = 0;
 }
 
-int compute_angular_position( int update_frequence ){
-    theta_update_cnt ++;
+inline int get_angular_position( int update_frequence ){
     static float delay_ratio = .5;
     return theta_origin + (int) (
         (theta_update_cnt+delay_ratio) * speed_csg_float * 
         ONE_TURN_THETA
     ) / update_frequence;
 }
+
+static int update_frequence = MOTOR_FREQUENCE;
+
+int compute_angular_position( int update_freq ){
+    update_frequence = update_freq;
+    theta_update_cnt ++;
+    return get_angular_position( update_frequence );
+}
+
+void save_theta_origin(){
+    theta_origin = get_angular_position( update_frequence );
+    theta_update_cnt = 0;
+}
+
 
 void servo_hybrid_init(){
     servo_foc_init();
@@ -111,9 +124,11 @@ void servo_hybrid_tick(){
     servo_foc_tick();
 }
 void servo_hybrid_set_speed_consign( float speed ){
-    speed_csg_float = speed;
-    init_position();
-    servo_set_speed_consign_foc(speed);
+    if( speed_csg_float != speed ){
+        save_theta_origin();
+        speed_csg_float = speed;
+        servo_set_speed_consign_foc(speed);
+    }
 }
 void servo_hybrid_set(bool enable, float targetSpeed, int16_t pwm){
     servo_hybrid_set_speed_consign(targetSpeed);
