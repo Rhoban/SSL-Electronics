@@ -8,10 +8,6 @@
 static_assert( IS_POW_2(REFERENCE_VOLTAGE), "");
 static_assert( REFERENCE_VOLTAGE == 2*HALF_REFERENCE_VOLTAGE , "");
 
-/*
- * 1 turn : [ 0 - 2^14 [ = [ 0 - 16384 [ 
- */
-#define ONE_TURN_THETA 0x4000
 
 #define PWM_SUPREMUM 750
 #define PWM_MIN ((PWM_MIN_PERCENT*PWM_SUPREMUM)/100)

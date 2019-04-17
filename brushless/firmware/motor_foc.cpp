@@ -787,9 +787,9 @@ void motor_foc_tick()
         if( nb_motor_update_by_servo_update == 0 ){
             speed_s = encoder_to_speed();
             // TODO : IMPROVE encoder_to_speed() !
-            if( abs(speed_s)<(ENCODER_SPEED_SCALE*5/10) ){
-              speed_s /= 2;
-            }
+            //if( abs(speed_s)<(ENCODER_SPEED_SCALE*5/10) ){
+            //  speed_s /= 2;
+            //}
             // TODO
             const int dephasage_for_delay = 0;
             //const int dephasage_for_delay = (

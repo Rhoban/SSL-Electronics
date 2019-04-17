@@ -144,11 +144,11 @@
     #define CONFIG_PWM 40
     #define NB_POSITIVE_MAGNETS 8
     #define MANUAL_SPEED true //false //true //false
-    #define KFEM 122 //122 //115.0 // 44.1
-    #define K_SPEED_P 400 //450 //300 // 310
-    #define K_SPEED_I 3000 // 3000 // 3000 // 150
-    #define K_POS_P 11.11 //11.0 // 1.5
-    #define K_POS_I 4.0 //0.1 // 0.1
+    #define KFEM 70 //122 //115.0 // 44.1
+    #define K_SPEED_P 400 //400 //450 //300 // 310
+    #define K_SPEED_I 3011 //3000 // 3000 // 3000 // 150
+    #define K_POS_P 10 //11.11 //11.0 // 1.5
+    #define K_POS_I 0.5 //4.0 //0.1 // 0.1
 #endif
 
 #ifndef INITIAL_SPEED
