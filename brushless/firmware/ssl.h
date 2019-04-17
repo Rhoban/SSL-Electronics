@@ -137,8 +137,9 @@
 #ifdef MOTEUR_ROBOT_4_0
     //#define PHASE_OPPOSITION 
     #define OPEN_LOOP_FOC false //true
-    #define USE_HYBRID
-    //#define USE_FOC
+    //#define USE_HYBRID
+    //#define USE_OPEN_LOOP_FOR_HYBRID
+    #define USE_FOC
     //#define STOP_OUTSIDE_LIMITS 
     #define MOTOR_NAME "MOTEUR_ROBOT_4_0"
     #define CONFIG_PWM 40

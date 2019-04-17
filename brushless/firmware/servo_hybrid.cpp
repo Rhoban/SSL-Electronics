@@ -34,10 +34,17 @@ void save_theta_origin(){
     theta_update_cnt = 0;
 }
 
+int compute_angular_position_for_foc(int angle){
+    return compute_angular_position( MOTOR_UPDATE_FREQUENCE );
+}
 
 void servo_hybrid_init(){
     servo_foc_init();
+    #ifdef USE_OPEN_LOOP_FOR_HYBRID
+    register_update_theta( compute_angular_position_for_foc );
+    #else
     servo_foc_register_get_theta_csg(compute_angular_position);   
+    #endif
 }
 
 static HybridState old_state = NO_STATE;
@@ -103,13 +110,24 @@ void change_motor_mode(){
     switch( state ){
         case LOW_SPEED:
         default:
+            #ifdef USE_OPEN_LOOP_FOR_HYBRID
+            set_fixed_theta(true);
+            set_open_loop( true );
+            direct_quadrature_voltage_set(REFERENCE_VOLTAGE/2, 0);
+            #else
             servo_foc_set_manual_speed(false);
-            init_position();
             set_foc_angular_position(theta_origin);
             reset_asservissement();
+            #endif
+            init_position();
             break;
         case NORMAL_SPEED:
         case HIGH_SPEED:
+            #ifdef USE_OPEN_LOOP_FOR_HYBRID
+            set_fixed_theta(false);
+            set_open_loop( false );
+            #else
+            #endif
             servo_foc_set_manual_speed(true);
             servo_set_speed_consign_foc(speed_csg_float);
             reset_asservissement();

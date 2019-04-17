@@ -216,7 +216,9 @@ void control_with_vectorial_command(){
             max_output_voltage = output_voltage_q;
         }
         output_voltage_d = 0;
-        direct_quadrature_voltage_set(output_voltage_d, output_voltage_q);
+        if( ! open_loop ){
+            direct_quadrature_voltage_set(output_voltage_d, output_voltage_q);
+        }
     }else{
         if(motor_is_tared()){
             reset_asservissement(); 
@@ -234,11 +236,7 @@ void servo_foc_tick()
     if (security_get_error() != SECURITY_NO_ERROR) {
         motor_foc_set(false, 0);
     } else {
-        if(open_loop){
-            reset_serv_flag();
-        }else{
-            control_with_vectorial_command();
-        }
+        control_with_vectorial_command();
     }
 }
 
