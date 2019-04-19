@@ -1,9 +1,9 @@
 #ifndef _SSL_H
 #define _SSL_H
 
-#define MOTEUR_BANC
+//#define MOTEUR_BANC
 //#define MOTEUR_90_12V
-//#define MOTEUR_ROBOT_4_0
+#define MOTEUR_ROBOT_4_0
 //#define CYCLOIDE_PHASE_OPPOSITION
 //#define CYCLOIDE12
 //#define CYCLOIDE16
