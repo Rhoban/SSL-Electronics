@@ -24,9 +24,9 @@ float encoder_to_turn();
 #define ENCODER_CNT_SCALE 16384
 #define MAX_SPEED_ENCODER_CNT 0x8000000
 #define MAX_MOTOR_SPEED 128 
-#define SPEED_NOMRALISATION (MAX_SPEED_ENCODER_CNT/MAX_MOTOR_SPEED)
+#define ENCODER_SPEED_SCALE (MAX_SPEED_ENCODER_CNT/MAX_MOTOR_SPEED)
 #define SPEED_SCALE 64
-static_assert( SPEED_SCALE*ENCODER_CNT_SCALE == SPEED_NOMRALISATION, "");
+static_assert( SPEED_SCALE*ENCODER_CNT_SCALE == ENCODER_SPEED_SCALE, "");
 
 #define ENCODER_FREQUENCE 8000
 #define SUB_SAMPLE_FREQUENCE 800
@@ -45,4 +45,12 @@ static_assert(
 );
 
 void encoder_print_errors();
+
+/*
+ * 1 turn : [ 0 - 2^14 [ = [ 0 - 16384 [ 
+ */
+#define ONE_TURN_THETA 0x4000
+
+#define THETA_OUT_SCALE ONE_TURN_THETA
+
 #endif

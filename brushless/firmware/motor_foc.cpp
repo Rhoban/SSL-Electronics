@@ -14,8 +14,6 @@ inline int mod(int n, int d){
     return (r>=0) ? r : r+d;
 }
 
-void display_warning();
-
 // Target PWM speed [0-3000]
 static bool motor_on = false;
 
@@ -72,25 +70,41 @@ inline void apply_pwm( int low_pin, int high_pin, int pwm ){
     pwmWrite(high_pin, pwm);
 }
 
+static unsigned int nb_motor_update_by_servo_update = 0;
 
 void motor_irq(){
-    static unsigned int count_irq = 0;
+    static unsigned int count_motor_irq = 0;
+    static unsigned int count_servo_irq = 0;
     static unsigned int count_irq_2 = 0;
-    count_irq++;
-    if( count_irq == MOTOR_SUB_SAMPLE ) count_irq = 0;
+    count_motor_irq++;
+    count_servo_irq++;
     count_irq_2++;
-    if( ! count_irq ){
-        if( motor_flag ){
-            security_set_warning(WARNING_MOTOR_LAG);
-        }
+    if(count_motor_irq == MOTOR_UPDATE){
+        count_motor_irq = 0;
+        nb_motor_update_by_servo_update++;
+    }
+    if(count_servo_irq == SERVO_UPDATE){
+        count_servo_irq = 0;
+        nb_motor_update_by_servo_update = 0;
+    }
+    if( ! count_servo_irq ){
         if( serv_flag ){
             security_set_warning(WARNING_SERVO_LAG);
         }
-        motor_flag = true;
         serv_flag = true;
     }
-    #define PWM_SHIFT_PERCENT 25 
-    //#define PWM_SHIFT_PERCENT 0 
+    if( ! count_motor_irq ){
+        if( motor_flag ){
+            security_set_warning(WARNING_MOTOR_LAG);
+        }
+        motor_flag = true;
+    }
+    #ifdef HIGH_IMPEDENCE_MODE
+      #define PWM_SHIFT_PERCENT 0
+    #else
+      #define PWM_SHIFT_PERCENT 15 
+      //#define PWM_SHIFT_PERCENT 0 
+    #endif
     #define PWM_SHIFT  ((PWM_SHIFT_PERCENT*PWM_SUPREMUM)/100)
     #ifdef PHASE_OPPOSITION 
         if(count_irq_2%SWAP_PWM_FREQUENCE == 0){
@@ -565,7 +579,7 @@ inline void compute_vectorial_command(
 
     // VALUE : [0, 1]
     // SCALE : SIN_INPUT_RESOLUTION
-    static_assert( SIN_INPUT_RESOLUTION <  ONE_TURN_THETA , "");
+    static_assert( SIN_INPUT_RESOLUTION <=  ONE_TURN_THETA , "");
     t1 = mod(t1, ONE_TURN_THETA)/(ONE_TURN_THETA/SIN_INPUT_RESOLUTION);
     t2 = mod(t2, ONE_TURN_THETA)/(ONE_TURN_THETA/SIN_INPUT_RESOLUTION);
     t3 = mod(t3, ONE_TURN_THETA)/(ONE_TURN_THETA/SIN_INPUT_RESOLUTION);
@@ -589,7 +603,7 @@ inline void compute_vectorial_command(
     phase_voltage_u = (((c1/1)*(direct_voltage_c/1))/1 + (-((s1/1)*(quadrature_voltage_c/1)))/1);
     phase_voltage_v = (((c2/1)*(direct_voltage_c/1))/1 + (-((s2/1)*(quadrature_voltage_c/1)))/1);
     phase_voltage_w = (((c3/1)*(direct_voltage_c/1))/1 + (-((s3/1)*(quadrature_voltage_c/1)))/1);
-    min_voltage = ( (( (phase_voltage_u*1.0 < phase_voltage_v*1.0) ? phase_voltage_u*1.0 : phase_voltage_v*1.0 )*1.0 < phase_voltage_w*1.0) ? ( (phase_voltage_u*1.0 < phase_voltage_v*1.0) ? phase_voltage_u*1.0 : phase_voltage_v*1.0 )*1.0 : phase_voltage_w*1.0 );
+    min_voltage = ( (( (phase_voltage_u*1 < phase_voltage_v*1) ? phase_voltage_u*1 : phase_voltage_v*1 )*1 < phase_voltage_w*1) ? ( (phase_voltage_u*1 < phase_voltage_v*1) ? phase_voltage_u*1 : phase_voltage_v*1 )*1 : phase_voltage_w*1 );
     phase_pwm_u = (((alpha_user_pwm/65536)*((phase_voltage_u/1 + (-min_voltage)/1)/256))/4194304);
     phase_pwm_v = (((alpha_user_pwm/65536)*((phase_voltage_v/1 + (-min_voltage)/1)/256))/4194304);
     phase_pwm_w = (((alpha_user_pwm/65536)*((phase_voltage_w/1 + (-min_voltage)/1)/256))/4194304);
@@ -650,11 +664,11 @@ int tare_process(){
             motor_on = true,
             last_tare_time = millis();
 
-#ifdef PHASE_OPPOSITION
-            direct_quadrature_voltage_set(REFERENCE_VOLTAGE/2, 0);
-#else
-            direct_quadrature_voltage_set(REFERENCE_VOLTAGE/2, 0);
-#endif
+            if( CONFIG_PWM > 50){
+              direct_quadrature_voltage_set(REFERENCE_VOLTAGE/2, 0);
+            }else{
+              direct_quadrature_voltage_set(REFERENCE_VOLTAGE, 0);
+            }
 
             //direct_quadrature_voltage_set(REF, 0);
             save_user_pwm = user_pwm;
@@ -745,6 +759,8 @@ void register_update_theta( int (* fct)(int) ){
     update_theta = fct;
 };
 
+TERMINAL_PARAMETER_INT(deph, "dephasage", 0);
+
 void motor_foc_tick()
 {
     static bool motor_ticking = false;
@@ -760,15 +776,29 @@ void motor_foc_tick()
     }
     motor_flag = false;
     
-    display_warning();
-
     // VALUE : [INT_MIN/ONE_TURN_THETA, INT_MAX/ONE_TURN_THETA]
     // SCALE :  ONE_TURN_THETA 
-    int theta_s;
+    static int theta_s = 0;
+    static int speed_s = 0;
     if( tare_is_set ){
         theta_s = tare_process();
     }else{
-        theta_s = rotor_angle();
+        #define SCALED_FREQ ((ENCODER_SPEED_SCALE/THETA_OUT_SCALE)*MOTOR_UPDATE_FREQUENCE)
+        if( nb_motor_update_by_servo_update == 0 ){
+            speed_s = encoder_to_speed();
+            // TODO : IMPROVE encoder_to_speed() !
+            //if( abs(speed_s)<(ENCODER_SPEED_SCALE*5/10) ){
+            //  speed_s /= 2;
+            //}
+            // TODO
+            const int dephasage_for_delay = 0;
+            //const int dephasage_for_delay = (
+            //   deph*(speed_s/(ENCODER_SPEED_SCALE/THETA_OUT_SCALE))
+            //)/1000000;
+            theta_s = dephasage_for_delay + rotor_angle() + (speed_s/(2*SCALED_FREQ));
+        }else{
+            theta_s += nb_motor_update_by_servo_update * (speed_s/SCALED_FREQ);
+        }
     }
     if( tare_state == TARE_IS_DONE || tare_is_set ){
         if( ! tare_is_set and use_fixed_theta ){
@@ -855,30 +885,6 @@ TERMINAL_COMMAND(user_pwm, "Force the phase to use a given pwm")
             return;
         }
         terminal_io()->println("Usage: user_pwm [ -100.0 - 100 ]");
-    }
-}
-
-static int last_warning = 0;
-
-void display_warning(){
-    int warning = security_get_warning();  
-    int error = security_get_error();  
-    if( warning != SECURITY_NO_WARNING || error != SECURITY_NO_ERROR ){
-        int val = millis();
-        if( val - last_warning > 4000 ){
-            if( warning != SECURITY_NO_WARNING ){
-                terminal_io()->print("W ");
-                terminal_io()->println( driver_warning(warning) );
-                security_set_warning( SECURITY_NO_WARNING );
-                encoder_print_errors();
-            }
-            if( error != SECURITY_NO_ERROR ){
-                //terminal_io()->print("E ");
-                terminal_io()->print(error);
-                terminal_io()->println( driver_error(error) );
-            }
-            last_warning = val;
-        }
     }
 }
 

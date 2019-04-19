@@ -30,21 +30,29 @@ static inline const char *driver_error(int code)
 static inline const char *driver_warning(int code)
 {
     if ( code == WARNING_MOTOR_LAG ){
-        return "PWM motor LAG";
+        // return "PWM motor LAG";
+        return "M";
     } else if( code == WARNING_INVALID_RANGE ){
-        return "Invalide range";
+        // return "Invalide range";
+        return "I";
     } else if( code == WARNING_SERVO_LAG ){
-        return "PWM servo LAG";
+        // return "PWM servo LAG";
+        return "S";
     } else if( code == WARNING_ENCODER_LAG ){
-        return "Encoder LAG";
+        // return "Encoder LAG";
+        return "E";
     } else if( code == WARNING_DELTAS_MAGNETIC ){
-        return "Delta TOO LONG";
+        // return "Delta TOO LONG";
+        return "D";
     } else if( code == WARNING_ERROR_FLAG_ENCODER ){
-        return "Error Flag encoder";
+        // return "Error Flag encoder";
+        return "F";
     } else if( code == WARNING_ERROR_PARITY_ENCODER ){
-        return "Error parity encoder";
+        // return "Error parity encoder";
+        return "P";
     } else if( code == WARNING_INCOHERENT_PACKET_ENCODER ){
-        return "incoherent packet encoder";
+        // return "incoherent packet encoder";
+        return "X";
     }
     return "?";
 }

@@ -16,8 +16,8 @@ maximal_speed = 10.0
 minimal_theta_error=-.9
 maximal_theta_error=.9
 
-k_pos_p_max = max(abs(maximal_speed), abs(minimal_speed)) / max(abs(maximal_theta_error),abs(minimal_theta_error))
-temps_reactivite = 1/10.0
+k_pos_p_max = 4*max(abs(maximal_speed), abs(minimal_speed)) / max(abs(maximal_theta_error),abs(minimal_theta_error))
+temps_reactivite = 1/100.0
 k_pos_i_max = max(abs(maximal_speed), abs(minimal_speed))/(
     temps_reactivite*max(abs(maximal_theta_error),abs(minimal_theta_error))
 )
@@ -30,7 +30,7 @@ reference_voltage = 2**nb_bits_refernece_voltage
 minimal_speed_error = -2.4
 maximal_speed_error = 2.4
 
-maximal_k_speed_p = 3*reference_voltage / max(abs(maximal_speed_error),abs(minimal_speed_error))
+maximal_k_speed_p = 2*reference_voltage / max(abs(maximal_speed_error),abs(minimal_speed_error))
 
 k_pos_p = Variable( minimal=0.0, maximal=k_pos_p_max, error=None, digits=digits, name="k_pos_p")
 k_pos_i = Variable( minimal=0.0, maximal=k_pos_i_max, error=None, digits=digits, name="k_pos_i")
@@ -41,14 +41,14 @@ k_speed_p = Variable(
     error=None, digits=digits, name="k_speed_p"
 )
 
-temps_reactivite = 1/10.0
+temps_reactivite = 1/100.0
 k_speed_i_max = reference_voltage/(
     temps_reactivite*max(abs(maximal_speed_error),abs(minimal_speed_error))
 )
 k_speed_i = Variable( minimal=0.0, maximal=k_speed_i_max, error=None, digits=digits, name="k_speed_i")
 #k_speed_d = Variable( minimal=0.1, maximal=10.0, error=None, digits=digits, name="k_speed_d")
 
-k_fem_max = 1.2 * reference_voltage/max(abs(maximal_speed), abs(minimal_speed))
+k_fem_max = 2.0 * reference_voltage/max(abs(maximal_speed), abs(minimal_speed))
 k_fem = Variable(
     minimal=0.0,
     maximal=k_fem_max,
@@ -58,7 +58,8 @@ k_fem = Variable(
 dt = Constant(constant=1.0/motor_frequence, error=None, digits=digits)
 inv_dt = Constant(constant=motor_frequence, error=None, digits=digits)
 
-maximal_number_of_turns=24000.0
+total_time_match = 20 * 60 * 1.0
+maximal_number_of_turns=maximal_speed * total_time_match
 theta = Input(
     minimal=-maximal_number_of_turns, maximal=maximal_number_of_turns,
     scale=14, digits=digits, name="theta"
@@ -226,7 +227,7 @@ theta_csg = Rescale(
 #    term=voltage_q, minimal=-reference_voltage, maximal=reference_voltage, 
 #    digits=digits, name="reference_voltage_q"
 #)
-if( not reference_voltage_q.final_error()< 2.0 ):
+if( not reference_voltage_q.final_error()< 6.0 ):
     raise ValueError(
         "Not enough precision : " + str(reference_voltage_q.final_error())
     )

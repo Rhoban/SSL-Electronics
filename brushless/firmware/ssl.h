@@ -1,14 +1,13 @@
 #ifndef _SSL_H
 #define _SSL_H
 
-//#define MOTEUR_BANC
-#define MOTEUR_90_12V
+#define MOTEUR_BANC
+//#define MOTEUR_90_12V
 //#define MOTEUR_ROBOT_4_0
 //#define CYCLOIDE_PHASE_OPPOSITION
 //#define CYCLOIDE12
 //#define CYCLOIDE16
 //#define CYCLOIDE16_PHASE_OPPOSITION
-
 
 #define MAX_THETA_LIMIT 6.15
 #define MIN_THETA_LIMIT -6.15
@@ -42,10 +41,10 @@
     #define REVERSE_PHASE
     #define MANUAL_SPEED false //true
     // #define INITIAL_SPEED 1.0
-    #define KFEM 29.0 //42.0 //55.0 //110.0// //55.0 //29.6
-    #define K_SPEED_P  80.0 //270.0 //200.0 //180
-    #define K_SPEED_I 1000.0 //3011.0 //80.0 //150
-    #define K_POS_P 1.0 //6.66 //1.5 // 1.5
+    #define KFEM 81.0 //29.0 //42.0 //55.0 //110.0// //55.0 //29.6
+    #define K_SPEED_P  120.0 //270.0 //200.0 //180
+    #define K_SPEED_I 3000.0 //3011.0 //80.0 //150
+    #define K_POS_P 11.11 //6.66 //1.5 // 1.5
     #define K_POS_I 0.0 //5.0 //0.1 // 0.1
 #endif
 
@@ -106,14 +105,14 @@
     #define USE_FOC
     //#define STOP_OUTSIDE_LIMITS 
     #define MOTOR_NAME "MOTEUR_BANC"
-    #define CONFIG_PWM 30
+    #define CONFIG_PWM 90
     #define NB_POSITIVE_MAGNETS 8
-    #define MANUAL_SPEED true //false
-    #define KFEM 115.0 // 44.1
-    #define K_SPEED_P 300 // 310
-    #define K_SPEED_I 3000 // 150
-    #define K_POS_P 0 // 1.5
-    #define K_POS_I 0 // 0.1
+    #define MANUAL_SPEED false // true //false
+    #define KFEM 54 //115.0 // 44.1
+    #define K_SPEED_P 400 //300 // 310
+    #define K_SPEED_I 3000 // 3000 // 150
+    #define K_POS_P 20 // 1.5
+    #define K_POS_I 0.1 // 0.1
 #endif
 
 
@@ -127,7 +126,7 @@
     #define CONFIG_PWM 90
     #define NB_POSITIVE_MAGNETS 8
     #define MANUAL_SPEED false
-    #define KFEM 65 //73.0 // 44.1
+    #define KFEM 52 //73.0 // 44.1
     #define K_SPEED_P 450  // 310
     #define K_SPEED_I 3000 // 150
     #define K_POS_P 11 // 1.5
@@ -139,21 +138,29 @@
     //#define PHASE_OPPOSITION 
     #define OPEN_LOOP_FOC false //true
     //#define USE_HYBRID
+    //#define USE_OPEN_LOOP_FOR_HYBRID
     #define USE_FOC
     //#define STOP_OUTSIDE_LIMITS 
     #define MOTOR_NAME "MOTEUR_ROBOT_4_0"
-    #define CONFIG_PWM 30
+    #define CONFIG_PWM 40
     #define NB_POSITIVE_MAGNETS 8
-    #define MANUAL_SPEED true //false
-    #define KFEM 115.0 // 44.1
-    #define K_SPEED_P 300 // 310
-    #define K_SPEED_I 3000 // 150
-    #define K_POS_P 0 // 1.5
-    #define K_POS_I 0 // 0.1
+    #define MANUAL_SPEED true //false //true //false
+    #define KFEM 70 //122 //115.0 // 44.1
+    #define K_SPEED_P 400 //400 //450 //300 // 310
+    #define K_SPEED_I 3011 //3000 // 3000 // 3000 // 150
+    #define K_POS_P 10 //11.11 //11.0 // 1.5
+    #define K_POS_I 0.5 //4.0 //0.1 // 0.1
 #endif
 
 #ifndef INITIAL_SPEED
     #define INITIAL_SPEED 0
+#endif
+
+#if defined(USE_FOC) && defined(USE_HYBRID)
+  static_assert(
+    false,
+    "It is not possible to have USE_FOC and USE_HYBRID at same time."
+  );
 #endif
 
 #endif

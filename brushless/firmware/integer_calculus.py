@@ -528,10 +528,10 @@ class Min(Common):
             )
     def to_c(self, variable_1, variable_2):
         return "( (%s*%s < %s*%s) ? %s*%s : %s*%s )"%(
-            variable_1, self.scale/self.terms[0].scale,
-            variable_2, self.scale/self.terms[1].scale,
-            variable_1, self.scale/self.terms[0].scale,
-            variable_2, self.scale/self.terms[1].scale,
+            variable_1, self.scale//self.terms[0].scale,
+            variable_2, self.scale//self.terms[1].scale,
+            variable_1, self.scale//self.terms[0].scale,
+            variable_2, self.scale//self.terms[1].scale,
         )
     def make_program(self, prog, inputs, declarations, defines, yet_done):
         if self.name in yet_done:

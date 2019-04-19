@@ -26,9 +26,7 @@ inline bool parity_16_check( uint16_t x ){
 }
 
 
-#define ENCODER_CNT_SCALE 16384
-#define THETA_OUT_SCALE 1638
-#define ENCODER_SPEED_SCALE 16384
+
 static int theta_out_0 = 0*THETA_OUT_SCALE;
 static int theta_out_1 = 0*THETA_OUT_SCALE;
 static int theta_out_2 = 0*THETA_OUT_SCALE;
@@ -77,7 +75,7 @@ static int32_t encoder_deltas = 0;
 
 inline int32_t encoder_compute_delta(uint16_t a, uint16_t b)
 {
-    int32_t delta = b - a;
+    int32_t delta = ((int32_t) b) - ((int32_t) a);
 
     if (delta > 0x1fff) {
         delta -= 0x4000;
@@ -373,15 +371,15 @@ static Speed_state speed_state;
 static float adaptative_encoder_speed = 0;
 
 int encoder_to_speed(){
-    return encoder_speed; //adaptative_encoder_speed;
-    //return adaptative_encoder_speed;
+    //return encoder_speed;
+    return adaptative_encoder_speed;
 }
 
 #define LOW_NORMAL_SPEED_MIN_FLOAT 1.0 
 #define LOW_NORMAL_SPEED_MAX_FLOAT 1.5
 
-#define LOW_NORMAL_SPEED_MIN 16384
-#define LOW_NORMAL_SPEED_MAX 24576
+#define LOW_NORMAL_SPEED_MIN 1048576
+#define LOW_NORMAL_SPEED_MAX 1572864
 
 static_assert( LOW_NORMAL_SPEED_MIN <= LOW_NORMAL_SPEED_MIN_FLOAT*ENCODER_SPEED_SCALE, "");
 static_assert( LOW_NORMAL_SPEED_MIN_FLOAT*ENCODER_SPEED_SCALE < LOW_NORMAL_SPEED_MIN+1, "");
@@ -439,13 +437,13 @@ void encoder_tick()
 
         switch( speed_state ){
             case LOW_SPEED :
-                if( encoder_speed >= LOW_NORMAL_SPEED_MAX ){
+                if( abs(encoder_speed) >= LOW_NORMAL_SPEED_MAX ){
                     speed_state = NORMAL_SPEED;
                 }
                 break;
             case NORMAL_SPEED:
             default:
-                if( encoder_speed <= LOW_NORMAL_SPEED_MIN ){
+                if( abs(encoder_speed) <= LOW_NORMAL_SPEED_MIN ){
                     speed_state = LOW_SPEED;
                 }
                 break;
@@ -591,8 +589,8 @@ TERMINAL_COMMAND(cnt, "Cnt debug")
 
 TERMINAL_COMMAND(spd, "Speed debug")
 {
-    float result = ( (float) encoder_to_speed()) / SPEED_NOMRALISATION;
-    float average = ( (float) sum_speed) / ( 8*SPEED_NOMRALISATION);
+    float result = ( (float) encoder_to_speed()) / ENCODER_SPEED_SCALE;
+    float average = ( (float) sum_speed) / ( 8*ENCODER_SPEED_SCALE);
 
 //    terminal_io()->print("theta_0 : ");
 //    terminal_io()->println( ((float)theta_out_0)/0x4000);
@@ -605,17 +603,17 @@ TERMINAL_COMMAND(spd, "Speed debug")
     terminal_io()->println(result);
     terminal_io()->println(average);
 //    terminal_io()->print("low 2 speed : ");
-//    terminal_io()->println( ( (float) low_2_speed) / SPEED_NOMRALISATION );
+//    terminal_io()->println( ( (float) low_2_speed) / ENCODER_SPEED_SCALE );
 //    terminal_io()->print("low 3 speed : ");
-//    terminal_io()->println( ( (float) low_3_speed) / SPEED_NOMRALISATION );
+//    terminal_io()->println( ( (float) low_3_speed) / ENCODER_SPEED_SCALE );
 //    terminal_io()->print("low 4 speed : ");
-//    terminal_io()->println( ( (float) low_4_speed) / SPEED_NOMRALISATION );
+//    terminal_io()->println( ( (float) low_4_speed) / ENCODER_SPEED_SCALE );
 //    terminal_io()->print("low 8 speed : ");
-//    terminal_io()->println( ( (float) low_8_speed) / SPEED_NOMRALISATION );
+//    terminal_io()->println( ( (float) low_8_speed) / ENCODER_SPEED_SCALE );
 }
 
 float encoder_to_turn(){
-    return encoder_cnt/16384.0; 
+    return encoder_cnt/(1.0*ONE_TURN_THETA); 
 }
 
 int encoder_position(){

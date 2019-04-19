@@ -8,10 +8,6 @@
 static_assert( IS_POW_2(REFERENCE_VOLTAGE), "");
 static_assert( REFERENCE_VOLTAGE == 2*HALF_REFERENCE_VOLTAGE , "");
 
-/*
- * 1 turn : [ 0 - 2^14 [ = [ 0 - 16384 [ 
- */
-#define ONE_TURN_THETA 0x4000
 
 #define PWM_SUPREMUM 750
 #define PWM_MIN ((PWM_MIN_PERCENT*PWM_SUPREMUM)/100)
@@ -29,13 +25,18 @@ static_assert(
 );
 #define MOTOR_FREQUENCE 800
 #define SWAP_PWM_FREQUENCE 1
-#define MOTOR_SUB_SAMPLE 120
+#define SERVO_UPDATE 120
 
+#define MOTOR_UPDATE_FREQUENCE 3200
+#define MOTOR_UPDATE 30
+static_assert(MOTOR_UPDATE<=SERVO_UPDATE, "");
+static_assert(PWM_FREQUENCE == MOTOR_UPDATE_FREQUENCE*MOTOR_UPDATE, "");
+static_assert(SERVO_UPDATE%MOTOR_UPDATE == 0, "");
 
 static_assert(
-    PWM_FREQUENCE == MOTOR_FREQUENCE*MOTOR_SUB_SAMPLE, ""
+    PWM_FREQUENCE == MOTOR_FREQUENCE*SERVO_UPDATE, ""
 );
-static_assert( MOTOR_SUB_SAMPLE>=2, "Shanon !");
+static_assert( SERVO_UPDATE>=2, "Shanon !");
 
 
 /**
