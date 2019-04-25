@@ -12,7 +12,9 @@ static float current_ref = 0.0;
 
 void current_init()
 {
+  #ifdef BOARD_maple_mini 
     pinMode(CURRENT_PIN, INPUT);
+  #endif
 }
 
 static int samples = 0;
@@ -30,6 +32,7 @@ void current_tick()
     return;
 #endif
 
+#ifdef BOARD_maple_mini 
     static int last_update = millis();
     static int last_limit = 0;
 
@@ -72,6 +75,7 @@ void current_tick()
             }
         }
     }
+#endif
 }
 
 float current_amps()

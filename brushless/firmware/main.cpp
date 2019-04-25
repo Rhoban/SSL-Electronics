@@ -10,32 +10,39 @@
 #include "motor.h"
 #include "com.h"
 #include "servo.h"
-
+#include "hardware.h"
 /**
  * Setup function
  */
 void setup()
 {
     // Initalizing communication
-    com_init();
+//    com_init();
 
     // Initializng current  sensor
-    current_init();
+//    current_init();
 
     // Initalizing encoder
-    encoder_init();
+//    encoder_init();
 
     // Initalizing motor
-    motor_init();
+//    motor_init();
 
     // Initializing servo
-    servo_init();
+//    servo_init();
 
     // Starting the watchdog
-    watchdog_start(WATCHDOG_14MS);
+    //watchdog_start(WATCHDOG_14MS);
 
     terminal_init(&SerialUSB);
+    
+    pinMode(LED_PIN, OUTPUT);
+    digitalWrite(LED_PIN, LOW);
 }
+
+
+static int last_led = 0;
+static int cnt_led = 0;
 
 /**
  * Loop function
@@ -43,24 +50,41 @@ void setup()
 void loop()
 {
     // Feeding watchdog
-    watchdog_feed();
+    //watchdog_feed();
 
     // Updating motor phases, this is also done in the hall pin interrupt but
     // it seems safe to do it often anyway
-    motor_tick();
+//    motor_tick();
 
     // Updating current sensor value
-    current_tick();
+//    current_tick();
 
     // Ticking the terminal
     terminal_tick();
 
     // Ticking encoder
-    encoder_tick();
+//    encoder_tick();
 
     // Ticking servo
-    servo_tick();
+//    servo_tick();
 
     // Ticking com
-    com_tick();
+//    com_tick();
+
+    int val = millis();
+    if( val - last_led > 500 ){
+        cnt_led ++;
+        //terminal_io()->println( "ok" );
+        if( cnt_led % 2 ){
+          digitalWrite(LED_PIN, HIGH);
+        }else{
+          digitalWrite(LED_PIN, LOW);
+        }
+        last_led = val;
+    }
+}
+
+TERMINAL_COMMAND(term, "term test")
+{
+    terminal_io()->println("term works !");
 }

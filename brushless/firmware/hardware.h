@@ -31,48 +31,155 @@
 #define ENCODER_NONE                // No encoder
 #endif
 
-// For SPI based encoders
-#define ENCODER_SPI         2
-#define ENCODER_SELECT_PIN  31
-#define ENCODER_INDEX_PIN   12
+#define GREG 1
+#define CATIE 2
 
-// Current sensing
-#define CURRENT_PIN      4
-
-// Motors pins
-
-#ifdef REVERSE_PHASE
-    #define U_SD_PIN        10  //use Timer 2 (Maple Mini)
-    #define U_IN_PIN       11  //use Timer 2 (Maple Mini)
-
-    #define V_SD_PIN        33  //use Timer 3 (Maple Mini)
-    #define V_IN_PIN       3  //use Timer 2 (Maple Mini)
-    
-    #define W_SD_PIN        8 //use Timer 2 (Maple Mini)
-    #define W_IN_PIN       9 //use Timer 2 (Maple Mini)
+#ifdef BOARD_maple_mini
+  #define BOARD GREG
 #else
-    #define U_SD_PIN        10 //use Timer 2 (Maple Mini)
-    #define U_IN_PIN       11 //use Timer 2 (Maple Mini)
+  #define BOARD CATIE
+#endif
 
-    #define V_SD_PIN        8 //use Timer 2 (Maple Mini)
-    #define V_IN_PIN       9 //use Timer 2 (Maple Mini)
+#if BOARD == CATIE
+  // For SPI based encoders
+  #define ENCODER_SPI         2
+  #define ENCODER_SELECT_PIN  PB12
+  #define ENCODER_INDEX_PIN   12 // Used to make a shift bit to define PB12
 
-    #define W_SD_PIN        33  //use Timer 3 (Maple Mini)
-    #define W_IN_PIN       3 //use Timer 2 (Maple Mini)
+  // Current sensing
+  #define CURRENT_U_PIN      PC0
+  #define CURRENT_V_PIN      PC3
+  #define CURRENT_W_PIN      PC1
+  #define CURRENT_REF_PIN      PC2
+
+  // Motors pins
+
+  #ifdef REVERSE_PHASE
+      #define U_SD_PIN       PC6  //use Timer 2 (Maple Mini)
+      #define U_IN_PIN       PA8  //use Timer 2 (Maple Mini)
+
+      #define V_SD_PIN       PC8  //use Timer 3 (Maple Mini)
+      #define V_IN_PIN       PA10  //use Timer 2 (Maple Mini)
+      
+      #define W_SD_PIN       PC7 //use Timer 2 (Maple Mini)
+      #define W_IN_PIN       PA9 //use Timer 2 (Maple Mini)
+  #else
+      #define U_SD_PIN       PC6 //use Timer 2 (Maple Mini)
+      #define U_IN_PIN       PA8 //use Timer 2 (Maple Mini)
+
+      #define V_SD_PIN       PC7 //use Timer 2 (Maple Mini)
+      #define V_IN_PIN       PA9 //use Timer 2 (Maple Mini)
+
+      #define W_SD_PIN       PC8  //use Timer 3 (Maple Mini)
+      #define W_IN_PIN       PA10 //use Timer 2 (Maple Mini)
+  #endif
+
+
+
+  #define HALLU_PIN        PA0
+  #define HALLV_PIN        PA1
+  #define HALLW_PIN        PA2
+
+  // SPI slave pin
+  #define SLAVE_SPI           1
+  #define SLAVE_PIN PA4
+
+  // Board LED pin
+  #define LED_PIN     PB1
+#endif
+
+#if BOARD == GREG
+  // For SPI based encoders
+  #define ENCODER_SPI         2
+  #define ENCODER_SELECT_PIN  31
+  #define ENCODER_INDEX_PIN   12
+
+  // Current sensing
+  #define CURRENT_PIN      4
+
+  // Motors pins
+
+  #ifdef REVERSE_PHASE
+      #define U_SD_PIN        10  //use Timer 2 (Maple Mini)
+      #define U_IN_PIN       11  //use Timer 2 (Maple Mini)
+
+      #define V_SD_PIN        33  //use Timer 3 (Maple Mini)
+      #define V_IN_PIN       3  //use Timer 2 (Maple Mini)
+      
+      #define W_SD_PIN        8 //use Timer 2 (Maple Mini)
+      #define W_IN_PIN       9 //use Timer 2 (Maple Mini)
+  #else
+      #define U_SD_PIN        10 //use Timer 2 (Maple Mini)
+      #define U_IN_PIN       11 //use Timer 2 (Maple Mini)
+
+      #define V_SD_PIN        8 //use Timer 2 (Maple Mini)
+      #define V_IN_PIN       9 //use Timer 2 (Maple Mini)
+
+      #define W_SD_PIN        33  //use Timer 3 (Maple Mini)
+      #define W_IN_PIN       3 //use Timer 2 (Maple Mini)
+  #endif
+
+
+
+  #define HALLU_PIN        7
+  #define HALLV_PIN        6
+  #define HALLW_PIN        5
+
+  // SPI slave pin
+  #define SLAVE_SPI           1
+  #define SLAVE_PIN           20
+
+  // Board LED pin
+  #define LED_PIN     22
+  //#define LED_PIN     PB1
+
+
+
+//  // For SPI based encoders
+//  #define ENCODER_SPI         2
+//  #define ENCODER_SELECT_PIN  PB12
+//  #define ENCODER_INDEX_PIN   12 // Used to make a shift bit to define PB12
+//
+//  // Current sensing
+//  #define CURRENT_PIN      PA7
+//
+//  // Motors pins
+//
+//  #ifdef REVERSE_PHASE
+//      #define U_SD_PIN       PA1  //use Timer 2 (Maple Mini)
+//      #define U_IN_PIN       PA0  //use Timer 2 (Maple Mini)
+//
+//      #define V_SD_PIN       PB1  //use Timer 3 (Maple Mini)
+//      #define V_IN_PIN       PB0  //use Timer 2 (Maple Mini)
+//      
+//      #define W_SD_PIN       PA3 //use Timer 2 (Maple Mini)
+//      #define W_IN_PIN       PA2 //use Timer 2 (Maple Mini)
+//  #else
+//      #define U_SD_PIN       PA1 //use Timer 2 (Maple Mini)
+//      #define U_IN_PIN       PA0 //use Timer 2 (Maple Mini)
+//
+//      #define V_SD_PIN       PA3 //use Timer 2 (Maple Mini)
+//      #define V_IN_PIN       PA2 //use Timer 2 (Maple Mini)
+//
+//      #define W_SD_PIN       PB1  //use Timer 3 (Maple Mini)
+//      #define W_IN_PIN       PB0 //use Timer 2 (Maple Mini)
+//  #endif
+//
+//
+//
+//  #define HALLU_PIN        PA4
+//  #define HALLV_PIN        PA5
+//  #define HALLW_PIN        PA6
+//
+//  // SPI slave pin
+//  #define SLAVE_SPI           1
+//  #define SLAVE_PIN BOARD_JTDI_PIN
+//
+//  // Board LED pin
+//  #define LED_PIN BOARD_JTMS_SWDIO_PIN
 #endif
 
 
-
-#define HALLU_PIN        7
-#define HALLV_PIN        6
-#define HALLW_PIN        5
-
-// SPI slave pin
-#define SLAVE_SPI           1
-#define SLAVE_PIN           20
-
-// Board LED pin
-#define LED_PIN     22
 
 // Servo configuration
 #define SPEED_DT    10
