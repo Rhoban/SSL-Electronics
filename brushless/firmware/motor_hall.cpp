@@ -171,8 +171,13 @@ void motor_hall_init()
     attachInterrupt(HALLW_PIN, motor_hall_tick, CHANGE);
 
     // Configuring timers
+    #if BOARD == GREG
     _init_timer(2);
     _init_timer(3);
+    #endif
+    #if BOARD == CATIE
+    _init_timer(1);
+    #endif
 
     // Initalizing motor pins
     for (int k=0; k<6; k++)  pwmWrite(motor_pins[k], 0);

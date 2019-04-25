@@ -17,27 +17,27 @@
 void setup()
 {
     // Initalizing communication
-//    com_init();
+    //com_init();
 
     // Initializng current  sensor
 //    current_init();
 
     // Initalizing encoder
-//    encoder_init();
+    encoder_init();
 
     // Initalizing motor
-//    motor_init();
+    motor_init();
 
     // Initializing servo
-//    servo_init();
+    servo_init();
 
     // Starting the watchdog
-    //watchdog_start(WATCHDOG_14MS);
+    watchdog_start(WATCHDOG_14MS);
 
     terminal_init(&SerialUSB);
     
-    pinMode(LED_PIN, OUTPUT);
-    digitalWrite(LED_PIN, LOW);
+    // pinMode(LED_PIN, OUTPUT);
+    // digitalWrite(LED_PIN, LOW);
 }
 
 
@@ -50,11 +50,12 @@ static int cnt_led = 0;
 void loop()
 {
     // Feeding watchdog
-    //watchdog_feed();
+    watchdog_feed();
+
 
     // Updating motor phases, this is also done in the hall pin interrupt but
     // it seems safe to do it often anyway
-//    motor_tick();
+    motor_tick();
 
     // Updating current sensor value
 //    current_tick();
@@ -63,14 +64,14 @@ void loop()
     terminal_tick();
 
     // Ticking encoder
-//    encoder_tick();
+    encoder_tick();
 
     // Ticking servo
-//    servo_tick();
+    servo_tick();
 
     // Ticking com
-//    com_tick();
-
+    //com_tick();
+#if 0
     int val = millis();
     if( val - last_led > 500 ){
         cnt_led ++;
@@ -82,6 +83,7 @@ void loop()
         }
         last_led = val;
     }
+#endif
 }
 
 TERMINAL_COMMAND(term, "term test")

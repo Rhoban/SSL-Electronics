@@ -2,8 +2,9 @@
 #define _SSL_H
 
 //#define MOTEUR_BANC
+#define MOTEUR_CATIE
 //#define MOTEUR_90_12V
-#define MOTEUR_ROBOT_4_0
+//#define MOTEUR_ROBOT_4_0
 //#define CYCLOIDE_PHASE_OPPOSITION
 //#define CYCLOIDE12
 //#define CYCLOIDE16
@@ -113,6 +114,21 @@
     #define K_SPEED_I 3000 // 3000 // 150
     #define K_POS_P 20 // 1.5
     #define K_POS_I 0.1 // 0.1
+#endif
+
+#ifdef MOTEUR_CATIE
+    #define OPEN_LOOP_FOC false //true
+    #define USE_FOC
+    //#define STOP_OUTSIDE_LIMITS 
+    #define MOTOR_NAME "MOTEUR_CATIE"
+    #define CONFIG_PWM 30
+    #define NB_POSITIVE_MAGNETS 8
+    #define MANUAL_SPEED false // true //false
+    #define KFEM 0 // 54 //115.0 // 44.1
+    #define K_SPEED_P 0 // 400 //300 // 310
+    #define K_SPEED_I 0 // 3000 // 3000 // 150
+    #define K_POS_P 0 // 20 // 1.5
+    #define K_POS_I 0 // 0.1 // 0.1
 #endif
 
 

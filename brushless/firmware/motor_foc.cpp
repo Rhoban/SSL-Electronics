@@ -9,6 +9,7 @@
 #include "security.h"
 #include "errors.h"
 
+
 inline int mod(int n, int d){
     int r = n%d;
     return (r>=0) ? r : r+d;
@@ -244,20 +245,26 @@ static void _init_timer(int number)
     timer.setOverflow(PWM_OVERFLOW); // 24Khz
     timer.refresh();
 
+    #if BOARD == GREG
     if (number == 3) {
         timer.setMode(TIMER_CH2, TIMER_OUTPUT_COMPARE);
         timer.setCompare(TIMER_CH2, 1);
         timer.attachInterrupt(TIMER_CH2, motor_irq);
     }
-
+    #endif
+    #if BOARD == CATIE
+    if (number == 1) {
+        timer.setMode(TIMER_CH2, TIMER_OUTPUT_COMPARE);
+        timer.setCompare(TIMER_CH2, 1);
+        timer.attachInterrupt(TIMER_CH2, motor_irq);
+    }
+    #endif
+    timer.refresh();
     timer.resume();
 }
 
 void motor_foc_init()
 {
-    // Configuring timers
-    _init_timer(2);
-    _init_timer(3);
 
     // Initalizing motor pins
     digitalWrite(U_IN_PIN, LOW);
@@ -274,6 +281,18 @@ void motor_foc_init()
     pinMode(U_IN_PIN, PWM);
     pinMode(V_IN_PIN, PWM);
     pinMode(W_IN_PIN, PWM);
+    
+    // Configuring timers
+    #if BORAD == GREG
+    _init_timer(2);
+    _init_timer(3);
+    #endif
+
+
+    #if BOARD == CATIE
+    _init_timer(1);
+    #endif
+    
 }
 
 void motor_foc_set(bool enable, int value)
@@ -667,7 +686,7 @@ int tare_process(){
             if( CONFIG_PWM > 50){
               direct_quadrature_voltage_set(REFERENCE_VOLTAGE/2, 0);
             }else{
-              direct_quadrature_voltage_set(REFERENCE_VOLTAGE, 0);
+              direct_quadrature_voltage_set(REFERENCE_VOLTAGE/8, 0);
             }
 
             //direct_quadrature_voltage_set(REF, 0);
