@@ -9,6 +9,7 @@
 #include "security.h"
 #include "errors.h"
 
+// #define TEST_LED_FOC
 
 inline int mod(int n, int d){
     int r = n%d;
@@ -29,6 +30,7 @@ bool get_serv_flag(){
     return serv_flag;
 }
 
+#ifdef PHASE_OPPOSITION 
 static int sd_pin_1;
 static int in_pin_1;
 static int pwm_1;
@@ -41,6 +43,7 @@ static int sd_pin_low;
 static int in_pin_low;
 
 static int lock=true;
+#endif
 
 inline void set_to_high_impedance( int low_pin, int high_pin ){
     digitalWrite(low_pin, LOW);
@@ -77,6 +80,13 @@ void motor_irq(){
     static unsigned int count_motor_irq = 0;
     static unsigned int count_servo_irq = 0;
     static unsigned int count_irq_2 = 0;
+    #ifdef TEST_LED_FOC
+    if( count_irq_2 % 2 ){
+      digitalWrite(LED_PIN, HIGH);
+    }else{
+      digitalWrite(LED_PIN, LOW);
+    }
+    #endif
     count_motor_irq++;
     count_servo_irq++;
     count_irq_2++;
@@ -242,7 +252,7 @@ static void _init_timer(int number)
     // Configuring timer
     timer.pause();
     timer.setPrescaleFactor(PWM_PRESCALE_FACTOR);
-    timer.setOverflow(PWM_OVERFLOW); // 24Khz
+    timer.setOverflow(PWM_OVERFLOW);
     timer.refresh();
 
     #if BOARD == GREG
@@ -254,9 +264,9 @@ static void _init_timer(int number)
     #endif
     #if BOARD == CATIE
     if (number == 1) {
-        timer.setMode(TIMER_CH2, TIMER_OUTPUT_COMPARE);
-        timer.setCompare(TIMER_CH2, 1);
-        timer.attachInterrupt(TIMER_CH2, motor_irq);
+        timer.setMode(TIMER_CH4, TIMER_OUTPUT_COMPARE);
+        timer.setCompare(TIMER_CH4, 1);
+        timer.attachInterrupt(TIMER_CH4, motor_irq);
     }
     #endif
     timer.refresh();
@@ -265,6 +275,11 @@ static void _init_timer(int number)
 
 void motor_foc_init()
 {
+
+    #ifdef TEST_LED_FOC
+    pinMode(LED_PIN, OUTPUT);
+    digitalWrite(LED_PIN, LOW);
+    #endif
 
     // Initalizing motor pins
     digitalWrite(U_IN_PIN, LOW);
@@ -686,7 +701,7 @@ int tare_process(){
             if( CONFIG_PWM > 50){
               direct_quadrature_voltage_set(REFERENCE_VOLTAGE/2, 0);
             }else{
-              direct_quadrature_voltage_set(REFERENCE_VOLTAGE/8, 0);
+              direct_quadrature_voltage_set(REFERENCE_VOLTAGE, 0);
             }
 
             //direct_quadrature_voltage_set(REF, 0);
@@ -920,10 +935,12 @@ TERMINAL_COMMAND(motor_info, "Display")
     terminal_io()->print("w pwm : ");
     terminal_io()->println(phase_pwm_w);
 
+#ifdef PHASE_OPPOSITION 
     terminal_io()->print("pwm1 : ");
     terminal_io()->println(pwm_1);
     terminal_io()->print("pwm2 : ");
     terminal_io()->println(pwm_2);
+#endif
 
     terminal_io()->print("user pwm : ");
     terminal_io()->println(user_pwm);
@@ -936,4 +953,9 @@ bool motor_is_tared(){
 
 bool motor_foc_is_on(){
     return motor_on;
+}
+
+TERMINAL_COMMAND(FORCEREFLASH, "Force the phase to use a given pwm")
+{
+  terminal_io()->println("FORCE REFLASH");
 }

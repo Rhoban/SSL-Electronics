@@ -55,23 +55,23 @@
   // Motors pins
 
   #ifdef REVERSE_PHASE
-      #define U_SD_PIN       PC6  //use Timer 2 (Maple Mini)
-      #define U_IN_PIN       PA8  //use Timer 2 (Maple Mini)
+      #define U_SD_PIN       PC6  //use Timer 1 (Maple)
+      #define U_IN_PIN       PA8  //use Timer 1 (Maple)
 
-      #define V_SD_PIN       PC8  //use Timer 3 (Maple Mini)
-      #define V_IN_PIN       PA10  //use Timer 2 (Maple Mini)
+      #define V_SD_PIN       PC8  //use Timer 1 (Maple)
+      #define V_IN_PIN       PA10  //use Timer 1 (Maple)
       
-      #define W_SD_PIN       PC7 //use Timer 2 (Maple Mini)
-      #define W_IN_PIN       PA9 //use Timer 2 (Maple Mini)
+      #define W_SD_PIN       PC7 //use Timer 1 (Maple)
+      #define W_IN_PIN       PA9 //use Timer 1 (Maple)
   #else
-      #define U_SD_PIN       PC6 //use Timer 2 (Maple Mini)
-      #define U_IN_PIN       PA8 //use Timer 2 (Maple Mini)
+      #define U_SD_PIN       PC6 //use Timer 1 (Maple)
+      #define U_IN_PIN       PA8 //use Timer 1 (Maple)
 
-      #define V_SD_PIN       PC7 //use Timer 2 (Maple Mini)
-      #define V_IN_PIN       PA9 //use Timer 2 (Maple Mini)
+      #define V_SD_PIN       PC7 //use Timer 1 (Maple)
+      #define V_IN_PIN       PA9 //use Timer 1 (Maple)
 
-      #define W_SD_PIN       PC8  //use Timer 3 (Maple Mini)
-      #define W_IN_PIN       PA10 //use Timer 2 (Maple Mini)
+      #define W_SD_PIN       PC8  //use Timer 1 (Maple)
+      #define W_IN_PIN       PA10 //use Timer 1 (Maple)
   #endif
 
 

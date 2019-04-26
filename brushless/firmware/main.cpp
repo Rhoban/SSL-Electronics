@@ -11,13 +11,16 @@
 #include "com.h"
 #include "servo.h"
 #include "hardware.h"
+
+//#define TEST_LED
+
 /**
  * Setup function
  */
 void setup()
 {
     // Initalizing communication
-    //com_init();
+    com_init();
 
     // Initializng current  sensor
 //    current_init();
@@ -36,8 +39,10 @@ void setup()
 
     terminal_init(&SerialUSB);
     
-    // pinMode(LED_PIN, OUTPUT);
-    // digitalWrite(LED_PIN, LOW);
+#ifdef TEST_LED
+    pinMode(LED_PIN, OUTPUT);
+    digitalWrite(LED_PIN, LOW);
+#endif
 }
 
 
@@ -70,8 +75,8 @@ void loop()
     servo_tick();
 
     // Ticking com
-    //com_tick();
-#if 0
+    com_tick();
+#ifdef TEST_LED
     int val = millis();
     if( val - last_led > 500 ){
         cnt_led ++;

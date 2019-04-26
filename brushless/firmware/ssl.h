@@ -117,18 +117,19 @@
 #endif
 
 #ifdef MOTEUR_CATIE
+    #define REVERSE_PHASE
     #define OPEN_LOOP_FOC false //true
     #define USE_FOC
     //#define STOP_OUTSIDE_LIMITS 
     #define MOTOR_NAME "MOTEUR_CATIE"
-    #define CONFIG_PWM 30
+    #define CONFIG_PWM 40
     #define NB_POSITIVE_MAGNETS 8
-    #define MANUAL_SPEED false // true //false
-    #define KFEM 0 // 54 //115.0 // 44.1
-    #define K_SPEED_P 0 // 400 //300 // 310
-    #define K_SPEED_I 0 // 3000 // 3000 // 150
-    #define K_POS_P 0 // 20 // 1.5
-    #define K_POS_I 0 // 0.1 // 0.1
+    #define MANUAL_SPEED true //false
+    #define KFEM 100 // 54 //115.0 // 44.1
+    #define K_SPEED_P 400 //300 // 310
+    #define K_SPEED_I 3000 // 3000 // 150
+    #define K_POS_P 20 // 1.5
+    #define K_POS_I 0.1 // 0.1
 #endif
 
 

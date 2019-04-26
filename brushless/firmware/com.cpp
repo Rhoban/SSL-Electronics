@@ -137,7 +137,9 @@ static void slave_irq()
 void com_init()
 {
     // Enabling remap on SPI1
+#if BOARD == GREG
     afio_remap(AFIO_REMAP_SPI1);
+#endif
     pinMode(SLAVE_PIN, INPUT_PULLUP);
     attachInterrupt(SLAVE_PIN, slave_irq, CHANGE);
 
