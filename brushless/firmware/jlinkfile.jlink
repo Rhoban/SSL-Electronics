@@ -1,0 +1,2 @@
+loadbin build/maple.bin, 0x8000000
+q
