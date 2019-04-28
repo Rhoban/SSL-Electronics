@@ -38,7 +38,7 @@ void display_warning(){
             }
             if( error != SECURITY_NO_ERROR ){
                 //terminal_io()->print("E ");
-                terminal_io()->print(error);
+                //terminal_io()->print(error);
                 terminal_io()->println( driver_error(error) );
             }
             last_warning = val;

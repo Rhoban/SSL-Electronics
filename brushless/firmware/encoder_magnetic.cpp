@@ -277,7 +277,7 @@ unsigned int encoder_counter = 0;
 static uint16_t encoder_read_value()
 {
     if( encoder_flag ){
-        // security_set_warning(WARNING_ENCODER_LAG);
+        security_set_warning(WARNING_ENCODER_LAG);
     }
     encoder_flag = true;
     if (encoder_read_state == -1) {

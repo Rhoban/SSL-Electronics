@@ -41,6 +41,9 @@ static inline const char *driver_warning(int code)
     } else if( code == WARNING_ENCODER_LAG ){
         // return "Encoder LAG";
         return "E";
+    } else if( code == WARNING_CURRENT_LAG ){
+        // return "Current LAG";
+        return "C";
     } else if( code == WARNING_DELTAS_MAGNETIC ){
         // return "Delta TOO LONG";
         return "D";

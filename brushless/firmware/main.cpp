@@ -23,7 +23,9 @@ void setup()
     com_init();
 
     // Initializng current  sensor
-//    current_init();
+    #ifndef CURRENT_DISABLE
+    current_init();
+    #endif
 
     // Initalizing encoder
     encoder_init();
@@ -63,7 +65,9 @@ void loop()
     motor_tick();
 
     // Updating current sensor value
-//    current_tick();
+    #ifndef CURRENT_DISABLE
+    current_tick();
+    #endif
 
     // Ticking the terminal
     terminal_tick();
