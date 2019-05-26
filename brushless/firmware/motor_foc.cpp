@@ -11,6 +11,8 @@
 
 // #define TEST_LED_FOC
 
+static bool enable_foc = true;
+
 inline int mod(int n, int d){
     int r = n%d;
     return (r>=0) ? r : r+d;
@@ -282,11 +284,19 @@ void motor_foc_init()
     #endif
 
     // Initalizing motor pins
+    pwmWrite(U_IN_PIN, 0);
     digitalWrite(U_IN_PIN, LOW);
+    pwmWrite(U_IN_PIN, 0);
+    digitalWrite(U_IN_PIN, LOW);
+    pwmWrite(V_IN_PIN, 0);
     digitalWrite(V_IN_PIN, LOW);
+    pwmWrite(W_IN_PIN, 0);
     digitalWrite(W_IN_PIN, LOW);
+    pwmWrite(U_SD_PIN, 0);
     digitalWrite(U_SD_PIN, LOW);
+    pwmWrite(V_SD_PIN, 0);
     digitalWrite(V_SD_PIN, LOW);
+    pwmWrite(W_SD_PIN, 0);
     digitalWrite(W_SD_PIN, LOW);
 
     pinMode(U_SD_PIN, OUTPUT);
@@ -797,6 +807,7 @@ TERMINAL_PARAMETER_INT(deph, "dephasage", 0);
 
 void motor_foc_tick()
 {
+    // TODO : RETIRER motor_ticking : INUTILE
     static bool motor_ticking = false;
 
     if (motor_ticking) {
@@ -954,6 +965,22 @@ bool motor_is_tared(){
 bool motor_foc_is_on(){
     return motor_on;
 }
+
+void enable_motor_foc(bool value){
+    enable_foc = value;
+}
+
+TERMINAL_COMMAND(enable_foc, "Enable foc"){
+    if (argc == 1) {
+        int val = atoi(argv[0]);
+        if( val == 0 ){
+            enable_motor_foc(false);
+        }else{
+            enable_motor_foc(true);
+        }
+    }
+}
+
 
 TERMINAL_COMMAND(FORCEREFLASH, "Force the phase to use a given pwm")
 {

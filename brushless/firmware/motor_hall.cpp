@@ -7,9 +7,11 @@
 #include "motor_hall.h"
 #include "security.h"
 
-#define PWM_SUPREMUM 3000
+#define PWM_SUPREMUM PWM_HALL_SUPREMUM
 #define PWM_MIN ((PWM_MIN_PERCENT*PWM_SUPREMUM)/100)
 #define PWM_MAX ((PWM_MAX_PERCENT*PWM_SUPREMUM)/100)
+
+static bool enable_hall = true;
 
 // Motor pins
 static int motor_pins[6] = {
@@ -156,19 +158,22 @@ static void set_phases(int u, int v, int w, int phase)
     }
 }
 
-void motor_hall_tick();
 
-void motor_hall_init()
-{
+void init_hall(){
     // Initializing hall sensors input
     pinMode(HALLU_PIN, INPUT_PULLUP);
     pinMode(HALLV_PIN, INPUT_PULLUP);
     pinMode(HALLW_PIN, INPUT_PULLUP);
 
     // Attach interrupts on phase change
-    attachInterrupt(HALLU_PIN, motor_hall_tick, CHANGE);
-    attachInterrupt(HALLV_PIN, motor_hall_tick, CHANGE);
-    attachInterrupt(HALLW_PIN, motor_hall_tick, CHANGE);
+    attachInterrupt(HALLU_PIN, motor_hall_irq, CHANGE);
+    attachInterrupt(HALLV_PIN, motor_hall_irq, CHANGE);
+    attachInterrupt(HALLW_PIN, motor_hall_irq, CHANGE);
+}
+
+void motor_hall_init()
+{
+    init_hall();
 
     // Configuring timers
     #if BOARD == GREG
@@ -180,12 +185,19 @@ void motor_hall_init()
     #endif
 
     // Initalizing motor pins
-    for (int k=0; k<6; k++)  pwmWrite(motor_pins[k], 0);
+    pwmWrite(U_IN_PIN, 0);
     digitalWrite(U_IN_PIN, LOW);
+    pwmWrite(U_IN_PIN, 0);
+    digitalWrite(U_IN_PIN, LOW);
+    pwmWrite(V_IN_PIN, 0);
     digitalWrite(V_IN_PIN, LOW);
+    pwmWrite(W_IN_PIN, 0);
     digitalWrite(W_IN_PIN, LOW);
+    pwmWrite(U_SD_PIN, 0);
     digitalWrite(U_SD_PIN, LOW);
+    pwmWrite(V_SD_PIN, 0);
     digitalWrite(V_SD_PIN, LOW);
+    pwmWrite(W_SD_PIN, 0);
     digitalWrite(W_SD_PIN, LOW);
 
     pinMode(U_SD_PIN, OUTPUT);
@@ -229,23 +241,9 @@ TERMINAL_COMMAND(bdw, "Bdw")
     terminal_io()->println(micros()-start);
 }
 
-TERMINAL_PARAMETER_INT(fp, "Force phase", -1);
-
-void motor_hall_tick()
-{
-    static bool motor_ticking = false;
-
-    if (motor_ticking) {
-        return;
-    }
-    motor_ticking = true;
-
-    // Current phase
+void motor_hall_irq(){
+    if( ! enable_hall ) return;
     int phase = hall_phases[hall_value()];
-    if (fp >= 0) {
-        phase = fp;
-    }
-
     if (phase >= 0 && phase < 6) {
         set_phases(
             motor_phases[phase][0]*motor_pwm,
@@ -258,30 +256,45 @@ void motor_hall_tick()
         // in this situation
         set_phases(0, 0, 0, -1);
     }
+}
 
+void motor_hall_tick()
+{
+    // TODO : RETIRER motor_ticking : INUTILE
+    static bool motor_ticking = false;
+
+    if (motor_ticking) {
+        return;
+    }
+    motor_ticking = true;
+
+    // Current phase
+    int phase = hall_phases[hall_value()];
+
+    int time = millis();
     if (phase != hall_current_phase) {
-        hall_last_change_moving = millis();
-        hall_last_change = millis();
+        hall_last_change_moving = time;
+        hall_last_change = time;
     }
     if (abs(motor_pwm) < 300) {
-        hall_last_change_moving = millis();
+        hall_last_change_moving = time;
     }
     hall_current_phase = phase;
 
-    if ((millis() - hall_last_change) > 500 && hall_current_phase == -1) {
+    if ((time - hall_last_change) > 500 && hall_current_phase == -1) {
         security_set_error(SECURITY_HALL_MISSING);
     }
 
-    if (fp < 0 && (millis() - hall_last_change_moving) > 500 && abs(motor_pwm) >= 500) {
+    if ((time - hall_last_change_moving) > 500 && abs(motor_pwm) >= 500) {
         // Stop everything
         security_set_error(SECURITY_HALL_FREEZE);
     }
 
     if (safe_mode) {
         if (encoder_is_present() && encoder_is_ok()) {
-            encoder_last_ok = millis();
+            encoder_last_ok = time;
         } else {
-            if ((millis() - encoder_last_ok) > 500) {
+            if ((time - encoder_last_ok) > 500) {
                 if (!encoder_is_present()) {
                     security_set_error(SECURITY_ENCODER_MISSING);
                 } else if (!encoder_is_ok()) {
@@ -345,4 +358,22 @@ TERMINAL_COMMAND(itest, "Interference test")
 
 bool motor_hall_is_on(){
     return motor_on;
+}
+
+void switch_to_hall();
+void switch_to_foc();
+
+void enable_motor_hall(bool value){
+    enable_hall = value;
+}
+
+TERMINAL_COMMAND(enable_hall, "Enable hall"){
+    if (argc == 1) {
+        int val = atoi(argv[0]);
+        if( val == 0 ){
+            enable_motor_hall(false);
+        }else{
+            enable_motor_hall(true);
+        }
+    }
 }

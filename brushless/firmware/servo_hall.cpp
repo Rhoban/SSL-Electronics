@@ -7,7 +7,7 @@
 #include "servo_hall.h"
 #include "encoder.h"
 #include "security.h"
-
+#include "motor_hall.h"
 
 class fifo{
   public:
@@ -47,6 +47,7 @@ static int encoder_rb[SPEED_RB] = {0};
 static int encoder_pos = 0;
 ////////////////////////////////////////////////////////////////////////////////:
 #define VMAX 20
+#define VLIMIT 18
 #define NBR_COEF 4
 #define ART_LIM  2500
 #define PLOT 2
@@ -297,12 +298,12 @@ void servo_hall_tick()
                 servo_last_error = error;
 
                 // Limiting output PWM
-                if (servo_pwm < -3000) servo_pwm = -3000;
-                if (servo_pwm > 3000) servo_pwm = 3000;
+                if (servo_pwm < -PWM_HALL_SUPREMUM) servo_pwm = -PWM_HALL_SUPREMUM;
+                if (servo_pwm > PWM_HALL_SUPREMUM) servo_pwm = PWM_HALL_SUPREMUM;
 
                 // Limiting accumulator
-                if (servo_acc < -(3000/ki)) servo_acc = -(3000/ki);
-                if (servo_acc > (3000/ki)) servo_acc = (3000/ki);
+                if (servo_acc < -(PWM_HALL_SUPREMUM/ki)) servo_acc = -(PWM_HALL_SUPREMUM/ki);
+                if (servo_acc > (PWM_HALL_SUPREMUM/ki)) servo_acc = (PWM_HALL_SUPREMUM/ki);
 
                 // Limiting PWM variation
                 if (abs(servo_pwm_limited - servo_pwm) > 25) {
@@ -341,9 +342,9 @@ void servo_hall_tick()
                   #endif
                 }
 
-                new_cmd_V = (new_cmd_V >= 18)? 18: new_cmd_V;
-                new_cmd_V = (new_cmd_V <= -18)? -18 : new_cmd_V;
-                new_cmd = new_cmd_V*3000/VMAX;
+                new_cmd_V = (new_cmd_V >= VLIMIT)? VLIMIT: new_cmd_V;
+                new_cmd_V = (new_cmd_V <= -VLIMIT)? -VLIMIT : new_cmd_V;
+                new_cmd = new_cmd_V*PWM_HALL_SUPREMUM/VMAX;
                 cmd.top(new_cmd_V);
 
                 #if PLOT == 0

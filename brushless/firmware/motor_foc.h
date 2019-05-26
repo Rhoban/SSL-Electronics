@@ -69,4 +69,9 @@ bool motor_foc_is_on();
 
 void register_update_theta( int (* fct)(int) );
 void set_fixed_theta(bool value);
+
+
+void motor_irq();
+  
+void enable_motor_foc(bool);
 #endif

@@ -40,8 +40,8 @@ BOARD_INCLUDE_DIR := $(MAKEDIR)/board-includes
 
 # Try "make help" for more information on BOARD and MEMORY_TARGET;
 # these default to a Maple Flash build.
-BOARD ?= maple
-#BOARD ?= maple_mini
+#BOARD ?= maple
+BOARD ?= maple_mini
 MEMORY_TARGET ?=jtag
 #MEMORY_TARGET ?= flash
 

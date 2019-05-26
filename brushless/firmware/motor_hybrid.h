@@ -7,4 +7,10 @@ void motor_hybrid_tick();
 bool motor_hybrid_is_on();
 void launch_tare_motor_hybrid();
 
+enum MotorMode {
+  HALL,
+  FOC
+};
+
+
 #endif
