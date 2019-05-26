@@ -41,22 +41,9 @@ static float servo_speed = 0;
 static volatile float servo_public_speed = 0;
 static volatile int16_t servo_public_pwm = 0;
 
-// Number of values stored in the speed ring buffer
-#define SPEED_RB        (((SPEED_DT)/SERVO_DT)+1)
-static int encoder_rb[SPEED_RB] = {0};
-static int encoder_pos = 0;
-////////////////////////////////////////////////////////////////////////////////:
 #define VMAX 20
 #define VLIMIT 18
 #define NBR_COEF 4
-#define ART_LIM  2500
-#define PLOT 2
-#define PLOT_CURR 0
-#define STEP 1
-#define STEP1 1.5
-#define STEP2 2.5
-#define STEP3 0
-#define RAMP 0
 
 #define ASSERV_FPI 1
 #define ASSERV_FPI2 0
@@ -128,17 +115,8 @@ static double coef_cmd[NBR_COEF] = {0, 0, 0, 0}; //t-1 t-2 t-3 t-4
 
 fifo error(NBR_COEF);
 fifo cmd(NBR_COEF);
-static int cpt = 0;
 
 /////////////////////////////////////////////////////////////////
-
-
-
-TERMINAL_PARAMETER_BOOL(sdb, "Speed debug", false)
-static int sdb_t = 0;
-
-int timer = 0;
-int aim = 0;
 
 static void servo_irq()
 {
@@ -156,7 +134,6 @@ void servo_hall_init()
 }
 
 static int servo_pwm = 0;
-static int servo_pwm_limited = 0;
 static float servo_acc = 0;
 static float servo_last_error = 0;
 TERMINAL_PARAMETER_FLOAT(kp, "PID P", 10.0);
@@ -191,155 +168,23 @@ void servo_hall_tick()
         if (servo_flag) {
             servo_flag = false;
 
-#ifdef ENCODER_NONE
-            if (servo_enable) {
-                // No servoing, the value is just 0-1 of pwm max
-                if (fabs(servo_target) > 0.1) {
-                    motor_set(true, servo_target*PWM_MAX);
-                } else {
-                    motor_set(false, 0);
-                }
-            }
-#else
-            /*// Updating limited target
-            float maxAcc = ACC_MAX/1000.0;
-            float diff = servo_limited_target - servo_target;
-            if (fabs(diff) < maxAcc) {
-                servo_limited_target = servo_target;
-            } else {
-                if (diff > 0) {
-                    servo_limited_target -= maxAcc;
-                } else {
-                    servo_limited_target += maxAcc;
-                }
-            }*/
-
-            // XXX: Removing servo limit
-              servo_limited_target = servo_target;
-
-            // Storing current value
-            int current_value = encoder_value();
-            encoder_rb[encoder_pos] = current_value;
-            encoder_pos++;
-            if (encoder_pos >= SPEED_RB) {
-                encoder_pos = 0;
-            }
-            int past_value = encoder_rb[encoder_pos];
-
-            // Updating current speed estimation [pulse per SPEED_DT]
-            // XXX: Is there a problem when we overflowed?
-            int speed_pulse = current_value - past_value;
-
-            // Converting this into a speed [turn/s]
-            // XXX: The discount was not tuned properly
-            servo_speed = 0.95*servo_speed +  0.05*(1000.0/(double)SPEED_DT)*speed_pulse/(double)ENCODER_CPR;
-
-            if (sdb) {
-                //terminal_io()->println(sdb_t);
-                servo_enable = true;
-                #if RAMP == 1
-                  timer++;
-                  sdb_t += 1;
-                  aim += 1;
-                  motor_set(true, -aim);
-
-
-                  if(aim >= 2500){
-                    sdb = false;
-                    //motor_set(false, 0);
-                    servo_set = 5;
-                  }
-                #endif
-
-                #if STEP == 1
-                 sdb_t +=1;
-                 if ((sdb_t >= 0)&(sdb_t < 1000)) {
-                   //aim = STEP1;
-                   //motor_set(true, aim);
-                   servo_target = STEP1;
-                 }
-                 if (sdb_t == 5000){
-                   //aim = STEP2;
-                   //motor_set(true, aim);
-                   servo_target = STEP2;
-                 }
-                 if(sdb_t >= 12000){
-                   //sdb = false;
-                   //motor_set(false, 0);
-                   servo_target = STEP3;
-                 }
-                 if(sdb_t >= 12500){
-                   sdb = false;
-                   servo_target = 0;
-                   //motor_set(false, 0);
-                 }
-               #endif
-
-            } else {
-                sdb_t = 0;
-            }
+            servo_speed = encoder_to_float_speed();
 
             if (servo_enable) {
-                /*float error = (servo_speed - servo_limited_target);
-
-                // Applying prior LUT
-                servo_pwm = -servo_prior_pwm;
-
-                // Limiting the P impact
-                float j = kp*error;
-                if (j > 800) j = 800;
-                if (j < -800) j = -800;
-
-                servo_pwm += j
-                          + round(ki * servo_acc)
-                          + (error - servo_last_error) * kd;
-
-                servo_acc += error;
-                servo_last_error = error;
-
-                // Limiting output PWM
-                if (servo_pwm < -PWM_HALL_SUPREMUM) servo_pwm = -PWM_HALL_SUPREMUM;
-                if (servo_pwm > PWM_HALL_SUPREMUM) servo_pwm = PWM_HALL_SUPREMUM;
-
-                // Limiting accumulator
-                if (servo_acc < -(PWM_HALL_SUPREMUM/ki)) servo_acc = -(PWM_HALL_SUPREMUM/ki);
-                if (servo_acc > (PWM_HALL_SUPREMUM/ki)) servo_acc = (PWM_HALL_SUPREMUM/ki);
-
-                // Limiting PWM variation
-                if (abs(servo_pwm_limited - servo_pwm) > 25) {
-                    if (servo_pwm_limited < servo_pwm) servo_pwm_limited += 25;
-                    else servo_pwm_limited -= 25;
-                } else {
-                    servo_pwm_limited = servo_pwm;sr
-                }
-                motor_set(servo_pwm_limited);
-            }*/
-
-                double servo_filt_target = servo_target*2*3.1416;
-                double curr_error =  servo_filt_target - (servo_speed)*2*3.1416;
+                float servo_filt_target = servo_target*2*3.1416;
+                float curr_error =  servo_filt_target - (servo_speed)*2*3.1416;
 
                 #if BO == 1
-                  curr_error = servo_target;
-                  #endif
-
-
-                //motor_set(true, curr_error*0.3162);
+                curr_error = servo_target;
+                #endif
 
                 error.top(curr_error);
 
-                double new_cmd = 0;//insérer combinaison linéaire;
-                double new_cmd_V = 0;
-
+                float new_cmd = 0;//insérer combinaison linéaire;
+                float new_cmd_V = 0;
 
                 for(int i = 0; i < NBR_COEF; i++){
                   new_cmd_V += coef_cmd[i]*cmd.get_Value(i) + coef_err[i]*error.get_Value(i);
-                  #if PLOT == 0
-                  terminal_io()->println(i);
-                  terminal_io()->print("cmd = ");
-                  terminal_io()->println(cmd.get_Value(i));
-                  terminal_io()->print("err = ");
-                  terminal_io()->println(error.get_Value(i));
-                  #endif
                 }
 
                 new_cmd_V = (new_cmd_V >= VLIMIT)? VLIMIT: new_cmd_V;
@@ -347,51 +192,11 @@ void servo_hall_tick()
                 new_cmd = new_cmd_V*PWM_HALL_SUPREMUM/VMAX;
                 cmd.top(new_cmd_V);
 
-                #if PLOT == 0
-                terminal_io()->print("new_cmd = ");
-                terminal_io()->println(new_cmd);
-                terminal_io()->print("new_cmd_V = ");
-                terminal_io()->println(new_cmd_V);
-                terminal_io()->println();
-                #endif
-
-                #if PLOT == 1
-                //terminal_io()->println(cpt);
-                terminal_io()->print(servo_speed);
-                terminal_io()->print(" ");
-                terminal_io()->print(servo_target);
-                terminal_io()->print(" ");
-                terminal_io()->print(new_cmd_V);
-                terminal_io()->print(" ");
-                #endif
-
-                #if PLOT_CURR == 1
-
-                terminal_io()->print(current_amps());
-
-                #endif
-
-                // terminal_io()->print(servo_speed);
-                // terminal_io()->print(" ");
-                // terminal_io()->println(servo_target);
-
-                cpt++;
                 motor_set(true, -new_cmd);
-
+                servo_public_pwm = -new_cmd;
           }
-#endif
-        }
+       }
     }
-
-if(curr){
-
-}
-
-
-    servo_public_pwm = servo_pwm_limited;
-    servo_public_speed = servo_speed;
-
-
 }
 
 TERMINAL_COMMAND(dbg, "Dbg servo")
@@ -413,7 +218,6 @@ void servo_hall_set(bool enable, float target, int16_t pwm)
     if (!servo_enable) {
         servo_pwm = 0;
         servo_prior_pwm = 0;
-        servo_pwm_limited = 0;
         servo_acc = 0;
         servo_last_error = 0;
         servo_limited_target = 0;
@@ -432,7 +236,7 @@ void servo_hall_set_pid(float kp_, float ki_, float kd_)
 
 float servo_hall_get_speed()
 {
-    return servo_public_speed;
+    return servo_speed;
 }
 
 TERMINAL_COMMAND(speed, "Speed estimation")
@@ -442,12 +246,10 @@ TERMINAL_COMMAND(speed, "Speed estimation")
 
 void servo_hall_emergency(){
     servo_hall_set(false, 0);
-    sdb = false;
 }
 void servo_hall_stop(){
     servo_hall_set(false, 0);
     motor_set(true, 0);
-    sdb = false;
 }
 
 TERMINAL_COMMAND(step, "Step")
@@ -460,13 +262,11 @@ TERMINAL_COMMAND(step, "Step")
   else{
     terminal_io()->println("Usage: step [turn/s]");
   }
-    //do nothing, use sdb=1 to avoid the servo impact
 }
 TERMINAL_COMMAND(clean, "Clean fifo of asserv")
 {
   servo_hall_set(false, 0);
   motor_set(true, 0);
-  sdb = false;
   error.init();
   cmd.init();
 }

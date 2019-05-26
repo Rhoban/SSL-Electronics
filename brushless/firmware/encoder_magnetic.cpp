@@ -375,6 +375,10 @@ int encoder_to_speed(){
     return adaptative_encoder_speed;
 }
 
+float encoder_to_float_speed(){
+    return (1.0*encoder_to_speed())/SPEED_SCALE; //ENCODER_SPEED_SCALE;
+}
+
 #define LOW_NORMAL_SPEED_MIN_FLOAT 1.0 
 #define LOW_NORMAL_SPEED_MAX_FLOAT 1.5
 
