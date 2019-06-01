@@ -298,7 +298,7 @@ void motor_foc_init()
     pinMode(W_IN_PIN, PWM);
     
     // Configuring timers
-    #if BORAD == GREG
+    #if BOARD == GREG
     _init_timer(2);
     _init_timer(3);
     #endif
