@@ -241,7 +241,16 @@ TERMINAL_COMMAND(bdw, "Bdw")
     terminal_io()->println(micros()-start);
 }
 
+    
+static bool motor_irq_is_active = false;
+
 void motor_hall_irq(){
+
+    if (motor_irq_is_active) {
+        return;
+    }
+    motor_irq_is_active = true;
+
     if( ! enable_hall ) return;
     int phase = hall_phases[hall_value()];
     if (phase >= 0 && phase < 6) {
@@ -256,6 +265,8 @@ void motor_hall_irq(){
         // in this situation
         set_phases(0, 0, 0, -1);
     }
+    
+    motor_irq_is_active = false;
 }
 
 void motor_hall_tick()
@@ -267,6 +278,7 @@ void motor_hall_tick()
         return;
     }
     motor_ticking = true;
+    motor_hall_irq();
 
     // Current phase
     int phase = hall_phases[hall_value()];

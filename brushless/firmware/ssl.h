@@ -2,9 +2,9 @@
 #define _SSL_H
 
 //#define MOTEUR_BANC
-#define MOTEUR_CATIE
+//#define MOTEUR_CATIE
 //#define MOTEUR_90_12V
-//#define MOTEUR_ROBOT_4_0
+#define MOTEUR_ROBOT_4_0
 //#define CYCLOIDE_PHASE_OPPOSITION
 //#define CYCLOIDE12
 //#define CYCLOIDE16
@@ -158,7 +158,8 @@
     #define OPEN_LOOP_FOC false //true
     //#define USE_HYBRID
     //#define USE_OPEN_LOOP_FOR_HYBRID
-    #define USE_FOC
+    //#define USE_FOC
+    #define USE_HALL
     //#define STOP_OUTSIDE_LIMITS 
     #define MOTOR_NAME "MOTEUR_ROBOT_4_0"
     #define CONFIG_PWM 40

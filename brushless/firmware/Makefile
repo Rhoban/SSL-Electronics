@@ -42,8 +42,8 @@ BOARD_INCLUDE_DIR := $(MAKEDIR)/board-includes
 # these default to a Maple Flash build.
 #BOARD ?= maple
 BOARD ?= maple_mini
-MEMORY_TARGET ?=jtag
-#MEMORY_TARGET ?= flash
+#MEMORY_TARGET ?=jtag
+MEMORY_TARGET ?= flash
 
 BOOTLOADER ?= robotis
 BOOTLOADER_PORT ?= /dev/ttyACM0
