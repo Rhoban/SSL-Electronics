@@ -38,7 +38,6 @@ static float servo_limited_target = 0;
 
 // Speed estimation
 static float servo_speed = 0;
-static volatile float servo_public_speed = 0;
 static volatile int16_t servo_public_pwm = 0;
 
 #define VMAX 20
@@ -289,12 +288,12 @@ int servo_hall_get_pwm()
 
 TERMINAL_COMMAND(servo, "Servo status")
 {
+    terminal_io()->print("Servo enable : ");
+    terminal_io()->println(servo_enable);
     terminal_io()->print("Target speed: ");
     terminal_io()->println(servo_target);
-    terminal_io()->print("Prior PWM: ");
-    terminal_io()->println(servo_prior_pwm);
-    terminal_io()->print("Speed: ");
-    terminal_io()->println(servo_public_speed);
+    terminal_io()->print("speed: ");
+    terminal_io()->println(servo_speed);
     terminal_io()->print("PWM: ");
     terminal_io()->println(servo_public_pwm);
 }
