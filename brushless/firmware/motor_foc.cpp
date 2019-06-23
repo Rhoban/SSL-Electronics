@@ -277,35 +277,25 @@ static void _init_timer(int number)
 
 void motor_foc_init()
 {
-
     #ifdef TEST_LED_FOC
     pinMode(LED_PIN, OUTPUT);
     digitalWrite(LED_PIN, LOW);
     #endif
 
     // Initalizing motor pins
-    pwmWrite(U_IN_PIN, 0);
-    digitalWrite(U_IN_PIN, LOW);
-    pwmWrite(U_IN_PIN, 0);
-    digitalWrite(U_IN_PIN, LOW);
-    pwmWrite(V_IN_PIN, 0);
-    digitalWrite(V_IN_PIN, LOW);
-    pwmWrite(W_IN_PIN, 0);
-    digitalWrite(W_IN_PIN, LOW);
-    pwmWrite(U_SD_PIN, 0);
+    pinMode(U_SD_PIN, OUTPUT);
     digitalWrite(U_SD_PIN, LOW);
-    pwmWrite(V_SD_PIN, 0);
+    pinMode(V_SD_PIN, OUTPUT);
     digitalWrite(V_SD_PIN, LOW);
-    pwmWrite(W_SD_PIN, 0);
+    pinMode(W_SD_PIN, OUTPUT);
     digitalWrite(W_SD_PIN, LOW);
 
-    pinMode(U_SD_PIN, OUTPUT);
-    pinMode(V_SD_PIN, OUTPUT);
-    pinMode(W_SD_PIN, OUTPUT);
-
     pinMode(U_IN_PIN, PWM);
+    pwmWrite(U_IN_PIN, 0);
     pinMode(V_IN_PIN, PWM);
+    pwmWrite(V_IN_PIN, 0);
     pinMode(W_IN_PIN, PWM);
+    pwmWrite(W_IN_PIN, 0);
     
     // Configuring timers
     #if BOARD == GREG
@@ -313,11 +303,9 @@ void motor_foc_init()
     _init_timer(3);
     #endif
 
-
     #if BOARD == CATIE
     _init_timer(1);
     #endif
-    
 }
 
 void motor_foc_set(bool enable, int value)

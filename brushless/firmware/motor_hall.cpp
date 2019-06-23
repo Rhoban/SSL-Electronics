@@ -185,28 +185,21 @@ void motor_hall_init()
     #endif
 
     // Initalizing motor pins
-    pwmWrite(U_IN_PIN, 0);
-    digitalWrite(U_IN_PIN, LOW);
-    pwmWrite(U_IN_PIN, 0);
-    digitalWrite(U_IN_PIN, LOW);
-    pwmWrite(V_IN_PIN, 0);
-    digitalWrite(V_IN_PIN, LOW);
-    pwmWrite(W_IN_PIN, 0);
-    digitalWrite(W_IN_PIN, LOW);
-    pwmWrite(U_SD_PIN, 0);
+    pinMode(U_SD_PIN, OUTPUT);
     digitalWrite(U_SD_PIN, LOW);
-    pwmWrite(V_SD_PIN, 0);
+    pinMode(V_SD_PIN, OUTPUT);
     digitalWrite(V_SD_PIN, LOW);
-    pwmWrite(W_SD_PIN, 0);
+    pinMode(W_SD_PIN, OUTPUT);
     digitalWrite(W_SD_PIN, LOW);
 
-    pinMode(U_SD_PIN, OUTPUT);
-    pinMode(V_SD_PIN, OUTPUT);
-    pinMode(W_SD_PIN, OUTPUT);
-
     pinMode(U_IN_PIN, PWM);
+    pwmWrite(U_IN_PIN, 0);
     pinMode(V_IN_PIN, PWM);
+    pwmWrite(V_IN_PIN, 0);
     pinMode(W_IN_PIN, PWM);
+    pwmWrite(W_IN_PIN, 0);
+
+
 }
 
 TERMINAL_COMMAND(hall, "Test the hall sensors")
