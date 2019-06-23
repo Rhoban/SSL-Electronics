@@ -38,6 +38,18 @@ BOARD_INCLUDE_DIR := $(MAKEDIR)/board-includes
 ## linker options/flags.
 ##
 
+SSL_VERSION ?= CATIE
+# SSL_VERSION ?= GREG
+
+ifeq ($(SSL_VERSION),CATIE)
+EXTRA_FLAGS = -DCATIE_BOARD
+endif
+
+ifeq ($(SSL_VERSION),GREG)
+EXTRA_FLAGS = -DGREG_BOARD
+endif
+
+
 # Try "make help" for more information on BOARD and MEMORY_TARGET;
 # these default to a Maple Flash build.
 BOARD ?= maple_mini
@@ -75,7 +87,9 @@ GLOBAL_CFLAGS   := -Os -gdwarf-2 -nostdlib \
 		   -Wl,--gc-sections $(TARGET_FLAGS) \
 		   -DRC=Serial2 \
 		   -DBOOTLOADER_$(BOOTLOADER) \
-		   -DMETABOT_VERSION="0.0"
+		   -DMETABOT_VERSION="0.0" \
+		   $(EXTRA_FLAGS)
+
 GLOBAL_CXXFLAGS := -fno-rtti -fno-exceptions -Wall $(TARGET_FLAGS)
 GLOBAL_ASFLAGS  := -x assembler-with-cpp $(TARGET_FLAGS)
 LDFLAGS  = $(TARGET_LDFLAGS) $(TOOLCHAIN_LDFLAGS) -mcpu=cortex-m3 -mthumb \
@@ -144,7 +158,14 @@ endif
 # Conditionally upload to whatever the last build was
 install: INSTALL_TARGET = $(shell cat $(BUILD_PATH)/build-type 2>/dev/null)
 install: $(BUILD_PATH)/$(BOARD).bin
+	@echo ""
+	@echo "VERY IMPORTANT, TO AVOID TO BURN THE KICKER BOARD :  "
+	@echo ""
+	@echo "be carefull ! this version is for a "$(SSL_VERSION)" version of the main board. if not, change the SSL_VERSION variable of that makefile."
+	@echo ""
+	@echo ""
 	@echo "Install target:" $(INSTALL_TARGET)
+	@echo "SSL Version:" $(SSL_VERSION)
 	$(UPLOAD_$(INSTALL_TARGET))
 
 release: $(BUILD_PATH)/$(BOARD).bin

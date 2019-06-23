@@ -34,10 +34,14 @@
 #define GREG 1
 #define CATIE 2
 
-#ifdef BOARD_maple_mini
-  #define BOARD GREG
-#else
+#ifdef CATIE_BOARD
   #define BOARD CATIE
+#endif
+#ifdef GREG_BOARD
+  #define BOARD GREG
+#endif
+#ifndef BOARD
+  static_assert(false);
 #endif
 
 #if BOARD == CATIE
@@ -83,6 +87,9 @@
   // SPI slave pin
   #define SLAVE_SPI           1
   #define SLAVE_PIN PA4
+  #define SLAVE_CLK_PIN PA5
+  #define SLAVE_MISO_PIN PA6
+  #define SLAVE_MOSI_PIN PA7
 
   // Board LED pin
   #define LED_PIN     PB1

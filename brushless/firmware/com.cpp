@@ -127,9 +127,9 @@ static void slave_irq()
         spi_tx_reg(SPI1, 0x00);
         spi_irq_enable(slave.c_dev(), SPI_RXNE_INTERRUPT|SPI_TXE_INTERRUPT);
     } else {
+        spi_irq_disable(slave.c_dev(), SPI_INTERRUPTS_ALL);
         slave.end();
         pinMode(slave.misoPin(), INPUT_FLOATING);
-        spi_irq_disable(slave.c_dev(), SPI_INTERRUPTS_ALL);
     }
 }
 
@@ -158,6 +158,29 @@ void com_tick()
         }
     }
 }
+
+TERMINAL_COMMAND(map, "MAPPING COM")
+{
+    terminal_io()->print("CS : ");
+    terminal_io()->print(SLAVE_PIN);
+    terminal_io()->print(" - ");
+    terminal_io()->println(slave.nssPin());
+    terminal_io()->print("MISO : ");
+    terminal_io()->print(SLAVE_MISO_PIN);
+    terminal_io()->print(" - ");
+    terminal_io()->println(slave.misoPin());
+    terminal_io()->print("MOSI : ");
+    terminal_io()->print(SLAVE_MOSI_PIN);
+    terminal_io()->print(" - ");
+    terminal_io()->println(slave.mosiPin());
+    terminal_io()->print("sck : ");
+    terminal_io()->print(SLAVE_CLK_PIN);
+    terminal_io()->print(" - ");
+    terminal_io()->println(slave.sckPin());
+
+
+}
+
 
 TERMINAL_COMMAND(ap, "")
 {
