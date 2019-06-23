@@ -191,8 +191,8 @@ void servo_hall_tick()
                 new_cmd = new_cmd_V*PWM_HALL_SUPREMUM/VMAX;
                 cmd.top(new_cmd_V);
 
-                motor_set(true, -new_cmd);
-                servo_public_pwm = -new_cmd;
+                motor_set(true, new_cmd);
+                servo_public_pwm = new_cmd;
           }
        }
     }

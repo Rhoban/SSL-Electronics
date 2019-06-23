@@ -45,6 +45,7 @@
 #endif
 
 #if BOARD == CATIE
+  #define REVERSE_HALL_PHASE
   // For SPI based encoders
   #define ENCODER_SPI         2
   #define ENCODER_SELECT_PIN  PB12
@@ -80,9 +81,15 @@
 
 
 
-  #define HALLU_PIN        PA0
-  #define HALLV_PIN        PA1
-  #define HALLW_PIN        PA2
+  #ifdef REVERSE_HALL_PHASE
+    #define HALLU_PIN        PA0
+    #define HALLW_PIN        PA1
+    #define HALLV_PIN        PA2
+  #else
+    #define HALLU_PIN        PA0
+    #define HALLV_PIN        PA1
+    #define HALLW_PIN        PA2
+  #endif
 
   // SPI slave pin
   #define SLAVE_SPI           1
@@ -127,10 +134,15 @@
   #endif
 
 
-
-  #define HALLU_PIN        7
-  #define HALLV_PIN        6
-  #define HALLW_PIN        5
+  #ifdef REVERSE_HALL_PHASE
+    #define HALLU_PIN        7
+    #define HALLW_PIN        6
+    #define HALLV_PIN        5
+  #else
+    #define HALLU_PIN        7
+    #define HALLV_PIN        6
+    #define HALLW_PIN        5
+  #endif
 
   // SPI slave pin
   #define SLAVE_SPI           1
