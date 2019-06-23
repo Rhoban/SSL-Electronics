@@ -38,14 +38,32 @@ BOARD_INCLUDE_DIR := $(MAKEDIR)/board-includes
 ## linker options/flags.
 ##
 
+SSL_VERSION ?= CATIE
+# SSL_VERSION ?= GREG
+
+ifeq ($(SSL_VERSION),CATIE)
 # Try "make help" for more information on BOARD and MEMORY_TARGET;
 # these default to a Maple Flash build.
 BOARD ?= maple
-#BOARD ?= maple_mini
 MEMORY_TARGET ?=jtag
 #MEMORY_TARGET ?= flash
+BOOTLOADER ?= maple
+#BOOTLOADER ?= robotis
+# SPI_FLAGS =  # No SPI flags
+SPI_FLAGS =  # SPI is not remapped in the CATIE version
+EXTRA_FLAGS = -DCATIE_BOARD
+endif
 
+ifeq ($(SSL_VERSION),GREG)
+# Try "make help" for more information on BOARD and MEMORY_TARGET;
+# these default to a Maple Flash build.
+BOARD ?= maple_mini
+MEMORY_TARGET ?= flash
 BOOTLOADER ?= robotis
+SPI_FLAGS = -DSPI1_REMAPPED
+EXTRA_FLAGS = -DGREG_BOARD
+endif
+
 BOOTLOADER_PORT ?= /dev/ttyACM0
 
 # $(BOARD)- and $(MEMORY_TARGET)-specific configuration
@@ -79,7 +97,9 @@ GLOBAL_CFLAGS   := -Os -gdwarf-2 -nostdlib \
 		   -DBOOTLOADER_$(BOOTLOADER) \
 		   -DMETABOT_VERSION="0.0" \
 		   -DUSB_DISC_INVERTED \
-		   -DSPI1_REMAPPED
+		   $(SPI_FLAGS) \
+		   $(EXTRA_FLAGS)
+
 GLOBAL_CXXFLAGS := -Os -std=c++11 -fno-rtti -fno-exceptions -Wall $(TARGET_FLAGS)
 GLOBAL_ASFLAGS  := -x assembler-with-cpp $(TARGET_FLAGS)
 LDFLAGS  = $(TARGET_LDFLAGS) $(TOOLCHAIN_LDFLAGS) -mcpu=cortex-m3 -mthumb \
