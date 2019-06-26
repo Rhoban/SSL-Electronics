@@ -6,7 +6,7 @@
 #include <watchdog.h>
 
 bool ir_detected = false;
-int ir_value = 0;
+volatile int ir_value = 0;
 
 void ir_init()
 {
@@ -35,6 +35,7 @@ void ir_tick()
     if (millis() - lastSample > 1) {
         lastSample = millis();
         digitalWrite(IR_EMIT, HIGH);
+        ir_value = analogRead(IR_RECEIVE);
         ir_value = analogRead(IR_RECEIVE);
 
         if (ir_value < IR_THRESHOLD) {

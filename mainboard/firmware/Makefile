@@ -166,6 +166,7 @@ install: $(BUILD_PATH)/$(BOARD).bin
 	@echo ""
 	@echo "Install target:" $(INSTALL_TARGET)
 	@echo "SSL Version:" $(SSL_VERSION)
+	$(shell bash -c 'read -s -p "ARE YOU SURE?"')
 	$(UPLOAD_$(INSTALL_TARGET))
 
 release: $(BUILD_PATH)/$(BOARD).bin

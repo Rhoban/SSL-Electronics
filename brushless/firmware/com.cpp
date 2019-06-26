@@ -50,7 +50,11 @@ void com_frame_received()
             }else{
                 servo_set(false, 0);
             }
+#ifdef PWM_ONLY_MODE
+            motor_set(packet->enable, PWM_DRIBBLER);
+#else
             servo_set_speed_consign( packet->targetSpeed );
+#endif
         }
         break;
         case DRIVER_PACKET_PARAMS: {

@@ -643,10 +643,10 @@ void com_tick()
     static int last = micros();
 
 // Comment to debug on shell
-#define BINARY
+    //#define BINARY
 
-    // Entering master infinite loop
-    while (com_master) {
+       // Entering master infinite loop
+      while (com_master) {
         // Feed the watchdog
         watchdog_feed();
 
@@ -654,118 +654,118 @@ void com_tick()
         com_poll();
 
         // Tick the communication with USB master
-        #ifdef BINARY
+#ifdef BINARY
         com_usb_tick();
-        #else
+#else
         terminal_tick();
-        #endif
+#endif
 
         // Feed the watchdog
         watchdog_feed();
 
         bool transmitting = false;
         while (com_master_pos < MAX_ROBOTS && !transmitting) {
-            // Sending a packet to a robot
-            // XXX: Using micros() in unsafe because it sometime overflow, to fix!
-            // We either received a status from the previous robot or the timeout expired,
-            // we should ask the next one
-            if (com_master_pos < 0 || com_has_status[com_master_pos] || (micros() - last) > 2000) {
-                // Asking the next
-                com_master_pos++;
-                last = 0;
+          // Sending a packet to a robot
+          // XXX: Using micros() in unsafe because it sometime overflow, to fix!
+          // We either received a status from the previous robot or the timeout expired,
+          // we should ask the next one
+          if (com_master_pos < 0 || com_has_status[com_master_pos] || (micros() - last) > 2000) {
+            // Asking the next
+            com_master_pos++;
+            last = 0;
 
-                // Should we send a packet to this robot ?
-                if (com_master_pos < MAX_ROBOTS && com_should_transmit[com_master_pos]) {
-                    last = micros();
-                    transmitting = true;
+            // Should we send a packet to this robot ?
+            if (com_master_pos < MAX_ROBOTS && com_should_transmit[com_master_pos]) {
+              last = micros();
+              transmitting = true;
 
-                    // Sending the packet to the 3 modules
-                    for (size_t k=0; k<3; k++) {
-                        com_ce_disable(k);
-                        // Preparing to transmit
-                        com_mode(k, true, false);
-                        com_set_reg(k, REG_STATUS, 0x70);
-                        com_set_tx_addr(k, com_master_pos);
+              // Sending the packet to the 3 modules
+              for (size_t k=0; k<3; k++) {
+                com_ce_disable(k);
+                // Preparing to transmit
+                com_mode(k, true, false);
+                com_set_reg(k, REG_STATUS, 0x70);
+                com_set_tx_addr(k, com_master_pos);
 
-                        // Transmitting the payload
-                        com_tx(k, com_robots[com_master_pos], PACKET_SIZE);
-                        com_ce_enable(k);
-                    }
-                    com_should_transmit[com_master_pos] = false;
-                }
-
-                if (com_master_pos >= MAX_ROBOTS) {
-                    // Our cycle is over, sending back the robot statuses
-                    size_t statuses = 0;
-                    for (size_t k=0; k<MAX_ROBOTS; k++) {
-                        if (com_has_status[k] ) {
-                            statuses++;
-                        }
-                    }
-                    #ifdef BINARY
-                    uint8_t answer[1+1+1+statuses*(1+sizeof(struct packet_robot))+1];
-                    // Answer header
-                    answer[0] = 0xaa;
-                    answer[1] = 0x55;
-                    // Number of robots in the packet
-                    answer[2] = statuses;
-                    size_t pos = 3;
-                    for (size_t k=0; k<MAX_ROBOTS; k++) {
-                        if (com_has_status[k]) {
-                            // Inserting the robot #
-                            answer[pos++] = k;
-                            // Copying structure data
-                            uint8_t *ptr = (uint8_t *)&com_statuses[k];
-                            for (size_t n=0; n<sizeof(struct packet_robot); n++) {
-                                answer[pos++] = ptr[n];
-                            }
-                        }
-                    }
-                    // Ending with 0xff
-                    answer[pos] = 0xff;
-                    SerialUSB.write(answer, sizeof(answer));
-                    #endif
-                }
-            } else {
-                transmitting = true;
+                // Transmitting the payload
+                com_tx(k, com_robots[com_master_pos], PACKET_SIZE);
+                com_ce_enable(k);
+              }
+              com_should_transmit[com_master_pos] = false;
             }
+
+            if (com_master_pos >= MAX_ROBOTS) {
+              // Our cycle is over, sending back the robot statuses
+              size_t statuses = 0;
+              for (size_t k=0; k<MAX_ROBOTS; k++) {
+                if (com_has_status[k] ) {
+                  statuses++;
+                }
+              }
+#ifdef BINARY
+              uint8_t answer[1+1+1+statuses*(1+sizeof(struct packet_robot))+1];
+              // Answer header
+              answer[0] = 0xaa;
+              answer[1] = 0x55;
+              // Number of robots in the packet
+              answer[2] = statuses;
+              size_t pos = 3;
+              for (size_t k=0; k<MAX_ROBOTS; k++) {
+                if (com_has_status[k]) {
+                  // Inserting the robot #
+                  answer[pos++] = k;
+                  // Copying structure data
+                  uint8_t *ptr = (uint8_t *)&com_statuses[k];
+                  for (size_t n=0; n<sizeof(struct packet_robot); n++) {
+                    answer[pos++] = ptr[n];
+                  }
+                }
+              }
+              // Ending with 0xff
+              answer[pos] = 0xff;
+              SerialUSB.write(answer, sizeof(answer));
+#endif
+            }
+          } else {
+            transmitting = true;
+          }
         }
 
         // XXX: Led for master
         if ((millis() - com_usb_reception) < 100) {
-            digitalWrite(BOARD_LED_PIN, HIGH);
+          digitalWrite(BOARD_LED_PIN, HIGH);
         } else {
-            digitalWrite(BOARD_LED_PIN, LOW);
+          digitalWrite(BOARD_LED_PIN, LOW);
         }
-    }
+      }
 
-    // Polling IRQs
-    com_poll();
+      // Polling IRQs
+      com_poll();
 
-    // Processing a packet from the master
-    if (!com_master && com_master_new) {
+      // Processing a packet from the master
+      if (!com_master && com_master_new) {
         last = micros();
         com_master_controlling = true;
         com_master_new = false;
         com_process_master();
-    }
+      }
 
-    // Checking the last master reception, playing melody when the reception is changing
-    if ((millis() - com_master_reception) < 100 && com_master_reception != 0) {
+      // Checking the last master reception, playing melody when the reception is changing
+      if ((millis() - com_master_reception) < 100 && com_master_reception != 0) {
         if (!com_has_master) {
-            com_has_master = true;
-            // buzzer_play(MELODY_BEGIN);
+          com_has_master = true;
+          // buzzer_play(MELODY_BEGIN);
         }
         digitalWrite(BOARD_LED_PIN, HIGH);
-    } else {
+      } else {
         if (com_has_master) {
-            com_has_master = false;
-            kicker_boost_enable(false); // Stopping the charge
-            // buzzer_play(MELODY_END);
+          com_has_master = false;
+          kicker_boost_enable(false); // Stopping the charge
+          // buzzer_play(MELODY_END);
         }
         my_actions = 0;
         digitalWrite(BOARD_LED_PIN, LOW);
-    }
+      }
 }
 
 TERMINAL_COMMAND(mp, "Master packets")

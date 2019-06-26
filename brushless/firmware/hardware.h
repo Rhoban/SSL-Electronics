@@ -65,9 +65,9 @@
 
       #define V_SD_PIN       PC8  //use Timer 1 (Maple)
       #define V_IN_PIN       PA10  //use Timer 1 (Maple)
-      
-      #define W_SD_PIN       PC7 //use Timer 1 (Maple)
-      #define W_IN_PIN       PA9 //use Timer 1 (Maple)
+
+#define W_SD_PIN       PC7 //use Timer 1 (Maple)
+#define W_IN_PIN       PA9 //use Timer 1 (Maple)
   #else
       #define U_SD_PIN       PC6 //use Timer 1 (Maple)
       #define U_IN_PIN       PA8 //use Timer 1 (Maple)
@@ -119,9 +119,9 @@
 
       #define V_SD_PIN        33  //use Timer 3 (Maple Mini)
       #define V_IN_PIN       3  //use Timer 2 (Maple Mini)
-      
-      #define W_SD_PIN        8 //use Timer 2 (Maple Mini)
-      #define W_IN_PIN       9 //use Timer 2 (Maple Mini)
+
+#define W_SD_PIN        8 //use Timer 2 (Maple Mini)
+#define W_IN_PIN       9 //use Timer 2 (Maple Mini)
   #else
       #define U_SD_PIN        10 //use Timer 2 (Maple Mini)
       #define U_IN_PIN       11 //use Timer 2 (Maple Mini)
@@ -170,7 +170,7 @@
 //
 //      #define V_SD_PIN       PB1  //use Timer 3 (Maple Mini)
 //      #define V_IN_PIN       PB0  //use Timer 2 (Maple Mini)
-//      
+//
 //      #define W_SD_PIN       PA3 //use Timer 2 (Maple Mini)
 //      #define W_IN_PIN       PA2 //use Timer 2 (Maple Mini)
 //  #else
@@ -210,7 +210,7 @@
 #define CURRENT_MAX         8
 
 #define MAX_MOTOR_VOLTAGE 12
-#define HALF_MAX_MOTOR_VOLTAGE MAX_MOTOR_VOLTAGE/2 
+#define HALF_MAX_MOTOR_VOLTAGE MAX_MOTOR_VOLTAGE/2
 
 // XXX: Limiting PWM
 #if DRIVER_TYPE == TYPE_70W
