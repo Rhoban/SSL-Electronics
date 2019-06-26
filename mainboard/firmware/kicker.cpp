@@ -103,8 +103,6 @@ void kicker_init()
     init_boost();
 
     // Kicker pin
-    digitalWrite(KICKER1_PIN, KICKER_HIGH);
-    digitalWrite(KICKER2_PIN, KICKER_HIGH);
     pinMode(KICKER1_PIN, OUTPUT);
     digitalWrite(KICKER1_PIN, KICKER_HIGH);
     pinMode(KICKER2_PIN, OUTPUT);

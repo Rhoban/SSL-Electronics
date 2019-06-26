@@ -10,8 +10,8 @@ int ir_value = 0;
 
 void ir_init()
 {
-    digitalWrite(IR_EMIT, LOW);
     pinMode(IR_EMIT, OUTPUT);
+    digitalWrite(IR_EMIT, LOW);
     pinMode(IR_RECEIVE, INPUT_ANALOG);
 
     ir_value = 0;

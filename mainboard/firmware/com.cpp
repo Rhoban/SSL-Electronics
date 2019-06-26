@@ -379,18 +379,17 @@ void com_init()
 
     // Initializing CS pins
     for (int k=0; k<5; k++) {
-        digitalWrite(com_pins[k], HIGH);
         pinMode(com_pins[k], OUTPUT);
         digitalWrite(com_pins[k], HIGH);
     }
 
     // Initializing COM_CE
-    digitalWrite(COM_CE1, LOW);
-    digitalWrite(COM_CE2, LOW);
-    digitalWrite(COM_CE3, LOW);
     pinMode(COM_CE1, OUTPUT);
+    digitalWrite(COM_CE1, LOW);
     pinMode(COM_CE2, OUTPUT);
+    digitalWrite(COM_CE2, LOW);
     pinMode(COM_CE3, OUTPUT);
+    digitalWrite(COM_CE3, LOW);
 
     for (int k=0; k<3; k++) {
         // Disabling auto acknowledgement
