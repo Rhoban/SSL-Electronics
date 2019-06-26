@@ -24,11 +24,11 @@ void setup()
     init();
     RCC_BASE->APB1ENR &= ~RCC_APB1ENR_USART2EN;
 
-    digitalWrite(BOARD_LED_PIN, LOW);
     pinMode(BOARD_LED_PIN, OUTPUT);
+    digitalWrite(BOARD_LED_PIN, LOW);
 
     // Can be used to set the robot id
-    //infos_set(3, false);
+    // infos_set(6, false);
 
     // Multiplexer
     mux_init();
@@ -51,10 +51,10 @@ void setup()
     // Voltage measure
     voltage_init();
 
-    if (com_is_all_ok() && drivers_is_all_ok()) {
-        // buzzer_play(MELODY_BOOT);
+    if (com_is_all_ok() ) { // && drivers_is_all_ok()) {
+        buzzer_play(MELODY_BOOT);
     } else {
-        // buzzer_play(MELODY_WARNING);
+        buzzer_play(MELODY_WARNING);
     }
 
     terminal_init(&SerialUSB);
@@ -62,11 +62,11 @@ void setup()
     // Infos
     infos_init();
 
-    // Starting the watchdog
-    watchdog_start(WATCHDOG_14MS);
-
     // Reiniting com
     com_init();
+    
+    // Starting the watchdog
+    watchdog_start(WATCHDOG_58MS);
 }
 
 // Benchmaking main loop
@@ -84,6 +84,8 @@ TERMINAL_COMMAND(bl, "")
  */
 void loop()
 {
+
+#if 0
     // Benchmarking main loop
     static int last = micros();
     if (n < 100) {
@@ -94,6 +96,7 @@ void loop()
         }
         n += 1;
     }
+#endif
 
     // Feeding watchdog
     watchdog_feed();

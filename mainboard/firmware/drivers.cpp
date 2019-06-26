@@ -128,7 +128,6 @@ void drivers_init()
 
     // Initializing CS pins
     for (int k=0; k<5; k++) {
-        digitalWrite(drivers_pins[k], HIGH);
         pinMode(drivers_pins[k], OUTPUT);
         digitalWrite(drivers_pins[k], HIGH);
     }
