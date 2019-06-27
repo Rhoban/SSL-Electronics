@@ -12,18 +12,6 @@ static bool clearing = false;
 static int clear = 0;
 static bool charging = false;
 
-#define GREG 1
-#define CATIE 2
-
-#ifdef CATIE_BOARD
-  #define BOARD CATIE
-#endif
-#ifdef GREG_BOARD
-  #define BOARD GREG
-#endif
-#ifndef BOARD
-  static_assert(false);
-#endif
 
 #if BOARD == GREG
   #define KICKER_ON HIGH

@@ -1,6 +1,19 @@
 #ifndef _HARDWARE_H
 #define _HARDWARE_H
 
+#define GREG 1
+#define CATIE 2
+
+#ifdef CATIE_BOARD
+  #define BOARD CATIE
+#endif
+#ifdef GREG_BOARD
+  #define BOARD GREG
+#endif
+#ifndef BOARD
+  static_assert(false);
+#endif
+
 // Brushless drivers
 #define DRIVERS_CS1 7
 #define DRIVERS_CS2 1
