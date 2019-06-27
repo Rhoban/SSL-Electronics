@@ -123,11 +123,19 @@
     #define OPEN_LOOP_FOC false //true
     // #define USE_FOC
 //ONLY FOR DRIBBLER
-#define PWM_ONLY_MODE //until a velocity controller is done
-#define PWM_DRIBBLER -1000
 #define USE_HALL
+#if defined(USE_HALL)
+  #define PWM_ONLY_MODE //until a velocity controller is done
+  #define PWM_DRIBBLER -1000
+  #define MOTOR_NAME "MOTEUR_CATIE_HALL"
+#endif
 //#define STOP_OUTSIDE_LIMITS
-#define MOTOR_NAME "MOTEUR_CATIE"
+#if defined(USE_FOC)
+  #define MOTOR_NAME "MOTEUR_CATIE_FOC"
+#endif
+#if defined(USE_HYBRID)
+  #define MOTOR_NAME "MOTEUR_CATIE_HYBRID"
+#endif
 #define CONFIG_PWM 40
 #define NB_POSITIVE_MAGNETS 8
 #define MANUAL_SPEED true //false

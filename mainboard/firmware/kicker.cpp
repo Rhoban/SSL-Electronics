@@ -26,32 +26,32 @@ static bool charging = false;
 #endif
 
 #if BOARD == GREG
-  #define KICKER_HIGH HIGH
-  #define KICKER_LOW LOW
-  #define BOOST_HIGH 500
-  #define BOOST_LOW 0
+  #define KICKER_ON HIGH
+  #define KICKER_OFF LOW
+  #define BOOST_ON 500
+  #define BOOST_OFF 0
 #else
-  #define KICKER_HIGH LOW
-  #define KICKER_LOW HIGH
-  #define BOOST_HIGH LOW
-  #define BOOST_LOW HIGH
+  #define KICKER_ON LOW
+  #define KICKER_OFF HIGH
+  #define BOOST_ON LOW
+  #define BOOST_OFF HIGH
 #endif
 
 void enable_boost(){
   #if BOARD == GREG
-    pwmWrite(BOOSTER_PIN, BOOST_HIGH);
+    pwmWrite(BOOSTER_PIN, BOOST_ON);
   #endif
   #if BOARD == CATIE
-    digitalWrite(BOOSTER_PIN, BOOST_HIGH);
+    digitalWrite(BOOSTER_PIN, BOOST_ON);
   #endif
 }
 
 void disable_boost(){
   #if BOARD == GREG
-    pwmWrite(BOOSTER_PIN, BOOST_LOW);
+    pwmWrite(BOOSTER_PIN, BOOST_OFF);
   #endif
   #if BOARD == CATIE
-    digitalWrite(BOOSTER_PIN, BOOST_LOW);
+    digitalWrite(BOOSTER_PIN, BOOST_OFF);
   #endif
 }
 
@@ -72,8 +72,8 @@ TERMINAL_PARAMETER_FLOAT(cap, "Capacitor charge", 0.0);
 
 static void _kicker_irq()
 {
-    digitalWrite(KICKER1_PIN, KICKER_HIGH);
-    digitalWrite(KICKER2_PIN, KICKER_HIGH);
+    digitalWrite(KICKER1_PIN, KICKER_ON);
+    digitalWrite(KICKER2_PIN, KICKER_ON);
 
     HardwareTimer timer(KICKER_TIMER);
     timer.pause();
@@ -104,9 +104,9 @@ void kicker_init()
 
     // Kicker pin
     pinMode(KICKER1_PIN, OUTPUT);
-    digitalWrite(KICKER1_PIN, KICKER_HIGH);
+    digitalWrite(KICKER1_PIN, KICKER_ON);
     pinMode(KICKER2_PIN, OUTPUT);
-    digitalWrite(KICKER2_PIN, KICKER_HIGH);
+    digitalWrite(KICKER2_PIN, KICKER_ON);
 }
 
 void kicker_clear()
@@ -137,9 +137,9 @@ void kicker_kick(int kicker, int power)
     }
 
     if (kicker == 0) {
-        digitalWrite(KICKER1_PIN, KICKER_LOW);
+        digitalWrite(KICKER1_PIN, KICKER_OFF);
     } else {
-        digitalWrite(KICKER2_PIN, KICKER_LOW);
+        digitalWrite(KICKER2_PIN, KICKER_OFF);
     }
 
     HardwareTimer timer(KICKER_TIMER);
