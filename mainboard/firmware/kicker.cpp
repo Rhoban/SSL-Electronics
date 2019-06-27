@@ -44,7 +44,6 @@ void disable_boost(){
 }
 
 void init_boost(){
-    disable_boost();
     #if BOARD == GREG
       pinMode(BOOSTER_PIN, PWM);
     #endif
