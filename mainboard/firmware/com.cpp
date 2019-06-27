@@ -473,7 +473,7 @@ void com_init()
     com_master_pos = 0;
     com_last_init = millis();
 
-    mux_init();
+//    mux_init();  MUX INIT IS YET DONE !
 }
 
 TERMINAL_COMMAND(ci, "CI")
