@@ -158,15 +158,17 @@ endif
 # Conditionally upload to whatever the last build was
 install: INSTALL_TARGET = $(shell cat $(BUILD_PATH)/build-type 2>/dev/null)
 install: $(BUILD_PATH)/$(BOARD).bin
-	@echo ""
-	@echo "VERY IMPORTANT, TO AVOID TO BURN THE KICKER BOARD :  "
-	@echo ""
-	@echo "be carefull ! this version is for a "$(SSL_VERSION)" version of the main board. if not, change the SSL_VERSION variable of that makefile."
-	@echo ""
-	@echo ""
-	@echo "Install target:" $(INSTALL_TARGET)
-	@echo "SSL Version:" $(SSL_VERSION)
-	$(shell bash -c 'read -s -p "ARE YOU SURE?"')
+	$(warning "")
+	$(warning "VERY IMPORTANT, TO AVOID TO BURN THE KICKER BOARD :  ")
+	$(warning "")
+	$(warning "be carefull ! this version is for a "$(SSL_VERSION)" version of the main board.")
+	$(warning "if not, change the SSL_VERSION variable of that makefile.")
+	$(warning "")
+	$(warning "")
+	$(warning "Install target:" $(INSTALL_TARGET))
+	$(warning "SSL Version:" $(SSL_VERSION))
+	$(shell bash -c 'read -s -p "                    /!\\ /!\\ /!\\ ARE YOU SURE? /!\\ /!\\ /!\\ "')
+	$(warning "")
 	$(UPLOAD_$(INSTALL_TARGET))
 
 release: $(BUILD_PATH)/$(BOARD).bin

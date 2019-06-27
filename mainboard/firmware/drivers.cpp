@@ -162,6 +162,16 @@ TERMINAL_COMMAND(set, "Set speed for one driver")
             drivers_set_safe(atoi(argv[0]), true, atof(argv[1]));
             drivers_tick();
             buzzer_tick();
+
+//GROS DEBUG
+            digitalWrite(IR_EMIT, HIGH);
+            int value = analogRead(IR_RECEIVE);
+            digitalWrite(IR_EMIT, LOW);
+            terminal_io()->println(value);
+            delay(5);
+            /////////
+
+
             watchdog_feed();
             delay(5);
         }

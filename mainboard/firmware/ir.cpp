@@ -35,16 +35,17 @@ void ir_tick()
     if (millis() - lastSample > 1) {
         lastSample = millis();
         digitalWrite(IR_EMIT, HIGH);
-        ir_value = analogRead(IR_RECEIVE);
-        ir_value = analogRead(IR_RECEIVE);
+        delay_us(30); //DEBUG IR!!
+          ir_value = analogRead(IR_RECEIVE);
+          // ir_value = analogRead(IR_RECEIVE);
 
-        if (ir_value < IR_THRESHOLD) {
+          if (ir_value < IR_THRESHOLD) {
             ir_detected = false;
             presentSince = millis();
-        } else {
+          } else {
             ir_detected = true;
-        }
-        digitalWrite(IR_EMIT, LOW);
+          }
+          digitalWrite(IR_EMIT, LOW);
     }
 }
 
