@@ -101,6 +101,11 @@ void loop()
     // Feeding watchdog
     watchdog_feed();
 
+    // IR
+    // Adrien : We moce ir_tick, because, for the first loop,
+    // com_tick() use ir_present() and ir_present() is not yet setted.
+    ir_tick();
+
     // Com
     com_tick();
 
@@ -118,9 +123,6 @@ void loop()
 
     // Kinematic
     kinematic_tick();
-
-    // IR
-    ir_tick();
 
     // Ticking the terminal
     terminal_tick();
