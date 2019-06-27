@@ -80,6 +80,6 @@
 // Infrared
 #define IR_EMIT         12
 #define IR_RECEIVE      10
-#define IR_THRESHOLD    3700
+#define IR_THRESHOLD    2200
 
 #endif

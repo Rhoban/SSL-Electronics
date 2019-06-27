@@ -39,7 +39,7 @@ void ir_tick()
           ir_value = analogRead(IR_RECEIVE);
           // ir_value = analogRead(IR_RECEIVE);
 
-          if (ir_value < IR_THRESHOLD) {
+          if (ir_value > IR_THRESHOLD) {
             ir_detected = false;
             presentSince = millis();
           } else {
