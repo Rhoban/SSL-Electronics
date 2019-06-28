@@ -642,7 +642,7 @@ void com_tick()
     static int last = micros();
 
 // Comment to debug on shell
-    //#define BINARY
+#define BINARY
 
        // Entering master infinite loop
       while (com_master) {
