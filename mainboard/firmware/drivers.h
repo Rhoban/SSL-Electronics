@@ -27,10 +27,11 @@ struct driver_packet_params {
     float kd;
 } __attribute__((packed));
 
-static_assert(
-    sizeof(driver_packet_set) > sizeof(driver_packet_ans),
-    "In SPI, packet answer have to be strictly smaller than the resquest packet"
-);
+// TODO : to remove
+// static_assert(
+//    sizeof(driver_packet_set) > sizeof(driver_packet_ans),
+//    "In SPI, packet answer have to be strictly smaller than the resquest packet"
+// );
 
 extern struct driver_packet_ans driver_answers[5];
 
