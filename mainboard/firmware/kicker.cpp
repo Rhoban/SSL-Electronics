@@ -164,6 +164,7 @@ void kicker_tick()
     if (clearing) {
         if ((millis() - lastClear) >= 10) {
             lastClear = millis();
+            kicker_kick(0, 150);
             kicker_kick(1, 150);
             clear++;
 

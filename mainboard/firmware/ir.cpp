@@ -35,7 +35,7 @@ void ir_tick()
     if (millis() - lastSample > 1) {
         lastSample = millis();
         digitalWrite(IR_EMIT, HIGH);
-        delay_us(30); //DEBUG IR!!
+        delay_us(30); // TO IMPROVE (do we reduce the time ?)
           ir_value = analogRead(IR_RECEIVE);
           // ir_value = analogRead(IR_RECEIVE);
 
