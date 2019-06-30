@@ -696,10 +696,16 @@ int tare_process(){
             motor_on = true,
             last_tare_time = millis();
 
+            #define MAXIMAL_VOLTAGE_TO_TARE__PWM_GREATER_50 REFERENCE_VOLTAGE/4
+            #define MAXIMAL_VOLTAGE_TO_TARE__PWM_LESSER_50 REFERENCE_VOLTAGE/2
             if( CONFIG_PWM > 50){
-              direct_quadrature_voltage_set(REFERENCE_VOLTAGE/2, 0);
+              direct_quadrature_voltage_set(
+                MAXIMAL_VOLTAGE_TO_TARE__PWM_GREATER_50, 0
+              );
             }else{
-              direct_quadrature_voltage_set(REFERENCE_VOLTAGE, 0);
+              direct_quadrature_voltage_set(
+                MAXIMAL_VOLTAGE_TO_TARE__PWM_LESSER_50, 0
+              );
             }
 
             //direct_quadrature_voltage_set(REF, 0);
