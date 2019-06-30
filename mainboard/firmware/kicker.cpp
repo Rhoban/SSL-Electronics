@@ -175,6 +175,10 @@ void kicker_tick()
     }
 }
 
+bool kicker_is_charging(){
+  return charging;
+}
+
 float kicker_cap_voltage()
 {
     return cap;
