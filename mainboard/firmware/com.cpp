@@ -111,18 +111,23 @@ bool com_available[3] = {false};
 
 int com_pins[3] = {
     COM_CS1, COM_CS2, COM_CS3
+//    COM_CS1, COM_CS1, COM_CS1
+//    COM_CS2, COM_CS2, COM_CS2
+//    COM_CS3, COM_CS3, COM_CS3
 };
 
 TERMINAL_PARAMETER_INT(irqed, "", 0);
 
 void com_send(int index, uint8_t *packet, size_t n)
 {
+    pause_boost();
     digitalWrite(com_pins[index], LOW);
     for (size_t k=0; k<n; k++) {
         uint8_t reply = com.send(packet[k]);
         packet[k] = reply;
     }
     digitalWrite(com_pins[index], HIGH);
+    resume_boost();
 }
 
 void com_set_reg(int index, uint8_t reg, uint8_t value)
@@ -244,6 +249,13 @@ static bool com_rxes_empty()
     return true;
 }
 
+/*
+ * Actually com_irq is used in com_poll() and not call in an irq !
+ * 
+ * BE CAREFULL ! If you activate the IRQ MODE, you have to manage concurrency
+ * with resume_boost() and pause_boost(). See kicker.cpp for more details. 
+ *
+ */
 bool com_irq(int index)
 {
     if ((micros()-com_txing[index]) < 300) {
@@ -304,11 +316,19 @@ void com_irq3()
 }
 */
 
+bool is_charging(){
+  float cap = kicker_cap_voltage();
+  #define KICKER_CHARGING_VALUE 370.0
+  return  kicker_is_charging() and (cap < KICKER_CHARGING_VALUE);
+}
 
 static void com_poll()
 {
     bool reinit = false;
     for (int k=0; k<3; k++) {
+        int safe_com_module = 1;
+        if(!com_master and is_charging() and k!=safe_com_module ) continue;
+        
         bool present = com_irq(k);
 
         if (!present) {
@@ -375,7 +395,10 @@ void com_init()
     // Initializing SPI
     // com.begin(SPI_4_5MHZ, MSBFIRST, 0);
     com.begin(SPI_2_25MHZ, MSBFIRST, 0);
-    // com.begin(SPI_1_125MHZ, MSBFIRST, 0);
+    //com.begin(SPI_1_125MHZ, MSBFIRST, 0);
+    //com.begin(SPI_562_500KHZ, MSBFIRST, 0);
+    //com.begin(SPI_281_250KHZ, MSBFIRST, 0);
+    //com.begin(SPI_140_625KHZ, MSBFIRST, 0);
 
     // Initializing CS pins
     for (int k=0; k<5; k++) {
@@ -633,6 +656,8 @@ void com_process_master()
                 my_actions &= ~(ACTION_KICK1 | ACTION_KICK2);
             }
         } else {
+            buzzer_play(MELODY_ALERT_FAST, false);
+            
             drivers_set(0, false, 0);
             drivers_set(1, false, 0);
             drivers_set(2, false, 0);

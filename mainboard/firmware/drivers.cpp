@@ -5,6 +5,7 @@
 #include "hardware.h"
 #include "drivers.h"
 #include "buzzer.h"
+#include "kicker.h"
 #include "../../brushless/firmware/errors.h"
 
 HardwareSPI drivers(DRIVERS_SPI);
@@ -19,12 +20,14 @@ static int drivers_pins[5] = {
 
 uint8_t drivers_status(int index)
 {
+    pause_boost();
     digitalWrite(drivers_pins[index], LOW);
     delay_us(35);
     drivers.send(0);
     uint8_t answer = drivers.send(0);
     delay_us(5);
     digitalWrite(drivers_pins[index], HIGH);
+    resume_boost();
 
     return answer;
 }
@@ -37,6 +40,7 @@ int drivers_ping(int index)
 
 static void drivers_send(int index, uint8_t instruction, uint8_t *data, size_t len, uint8_t *answer)
 {
+    pause_boost();
     digitalWrite(drivers_pins[index], LOW);
     delay_us(35);
 
@@ -51,6 +55,7 @@ static void drivers_send(int index, uint8_t instruction, uint8_t *data, size_t l
     }
     delay_us(5);
     digitalWrite(drivers_pins[index], HIGH);
+    resume_boost();
 }
 
 struct driver_packet_ans drivers_set(int index, bool enable, float target, int16_t pwm)

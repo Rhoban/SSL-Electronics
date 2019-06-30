@@ -14,13 +14,13 @@ static bool charging = false;
 
 
 #if BOARD == GREG
-  #define KICKER_ON HIGH
-  #define KICKER_OFF LOW
+  #define KICKER_OFF HIGH
+  #define KICKER_ON LOW
   #define BOOST_ON 500
   #define BOOST_OFF 0
 #else
-  #define KICKER_ON LOW
-  #define KICKER_OFF HIGH
+  #define KICKER_OFF LOW
+  #define KICKER_ON HIGH
   #define BOOST_ON LOW
   #define BOOST_OFF HIGH
 #endif
@@ -52,22 +52,36 @@ void init_boost(){
     #endif
     disable_boost();
 }
+static bool kicker_pause = true;
 
+void pause_boost(){
+  kicker_pause = true;
+  if (charging) {
+    disable_boost();
+  }
+}
+
+void resume_boost(){
+  kicker_pause = false;
+  if (charging) {
+    enable_boost();
+  }
+}
 
 
 TERMINAL_PARAMETER_FLOAT(cap, "Capacitor charge", 0.0);
 
+static bool relaunch_charging = true;
+
 static void _kicker_irq()
 {
-    digitalWrite(KICKER1_PIN, KICKER_ON);
-    digitalWrite(KICKER2_PIN, KICKER_ON);
+    digitalWrite(KICKER1_PIN, KICKER_OFF);
+    digitalWrite(KICKER2_PIN, KICKER_OFF);
 
     HardwareTimer timer(KICKER_TIMER);
     timer.pause();
 
-    if (charging) {
-        enable_boost();
-    }
+    relaunch_charging = true;
 }
 
 void kicker_init()
@@ -91,9 +105,9 @@ void kicker_init()
 
     // Kicker pin
     pinMode(KICKER1_PIN, OUTPUT);
-    digitalWrite(KICKER1_PIN, KICKER_ON);
+    digitalWrite(KICKER1_PIN, KICKER_OFF);
     pinMode(KICKER2_PIN, OUTPUT);
-    digitalWrite(KICKER2_PIN, KICKER_ON);
+    digitalWrite(KICKER2_PIN, KICKER_OFF);
 }
 
 void kicker_clear()
@@ -108,10 +122,8 @@ void kicker_boost_enable(bool enable)
 
     if (enable) {
         clearing = false;
-        enable_boost();
-    } else {
-        disable_boost();
     }
+    relaunch_charging = true;
 }
 
 void kicker_kick(int kicker, int power)
@@ -124,9 +136,9 @@ void kicker_kick(int kicker, int power)
     }
 
     if (kicker == 0) {
-        digitalWrite(KICKER1_PIN, KICKER_OFF);
+        digitalWrite(KICKER1_PIN, KICKER_ON);
     } else {
-        digitalWrite(KICKER2_PIN, KICKER_OFF);
+        digitalWrite(KICKER2_PIN, KICKER_ON);
     }
 
     HardwareTimer timer(KICKER_TIMER);
@@ -155,7 +167,8 @@ void kicker_tick()
         lastSample = millis();
         cap = voltage*0.99 + cap*0.01;
 
-        if (cap > 24 && !charging) {
+        #define DICHARGE_VOLTAGE 24
+        if (cap > DICHARGE_VOLTAGE && !charging) {
             kicker_clear();
         }
     }
@@ -172,6 +185,20 @@ void kicker_tick()
                 clearing = false;
             }
         }
+    }
+
+    if (relaunch_charging ){
+      relaunch_charging = false;
+      if (charging) {
+        if( kicker_pause ){
+          // Should not happend ! 
+          disable_boost();
+        }else{
+          enable_boost();
+        }
+      }else{
+        disable_boost();
+      }
     }
 }
 
