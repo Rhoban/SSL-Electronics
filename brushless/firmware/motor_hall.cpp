@@ -254,6 +254,11 @@ TERMINAL_COMMAND(bdw, "Bdw")
     terminal_io()->println(micros()-start);
 }
 
+TERMINAL_COMMAND(bdw, "angle")
+{
+    terminal_io()->println(angular_velocity);
+}
+
     
 static bool motor_irq_is_active = false;
 int current_phase;

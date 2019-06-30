@@ -9,6 +9,7 @@
 #include "security.h"
 #include "motor_hall.h"
 
+
 class fifo{
   public:
     fifo();
@@ -41,7 +42,7 @@ static float servo_speed = 0;
 static volatile int16_t servo_public_pwm = 0;
 
 #define VMAX 20
-#define VLIMIT 18
+#define VLIMIT 12
 #define NBR_COEF 4
 
 #define ASSERV_FPI 1
@@ -93,7 +94,9 @@ void fifo::init(){
   }
 }
 #if ASSERV_FPI == 1
-static double coef_err[NBR_COEF] = {0.0512, -0.0502, 0, 0};//t  t-1   t-2  t-3
+// static double coef_err[NBR_COEF] = {0.0512, -0.0502, 0, 0};//t  t-1   t-2  t-3
+static double coef_err[NBR_COEF] = {0.0256, -0.0251, 0, 0};//t  t-1   t-2  t-3
+
 static double coef_cmd[NBR_COEF] = {1, 0, 0, 0}; //t-1 t-2 t-3 t-4
 #endif
 
