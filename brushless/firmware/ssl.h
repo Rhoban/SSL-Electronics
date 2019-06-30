@@ -2,7 +2,8 @@
 #define _SSL_H
 
 //#define MOTEUR_BANC
-#define MOTEUR_CATIE
+//#define MOTEUR_CATIE
+#define MOTEUR_DRIBBLER
 //#define MOTEUR_90_12V
 //#define MOTEUR_ROBOT_4_0
 //#define CYCLOIDE_PHASE_OPPOSITION
@@ -144,6 +145,21 @@
 #define K_SPEED_I 3000 // 3000 // 150
 #define K_POS_P 20 // 1.5
 #define K_POS_I 0.1 // 0.1
+#endif
+
+#ifdef MOTEUR_DRIBBLER
+    #define OPEN_LOOP_FOC false //true
+    #define REVERSE_PHASE
+    #define USE_HALL
+    #define MOTOR_NAME "MOTEUR_DRIBBLER"
+    #define CONFIG_PWM 40
+    #define NB_POSITIVE_MAGNETS 8 // TODO Check the number of magnet !
+    #define MANUAL_SPEED true //false
+    #define KFEM 100 // 54 //115.0 // 44.1
+    #define K_SPEED_P 400 //300 // 310
+    #define K_SPEED_I 3000 // 3000 // 150
+    #define K_POS_P 20 // 1.5
+    #define K_POS_I 0.1 // 0.1
 #endif
 
 

@@ -23,6 +23,7 @@ void motor_hall_tick();
 bool motor_hall_is_on();
 
 void enable_motor_hall(bool);
+float hall_to_float_speed();
 
 #define PWM_HALL_SUPREMUM 3000
 #endif

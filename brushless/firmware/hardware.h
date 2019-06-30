@@ -24,11 +24,12 @@
 #define ENCODER_MAGNETIC            // Magnetic AS5048 14bit encoder
 // #define ENCODER_CPR      1024
 #define ENCODER_CPR      16384
-// #define ENCODER_NONE                // No encoder
+#define ENCODER_IS_PRESENT   // No encoder
+#define HALL_IS_IS_PRESENT   // No encoder
 #endif
 
 #if DRIVER_TYPE == TYPE_DRIBBLER
-#define ENCODER_NONE                // No encoder
+#define HALL_IS_IS_PRESENT   // No encoder
 #endif
 
 #define GREG 1

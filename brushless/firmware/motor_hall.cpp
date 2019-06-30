@@ -7,6 +7,8 @@
 #include "motor_hall.h"
 #include "security.h"
 
+#define PI_CST 3.14159265358979323846 
+
 #define PWM_SUPREMUM PWM_HALL_SUPREMUM
 #define PWM_MIN ((PWM_MIN_PERCENT*PWM_SUPREMUM)/100)
 #define PWM_MAX ((PWM_MAX_PERCENT*PWM_SUPREMUM)/100)
@@ -54,6 +56,24 @@ static int hall_phases[8] = {
     3,                      // 0b110
     -1,                     // 0b111 (impossible)
 };
+
+static float angular_velocity;
+        
+void update_velocity(
+  int new_phase, int previous_phase, int time, int hall_last_change
+){
+  int jump = new_phase - previous_phase;
+  if( jump > 3 ){
+    jump -= 6;
+  }
+  if( jump < -2 ){
+    jump += 6;
+  }
+  // Jump is equal to -2, -1, 0, 1, 2, 3  
+  float angle = jump * (2.0 * PI_CST/(6*NB_POSITIVE_MAGNETS));
+  float velocity = 1000*angle/(time-hall_last_change);
+  angular_velocity = 0.8*angular_velocity + 0.2 * velocity;
+}
 
 static void _bc_load()
 {
@@ -236,6 +256,8 @@ TERMINAL_COMMAND(bdw, "Bdw")
 
     
 static bool motor_irq_is_active = false;
+int current_phase;
+int past_phase;
 
 void motor_hall_irq(){
 
@@ -244,8 +266,9 @@ void motor_hall_irq(){
     }
     motor_irq_is_active = true;
 
+    current_phase = hall_value();
     if( ! enable_hall ) return;
-    int phase = hall_phases[hall_value()];
+    int phase = hall_phases[current_phase];
     if (phase >= 0 && phase < 6) {
         set_phases(
             motor_phases[phase][0]*motor_pwm,
@@ -262,6 +285,8 @@ void motor_hall_irq(){
     motor_irq_is_active = false;
 }
 
+int previous_different_phase = 0;
+
 void motor_hall_tick()
 {
     // TODO : RETIRER motor_ticking : INUTILE
@@ -274,12 +299,25 @@ void motor_hall_tick()
     motor_hall_irq();
 
     // Current phase
-    int phase = hall_phases[hall_value()];
+    int phase = hall_phases[current_phase];
 
     int time = millis();
     if (phase != hall_current_phase) {
+        update_velocity( phase, previous_different_phase, time, hall_last_change);
         hall_last_change_moving = time;
         hall_last_change = time;
+        previous_different_phase = phase;
+    }else{
+        #define VELOCITY_MIN 2 // turn/s
+        #define DIVISION_HALL 6
+        #define SCALE_TIME_UNIT 1000
+        static const float  min_time_hall_irq =  SCALE_TIME_UNIT/(
+          VELOCITY_MIN* DIVISION_HALL *NB_POSITIVE_MAGNETS
+        );
+        float dt = time - hall_last_change;
+        if( dt > min_time_hall_irq ){
+          angular_velocity = 0.0;
+        }
     }
     if (abs(motor_pwm) < 300) {
         hall_last_change_moving = time;
@@ -370,6 +408,10 @@ void switch_to_foc();
 
 void enable_motor_hall(bool value){
     enable_hall = value;
+}
+
+float hall_to_float_speed(){
+  return angular_velocity;
 }
 
 TERMINAL_COMMAND(enable_hall, "Enable hall"){

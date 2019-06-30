@@ -166,9 +166,15 @@ void servo_hall_tick()
     } else {
         if (servo_flag) {
             servo_flag = false;
-
-            servo_speed = encoder_to_float_speed();
-
+    
+            #ifdef ENCODER_IS_PRESENT
+              servo_speed = encoder_to_float_speed();
+              
+            #elif HALL_IS_PRESENT
+              servo_speed = hall_to_float_speed();
+            #else
+              return;
+            #endif
             if (servo_enable) {
                 float servo_filt_target = servo_target*2*3.1416;
                 float curr_error =  servo_filt_target - (servo_speed)*2*3.1416;

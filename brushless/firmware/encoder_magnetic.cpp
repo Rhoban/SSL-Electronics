@@ -14,7 +14,11 @@ HardwareSPI encoder(ENCODER_SPI);
 // Counter value
 static int32_t encoder_cnt = 0;
 static uint16_t encoder_magnitude = 0;
-static bool encoder_present = true;
+#ifdef ENCODER_IS_PRESENT
+  static bool encoder_present = true;
+#else
+  static bool encoder_present = false;
+#endif
 static bool encoder_is_not_initialized = true;
 
 inline bool parity_16_check( uint16_t x ){
