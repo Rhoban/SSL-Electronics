@@ -1,0 +1,2 @@
+loadbin build/maple_boot.bin, 0x08000000
+q
