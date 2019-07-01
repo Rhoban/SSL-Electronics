@@ -44,7 +44,7 @@
 #define BUTTON      9
 
 #define STARTUP_BLINKS 5
-#define BOOTLOADER_WAIT 6
+#define BOOTLOADER_WAIT 2
 
 #define USER_CODE_RAM     ((u32)0x20000C00)
 #define RAM_END           ((u32)0x20005000)
