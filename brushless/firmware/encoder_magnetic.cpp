@@ -9,6 +9,7 @@
 #include "servo.h"
 #include "security.h"
 
+// #ifdef CARTE_CATIE
 HardwareSPI encoder(ENCODER_SPI);
 
 // Counter value
@@ -59,12 +60,14 @@ static int speed_7 = 0*ENCODER_SPEED_SCALE;
 
 bool encoder_is_ok()
 {
-    return encoder_magnitude > 500;
+    // return encoder_magnitude > 500;
+    return true;
 }
 
 bool encoder_is_present()
 {
-    return encoder_present;
+    // return encoder_present;
+    return true;
 }
 
 
@@ -646,4 +649,28 @@ TERMINAL_COMMAND(ec_err, "Encoder error")
     terminal_io()->println("");
 }
 
+#else
+    void encoder_init(){
+
+}
+int encoder_position(){
+    return 0;
+}
+
+void encoder_tick(){
+
+}
+
+bool encoder_is_present(){
+    return true;
+}
+
+bool encoder_is_ok(){
+    return true;
+
+}
+
+// #endif
 #endif
+
+

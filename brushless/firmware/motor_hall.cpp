@@ -311,7 +311,7 @@ void motor_hall_tick()
 
     int time = millis();
     int time_ang = micros();
-    if (phase != hall_current_phase) {
+    if ((phase != hall_current_phase) || (time_ang - hall_last_change) > 200000){
         update_velocity( phase, previous_different_phase, time_ang, hall_last_change);
         hall_last_change_moving = time_ang;
         hall_last_change = time_ang;
@@ -333,14 +333,14 @@ void motor_hall_tick()
     }
     hall_current_phase = phase;
 
-    if ((time - hall_last_change) > 500 && hall_current_phase == -1) {
-        security_set_error(SECURITY_HALL_MISSING);
-    }
+    // if ((time - hall_last_change) > 500 && hall_current_phase == -1) {
+    //     security_set_error(SECURITY_HALL_MISSING);
+    // }
 
-    if ((time - hall_last_change_moving) > 500 && abs(motor_pwm) >= 500) {
-        // Stop everything
-        security_set_error(SECURITY_HALL_FREEZE);
-    }
+    // if ((time - hall_last_change_moving) > 500 && abs(motor_pwm) >= 500) {
+    //     // Stop everything
+    //     security_set_error(SECURITY_HALL_FREEZE);
+    // }
 
     if (safe_mode) {
         if (encoder_is_present() && encoder_is_ok()) {
@@ -357,7 +357,7 @@ void motor_hall_tick()
     }
 
     // if (!encoder_is_present()) {
-    //     security_set_error(ENCODER
+    //     security_set_error(ENCODER)
     // }
 
     motor_ticking = false;
