@@ -218,7 +218,7 @@ TERMINAL_COMMAND(dbg, "Dbg servo")
     terminal_io()->println(servo_acc);
 }
 
-void servo_hall_set(float target, bool enable)
+void servo_hall_set(bool enable, float target)
 {
     servo_enable = true;
     error.init();
@@ -234,7 +234,7 @@ void servo_hall_set(float target, bool enable)
     //     current_resample();
     //     motor_set(false, 0);
     //     security_set_error(SECURITY_NO_ERROR);
-    }
+    // }
 }
 
 void servo_hall_set_pid(float kp_, float ki_, float kd_)

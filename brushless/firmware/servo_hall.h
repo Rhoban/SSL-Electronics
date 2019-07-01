@@ -19,7 +19,7 @@ void servo_hall_set_flag();
  * Sets the servo value, enables or not the motor control, target speed is
  * in [turn/s]
  */
-void servo_hall_set(bool enable, float targetSpeed, int16_t pwm=0);
+void servo_hall_set(bool enable, float targetSpeed);
 
 /**
  * Sets the PID parameters
