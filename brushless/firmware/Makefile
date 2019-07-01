@@ -45,8 +45,8 @@ ifeq ($(SSL_VERSION),CATIE)
 # Try "make help" for more information on BOARD and MEMORY_TARGET;
 # these default to a Maple Flash build.
 BOARD ?= maple
-MEMORY_TARGET ?=jtag
-#MEMORY_TARGET ?= flash
+#MEMORY_TARGET ?=jtag
+MEMORY_TARGET ?= flash
 BOOTLOADER ?= maple
 #BOOTLOADER ?= robotis
 # SPI_FLAGS =  # No SPI flags
