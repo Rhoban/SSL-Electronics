@@ -36,16 +36,17 @@ void ir_tick()
         lastSample = millis();
         digitalWrite(IR_EMIT, HIGH);
         delay_us(30); // TO IMPROVE (do we reduce the time ?)
-          ir_value = analogRead(IR_RECEIVE);
-          // ir_value = analogRead(IR_RECEIVE);
+        ir_value = analogRead(IR_RECEIVE);
+        // ir_value = analogRead(IR_RECEIVE);
+        digitalWrite(IR_EMIT, LOW);
 
-          if (ir_value < IR_THRESHOLD) {
-            ir_detected = false;
-            presentSince = millis();
-          } else {
-            ir_detected = true;
-          }
-          digitalWrite(IR_EMIT, LOW);
+        if (ir_value > IR_THRESHOLD) {
+          ir_detected = false;
+          presentSince = millis(); //reset the presence timer
+        } else {
+          ir_detected = true;
+        }
+
     }
 }
 
@@ -61,13 +62,39 @@ void ir_diagnostic()
 TERMINAL_COMMAND(ir, "Test IR")
 {
     while (!SerialUSB.available()) {
+/*
+  digitalWrite(IR_EMIT, HIGH);
+  delay_us(30); // TO IMPROVE (do we reduce the time ?)
+  int value = analogRead(IR_RECEIVE);
+  digitalWrite(IR_EMIT, LOW);
+
+  terminal_io()->println(value);
+  delay(5);
+  watchdog_feed();
+*/
+      //same as ir tick
+      static int lastSample = 0;
+
+      if (millis() - lastSample > 1) {
+        lastSample = millis();
         digitalWrite(IR_EMIT, HIGH);
-        int value = analogRead(IR_RECEIVE);
+        delay_us(30); // TO IMPROVE (do we reduce the time ?)
+        ir_value = analogRead(IR_RECEIVE);
+        // ir_value = analogRead(IR_RECEIVE);
         digitalWrite(IR_EMIT, LOW);
 
-        terminal_io()->println(value);
-        delay(5);
-        watchdog_feed();
+        if (ir_value > IR_THRESHOLD) {
+          ir_detected = false;
+          presentSince = millis(); //reset the presence timer
+        } else {
+          ir_detected = true;
+        }
+
+        terminal_io()->println(ir_value);
+        terminal_io()->println(ir_present());
+      }
+      watchdog_feed();
+
     }
 }
 

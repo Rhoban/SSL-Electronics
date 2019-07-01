@@ -38,21 +38,31 @@ void setup()
     buzzer_play(MELODY_BEGIN);
     buzzer_wait_play();
 
-    delay_us(3600000);
+
+
+
+
+    // delay_us(3600000);
 
     // Initalizng com
     com_init();
-
+    delay_us(1000000);
+    buzzer_beep(523,50);
+    buzzer_wait_play();
     // Initalizing drivers
     drivers_init();
-
+    delay_us(1000000);
+    buzzer_beep(659,50);
+    buzzer_wait_play();
     // Kicker
     kicker_init();
-
+    delay_us(1000000);
+    buzzer_beep(784,50);
+    buzzer_wait_play();
 
     // IR
     ir_init();
-
+    delay_us(1000000);
     // Voltage measure
     voltage_init();
 

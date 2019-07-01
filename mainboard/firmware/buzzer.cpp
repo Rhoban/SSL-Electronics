@@ -12,21 +12,21 @@ struct buzzer_note {
     unsigned int freq;
     unsigned int duration;
 };
-static struct buzzer_note beethoven_boot[] = {
-    {440, 200},
-    {0, 10},
-    {440, 200},
-    {0, 10},
-    {440, 200},
-    {0, 10},
-    {392, 600},
-    {0, 10},
-//    {415, 300/2},
-//    {415, 300/2},
-//    {415, 300/2},
-//    {370, 160/2},
-    {0, 0}
-};
+// static struct buzzer_note beethoven_boot[] = {
+//     {440, 200},
+//     {0, 10},
+//     {440, 200},
+//     {0, 10},
+//     {440, 200},
+//     {0, 10},
+//     {392, 600},
+//     {0, 10},
+// //    {415, 300/2},
+// //    {415, 300/2},
+// //    {415, 300/2},
+// //    {370, 160/2},
+//     {0, 0}
+// };
 
 
 static struct buzzer_note chord_boot[] = {
@@ -38,14 +38,14 @@ static struct buzzer_note chord_boot[] = {
 };
 
 
-static struct buzzer_note melody_boot[] = {
-    {523, 200/2},
-    {659, 350/2},
-    {523, 200/2},
-    {698, 300/2},
-    {659, 160/2},
-    {0, 0}
-};
+// static struct buzzer_note melody_boot[] = {
+//     {523, 200/2},
+//     {659, 350/2},
+//     {523, 200/2},
+//     {698, 300/2},
+//     {659, 160/2},
+//     {0, 0}
+// };
 
 static struct buzzer_note melody_alert[] = {
     {2000, 200},
