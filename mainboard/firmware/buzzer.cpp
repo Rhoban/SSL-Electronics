@@ -29,6 +29,13 @@ static struct buzzer_note beethoven_boot[] = {
 };
 
 
+static struct buzzer_note chord_boot[] = {
+  {523, 50},
+  {659, 50},
+  {784, 50},
+  {1047, 200},
+  {0, 0}
+};
 
 
 static struct buzzer_note melody_boot[] = {
@@ -132,7 +139,9 @@ void buzzer_play(unsigned int melody_num, bool repeat)
     struct buzzer_note *to_play = NULL;
 
     if (melody_num == MELODY_BOOT) {
-        to_play = &melody_boot[0];
+      // to_play = &melody_boot[0];
+      to_play = &chord_boot[0];
+
     } else if (melody_num == MELODY_ALERT) {
         to_play = &melody_alert[0];
     } else if (melody_num == MELODY_ALERT_FAST) {
@@ -140,7 +149,7 @@ void buzzer_play(unsigned int melody_num, bool repeat)
     } else if (melody_num == MELODY_WARNING) {
         to_play = &melody_warning[0];
     } else if (melody_num == MELODY_BEETHOVEN) {
-        to_play = &beethoven_boot[0];
+      to_play = &chord_boot[0];
     } else if (melody_num == MELODY_BEGIN) {
         to_play = &melody_begin[0];
     } else if (melody_num == MELODY_END) {

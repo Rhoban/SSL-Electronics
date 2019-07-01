@@ -60,7 +60,7 @@
 #define CAP_R1          200000.0
 #define CAP_R2          2000.0
 #define CHARGE_CUR_ADDR 6
-#define KICKER_CHARGING_VALUE 160.0
+#define KICKER_CHARGING_VALUE 150.0
 
 // Hall sensor
 #define HALL1_ADDR      0

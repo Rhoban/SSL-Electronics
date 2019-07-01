@@ -33,6 +33,10 @@ void setup()
 
     // Multiplexer
     mux_init();
+    // Buzzer
+    buzzer_init();
+    buzzer_play(MELODY_BEGIN);
+    buzzer_wait_play();
 
     delay_us(3600000);
 
@@ -45,8 +49,6 @@ void setup()
     // Kicker
     kicker_init();
 
-    // Buzzer
-    buzzer_init();
 
     // IR
     ir_init();
@@ -55,10 +57,11 @@ void setup()
     voltage_init();
 
     if (com_is_all_ok() ) { // && drivers_is_all_ok()) {
-        //buzzer_play(MELODY_BEETHOVEN);
-        buzzer_play(MELODY_BOOT);
+      // buzzer_play(MELODY_BEETHOVEN);
+      buzzer_play(MELODY_BOOT);
+
     } else {
-        buzzer_play(MELODY_WARNING);
+      buzzer_play(MELODY_WARNING);
     }
 
     terminal_init(&SerialUSB);
@@ -68,7 +71,7 @@ void setup()
 
     // Reiniting com
     com_init();
-    
+
     // Starting the watchdog
     watchdog_start(WATCHDOG_58MS);
 }
