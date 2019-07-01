@@ -151,6 +151,8 @@
     #define OPEN_LOOP_FOC false //true
     #define REVERSE_PHASE
     #define USE_HALL
+    #define ENCODER_IS_PRESENT   // No encoder
+    #define HALL_IS_PRESENT   // No encoder
     #define MOTOR_NAME "MOTEUR_DRIBBLER"
     #define CONFIG_PWM 40
     #define NB_POSITIVE_MAGNETS 8 // TODO Check the number of magnet !

@@ -28,6 +28,7 @@ void setup()
     #endif
 
     // Initalizing encoder
+
     encoder_init();
 
     // Initalizing motor

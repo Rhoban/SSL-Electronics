@@ -49,7 +49,7 @@ void display_warning(){
 void servo_tick()
 {
     if (security_get_error() != SECURITY_NO_ERROR) {
-        motor_set(false, 0);
+        motor_set(false, 0);    
     } else {
         // display_warning();
         #if defined(USE_HYBRID)

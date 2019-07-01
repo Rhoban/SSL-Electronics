@@ -63,16 +63,16 @@ void update_velocity(
   int new_phase, int previous_phase, int time, int hall_last_change
 ){
   int jump = new_phase - previous_phase;
-  if( jump > 3 ){
+  if( jump >= 3 ){
     jump -= 6;
   }
-  if( jump < -2 ){
+  if( jump <= -3 ){
     jump += 6;
   }
   // Jump is equal to -2, -1, 0, 1, 2, 3  
-  float angle = jump * (2.0 * PI_CST/(6*NB_POSITIVE_MAGNETS));
-  float velocity = 1000*angle/(time-hall_last_change);
-  angular_velocity = 0.8*angular_velocity + 0.2 * velocity;
+  float angle = jump * (2.0 * PI_CST/(NB_POSITIVE_MAGNETS));
+  float velocity = 1000000.0*angle/(time-hall_last_change);
+  angular_velocity = 0.9*angular_velocity + 0.1 * velocity;
 }
 
 static void _bc_load()
@@ -254,8 +254,11 @@ TERMINAL_COMMAND(bdw, "Bdw")
     terminal_io()->println(micros()-start);
 }
 
-TERMINAL_COMMAND(bdw, "angle")
+TERMINAL_COMMAND(ang, "angle")
 {
+    // terminal_io()->println("Jump :");
+    // terminal_io()->println(jump);
+    terminal_io()->println("ang velo :");
     terminal_io()->println(angular_velocity);
 }
 
@@ -307,10 +310,11 @@ void motor_hall_tick()
     int phase = hall_phases[current_phase];
 
     int time = millis();
+    int time_ang = micros();
     if (phase != hall_current_phase) {
-        update_velocity( phase, previous_different_phase, time, hall_last_change);
-        hall_last_change_moving = time;
-        hall_last_change = time;
+        update_velocity( phase, previous_different_phase, time_ang, hall_last_change);
+        hall_last_change_moving = time_ang;
+        hall_last_change = time_ang;
         previous_different_phase = phase;
     }else{
         #define VELOCITY_MIN 2 // turn/s

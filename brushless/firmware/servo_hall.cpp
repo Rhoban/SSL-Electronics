@@ -8,6 +8,7 @@
 #include "encoder.h"
 #include "security.h"
 #include "motor_hall.h"
+#include "ssl.h"
 
 
 class fifo{
@@ -170,17 +171,17 @@ void servo_hall_tick()
         if (servo_flag) {
             servo_flag = false;
     
-            #ifdef ENCODER_IS_PRESENT
-              servo_speed = encoder_to_float_speed();
+            #ifdef HALL_IS_PRESENT
+              servo_speed = hall_to_float_speed(); //in Rad/s
               
-            #elif HALL_IS_PRESENT
-              servo_speed = hall_to_float_speed();
+            #elif defined(ENCODER_IS_PRESENT)
+              servo_speed = encoder_to_float_speed();
             #else
               return;
             #endif
             if (servo_enable) {
-                float servo_filt_target = servo_target*2*3.1416;
-                float curr_error =  servo_filt_target - (servo_speed)*2*3.1416;
+                float servo_filt_target = servo_target*2*3.1416; //in rpm converted
+                float curr_error =  servo_filt_target - (servo_speed);
 
                 #if BO == 1
                 curr_error = servo_target;
@@ -197,9 +198,9 @@ void servo_hall_tick()
 
                 new_cmd_V = (new_cmd_V >= VLIMIT)? VLIMIT: new_cmd_V;
                 new_cmd_V = (new_cmd_V <= -VLIMIT)? -VLIMIT : new_cmd_V;
-                new_cmd = new_cmd_V*PWM_HALL_SUPREMUM/VMAX;
+                new_cmd = -new_cmd_V*PWM_HALL_SUPREMUM/VMAX;
                 cmd.top(new_cmd_V);
-
+                terminal_io()->println(curr_error);
                 motor_set(true, new_cmd);
                 servo_public_pwm = new_cmd;
           }
