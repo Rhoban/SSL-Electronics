@@ -25,7 +25,7 @@ static bool charging = false;
   #define BOOST_OFF HIGH
 #endif
 
-#define KICKER_CHARGING_VALUE 370.0
+
 
 bool is_charging(){
   float cap = kicker_cap_voltage();
@@ -167,16 +167,16 @@ void kicker_tick()
 
     // Sampling capacitor voltage
     if (millis() - lastSample > 5) {
-        float voltage = 3.3*mux_sample(CAP_ADDR)/4096;
-        voltage = voltage*(CAP_R1+CAP_R2)/CAP_R2;
+      float voltage = 3.0*mux_sample(CAP_ADDR)/4096;
+      voltage = voltage*(CAP_R1+CAP_R2)/CAP_R2;
 
-        lastSample = millis();
-        cap = voltage*0.99 + cap*0.01;
+      lastSample = millis();
+      cap = voltage*0.99 + cap*0.01;
 
-        #define DICHARGE_VOLTAGE 24
-        if (cap > DICHARGE_VOLTAGE && !charging) {
-            kicker_clear();
-        }
+#define DICHARGE_VOLTAGE 24
+      if (cap > DICHARGE_VOLTAGE && !charging) {
+        kicker_clear();
+      }
     }
 
     // Triggering kicks for clearing

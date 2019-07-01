@@ -57,9 +57,10 @@
 #define BOOSTER_PIN     27
 #define BOOSTER_TIMER   1
 #define CAP_ADDR        4
-#define CAP_R1          2000000.0
-#define CAP_R2          10000.0
+#define CAP_R1          200000.0
+#define CAP_R2          2000.0
 #define CHARGE_CUR_ADDR 6
+#define KICKER_CHARGING_VALUE 160.0
 
 // Hall sensor
 #define HALL1_ADDR      0
