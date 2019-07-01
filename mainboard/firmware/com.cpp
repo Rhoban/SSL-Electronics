@@ -30,7 +30,8 @@ static struct packet_robot com_statuses[MAX_ROBOTS];
 static bool com_has_status[MAX_ROBOTS] = {false};
 
 // Parmeters to send to robot
-static struct packet_params com_master_params;
+// static struct packet_params com_master_params; //NOT USED
+
 volatile static bool com_has_params[MAX_ROBOTS] = {false};
 
 // Timestamp of reception for each packets
@@ -110,19 +111,25 @@ uint8_t com_data[3][PAYLOAD_SIZE];
 bool com_available[3] = {false};
 
 int com_pins[3] = {
-    COM_CS1, COM_CS2, COM_CS3
+  // COM_CS1, COM_CS2, COM_CS3
+  COM_CS2, COM_CS3, COM_CS1
+//    COM_CS1, COM_CS1, COM_CS1
+//    COM_CS2, COM_CS2, COM_CS2
+//    COM_CS3, COM_CS3, COM_CS3
 };
 
 TERMINAL_PARAMETER_INT(irqed, "", 0);
 
 void com_send(int index, uint8_t *packet, size_t n)
 {
+    pause_boost();
     digitalWrite(com_pins[index], LOW);
     for (size_t k=0; k<n; k++) {
         uint8_t reply = com.send(packet[k]);
         packet[k] = reply;
     }
     digitalWrite(com_pins[index], HIGH);
+    resume_boost();
 }
 
 void com_set_reg(int index, uint8_t reg, uint8_t value)
@@ -211,8 +218,8 @@ static void com_tx(int index, uint8_t *payload, size_t n)
 
     uint8_t packet[n+1];
     packet[0] = OP_TX;
-    for (int k=0; k<n; k++) {
-        packet[k+1] = payload[k];
+    for (uint8_t k=0; k<n; k++) {
+      packet[k+1] = payload[k];
     }
 
     com_send(index, packet, n+1);
@@ -226,24 +233,35 @@ static void com_rx(int index, uint8_t *payload, size_t n)
 
     com_send(index, packet, n+1);
 
-    for (int k=1; k<n+1; k++) {
-        payload[k-1] = packet[k];
+    for (uint8_t k=1; k<n+1; k++) {
+      payload[k-1] = packet[k];
     }
 }
 
-static bool com_rxes_empty()
-{
-    for (int index=0; index<3; index++) {
-        int fifo = com_read_reg(index, REG_FIFO_STATUS);
+//NOT USED??
+/*
+  static bool com_rxes_empty()
+  {
+  for (uint8_t index=0; index<3; index++) {
+  int fifo = com_read_reg(index, REG_FIFO_STATUS);
 
-        if ((fifo & RX_EMPTY) == 0) {
-            return false;
-        }
-    }
+  if ((fifo & RX_EMPTY) == 0) {
+  return false;
+  }
+  }
 
-    return true;
-}
+  return true;
+  }
+*/
 
+
+/*
+  * Actually com_irq is used in com_poll() and not call in an irq !
+  *
+  * BE CAREFULL ! If you activate the IRQ MODE, you have to manage concurrency
+  * with resume_boost() and pause_boost(). See kicker.cpp for more details.
+  *
+  */
 bool com_irq(int index)
 {
     if ((micros()-com_txing[index]) < 300) {
@@ -309,17 +327,21 @@ static void com_poll()
 {
     bool reinit = false;
     for (int k=0; k<3; k++) {
-        bool present = com_irq(k);
 
-        if (!present) {
-            com_module_last_missing[k] = millis();
-            com_module_present[k] = false;
-        } else {
-            if (!com_module_present[k] && (millis() - com_module_last_missing[k] > 150)) {
-                reinit = true;
-                com_module_present[k] = true;
-            }
+      // int safe_com_module = 1; //IT SHOULD BE CS2
+      // if(!com_master and is_charging() and k!=safe_com_module ) continue;
+
+      bool present = com_irq(k);
+
+      if (!present) {
+        com_module_last_missing[k] = millis();
+        com_module_present[k] = false;
+      } else {
+        if (!com_module_present[k] && (millis() - com_module_last_missing[k] > 150)) {
+          reinit = true;
+          com_module_present[k] = true;
         }
+      }
     }
 
     if (reinit) {
@@ -375,13 +397,18 @@ void com_init()
     // Initializing SPI
     // com.begin(SPI_4_5MHZ, MSBFIRST, 0);
     com.begin(SPI_2_25MHZ, MSBFIRST, 0);
-    // com.begin(SPI_1_125MHZ, MSBFIRST, 0);
+    //com.begin(SPI_1_125MHZ, MSBFIRST, 0);
+    //com.begin(SPI_562_500KHZ, MSBFIRST, 0);
+    //com.begin(SPI_281_250KHZ, MSBFIRST, 0);
+    //com.begin(SPI_140_625KHZ, MSBFIRST, 0);
 
     // Initializing CS pins
-    for (int k=0; k<5; k++) {
-        pinMode(com_pins[k], OUTPUT);
-        digitalWrite(com_pins[k], HIGH);
+
+    for (uint8_t k=0; k<3; k++) {
+      pinMode(com_pins[k], OUTPUT);
+      digitalWrite(com_pins[k], HIGH);
     }
+
 
     // Initializing COM_CE
     pinMode(COM_CE1, OUTPUT);
@@ -557,7 +584,10 @@ void com_send_status_to_master()
     }
 
     packet.cap_volt = kicker_cap_voltage();
-    packet.voltage = voltage_value()*8.0;
+    packet.voltage  = voltage_value()*8.0;
+    packet.xpos     = getOdometry().xpos*1000;
+    packet.ypos     = getOdometry().ypos*1000;
+    packet.ang      = getOdometry().ang*1000;
 
     for (size_t k=0; k<3; k++) {
         com_ce_disable(k);
@@ -581,14 +611,24 @@ void com_process_master()
         master_packet = (struct packet_master*)(com_master_frame + 1);
 
         // Driving wheels
-        if (master_packet->actions & ACTION_ON) {
+        if ((master_packet->actions & ACTION_ON)) {
+            if(master_packet->actions & ACTION_TARE_ODOM) {
+                odometry_tare((master_packet->x_speed)/1000.0, (master_packet->y_speed)/1000.0, (master_packet->t_speed)/10000.0);
+                //odometry_tare(0.0, 0.0, 0.0);
+
+            }else{
             kinematic_set(master_packet->x_speed/1000.0, master_packet->y_speed/1000.0,
                  master_packet->t_speed/1000.0);
+            }
             actions = master_packet->actions;
 
+            // TODO !
+            // If we want to drible only when IR is activated, we need
+            // to uncomment
+            // the following line
             //if ((master_packet->actions & ACTION_DRIBBLE) && (ir_present()) ) {
             if ((master_packet->actions & ACTION_DRIBBLE)) {
-                drivers_set_safe(4, true, 0.5);
+                drivers_set_safe(4, true, 0.3);
             } else {
                 drivers_set(4, false, 0);
             }
@@ -620,6 +660,8 @@ void com_process_master()
                 my_actions &= ~(ACTION_KICK1 | ACTION_KICK2);
             }
         } else {
+            buzzer_play(MELODY_ALERT_FAST, false);
+
             drivers_set(0, false, 0);
             drivers_set(1, false, 0);
             drivers_set(2, false, 0);

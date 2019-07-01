@@ -1,0 +1,15 @@
+#!/bin/bash
+
+line=`lsusb|grep "1eaf:0003"`
+
+if [ "$line" == "" ]; then
+    echo "Can't find leaf device!"
+    exit
+fi
+
+bus=`echo $line|cut -d' ' -f2|head -c 3`
+dev=`echo $line|cut -d' ' -f4|head -c 3`
+file="/dev/bus/usb/$bus/$dev"
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+$DIR/usbreset $file

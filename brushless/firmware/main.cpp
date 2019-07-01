@@ -12,7 +12,7 @@
 #include "servo.h"
 #include "hardware.h"
 
-//#define TEST_LED
+#define TEST_LED
 
 /**
  * Setup function
@@ -50,7 +50,6 @@ void setup()
 
 
 static int last_led = 0;
-static int cnt_led = 0;
 
 /**
  * Loop function
@@ -83,7 +82,8 @@ void loop()
     com_tick();
 #ifdef TEST_LED
     int val = millis();
-    if( val - last_led > 500 ){
+    static int cnt_led = 0;
+    if( val - last_led > 100 and cnt_led < 4 ){
         cnt_led ++;
         //terminal_io()->println( "ok" );
         if( cnt_led % 2 ){
