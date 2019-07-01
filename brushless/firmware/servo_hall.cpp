@@ -30,7 +30,7 @@ class fifo{
 
 
 // Interrupt flag
-static bool servo_flag = false;
+static bool servo_flag = true;
 float curr;
 // Enable and target
 static bool servo_enable = false;
@@ -200,7 +200,6 @@ void servo_hall_tick()
                 new_cmd_V = (new_cmd_V <= -VLIMIT)? -VLIMIT : new_cmd_V;
                 new_cmd = -new_cmd_V*PWM_HALL_SUPREMUM/VMAX;
                 cmd.top(new_cmd_V);
-                terminal_io()->println(curr_error);
                 motor_set(true, new_cmd);
                 servo_public_pwm = new_cmd;
           }

@@ -50,11 +50,8 @@ void com_frame_received()
             }else{
                 servo_set(false, 0);
             }
-#ifdef PWM_ONLY_MODE
-            motor_set(packet->enable, PWM_DRIBBLER);
-#else
-            servo_set_speed_consign( packet->targetSpeed );
-#endif
+            servo_set(packet->enable, packet->targetSpeed, packet->pwm);
+
         }
         break;
         case DRIVER_PACKET_PARAMS: {
@@ -125,6 +122,7 @@ static void slave_irq()
         }
         answer.speed = servo_get_speed();
         answer.pwm = save_pwm;//motor_get_pwm();
+        answer.enc_cnt = 0;
         answer_ptr = (uint8_t*)&answer;
         answer_pos = 0;
 
