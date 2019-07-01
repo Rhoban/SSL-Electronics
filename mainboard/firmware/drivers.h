@@ -2,6 +2,8 @@
 #define _DRIVERS_H
 
 #include <stdint.h>
+#include <assert.h>
+#define cstatic_assert _Static_assert
 
 #define DRIVER_PACKET_SET   0x00
 struct driver_packet_set {
@@ -27,11 +29,7 @@ struct driver_packet_params {
     float kd;
 } __attribute__((packed));
 
-// TODO : to remove
-// static_assert(
-//    sizeof(driver_packet_set) > sizeof(driver_packet_ans),
-//    "In SPI, packet answer have to be strictly smaller than the resquest packet"
-// );
+
 
 extern struct driver_packet_ans driver_answers[5];
 

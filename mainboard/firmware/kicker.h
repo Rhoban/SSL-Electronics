@@ -32,4 +32,5 @@ bool kicker_is_charging();
 void pause_boost();
 void resume_boost();
 
+bool is_charging();
 #endif

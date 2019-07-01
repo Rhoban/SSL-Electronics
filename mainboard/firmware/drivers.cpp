@@ -46,12 +46,12 @@ static void drivers_send(int index, uint8_t instruction, uint8_t *data, size_t l
 
     drivers.send(instruction);
 
-    for (int k=0; k < len; k++) {
-        if (answer == NULL) {
-            drivers.send(data[k]);
-        } else {
-            *(answer++) = drivers.send(data[k]);
-        }
+    for (uint8_t k=0; k < len; k++) {
+      if (answer == NULL) {
+        drivers.send(data[k]);
+      } else {
+        *(answer++) = drivers.send(data[k]);
+      }
     }
     delay_us(5);
     digitalWrite(drivers_pins[index], HIGH);
@@ -130,18 +130,23 @@ void drivers_tick()
 
 void drivers_init()
 {
-    // Initializing SPI
-    drivers.begin(SPI_281_250KHZ, MSBFIRST, 0);
+  cstatic_assert(
+    sizeof(driver_packet_set) > sizeof(driver_packet_ans),
+    "In SPI, packet answer have to be strictly smaller than the resquest packet"
+    );
 
-    // Initializing CS pins
-    for (int k=0; k<5; k++) {
-        pinMode(drivers_pins[k], OUTPUT);
-        digitalWrite(drivers_pins[k], HIGH);
-    }
+  // Initializing SPI
+  drivers.begin(SPI_281_250KHZ, MSBFIRST, 0);
 
-    for (int k=0; k<5; k++) {
-        drivers_present[k] = drivers_ping(k);
-    }
+  // Initializing CS pins
+  for (int k=0; k<5; k++) {
+    pinMode(drivers_pins[k], OUTPUT);
+    digitalWrite(drivers_pins[k], HIGH);
+  }
+
+  for (int k=0; k<5; k++) {
+    drivers_present[k] = drivers_ping(k);
+  }
 }
 
 TERMINAL_COMMAND(scan, "Scan for drivers")

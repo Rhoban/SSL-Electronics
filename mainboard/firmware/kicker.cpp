@@ -6,8 +6,8 @@
 #include "kicker.h"
 #include "mux.h"
 
-static bool kicking = false;
-static int kick_end = 0;
+// static bool kicking = false;
+// static int kick_end = 0;
 static bool clearing = false;
 static int clear = 0;
 static bool charging = false;
@@ -25,6 +25,12 @@ static bool charging = false;
   #define BOOST_OFF HIGH
 #endif
 
+#define KICKER_CHARGING_VALUE 370.0
+
+bool is_charging(){
+  float cap = kicker_cap_voltage();
+  return  kicker_is_charging() and (cap < KICKER_CHARGING_VALUE);
+}
 void enable_boost(){
   #if BOARD == GREG
     pwmWrite(BOOSTER_PIN, BOOST_ON);
@@ -191,7 +197,7 @@ void kicker_tick()
       relaunch_charging = false;
       if (charging) {
         if( kicker_pause ){
-          // Should not happend ! 
+          // Should not happend !
           disable_boost();
         }else{
           enable_boost();
@@ -199,6 +205,11 @@ void kicker_tick()
       }else{
         disable_boost();
       }
+    }
+
+    //If we are charging, we allow for some more time without the com interlacing (faster charge)
+    if(is_charging()){
+      delay_us(1000);
     }
 }
 
