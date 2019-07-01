@@ -14,6 +14,7 @@
 #define MELODY_END        5
 // A custom melody used by beep
 #define MELODY_CUSTOM     6
+#define MELODY_BEETHOVEN     7
 
 /**
  * Initializes the buzzer
@@ -53,5 +54,7 @@ void buzzer_wait_play();
  * @param duration The duration (ms)
  */
 void buzzer_beep(unsigned int freq, unsigned int duration);
+
+void buzzer_play_note(int note);
 
 #endif

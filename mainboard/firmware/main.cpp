@@ -34,6 +34,8 @@ void setup()
     // Multiplexer
     mux_init();
 
+    delay_us(3600000);
+
     // Initalizng com
     com_init();
 
@@ -53,6 +55,7 @@ void setup()
     voltage_init();
 
     if (com_is_all_ok() ) { // && drivers_is_all_ok()) {
+        //buzzer_play(MELODY_BEETHOVEN);
         buzzer_play(MELODY_BOOT);
     } else {
         buzzer_play(MELODY_WARNING);

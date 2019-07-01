@@ -12,6 +12,24 @@ struct buzzer_note {
     unsigned int freq;
     unsigned int duration;
 };
+static struct buzzer_note beethoven_boot[] = {
+    {440, 200},
+    {0, 10},
+    {440, 200},
+    {0, 10},
+    {440, 200},
+    {0, 10},
+    {392, 600},
+    {0, 10},
+//    {415, 300/2},
+//    {415, 300/2},
+//    {415, 300/2},
+//    {370, 160/2},
+    {0, 0}
+};
+
+
+
 
 static struct buzzer_note melody_boot[] = {
     {523, 200/2},
@@ -121,6 +139,8 @@ void buzzer_play(unsigned int melody_num, bool repeat)
         to_play = &melody_alert_fast[0];
     } else if (melody_num == MELODY_WARNING) {
         to_play = &melody_warning[0];
+    } else if (melody_num == MELODY_BEETHOVEN) {
+        to_play = &beethoven_boot[0];
     } else if (melody_num == MELODY_BEGIN) {
         to_play = &melody_begin[0];
     } else if (melody_num == MELODY_END) {
