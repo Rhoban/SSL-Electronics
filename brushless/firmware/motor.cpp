@@ -29,7 +29,7 @@ void motor_set(bool enable, int value)
     #if defined(USE_HYBRID)
         motor_hybrid_set(enable,value);
     #elif defined(USE_HALL)
-        motor_hall_set(enable,value);
+        // motor_hall_set(enable,value);
     #elif defined(USE_FOC)
         motor_foc_set(enable,value);
     #endif

@@ -68,7 +68,7 @@ void servo_set(bool enable, float targetSpeed, int16_t pwm){
     #if defined(USE_HYBRID)
     servo_hybrid_set(enable, targetSpeed, pwm);
     #elif defined(USE_HALL)
-    servo_hall_set(enable, targetSpeed, pwm);
+    servo_hall_set(enable, targetSpeed);
     #elif defined(USE_FOC)
     servo_foc_set(enable, targetSpeed, pwm);
     #else
@@ -80,6 +80,7 @@ void servo_set_speed_consign( float speed ){
     #if defined(USE_HYBRID)
     servo_hybrid_set_speed_consign(speed);
     #elif defined(USE_HALL)
+    servo_hall_set(true, speed);
     #elif defined(USE_FOC)
     servo_set_speed_consign_foc(speed);
     #else

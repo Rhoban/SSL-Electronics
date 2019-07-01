@@ -235,7 +235,7 @@ TERMINAL_COMMAND(hall, "Test the hall sensors")
 void motor_hall_set(bool enable, int value)
 {
     motor_on = enable;
-
+    
     if (value > 0) value += PWM_MIN;
     if (value < 0) value -= PWM_MIN;
 
