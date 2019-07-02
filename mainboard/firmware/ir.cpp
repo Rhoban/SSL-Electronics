@@ -20,12 +20,12 @@ void ir_init()
 int presentSince = 0;
 bool ir_present()
 {
-    return (millis() - presentSince) > 10;
+  return (millis() - presentSince) > 10;
 }
 
 bool ir_present_now()
 {
-    return ir_detected;
+  return ir_detected;
 }
 
 void ir_tick()

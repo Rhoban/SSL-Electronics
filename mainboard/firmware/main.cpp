@@ -29,7 +29,11 @@ void setup()
     digitalWrite(BOARD_LED_PIN, LOW);
 
     // Can be used to set the robot id
-    // infos_set(6, false);
+    infos_set(1, false);
+
+//To set in master
+    // infos_set(-1, false);
+
 
     // Multiplexer
     mux_init();

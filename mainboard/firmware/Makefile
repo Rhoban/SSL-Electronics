@@ -38,6 +38,8 @@ BOARD_INCLUDE_DIR := $(MAKEDIR)/board-includes
 ## linker options/flags.
 ##
 
+
+
 SSL_VERSION ?= CATIE
 # SSL_VERSION ?= GREG
 
@@ -48,7 +50,6 @@ endif
 ifeq ($(SSL_VERSION),GREG)
 EXTRA_FLAGS = -DGREG_BOARD
 endif
-
 
 # Try "make help" for more information on BOARD and MEMORY_TARGET;
 # these default to a Maple Flash build.
@@ -77,6 +78,10 @@ include $(MAKEDIR)/build-templates.mk
 # or
 #     #include "wirish.h"
 # It slows compilation noticeably; remove after 1 release.
+
+
+FIRMWARE_VERSION:="`git rev-parse HEAD`_`date '+%Y_%m_%d_%H_%M_%S'`_`whoami`"
+
 TARGET_FLAGS    += -I$(LIBMAPLE_PATH)/include/libmaple \
                    -I$(WIRISH_PATH)/include/wirish \
 		   -I$(LIB_RHOBAN_HOME) \
@@ -87,7 +92,7 @@ GLOBAL_CFLAGS   := -Os -gdwarf-2 -nostdlib \
 		   -Wl,--gc-sections $(TARGET_FLAGS) \
 		   -DRC=Serial2 \
 		   -DBOOTLOADER_$(BOOTLOADER) \
-		   -DMETABOT_VERSION="0.0" \
+		   -DFIRMWARE_VERSION=$(FIRMWARE_VERSION) \
 		   $(EXTRA_FLAGS)
 
 GLOBAL_CXXFLAGS := -fno-rtti -fno-exceptions -Wall $(TARGET_FLAGS)
@@ -158,6 +163,7 @@ endif
 # Conditionally upload to whatever the last build was
 install: INSTALL_TARGET = $(shell cat $(BUILD_PATH)/build-type 2>/dev/null)
 install: $(BUILD_PATH)/$(BOARD).bin
+ifeq ($(git status --untracked-files=no --porcelain),"") #NAZIFICATION
 	$(warning "")
 	$(warning "VERY IMPORTANT, TO AVOID TO BURN THE KICKER BOARD :  ")
 	$(warning "")
@@ -170,6 +176,25 @@ install: $(BUILD_PATH)/$(BOARD).bin
 	$(shell bash -c 'read -s -p "                    /!\\ /!\\ /!\\ ARE YOU SURE? /!\\ /!\\ /!\\ "')
 	$(warning "")
 	$(UPLOAD_$(INSTALL_TARGET))
+else
+	@echo ""
+	@echo "YOUR REPOSITORY IS NOT CLEAN!"
+	@echo "COMMIT YOUR CHANGE AND RECOMPILE TO UPLOAD"
+	@echo ""
+	# rm -rf build LibMaple LibRhoban LibRhock Rhock
+	$(warning "")
+	$(warning "VERY IMPORTANT, TO AVOID TO BURN THE KICKER BOARD :  ")
+	$(warning "")
+	$(warning "be carefull ! this version is for a "$(SSL_VERSION)" version of the main board.")
+	$(warning "if not, change the SSL_VERSION variable of that makefile.")
+	$(warning "")
+	$(warning "")
+	$(warning "Install target:" $(INSTALL_TARGET))
+	$(warning "SSL Version:" $(SSL_VERSION))
+	$(shell bash -c 'read -s -p "                    /!\\ /!\\ /!\\ ARE YOU SURE? /!\\ /!\\ /!\\ "')
+	$(warning "")
+	$(UPLOAD_$(INSTALL_TARGET))
+endif
 
 release: $(BUILD_PATH)/$(BOARD).bin
 	@echo "Copying to metabot.bin"

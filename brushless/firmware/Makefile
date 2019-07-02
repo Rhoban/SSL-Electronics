@@ -38,6 +38,8 @@ BOARD_INCLUDE_DIR := $(MAKEDIR)/board-includes
 ## linker options/flags.
 ##
 
+
+FIRMWARE_VERSION:="`git rev-parse HEAD`_`date '+%Y_%m_%d_%H_%M_%S'`_`whoami`"
 SSL_VERSION ?= CATIE
 # SSL_VERSION ?= GREG
 
@@ -62,6 +64,7 @@ MEMORY_TARGET ?= flash
 BOOTLOADER ?= robotis
 SPI_FLAGS = -DSPI1_REMAPPED
 EXTRA_FLAGS = -DGREG_BOARD
+VERSION_FLAG= -DFIRMWARE_ID=$(FIRMWARE_ID)
 endif
 
 BOOTLOADER_PORT ?= /dev/ttyACM0
@@ -98,6 +101,7 @@ GLOBAL_CFLAGS   := -Os -gdwarf-2 -nostdlib \
 		   -DMETABOT_VERSION="0.0" \
 		   -DUSB_DISC_INVERTED \
 		   $(SPI_FLAGS) \
+		   -DFIRMWARE_VERSION=$(FIRMWARE_VERSION) \
 		   $(EXTRA_FLAGS)
 
 GLOBAL_CXXFLAGS := -Os -std=c++11 -fno-rtti -fno-exceptions -Wall $(TARGET_FLAGS)
@@ -156,9 +160,7 @@ ifeq ($(BOOTLOADER),maple)
 UPLOAD_ram   := $(SUPPORT_PATH)/scripts/reset.py && \
                 sleep 1                  && \
                 $(DFU) -a0 -d $(BOARD_USB_VENDOR_ID):$(BOARD_USB_PRODUCT_ID) -D $(BUILD_PATH)/$(BOARD).bin -R
-UPLOAD_flash := $(SUPPORT_PATH)/scripts/reset.py && \
-                sleep 1                  && \
-                $(DFU) -a1 -d $(BOARD_USB_VENDOR_ID):$(BOARD_USB_PRODUCT_ID) -D $(BUILD_PATH)/$(BOARD).bin -R
+UPLOAD_flash := $(DFU) -a1 -d $(BOARD_USB_VENDOR_ID):$(BOARD_USB_PRODUCT_ID) -D $(BUILD_PATH)/$(BOARD).bin -R
 endif
 
 ifeq ($(BOOTLOADER),robotis)
@@ -168,8 +170,14 @@ endif
 # Conditionally upload to whatever the last build was
 install: INSTALL_TARGET = $(shell cat $(BUILD_PATH)/build-type 2>/dev/null)
 install: $(BUILD_PATH)/$(BOARD).bin
-	@echo "Install target:" $(INSTALL_TARGET)
+# ifeq ($(git status --untracked-files=no --porcelain),"") #NAZIFICATION
+	@echo "Install target:" bash get date short$(INSTALL_TARGET)
 	$(UPLOAD_$(INSTALL_TARGET))
+# else
+# 	@echo "YOUR REPOSITORY IS NOT CLEAN!"
+# 	@echo "COMMIT YOUR CHANGE AND RECOMPILE TO UPLOAD"
+# 	rm -rf build LibMaple LibRhoban LibRhock Rhock
+# endif
 
 release: $(BUILD_PATH)/$(BOARD).bin
 	@echo "Copying to metabot.bin"

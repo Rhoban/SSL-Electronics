@@ -28,6 +28,19 @@ static int frame_type = 0xff;
 static int last_receive = 0;
 static bool controlling = false;
 
+
+#define VALUE_TO_STRING(x) #x
+#define VALUE(x) VALUE_TO_STRING(x)
+#define VAR_NAME_VALUE(var) #var "="  VALUE(var)
+
+#pragma message(VAR_NAME_VALUE(FIRMWARE_VERSION))
+
+#ifdef FIRMWARE_VERSION
+static char firmware_version[]=VALUE(FIRMWARE_VERSION);
+#else
+static char firmware_version[]="TEST";
+#endif
+
 #define COM_READ_PACKET(type) \
     struct type *packet;      \
     packet = (struct type *)frame;
@@ -189,4 +202,9 @@ TERMINAL_COMMAND(map, "MAPPING COM")
 TERMINAL_COMMAND(ap, "")
 {
     terminal_io()->println(answer_pos);
+}
+
+TERMINAL_COMMAND(version, "")
+{
+  terminal_io()->println(firmware_version);
 }

@@ -60,6 +60,18 @@ static int com_txing[3] = {0};
 static bool com_module_present[3] = {true};
 static int com_module_last_missing[3] = {0};
 
+#define VALUE_TO_STRING(x) #x
+#define VALUE(x) VALUE_TO_STRING(x)
+#define VAR_NAME_VALUE(var) #var "="  VALUE(var)
+
+#pragma message(VAR_NAME_VALUE(FIRMWARE_VERSION))
+
+#ifdef FIRMWARE_VERSION
+static char firmware_version[]=VALUE(FIRMWARE_VERSION);
+#else
+static char firmware_version[]="TEST";
+#endif
+
 HardwareSPI com(COM_SPI);
 
 // Operations
@@ -909,4 +921,9 @@ TERMINAL_COMMAND(em, "Emergency")
     }
 
     kicker_boost_enable(false);
+}
+
+TERMINAL_COMMAND(version, "")
+{
+  terminal_io()->println(firmware_version);
 }
