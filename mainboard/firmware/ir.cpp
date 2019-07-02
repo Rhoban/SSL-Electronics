@@ -5,8 +5,9 @@
 #include "hardware.h"
 #include <watchdog.h>
 
-bool ir_detected = false;
+volatile bool ir_detected = false;
 volatile int ir_value = 0;
+volatile int presentSince = 0;
 
 void ir_init()
 {
@@ -17,10 +18,10 @@ void ir_init()
     ir_value = 0;
 }
 
-int presentSince = 0;
+
 bool ir_present()
 {
-  return (millis() - presentSince) > 10;
+  return (millis() - presentSince) > 20;
 }
 
 bool ir_present_now()
@@ -52,9 +53,9 @@ void ir_tick()
 
 void ir_diagnostic()
 {
-    if (ir_present()) {
+  if (ir_present()) {
         terminal_io()->println("* IR: ERROR OR SOMETHING PRESENT");
-    } else {
+  } else {
         terminal_io()->println("* IR: OK");
     }
 }
@@ -100,6 +101,13 @@ TERMINAL_COMMAND(ir, "Test IR")
 
 TERMINAL_COMMAND(irp, "Ir present?")
 {
-    terminal_io()->println(ir_present() ? 1 : 0);
-    terminal_io()->println(ir_present_now() ? 1 : 0);
+  terminal_io()->println(ir_present() ? 1 : 0);
+  terminal_io()->println(ir_present_now() ? 1 : 0);
+}
+
+TERMINAL_COMMAND(val, "Ir value")
+{
+  terminal_io()->println(ir_value);
+  terminal_io()->println(ir_present() ? 1 : 0);
+  terminal_io()->println(ir_present_now() ? 1 : 0);
 }
