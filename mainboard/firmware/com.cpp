@@ -628,7 +628,7 @@ void com_process_master()
             // the following line
             //if ((master_packet->actions & ACTION_DRIBBLE) && (ir_present()) ) {
             if ((master_packet->actions & ACTION_DRIBBLE)) {
-                drivers_set_safe(4, true, 0.3);
+              drivers_set_safe(4, true, 40);
             } else {
                 drivers_set(4, false, 0);
             }
