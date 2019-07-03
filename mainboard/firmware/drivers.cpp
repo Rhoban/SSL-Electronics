@@ -5,6 +5,7 @@
 #include "hardware.h"
 #include "drivers.h"
 #include "buzzer.h"
+#include "kicker.h"
 #include "../../brushless/firmware/errors.h"
 
 HardwareSPI drivers(DRIVERS_SPI);
@@ -19,12 +20,14 @@ static int drivers_pins[5] = {
 
 uint8_t drivers_status(int index)
 {
+    pause_boost();
     digitalWrite(drivers_pins[index], LOW);
     delay_us(35);
     drivers.send(0);
     uint8_t answer = drivers.send(0);
     delay_us(5);
     digitalWrite(drivers_pins[index], HIGH);
+    resume_boost();
 
     return answer;
 }
@@ -37,28 +40,37 @@ int drivers_ping(int index)
 
 static void drivers_send(int index, uint8_t instruction, uint8_t *data, size_t len, uint8_t *answer)
 {
+    pause_boost();
     digitalWrite(drivers_pins[index], LOW);
     delay_us(35);
 
     drivers.send(instruction);
 
-    for (int k=0; k < len; k++) {
-        if (answer == NULL) {
-            drivers.send(data[k]);
-        } else {
-            *(answer++) = drivers.send(data[k]);
-        }
+    for (uint8_t k=0; k < len; k++) {
+      if (answer == NULL) {
+        drivers.send(data[k]);
+      } else {
+        *(answer++) = drivers.send(data[k]);
+      }
     }
     delay_us(5);
     digitalWrite(drivers_pins[index], HIGH);
+    resume_boost();
 }
 
+#define REVERSE_TURN
 struct driver_packet_ans drivers_set(int index, bool enable, float target, int16_t pwm)
 {
     struct driver_packet_set packet;
     packet.enable = enable;
+#ifdef REVERSE_TURN
+    packet.targetSpeed = -target;
+#else
     packet.targetSpeed = target;
+#endif
     packet.pwm = pwm;
+    packet.padding1 = 0;
+    packet.padding2 = 0;
 
     struct driver_packet_ans answer;
     drivers_send(index, DRIVER_PACKET_SET, (uint8_t*)&packet, sizeof(struct driver_packet_set), (uint8_t*)&answer);
@@ -123,18 +135,23 @@ void drivers_tick()
 
 void drivers_init()
 {
-    // Initializing SPI
-    drivers.begin(SPI_281_250KHZ, MSBFIRST, 0);
+  cstatic_assert(
+    sizeof(driver_packet_set) > sizeof(driver_packet_ans),
+    "In SPI, packet answer have to be strictly smaller than the resquest packet"
+    );
 
-    // Initializing CS pins
-    for (int k=0; k<5; k++) {
-        pinMode(drivers_pins[k], OUTPUT);
-        digitalWrite(drivers_pins[k], HIGH);
-    }
+  // Initializing SPI
+  drivers.begin(SPI_281_250KHZ, MSBFIRST, 0);
 
-    for (int k=0; k<5; k++) {
-        drivers_present[k] = drivers_ping(k);
-    }
+  // Initializing CS pins
+  for (int k=0; k<5; k++) {
+    pinMode(drivers_pins[k], OUTPUT);
+    digitalWrite(drivers_pins[k], HIGH);
+  }
+
+  for (int k=0; k<5; k++) {
+    drivers_present[k] = drivers_ping(k);
+  }
 }
 
 TERMINAL_COMMAND(scan, "Scan for drivers")

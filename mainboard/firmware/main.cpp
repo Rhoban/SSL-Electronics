@@ -15,10 +15,14 @@
 #include "kinematic.h"
 #include "mux.h"
 #include "infos.h"
+#include "odometry.h"
 
 /**
  * Setup function
  */
+
+
+
 void setup()
 {
     init();
@@ -27,44 +31,130 @@ void setup()
     pinMode(BOARD_LED_PIN, OUTPUT);
     digitalWrite(BOARD_LED_PIN, LOW);
 
+/*****************************************************************************/
+/* Uncomment JUST when you want to define an ID. If not comment those lines !*/
+/*                                                                           */
     // Can be used to set the robot id
     // infos_set(6, false);
 
+    //To set in master for Match
+    // infos_set(-1, false);
+
+/*                                                                           */
+/*****************************************************************************/
+    // Infos
+    infos_init();
+
     // Multiplexer
     mux_init();
-
-    // Initalizng com
-    com_init();
-
-    // Initalizing drivers
-    drivers_init();
-
-    // Kicker
-    kicker_init();
-
     // Buzzer
     buzzer_init();
+    delay_us(1000);
+    bool h1=get_hall(HALL1_ADDR);
+    // delay_us(1000);
+    bool h2=get_hall(HALL2_ADDR);
+    // delay_us(1000);
+    bool h3=get_hall(HALL3_ADDR);
+    // delay_us(1000);
+    bool h4=get_hall(HALL4_ADDR);
+
+
+    int robot_id=id_from_hall(h1,h2,h3,h4);
+
+    if(robot_id<=6) //IF IT IS A VALID ID
+    {
+      if(robot_id!=infos_get_id())
+        infos_set(robot_id, false);
+    }
+
+
+    if(!h1 && !h2 && !h3 && !h4) //no magnet
+      developer_mode=true; //THIS IS A GLOBAL
+
+
+    int note=C7;
+
+    if(developer_mode)
+    {
+      note=C5;
+    }
+
+    //THE ID
+    int id=infos_get_id();
+    if(id==0)
+    {
+      buzzer_beep(note,300);
+      buzzer_wait_play();
+
+    }
+    else{
+      for(int i=1;i<=id;i++)
+      {
+        buzzer_beep(note,65);
+        buzzer_wait_play();
+        delay_us(65000);
+      }
+    }
+
+
+    delay_us(200000);
+
+
+// delay_us(3600000);
+
+// Initalizng com
+    com_init();
+    delay_us(800000);
+    if(developer_mode)
+      buzzer_beep(C6,50);
+    else
+      buzzer_beep(C5,50);
+    buzzer_wait_play();
+    // Initalizing drivers
+    drivers_init();
+    delay_us(800000);
+
+    if(developer_mode)
+      buzzer_beep(G5,50);
+    else
+      buzzer_beep(E5,50);
+
+    buzzer_wait_play();
+    // Kicker
+    kicker_init();
+    delay_us(800000);
+
+
+    if(developer_mode)
+      buzzer_beep(E5,50);
+    else
+      buzzer_beep(G5,50);
+    buzzer_wait_play();
 
     // IR
     ir_init();
-
+    delay_us(800000);
     // Voltage measure
     voltage_init();
 
     if (com_is_all_ok() ) { // && drivers_is_all_ok()) {
+      // buzzer_play(MELODY_BEETHOVEN);
+      if(developer_mode)
+        buzzer_play(MELODY_BOOT_DEV);
+      else
         buzzer_play(MELODY_BOOT);
+      buzzer_wait_play();
+
     } else {
-        buzzer_play(MELODY_WARNING);
+      buzzer_play(MELODY_WARNING);
     }
 
     terminal_init(&SerialUSB);
 
-    // Infos
-    infos_init();
 
     // Reiniting com
     com_init();
-    
+
     // Starting the watchdog
     watchdog_start(WATCHDOG_58MS);
 }
@@ -131,4 +221,57 @@ TERMINAL_COMMAND(diag, "Diagnostic")
     drivers_diagnostic();
     com_diagnostic();
     ir_diagnostic();
+}
+
+TERMINAL_COMMAND(hall, "Configuration hall")
+{
+
+  // int hall1=mux_sample(HALL1_ADDR);
+  // delay_us(10000);
+  // int hall2=mux_sample(HALL2_ADDR);
+  // delay_us(10000);
+  // int hall3=mux_sample(HALL3_ADDR);
+  // delay_us(10000);
+  // int hall4=mux_sample(HALL4_ADDR);
+
+  // terminal_io()->println(hall1);
+  terminal_io()->println(get_hall(HALL1_ADDR));
+
+  // terminal_io()->println(hall2);
+  terminal_io()->println(get_hall(HALL2_ADDR));
+
+  // terminal_io()->println(hall3);
+  terminal_io()->println(get_hall(HALL3_ADDR));
+
+  // terminal_io()->println(hall4);
+  terminal_io()->println(get_hall(HALL4_ADDR));
+
+  terminal_io()->println("");
+
+
+}
+
+TERMINAL_COMMAND(hallid, "ID from hall")
+{
+  bool h1=get_hall(HALL1_ADDR);
+  bool h2=get_hall(HALL2_ADDR);
+  bool h3=get_hall(HALL3_ADDR);
+  bool h4=get_hall(HALL4_ADDR);
+
+  // terminal_io()->println(h1);
+  // terminal_io()->println(h2);
+  // terminal_io()->println(h3);
+  // terminal_io()->println(h4);
+
+
+  // bool developer_mode=false;
+
+  // if(!h1 && !h2 && !h3 && !h4) //no magnet
+  //   developer_mode=true;
+  terminal_io()->println("ID:");
+  terminal_io()->println(id_from_hall(h1,h2,h3,h4));
+  terminal_io()->println("Dev mode:");
+  terminal_io()->println(developer_mode?1:0);
+  // int index=(h1) + (h2<<1) + (h3<<2) + (h4<<3);
+  // terminal_io()->println(index);
 }

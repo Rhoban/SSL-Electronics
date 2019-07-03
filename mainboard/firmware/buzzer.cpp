@@ -12,15 +12,57 @@ struct buzzer_note {
     unsigned int freq;
     unsigned int duration;
 };
+// static struct buzzer_note beethoven_boot[] = {
+//     {440, 200},
+//     {0, 10},
+//     {440, 200},
+//     {0, 10},
+//     {440, 200},
+//     {0, 10},
+//     {392, 600},
+//     {0, 10},
+// //    {415, 300/2},
+// //    {415, 300/2},
+// //    {415, 300/2},
+// //    {370, 160/2},
+//     {0, 0}
+// };
 
-static struct buzzer_note melody_boot[] = {
-    {523, 200/2},
-    {659, 350/2},
-    {523, 200/2},
-    {698, 300/2},
-    {659, 160/2},
-    {0, 0}
+
+static struct buzzer_note chord_boot[] = {
+  {C5, 50},
+  {E5, 50},
+  {G5, 50},
+  {C6, 200},
+  {0, 0}
 };
+
+// static struct buzzer_note chord_boot_dev[] = {
+//   {C5, 50},
+//   {E5b, 50},
+//   {G5, 50},
+//   {C6, 200},
+//   {0, 0}
+// };
+
+
+static struct buzzer_note chord_boot_dev[] = {
+  {C6, 50},
+  {G5, 50},
+  {E5, 50},
+  {C5, 200},
+  {0, 0}
+};
+
+
+// static struct buzzer_note melody_boot[] = {
+//     {523, 200/2},
+//     {659, 350/2},
+//     {523, 200/2},
+//     {698, 300/2},
+//     {659, 160/2},
+//     {0, 0}
+// };
 
 static struct buzzer_note melody_alert[] = {
     {2000, 200},
@@ -31,6 +73,8 @@ static struct buzzer_note melody_alert[] = {
 };
 
 static struct buzzer_note melody_alert_fast[] = {
+    {2000, 100},
+    {200, 100},
     {2000, 100},
     {200, 100},
     {2000, 100},
@@ -112,19 +156,26 @@ void buzzer_play(unsigned int melody_num, bool repeat)
     struct buzzer_note *to_play = NULL;
 
     if (melody_num == MELODY_BOOT) {
-        to_play = &melody_boot[0];
+      // to_play = &melody_boot[0];
+      to_play = &chord_boot[0];
+
     } else if (melody_num == MELODY_ALERT) {
         to_play = &melody_alert[0];
     } else if (melody_num == MELODY_ALERT_FAST) {
         to_play = &melody_alert_fast[0];
     } else if (melody_num == MELODY_WARNING) {
         to_play = &melody_warning[0];
+    } else if (melody_num == MELODY_BEETHOVEN) {
+      to_play = &chord_boot[0];
     } else if (melody_num == MELODY_BEGIN) {
         to_play = &melody_begin[0];
     } else if (melody_num == MELODY_END) {
         to_play = &melody_end[0];
     } else if (melody_num == MELODY_CUSTOM) {
         to_play = &melody_custom[0];
+    }else if (melody_num == MELODY_BOOT_DEV) {
+      to_play = &chord_boot_dev[0];
+
     } else {
         melody = NULL;
     }

@@ -57,15 +57,18 @@
 #define BOOSTER_PIN     27
 #define BOOSTER_TIMER   1
 #define CAP_ADDR        4
-#define CAP_R1          2000000.0
-#define CAP_R2          10000.0
+#define CAP_R1          200000.0
+#define CAP_R2          2000.0
 #define CHARGE_CUR_ADDR 6
+#define KICKER_CHARGING_VALUE 150.0
 
 // Hall sensor
 #define HALL1_ADDR      0
 #define HALL2_ADDR      1
 #define HALL3_ADDR      2
 #define HALL4_ADDR      3
+
+#define HALL_THRES     2000
 
 // Kicker
 #define KICKER1_PIN     25
@@ -80,6 +83,6 @@
 // Infrared
 #define IR_EMIT         12
 #define IR_RECEIVE      10
-#define IR_THRESHOLD    3700
+#define IR_THRESHOLD    80
 
 #endif

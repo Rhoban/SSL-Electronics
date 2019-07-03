@@ -23,6 +23,11 @@ int mux_sample(int addr)
     return analogRead(MUX);
 }
 
+bool get_hall(int addr)
+{
+  return mux_sample(addr)<HALL_THRES;
+}
+
 TERMINAL_COMMAND(mdb, "Mux debug")
 {
     for (int k=0; k<8; k++) {

@@ -2,7 +2,7 @@
 # Defines here your cpp source files
 # Ex : main.cpp test.cpp ...
 SRC_FILES = main.cpp drivers.cpp com.cpp buzzer.cpp \
-	kicker.cpp voltage.cpp ir.cpp kinematic.cpp mux.cpp infos.cpp
+	kicker.cpp voltage.cpp ir.cpp kinematic.cpp mux.cpp infos.cpp odometry.cpp
 
 ifeq ($(ENABLE_RHOCK),yes)
 SRC_FILES += rhock-functions.cpp rhock-stream.cpp
@@ -14,6 +14,7 @@ CFLAGS += -DHAS_TERMINAL -DDISABLE_SERVOS_COMMANDS
 
 OBJ_FILES_CPP = $(SRC_FILES:.cpp=.o)
 OBJ_FILES = $(addprefix $(BUILD_PATH)/,$(OBJ_FILES_CPP:.c=.o))
+
 
 $(BUILD_PATH)/%.o: %.cpp
 	$(SILENT_CXX) $(CXX) $(CFLAGS) $(CXXFLAGS) $(LIBMAPLE_INCLUDES) $(WIRISH_INCLUDES) -o $@ -c $<
