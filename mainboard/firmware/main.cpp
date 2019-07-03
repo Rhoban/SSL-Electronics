@@ -42,6 +42,8 @@ void setup()
 
 /*                                                                           */
 /*****************************************************************************/
+    // Infos
+    infos_init();
 
     // Multiplexer
     mux_init();
@@ -70,41 +72,37 @@ void setup()
       developer_mode=true; //THIS IS A GLOBAL
 
 
+    int note=C7;
+
     if(developer_mode)
     {
-      buzzer_beep(C5,50);
-      buzzer_wait_play();
-      delay_us(50000);
-      buzzer_beep(C5,50);
-      buzzer_wait_play();
+      note=C5;
+    }
 
+    //THE ID
+    int id=infos_get_id();
+    if(id==0)
+    {
+      buzzer_beep(note,300);
+      buzzer_wait_play();
 
     }
     else{
-      //THE ID
-      int id=infos_get_id();
-      if(id==0)
+      for(int i=1;i<=id;i++)
       {
-        buzzer_beep(C7,300);
+        buzzer_beep(note,65);
         buzzer_wait_play();
-
+        delay_us(65000);
       }
-      else
-        for(int i=1;i<=id;i++)
-        {
-          buzzer_beep(C7,65);
-          buzzer_wait_play();
-          delay_us(65000);
-        }
-
     }
+
 
     delay_us(200000);
 
 
-    // delay_us(3600000);
+// delay_us(3600000);
 
-    // Initalizng com
+// Initalizng com
     com_init();
     delay_us(800000);
     if(developer_mode)
@@ -153,8 +151,6 @@ void setup()
 
     terminal_init(&SerialUSB);
 
-    // Infos
-    infos_init();
 
     // Reiniting com
     com_init();
@@ -272,7 +268,7 @@ TERMINAL_COMMAND(hallid, "ID from hall")
 
   // if(!h1 && !h2 && !h3 && !h4) //no magnet
   //   developer_mode=true;
-
+  terminal_io()->println("ID:");
   terminal_io()->println(id_from_hall(h1,h2,h3,h4));
   terminal_io()->println("Dev mode:");
   terminal_io()->println(developer_mode?1:0);
