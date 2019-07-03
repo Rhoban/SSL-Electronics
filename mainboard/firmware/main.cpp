@@ -14,7 +14,6 @@
 #include "infos.h"
 #include "kinematic.h"
 #include "mux.h"
-#include "infos.h"
 #include "odometry.h"
 
 /**

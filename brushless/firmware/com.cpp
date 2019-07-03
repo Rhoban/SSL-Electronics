@@ -8,6 +8,8 @@
 #include "ssl.h"
 #include "motor.h"
 #include "security.h"
+#include "servo_hall.h"
+#include "motor_foc.h"
 
 HardwareSPI slave(SLAVE_SPI);
 
@@ -52,18 +54,24 @@ void com_frame_received()
     switch (frame_type) {
         case DRIVER_PACKET_SET: {
             // Setting the target speed
-            COM_READ_PACKET(driver_packet_set)
+          COM_READ_PACKET(driver_packet_set)
+#ifdef USE_HALL
             servo_hall_set(packet->enable, packet->targetSpeed, packet->pwm);
-#if 0 
-            save_pwm = packet->pwm;
-            if(packet->enable){
-                if( !motor_is_on() ){
-                    motor_set(packet->enable, CONFIG_PWM);
-                    launch_tare_motor();
-                }
-            }else{
-                servo_set(false, 0);
+#endif
+#ifdef USE_FOC
+          save_pwm = packet->pwm;
+          if(packet->enable){
+
+            if( !motor_is_tared() && !motor_is_on()){
+              motor_set(packet->enable, CONFIG_PWM);
+              launch_tare_motor();
             }
+            else{
+              motor_set(packet->enable, CONFIG_PWM);
+            }
+          }else{
+            servo_set(false, 0);
+          }
 #ifdef PWM_ONLY_MODE
             motor_set(packet->enable, PWM_DRIBBLER);
 #else
@@ -140,8 +148,12 @@ static void slave_irq()
             answer.status = 0x80|security_get_error();
         }
         answer.speed = servo_get_speed();
-        // answer.pwm = save_pwm;//motor_get_pwm();
+#ifdef USE_FOC
+        answer.pwm = save_pwm;//motor_get_pwm();
+#endif
+#ifdef USE_HALL
         answer.pwm = servo_get_pwm();
+#endif
         answer.enc_cnt = encoder_position();
         answer_ptr = (uint8_t*)&answer;
         answer_pos = 0;
@@ -207,6 +219,11 @@ TERMINAL_COMMAND(map, "MAPPING COM")
 TERMINAL_COMMAND(ap, "")
 {
     terminal_io()->println(answer_pos);
+}
+
+TERMINAL_COMMAND(status, "")
+{
+  terminal_io()->println(answer.status);
 }
 
 TERMINAL_COMMAND(version, "")

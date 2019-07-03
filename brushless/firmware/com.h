@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #define DRIVER_PACKET_SET   0x00
+
 struct driver_packet_set {
     bool enable;
     float targetSpeed;

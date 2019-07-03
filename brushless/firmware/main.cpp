@@ -11,6 +11,7 @@
 #include "com.h"
 #include "servo.h"
 #include "hardware.h"
+#include "info.h"
 
 #define TEST_LED
 
@@ -19,32 +20,38 @@
  */
 void setup()
 {
-    // Initalizing communication
-    com_init();
+  // init();
+  // info_init();
 
-    // Initializng current  sensor
-    #ifndef CURRENT_DISABLE
-    current_init();
-    #endif
 
-    // Initalizing encoder
-    encoder_init();
+  // Initalizing communication
+  com_init();
 
-    // Initalizing motor
-    motor_init();
-
-    // Initializing servo
-    servo_init();
-
-    // Starting the watchdog
-    watchdog_start(WATCHDOG_14MS);
-
-    terminal_init(&SerialUSB);
-    
-#ifdef TEST_LED
-    pinMode(LED_PIN, OUTPUT);
-    digitalWrite(LED_PIN, LOW);
+  // Initializng current  sensor
+#ifndef CURRENT_DISABLE
+  current_init();
 #endif
+
+  // Initalizing encoder
+  encoder_init();
+
+  // Initalizing motor
+  motor_init();
+
+  // Initializing servo
+  servo_init();
+
+  // Starting the watchdog
+  watchdog_start(WATCHDOG_14MS);
+
+  terminal_init(&SerialUSB);
+
+#ifdef TEST_LED
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, LOW);
+#endif
+
+
 }
 
 
