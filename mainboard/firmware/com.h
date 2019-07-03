@@ -50,7 +50,7 @@ struct packet_robot {
 
 } __attribute__((packed));
 
-void com_init();
+void com_init(bool developer=false);
 
 void com_tick();
 

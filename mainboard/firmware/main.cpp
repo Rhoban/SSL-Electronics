@@ -28,13 +28,19 @@ void setup()
     pinMode(BOARD_LED_PIN, OUTPUT);
     digitalWrite(BOARD_LED_PIN, LOW);
 
-    //TO BE COMMENTED
-    // Can be used to set the robot id.
+/*****************************************************************************/
+/* Uncomment JUST when you want to define an ID. If not comment those lines !*/
+/*                                                                           */
+    // Can be used to set the robot id
     // infos_set(6, false);
 
-    //To set in master
+    //To set in master for Match
     // infos_set(-1, false);
 
+    //To set in master for Developers
+    // infos_set(-2, false);
+/*                                                                           */
+/*****************************************************************************/
 
     // Multiplexer
     mux_init();
@@ -52,13 +58,13 @@ void setup()
 
 
 
-    bool developper_mode=false;
+    bool developer_mode=false;
 
     if(hall1>2000&&hall2>2000&&hall3>2000&&hall4>2000) //no magnet
-      developper_mode=true;
+      developer_mode=true;
 
 
-    if(developper_mode)
+    if(developer_mode)
     {
       buzzer_beep(C5,50);
       buzzer_wait_play();
@@ -70,14 +76,14 @@ void setup()
       buzzer_wait_play();
 
     }
+    else{
+      //THE ID
+      buzzer_beep(C6,50);
+      buzzer_wait_play();
+      delay_us(100000);
+      buzzer_wait_play();
 
-    //THE ID
-    buzzer_beep(C5,50);
-    buzzer_wait_play();
-    delay_us(100000);
-    buzzer_wait_play();
-
-
+    }
 
     delay_us(200000);
 
@@ -85,9 +91,9 @@ void setup()
     // delay_us(3600000);
 
     // Initalizng com
-    com_init();
+    com_init(developer_mode);
     delay_us(800000);
-    if(developper_mode)
+    if(developer_mode)
       buzzer_beep(C6,50);
     else
       buzzer_beep(C5,50);
@@ -96,7 +102,7 @@ void setup()
     drivers_init();
     delay_us(800000);
 
-    if(developper_mode)
+    if(developer_mode)
       buzzer_beep(G5,50);
     else
       buzzer_beep(E5,50);
@@ -107,7 +113,7 @@ void setup()
     delay_us(800000);
 
 
-    if(developper_mode)
+    if(developer_mode)
       buzzer_beep(E5,50);
     else
       buzzer_beep(G5,50);
@@ -121,7 +127,7 @@ void setup()
 
     if (com_is_all_ok() ) { // && drivers_is_all_ok()) {
       // buzzer_play(MELODY_BEETHOVEN);
-      if(developper_mode)
+      if(developer_mode)
         buzzer_play(MELODY_BOOT_DEV);
       else
         buzzer_play(MELODY_BOOT);
@@ -137,7 +143,7 @@ void setup()
     infos_init();
 
     // Reiniting com
-    com_init();
+    com_init(developer_mode);
 
     // Starting the watchdog
     watchdog_start(WATCHDOG_58MS);
@@ -209,17 +215,28 @@ TERMINAL_COMMAND(diag, "Diagnostic")
 
 TERMINAL_COMMAND(hall, "Configuration hall")
 {
-  int hall1=mux_sample(HALL1_ADDR);
-  delay_us(10000);
-  int hall2=mux_sample(HALL2_ADDR);
-  delay_us(10000);
-  int hall3=mux_sample(HALL3_ADDR);
-  delay_us(10000);
-  int hall4=mux_sample(HALL4_ADDR);
 
-  terminal_io()->println(hall1);
-  terminal_io()->println(hall2);
-  terminal_io()->println(hall3);
-  terminal_io()->println(hall4);
+  // int hall1=mux_sample(HALL1_ADDR);
+  // delay_us(10000);
+  // int hall2=mux_sample(HALL2_ADDR);
+  // delay_us(10000);
+  // int hall3=mux_sample(HALL3_ADDR);
+  // delay_us(10000);
+  // int hall4=mux_sample(HALL4_ADDR);
+
+  // terminal_io()->println(hall1);
+  terminal_io()->println(get_hall(HALL1_ADDR));
+
+  // terminal_io()->println(hall2);
+  terminal_io()->println(get_hall(HALL2_ADDR));
+
+  // terminal_io()->println(hall3);
+  terminal_io()->println(get_hall(HALL3_ADDR));
+
+  // terminal_io()->println(hall4);
+  terminal_io()->println(get_hall(HALL4_ADDR));
+
+  terminal_io()->println("");
+
 
 }

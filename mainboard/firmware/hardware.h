@@ -68,6 +68,8 @@
 #define HALL3_ADDR      2
 #define HALL4_ADDR      3
 
+#define HALL_THRES     2000
+
 // Kicker
 #define KICKER1_PIN     25
 #define KICKER2_PIN     26

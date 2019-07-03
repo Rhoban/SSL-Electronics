@@ -58,11 +58,16 @@ static void drivers_send(int index, uint8_t instruction, uint8_t *data, size_t l
     resume_boost();
 }
 
+#define REVERSE_TURN
 struct driver_packet_ans drivers_set(int index, bool enable, float target, int16_t pwm)
 {
     struct driver_packet_set packet;
     packet.enable = enable;
+#ifdef REVERSE_TURN
+    packet.targetSpeed = -target;
+#else
     packet.targetSpeed = target;
+#endif
     packet.pwm = pwm;
     packet.padding1 = 0;
     packet.padding2 = 0;

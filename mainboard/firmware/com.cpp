@@ -16,7 +16,8 @@
 #include "ir.h"
 
 // Channels
-static int com_channels[3] = {0, 10, 60};
+static int com_channels[3] = {110, 119, 125};
+static int com_channels_developers[3] = {111, 118, 124};
 
 // Only for master board
 static bool com_master = false;
@@ -399,7 +400,7 @@ bool com_is_ok(int index)
     return true;
 }
 
-void com_init()
+void com_init(bool developer)
 {
     // Not initializing if we don't have an id and are not master
     if (infos_get_id() == 0xff && !com_master) {
@@ -435,14 +436,17 @@ void com_init()
         com_set_reg(k, REG_EN_AA, 0x00);
 
         // Setting the appropriate channel for this module
-        com_set_reg(k, REG_RF_CH, com_channels[k]);
+        if(developer)
+          com_set_reg(k, REG_RF_CH, com_channels_developers[k]);
+        else
+          com_set_reg(k, REG_RF_CH, com_channels[k]);
 
         // Setting the address
         uint8_t addr[5] = COM_ADDR;
         if (com_master) {
-            addr[4] = COM_MASTER;
+          addr[4] = COM_MASTER;
         } else {
-            addr[4] = infos_get_id();
+          addr[4] = infos_get_id();
         }
         com_set_reg5(k, REG_RX_ADDR_P0, addr);
 
