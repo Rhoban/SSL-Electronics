@@ -316,20 +316,6 @@ void motor_hall_tick()
       security_set_error(SECURITY_HALL_FREEZE);
     }
 
-    if (safe_mode) {
-        if (encoder_is_present() && encoder_is_ok()) {
-            encoder_last_ok = time;
-        } else {
-            if ((time - encoder_last_ok) > 500) {
-                if (!encoder_is_present()) {
-                    security_set_error(SECURITY_ENCODER_MISSING);
-                } else if (!encoder_is_ok()) {
-                    security_set_error(SECURITY_ENCODER_FAILURE);
-                }
-            }
-        }
-    }
-
     // if (!encoder_is_present()) {
     //     security_set_error(ENCODER
     // }
