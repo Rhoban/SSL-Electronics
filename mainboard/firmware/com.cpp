@@ -16,7 +16,8 @@
 #include "ir.h"
 
 // Channels
-static int com_channels[3] = {0, 10, 60};
+static int com_channels[3] = {110, 119, 125};
+static int com_channels_developers[3] = {111, 118, 124};
 
 // Only for master board
 static bool com_master = false;
