@@ -3,6 +3,7 @@
 
 // When the robot starts
 #define MELODY_BOOT       0
+
 // When the battery is low
 #define MELODY_ALERT      1
 #define MELODY_ALERT_FAST 2
@@ -15,7 +16,14 @@
 // A custom melody used by beep
 #define MELODY_CUSTOM     6
 #define MELODY_BEETHOVEN     7
-
+#define MELODY_BOOT_DEV       8
+#define C5 523 //C note in Hz
+#define E5 659
+#define E5b 622
+#define F5 698
+#define G5 784
+#define C6 1047
+#define B5b 932
 /**
  * Initializes the buzzer
  */

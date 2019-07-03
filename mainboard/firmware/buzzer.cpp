@@ -30,10 +30,27 @@ struct buzzer_note {
 
 
 static struct buzzer_note chord_boot[] = {
-  {523, 50},
-  {659, 50},
-  {784, 50},
-  {1047, 200},
+  {C5, 50},
+  {E5, 50},
+  {G5, 50},
+  {C6, 200},
+  {0, 0}
+};
+
+// static struct buzzer_note chord_boot_dev[] = {
+//   {C5, 50},
+//   {E5b, 50},
+//   {G5, 50},
+//   {C6, 200},
+//   {0, 0}
+// };
+
+
+static struct buzzer_note chord_boot_dev[] = {
+  {C6, 50},
+  {G5, 50},
+  {E5, 50},
+  {C5, 200},
   {0, 0}
 };
 
@@ -156,6 +173,9 @@ void buzzer_play(unsigned int melody_num, bool repeat)
         to_play = &melody_end[0];
     } else if (melody_num == MELODY_CUSTOM) {
         to_play = &melody_custom[0];
+    }else if (melody_num == MELODY_BOOT_DEV) {
+      to_play = &chord_boot_dev[0];
+
     } else {
         melody = NULL;
     }

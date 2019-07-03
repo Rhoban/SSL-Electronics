@@ -28,10 +28,11 @@ void setup()
     pinMode(BOARD_LED_PIN, OUTPUT);
     digitalWrite(BOARD_LED_PIN, LOW);
 
-    // Can be used to set the robot id
-    infos_set(6, false);
+    //TO BE COMMENTED
+    // Can be used to set the robot id.
+    // infos_set(6, false);
 
-//To set in master
+    //To set in master
     // infos_set(-1, false);
 
 
@@ -39,40 +40,92 @@ void setup()
     mux_init();
     // Buzzer
     buzzer_init();
-    buzzer_play(MELODY_BEGIN);
+    delay_us(1000);
+    int hall1=mux_sample(HALL1_ADDR);
+    delay_us(10000);
+    int hall2=mux_sample(HALL2_ADDR);
+    delay_us(10000);
+    int hall3=mux_sample(HALL3_ADDR);
+    delay_us(10000);
+    int hall4=mux_sample(HALL4_ADDR);
+
+
+
+
+    bool developper_mode=false;
+
+    if(hall1>2000&&hall2>2000&&hall3>2000&&hall4>2000) //no magnet
+      developper_mode=true;
+
+
+    if(developper_mode)
+    {
+      buzzer_beep(C5,50);
+      buzzer_wait_play();
+      delay_us(50000);
+      buzzer_wait_play();
+      buzzer_beep(C5,50);
+      buzzer_wait_play();
+      delay_us(50000);
+      buzzer_wait_play();
+
+    }
+
+    //THE ID
+    buzzer_beep(C5,50);
+    buzzer_wait_play();
+    delay_us(100000);
     buzzer_wait_play();
 
 
 
+    delay_us(200000);
 
 
     // delay_us(3600000);
 
     // Initalizng com
     com_init();
-    delay_us(1000000);
-    buzzer_beep(523,50);
+    delay_us(800000);
+    if(developper_mode)
+      buzzer_beep(C6,50);
+    else
+      buzzer_beep(C5,50);
     buzzer_wait_play();
     // Initalizing drivers
     drivers_init();
-    delay_us(1000000);
-    buzzer_beep(659,50);
+    delay_us(800000);
+
+    if(developper_mode)
+      buzzer_beep(G5,50);
+    else
+      buzzer_beep(E5,50);
+
     buzzer_wait_play();
     // Kicker
     kicker_init();
-    delay_us(1000000);
-    buzzer_beep(784,50);
+    delay_us(800000);
+
+
+    if(developper_mode)
+      buzzer_beep(E5,50);
+    else
+      buzzer_beep(G5,50);
     buzzer_wait_play();
 
     // IR
     ir_init();
-    delay_us(1000000);
+    delay_us(800000);
     // Voltage measure
     voltage_init();
 
     if (com_is_all_ok() ) { // && drivers_is_all_ok()) {
       // buzzer_play(MELODY_BEETHOVEN);
-      buzzer_play(MELODY_BOOT);
+      if(developper_mode)
+        buzzer_play(MELODY_BOOT_DEV);
+      else
+        buzzer_play(MELODY_BOOT);
+      buzzer_wait_play();
 
     } else {
       buzzer_play(MELODY_WARNING);
@@ -152,4 +205,21 @@ TERMINAL_COMMAND(diag, "Diagnostic")
     drivers_diagnostic();
     com_diagnostic();
     ir_diagnostic();
+}
+
+TERMINAL_COMMAND(hall, "Configuration hall")
+{
+  int hall1=mux_sample(HALL1_ADDR);
+  delay_us(10000);
+  int hall2=mux_sample(HALL2_ADDR);
+  delay_us(10000);
+  int hall3=mux_sample(HALL3_ADDR);
+  delay_us(10000);
+  int hall4=mux_sample(HALL4_ADDR);
+
+  terminal_io()->println(hall1);
+  terminal_io()->println(hall2);
+  terminal_io()->println(hall3);
+  terminal_io()->println(hall4);
+
 }
