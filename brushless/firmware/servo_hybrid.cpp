@@ -3,6 +3,7 @@
 #include "servo_foc.h"
 #include "servo_hybrid.h"
 #include <terminal.h>
+#include "motor_hybrid.h"
 
 static float speed_csg_float = 0;
 static int theta_origin = 0;
@@ -39,9 +40,9 @@ int compute_angular_position_for_foc(int angle){
 }
 
 void servo_hybrid_init(){
-    servo_foc_init();
+    // servo_foc_init();
 
-    ///servo_hall_init();
+    servo_hall_init();
 
     ///#ifdef USE_OPEN_LOOP_FOR_HYBRID
     /// register_update_theta( compute_angular_position_for_foc );
@@ -142,15 +143,23 @@ void servo_hybrid_tick(){
 
   /// update_hybrid_state();
     /// change_motor_mode();
-    servo_foc_tick();
-    /// servo_hall_tick();
+    // servo_foc_tick();
+    // servo_hall_tick();
 }
 void servo_hybrid_set_speed_consign( float speed ){
-  if( speed_csg_float != speed ){
-    save_theta_origin();
-    speed_csg_float = speed;
-    servo_set_speed_consign_foc(speed);
+
+  switch(get_hybrid_mode())
+  {
+    case FOC:
+      servo_set_speed_consign_foc(speed);
+      break;
+    case HALL:
+      // servo_set_speed_consign_hall(speed);
+      break;
+    default:
+      break;
   }
+
 }
 void servo_hybrid_set(bool enable, float targetSpeed, int16_t pwm){
     servo_hybrid_set_speed_consign(targetSpeed);

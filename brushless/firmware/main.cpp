@@ -12,6 +12,7 @@
 #include "servo.h"
 #include "hardware.h"
 #include "info.h"
+#include "motor_hybrid.h"
 
 #define TEST_LED
 static bool motor_is_tared=false;
@@ -51,10 +52,11 @@ void setup()
   digitalWrite(LED_PIN, LOW);
 #endif
 
-  if(!motor_is_tared){
-    motor_is_tared=true;
-    launch_tare_motor();
-  }
+  switch_to_hall();
+  // if(!motor_is_tared){
+  //   motor_is_tared=true;
+  //   launch_tare_motor();
+  // }
 }
 
 

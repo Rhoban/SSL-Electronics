@@ -7,18 +7,23 @@
 
 static MotorMode motor_mode = FOC;
 
+MotorMode get_hybrid_mode()
+{
+  return motor_mode;
+}
+
 void motor_hall_hybrid_tick();
 
 void init_hall_hybrid(){
-    // Initializing hall sensors input
-    pinMode(HALLU_PIN, INPUT_PULLUP);
-    pinMode(HALLV_PIN, INPUT_PULLUP);
-    pinMode(HALLW_PIN, INPUT_PULLUP);
+  // Initializing hall sensors input
+  pinMode(HALLU_PIN, INPUT_PULLUP);
+  pinMode(HALLV_PIN, INPUT_PULLUP);
+  pinMode(HALLW_PIN, INPUT_PULLUP);
 
-    // Attach interrupts on phase change
-    attachInterrupt(HALLU_PIN, motor_hall_hybrid_tick, CHANGE);
-    attachInterrupt(HALLV_PIN, motor_hall_hybrid_tick, CHANGE);
-    attachInterrupt(HALLW_PIN, motor_hall_hybrid_tick, CHANGE);
+  // Attach interrupts on phase change
+  attachInterrupt(HALLU_PIN, motor_hall_hybrid_tick, CHANGE);
+  attachInterrupt(HALLV_PIN, motor_hall_hybrid_tick, CHANGE);
+  attachInterrupt(HALLW_PIN, motor_hall_hybrid_tick, CHANGE);
 }
 
 void init_hybrid_pwm_pins(){
@@ -47,17 +52,15 @@ void motor_hybrid_irq(){
 }
 
 void switch_to_hall(){
-  motor_mode = HALL;
-
   enable_motor_foc(false);
   enable_motor_hall(true);
+  motor_mode = HALL;
 }
 
 void switch_to_foc(){
-  motor_mode = FOC;
-
-  enable_motor_foc(true);
   enable_motor_hall(false);
+  enable_motor_foc(true);
+  motor_mode = FOC;
 }
 
 static void _init_hybrid_timer(int number)
@@ -100,20 +103,20 @@ void init_hybrid_timers(){
 }
 
 void motor_hybrid_init(){
-  ///   init_hall_hybrid();
+  init_hall_hybrid();
   init_hybrid_timers();
   init_hybrid_pwm_pins();
   switch_to_foc();
 }
 
 void motor_hybrid_set(bool enable, int value){
-    motor_foc_set(enable, value);
+    // motor_foc_set(enable, value);
     motor_hall_set(enable, value);
 }
 
 void motor_hybrid_tick(){
-    motor_foc_tick();
-    /// motor_hall_tick();
+    // motor_foc_tick();
+    motor_hall_tick();
 }
 bool motor_hybrid_is_on(){
     return motor_foc_is_on();
@@ -129,4 +132,15 @@ void motor_hall_hybrid_tick(){
 TERMINAL_COMMAND(hyb_tare, "Tare hybrid")
 {
     launch_tare_motor_hybrid();
+}
+
+
+TERMINAL_COMMAND(toggle_mode, "Switch hybrid mode")
+{
+  if(motor_mode==FOC)
+    switch_to_hall();
+  else if(motor_mode==HALL)
+    switch_to_foc();
+
+  terminal_io()->println(motor_mode?"HALL":"FOC");
 }

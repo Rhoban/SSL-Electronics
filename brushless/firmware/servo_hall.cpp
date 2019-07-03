@@ -210,20 +210,20 @@ TERMINAL_COMMAND(dbg, "Dbg servo")
 
 void servo_hall_set(bool enable, float target, int16_t pwm)
 {
-    servo_enable = enable;
-    servo_target = target;
-    servo_prior_pwm = pwm;
+  servo_enable = enable;
+  servo_target = target;
+  servo_prior_pwm = pwm;
 
-    if (!servo_enable) {
-        servo_pwm = 0;
-        servo_prior_pwm = 0;
-        servo_acc = 0;
-        servo_last_error = 0;
-        servo_limited_target = 0;
-        current_resample();
-        motor_set(false, 0);
-        security_set_error(SECURITY_NO_ERROR);
-    }
+  if (!servo_enable) {
+    servo_pwm = 0;
+    servo_prior_pwm = 0;
+    servo_acc = 0;
+    servo_last_error = 0;
+    servo_limited_target = 0;
+    current_resample();
+    motor_set(false, 0);
+    security_set_error(SECURITY_NO_ERROR);
+  }
 }
 
 void servo_hall_set_pid(float kp_, float ki_, float kd_)

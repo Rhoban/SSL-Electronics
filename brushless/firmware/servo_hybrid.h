@@ -21,25 +21,25 @@ void servo_hybrid_emergency();
 void servo_hybrid_stop();
 
 enum HybridState {
-    NO_STATE,
-    LOW_SPEED,
-    NORMAL_SPEED,
-    HIGH_SPEED
+  NO_STATE,
+  LOW_SPEED,
+  NORMAL_SPEED,
+  HIGH_SPEED
 };
 
 static inline const char *hyb_state_str(HybridState s){
-    switch(s){
-        case NO_STATE:
-            return "NO_STATE";
-        case LOW_SPEED:
-            return "LOW_SPEED";
-        case NORMAL_SPEED:
-            return "NORMAL_SPEED";
-        case HIGH_SPEED:
-            return "HIGH_SPEED";
-        default :
-            return "?";
-    }
+  switch(s){
+    case NO_STATE:
+      return "NO_STATE";
+    case LOW_SPEED:
+      return "LOW_SPEED";
+    case NORMAL_SPEED:
+      return "NORMAL_SPEED";
+    case HIGH_SPEED:
+      return "HIGH_SPEED";
+    default :
+      return "?";
+  }
 }
 
 

@@ -9,7 +9,11 @@
 #include "motor.h"
 #include "security.h"
 #include "servo_hall.h"
+#include "servo_hybrid.h"
+#include "servo_foc.h"
+
 #include "motor_foc.h"
+#include "motor_hybrid.h"
 
 HardwareSPI slave(SLAVE_SPI);
 
@@ -63,20 +67,32 @@ void com_frame_received()
 #endif
 #endif
 #ifdef USE_HYBRID
-          save_pwm = packet->pwm;
-          if(packet->enable){
-            motor_set(packet->enable, CONFIG_PWM);
+          // if(get_hybrid_mode()==HALL)
+          // {
+          servo_hall_set(packet->enable, packet->targetSpeed, packet->pwm);
+          // }
+          // else{
+          // save_pwm = packet->pwm;
+          // if(packet->enable){
+          //   motor_set(packet->enable, CONFIG_PWM);
 
-          }else{
-            servo_set(false, 0);
-          }
-          servo_set_speed_consign( packet->targetSpeed );
+          // }else{
+          //   motor_set(false, 0);
+          //   servo_set(false, 0);
+          // }
+
+          // servo_set_speed_consign_foc(packet->targetSpeed);
+
+          // servo_set_speed_consign( packet->targetSpeed );
+          // }
+
 #endif
 #ifdef USE_FOC
           save_pwm = packet->pwm;
           if(packet->enable){
             motor_set(packet->enable, CONFIG_PWM);
           }else{
+            motor_set(false, 0);
             servo_set(false, 0);
           }
           servo_set_speed_consign( packet->targetSpeed );
@@ -156,7 +172,18 @@ static void slave_irq()
         answer.pwm = save_pwm;//motor_get_pwm();
 #endif
 #ifdef USE_HYBRID
-        answer.pwm = save_pwm;//motor_get_pwm();
+
+        switch(get_hybrid_mode())
+        {
+          case FOC:
+            answer.pwm = save_pwm;//motor_get_pwm();
+            break;
+          case HALL:
+            answer.pwm = servo_get_pwm();
+            break;
+          default:
+            break;
+        }
 #endif
 #ifdef USE_HALL
         answer.pwm = servo_get_pwm();
@@ -195,6 +222,7 @@ void com_tick()
         if (millis() - last_receive > 100) {
             controlling = false;
             digitalWrite(LED_PIN, LOW);
+            motor_set(false, 0);
             servo_set(false, 0);
         }
     }
