@@ -56,7 +56,7 @@ void setup()
 
 
 static int last_led = 0;
-
+static bool motor_is_tared=false;
 /**
  * Loop function
  */
@@ -100,6 +100,11 @@ void loop()
         last_led = val;
     }
 #endif
+
+    if(!motor_is_tared){
+      motor_is_tared=true;
+      launch_tare_motor();
+    }
 }
 
 TERMINAL_COMMAND(term, "term test")

@@ -62,13 +62,17 @@ void com_frame_received()
           save_pwm = packet->pwm;
           if(packet->enable){
 
-            if( !motor_is_tared() && !motor_is_on()){
+            motor_set(packet->enable, CONFIG_PWM);
+            /*
+              if( !motor_is_tared() && !motor_is_on()){
               motor_set(packet->enable, CONFIG_PWM);
               launch_tare_motor();
-            }
-            else{
+              }
+              else{
               motor_set(packet->enable, CONFIG_PWM);
-            }
+              }
+            */
+
           }else{
             servo_set(false, 0);
           }
