@@ -11,7 +11,6 @@
 #include "com.h"
 #include "servo.h"
 #include "hardware.h"
-#include "info.h"
 
 #define TEST_LED
 static bool motor_is_tared=false;

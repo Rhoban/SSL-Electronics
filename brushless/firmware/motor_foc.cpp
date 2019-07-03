@@ -8,10 +8,9 @@
 #include "sin_lut.h"
 #include "security.h"
 #include "errors.h"
-#include "info.h"
 // #define TEST_LED_FOC
 
-static bool tare_is_read=false; //Did we already read the tare value from flash
+//static bool tare_is_read=false; //Did we already read the tare value from flash
 static bool enable_foc = true;
 
 inline int mod(int n, int d){
@@ -911,10 +910,10 @@ TERMINAL_COMMAND(tare, "Tare origin")
 
 }
 
-TERMINAL_COMMAND(save, "Save origin")
-{
-  info_set(angle_origin);
-}
+//TERMINAL_COMMAND(save, "Save origin")
+//{
+//  info_set(angle_origin);
+//}
 
 void launch_tare_motor_foc(){
   tare_is_set = false;
