@@ -400,7 +400,7 @@ bool com_is_ok(int index)
     return true;
 }
 
-void com_init(bool developer)
+void com_init()
 {
     // Not initializing if we don't have an id and are not master
     if (infos_get_id() == 0xff && !com_master) {
@@ -436,7 +436,7 @@ void com_init(bool developer)
         com_set_reg(k, REG_EN_AA, 0x00);
 
         // Setting the appropriate channel for this module
-        if(developer)
+        if(developer_mode)
           com_set_reg(k, REG_RF_CH, com_channels_developers[k]);
         else
           com_set_reg(k, REG_RF_CH, com_channels[k]);

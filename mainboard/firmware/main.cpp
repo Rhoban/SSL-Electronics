@@ -17,11 +17,12 @@
 #include "infos.h"
 #include "odometry.h"
 
-bool developer_mode=false;
-
 /**
  * Setup function
  */
+
+
+
 void setup()
 {
     init();
@@ -66,7 +67,7 @@ void setup()
 
 
     if(!h1 && !h2 && !h3 && !h4) //no magnet
-      developer_mode=true;
+      developer_mode=true; //THIS IS A GLOBAL
 
 
     if(developer_mode)
@@ -104,7 +105,7 @@ void setup()
     // delay_us(3600000);
 
     // Initalizng com
-    com_init(developer_mode);
+    com_init();
     delay_us(800000);
     if(developer_mode)
       buzzer_beep(C6,50);
@@ -156,7 +157,7 @@ void setup()
     infos_init();
 
     // Reiniting com
-    com_init(developer_mode);
+    com_init();
 
     // Starting the watchdog
     watchdog_start(WATCHDOG_58MS);
