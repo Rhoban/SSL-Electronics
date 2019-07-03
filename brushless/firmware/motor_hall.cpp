@@ -234,7 +234,7 @@ TERMINAL_COMMAND(bdw, "Bdw")
     terminal_io()->println(micros()-start);
 }
 
-    
+
 static bool motor_irq_is_active = false;
 
 void motor_hall_irq(){
@@ -258,7 +258,7 @@ void motor_hall_irq(){
         // in this situation
         set_phases(0, 0, 0, -1);
     }
-    
+
     motor_irq_is_active = false;
 }
 
@@ -292,7 +292,10 @@ void motor_hall_tick()
 
     if ((time - hall_last_change_moving) > 500 && abs(motor_pwm) >= 500) {
         // Stop everything
-        security_set_error(SECURITY_HALL_FREEZE);
+      do{hall_current_phase++;}
+      while(hall_current_phase==-1);
+
+      // security_set_error(SECURITY_HALL_FREEZE);
     }
 
     if (safe_mode) {
