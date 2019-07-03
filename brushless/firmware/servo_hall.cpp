@@ -199,6 +199,8 @@ void servo_hall_tick()
                 new_cmd_V = (new_cmd_V >= VLIMIT)? VLIMIT: new_cmd_V;
                 new_cmd_V = (new_cmd_V <= -VLIMIT)? -VLIMIT : new_cmd_V;
                 new_cmd = -new_cmd_V*PWM_HALL_SUPREMUM/VMAX;
+
+                terminal_io()->println(new_cmd_V);
                 cmd.top(new_cmd_V);
                 motor_set(true, new_cmd);
                 servo_public_pwm = new_cmd;
@@ -221,7 +223,7 @@ void servo_hall_set(bool enable, float target, int16_t pwm)
 {
     servo_enable = enable;
     servo_target = target;
-    servo_prior_pwm = pwm;
+    // servo_prior_pwm = pwm;
 
     if (!servo_enable) {
         servo_pwm = 0;

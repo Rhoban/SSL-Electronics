@@ -63,7 +63,12 @@ void com_frame_received()
             }else{
                 servo_set(false, 0);
             }
-            servo_set(packet->enable, packet->targetSpeed, packet->pwm);
+#ifdef PWM_ONLY_MODE
+            motor_set(packet->enable, PWM_DRIBBLER);
+            servo_set(packet->enable, packet->pwm*10);
+#else
+            servo_set_speed_consign( packet->targetSpeed );
+#endif
 
         }
         break;

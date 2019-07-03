@@ -9,17 +9,12 @@
 #include "servo.h"
 #include "security.h"
 
-// #ifdef CARTE_CATIE
 HardwareSPI encoder(ENCODER_SPI);
 
 // Counter value
 static int32_t encoder_cnt = 0;
 static uint16_t encoder_magnitude = 0;
-#ifdef ENCODER_IS_PRESENT
-  static bool encoder_present = true;
-#else
-  static bool encoder_present = false;
-#endif
+static bool encoder_present = true;
 static bool encoder_is_not_initialized = true;
 
 inline bool parity_16_check( uint16_t x ){
@@ -62,12 +57,14 @@ bool encoder_is_ok()
 {
     // return encoder_magnitude > 500;
     return true;
+ 
 }
 
 bool encoder_is_present()
 {
     // return encoder_present;
     return true;
+ 
 }
 
 
@@ -648,29 +645,6 @@ TERMINAL_COMMAND(ec_err, "Encoder error")
     encoder_print_errors();
     terminal_io()->println("");
 }
-
-#else
-    void encoder_init(){
-
-}
-int encoder_position(){
-    return 0;
-}
-
-void encoder_tick(){
-
-}
-
-bool encoder_is_present(){
-    return true;
-}
-
-bool encoder_is_ok(){
-    return true;
-
-}
-
-// #endif
 #endif
 
 

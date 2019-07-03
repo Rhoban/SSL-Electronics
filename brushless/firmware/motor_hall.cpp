@@ -72,7 +72,14 @@ void update_velocity(
   // Jump is equal to -2, -1, 0, 1, 2, 3  
   float angle = jump * (2.0 * PI_CST/(NB_POSITIVE_MAGNETS));
   float velocity = 1000000.0*angle/(time-hall_last_change);
-  angular_velocity = 0.9*angular_velocity + 0.1 * velocity;
+
+  if(abs(velocity - angular_velocity) > 30){
+      velocity = angular_velocity;
+  }
+  else{
+    angular_velocity = 0.9*angular_velocity + 0.1 * velocity;
+  }
+
 }
 
 static void _bc_load()
