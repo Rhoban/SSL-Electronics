@@ -28,12 +28,19 @@ void setup()
     pinMode(BOARD_LED_PIN, OUTPUT);
     digitalWrite(BOARD_LED_PIN, LOW);
 
+/*****************************************************************************/
+/* Uncomment JUST when you want to define an ID. If not comment those lines !*/
+/*                                                                           */
     // Can be used to set the robot id
-//    infos_set(-1, false);
+    // infos_set(6, false);
 
-//To set in master
+    //To set in master for Match
     // infos_set(-1, false);
 
+    //To set in master for Developers
+    // infos_set(-2, false);
+/*                                                                           */
+/*****************************************************************************/
 
     // Multiplexer
     mux_init();
