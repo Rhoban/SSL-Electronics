@@ -71,6 +71,12 @@ void setup()
     if(!h1 && !h2 && !h3 && !h4) //no magnet
       developer_mode=true; //THIS IS A GLOBAL
 
+/*****************************************************************************/
+    /* HERE TO SWITCH BETWEEN DEVMODE/PRODMODE (until the magnets are found) */
+
+    developer_mode=false;
+    // infos_set(4, false);
+
 
     int note=C7;
 
