@@ -261,6 +261,7 @@ TERMINAL_COMMAND(bdw, "Bdw")
     terminal_io()->println(micros()-start);
 }
 
+<<<<<<< HEAD
 TERMINAL_COMMAND(ang, "angle")
 {
     // terminal_io()->println("Jump :");
@@ -270,6 +271,9 @@ TERMINAL_COMMAND(ang, "angle")
 }
 
     
+=======
+
+>>>>>>> origin/master
 static bool motor_irq_is_active = false;
 int current_phase;
 int past_phase;
@@ -283,12 +287,26 @@ void motor_hall_irq(){
 
     current_phase = hall_value();
     if( ! enable_hall ) return;
-    int phase = hall_phases[current_phase];
+    int phase = hall_phases[hall_value()];
+
+    if (phase < 0 || phase >= 6) {
+        // XXX: This is not a normal state, not sure what should be done
+        // in this situation
+        set_phases(0, 0, 0, -1);
+    }
+
+    phase += ( (motor_pwm>0)? 1:-1 );
+    if( phase >= 6 ){
+      phase = 0;
+    }
+    if( phase < 0 ){
+      phase = 5;
+    }
     if (phase >= 0 && phase < 6) {
         set_phases(
-            motor_phases[phase][0]*motor_pwm,
-            motor_phases[phase][1]*motor_pwm,
-            motor_phases[phase][2]*motor_pwm,
+            motor_phases[phase][0]*abs(motor_pwm),
+            motor_phases[phase][1]*abs(motor_pwm),
+            motor_phases[phase][2]*abs(motor_pwm),
             phase
         );
     } else {
@@ -296,7 +314,7 @@ void motor_hall_irq(){
         // in this situation
         set_phases(0, 0, 0, -1);
     }
-    
+
     motor_irq_is_active = false;
 }
 
@@ -314,7 +332,12 @@ void motor_hall_tick()
     motor_hall_irq();
 
     // Current phase
+<<<<<<< HEAD
     int phase = hall_phases[current_phase];
+=======
+    int hall_val = hall_value();
+    int phase = hall_phases[hall_val];
+>>>>>>> origin/master
 
     int time = millis();
     int time_ang = micros();
@@ -344,10 +367,19 @@ void motor_hall_tick()
     //     security_set_error(SECURITY_HALL_MISSING);
     // }
 
+<<<<<<< HEAD
     // if ((time - hall_last_change_moving) > 500 && abs(motor_pwm) >= 500) {
     //     // Stop everything
     //     security_set_error(SECURITY_HALL_FREEZE);
     // }
+=======
+    if ((time - hall_last_change_moving) > 500 && abs(motor_pwm) >= 500) {
+        // Stop everything
+      //hall_current_phase = ( hall_val + (motor_pwm>0)? 1:-1 ) % 6;
+
+      security_set_error(SECURITY_HALL_FREEZE);
+    }
+>>>>>>> origin/master
 
     if (safe_mode) {
         if (encoder_is_present() && encoder_is_ok()) {
