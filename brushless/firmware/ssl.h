@@ -121,7 +121,8 @@
 #ifdef MOTEUR_CATIE
     #define REVERSE_PHASE
     #define OPEN_LOOP_FOC false //true
-#define USE_FOC
+// #define USE_FOC
+#define USE_HYBRID
 //ONLY FOR DRIBBLER
 // #define USE_HALL
 #if defined(USE_HALL)

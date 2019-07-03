@@ -244,13 +244,17 @@ void motor_hall_irq(){
     }
     motor_irq_is_active = true;
 
-    if( ! enable_hall ) return;
+    if( ! enable_hall ){
+      motor_irq_is_active = false;
+      return;
+    }
+
     int phase = hall_phases[hall_value()];
 
     if (phase < 0 || phase >= 6) {
-        // XXX: This is not a normal state, not sure what should be done
-        // in this situation
-        set_phases(0, 0, 0, -1);
+      // XXX: This is not a normal state, not sure what should be done
+      // in this situation
+      set_phases(0, 0, 0, -1);
     }
 
     phase += ( (motor_pwm>0)? 1:-1 );
@@ -261,16 +265,16 @@ void motor_hall_irq(){
       phase = 5;
     }
     if (phase >= 0 && phase < 6) {
-        set_phases(
-            motor_phases[phase][0]*abs(motor_pwm),
-            motor_phases[phase][1]*abs(motor_pwm),
-            motor_phases[phase][2]*abs(motor_pwm),
-            phase
+      set_phases(
+        motor_phases[phase][0]*abs(motor_pwm),
+        motor_phases[phase][1]*abs(motor_pwm),
+        motor_phases[phase][2]*abs(motor_pwm),
+        phase
         );
     } else {
-        // XXX: This is not a normal state, not sure what should be done
-        // in this situation
-        set_phases(0, 0, 0, -1);
+      // XXX: This is not a normal state, not sure what should be done
+      // in this situation
+      set_phases(0, 0, 0, -1);
     }
 
     motor_irq_is_active = false;

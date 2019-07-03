@@ -56,32 +56,32 @@ void com_frame_received()
             // Setting the target speed
           COM_READ_PACKET(driver_packet_set)
 #ifdef USE_HALL
+#ifndef PWM_ONLY_MODE
             servo_hall_set(packet->enable, packet->targetSpeed, packet->pwm);
+#else
+          motor_set(packet->enable, PWM_DRIBBLER);
 #endif
-#ifdef USE_FOC
+#endif
+#ifdef USE_HYBRID
           save_pwm = packet->pwm;
           if(packet->enable){
-
             motor_set(packet->enable, CONFIG_PWM);
-            /*
-              if( !motor_is_tared() && !motor_is_on()){
-              motor_set(packet->enable, CONFIG_PWM);
-              launch_tare_motor();
-              }
-              else{
-              motor_set(packet->enable, CONFIG_PWM);
-              }
-            */
 
           }else{
             servo_set(false, 0);
           }
-#ifdef PWM_ONLY_MODE
-            motor_set(packet->enable, PWM_DRIBBLER);
-#else
-            servo_set_speed_consign( packet->targetSpeed );
+          servo_set_speed_consign( packet->targetSpeed );
 #endif
+#ifdef USE_FOC
+          save_pwm = packet->pwm;
+          if(packet->enable){
+            motor_set(packet->enable, CONFIG_PWM);
+          }else{
+            servo_set(false, 0);
+          }
+          servo_set_speed_consign( packet->targetSpeed );
 #endif
+
         }
         break;
         case DRIVER_PACKET_PARAMS: {
@@ -153,6 +153,9 @@ static void slave_irq()
         }
         answer.speed = servo_get_speed();
 #ifdef USE_FOC
+        answer.pwm = save_pwm;//motor_get_pwm();
+#endif
+#ifdef USE_HYBRID
         answer.pwm = save_pwm;//motor_get_pwm();
 #endif
 #ifdef USE_HALL

@@ -14,7 +14,7 @@
 #include "info.h"
 
 #define TEST_LED
-
+static bool motor_is_tared=false;
 /**
  * Setup function
  */
@@ -51,12 +51,15 @@ void setup()
   digitalWrite(LED_PIN, LOW);
 #endif
 
-
+  if(!motor_is_tared){
+    motor_is_tared=true;
+    launch_tare_motor();
+  }
 }
 
 
 static int last_led = 0;
-static bool motor_is_tared=false;
+
 /**
  * Loop function
  */
@@ -101,10 +104,7 @@ void loop()
     }
 #endif
 
-    if(!motor_is_tared){
-      motor_is_tared=true;
-      launch_tare_motor();
-    }
+
 }
 
 TERMINAL_COMMAND(term, "term test")

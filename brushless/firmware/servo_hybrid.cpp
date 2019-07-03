@@ -16,7 +16,7 @@ void init_position(){
 inline int get_angular_position( int update_frequence ){
     static float delay_ratio = .5;
     return theta_origin + (int) (
-        (theta_update_cnt+delay_ratio) * speed_csg_float * 
+        (theta_update_cnt+delay_ratio) * speed_csg_float *
         ONE_TURN_THETA
     ) / update_frequence;
 }
@@ -40,11 +40,14 @@ int compute_angular_position_for_foc(int angle){
 
 void servo_hybrid_init(){
     servo_foc_init();
-    #ifdef USE_OPEN_LOOP_FOR_HYBRID
-    register_update_theta( compute_angular_position_for_foc );
-    #else
-    servo_foc_register_get_theta_csg(compute_angular_position);   
-    #endif
+
+    ///servo_hall_init();
+
+    ///#ifdef USE_OPEN_LOOP_FOR_HYBRID
+    /// register_update_theta( compute_angular_position_for_foc );
+    ///#else
+    ///      servo_foc_register_get_theta_csg(compute_angular_position);
+    ///#endif
 }
 
 static HybridState old_state = NO_STATE;
@@ -136,17 +139,18 @@ void change_motor_mode(){
 }
 
 void servo_hybrid_tick(){
-    if( ! motor_is_tared() ) return;
-    update_hybrid_state();
-    change_motor_mode();
+
+  /// update_hybrid_state();
+    /// change_motor_mode();
     servo_foc_tick();
+    /// servo_hall_tick();
 }
 void servo_hybrid_set_speed_consign( float speed ){
-    if( speed_csg_float != speed ){
-        save_theta_origin();
-        speed_csg_float = speed;
-        servo_set_speed_consign_foc(speed);
-    }
+  if( speed_csg_float != speed ){
+    save_theta_origin();
+    speed_csg_float = speed;
+    servo_set_speed_consign_foc(speed);
+  }
 }
 void servo_hybrid_set(bool enable, float targetSpeed, int16_t pwm){
     servo_hybrid_set_speed_consign(targetSpeed);

@@ -811,10 +811,15 @@ void motor_foc_tick()
     motor_ticking = true;
 
     if( !motor_flag ){
-        motor_ticking = false;
+      motor_ticking = false;
         return;
     }
     motor_flag = false;
+
+    if( ! enable_foc ){
+      motor_ticking = false;
+      return;
+    }
 
     // VALUE : [INT_MIN/ONE_TURN_THETA, INT_MAX/ONE_TURN_THETA]
     // SCALE :  ONE_TURN_THETA

@@ -5,7 +5,7 @@
 #include <terminal.h>
 
 
-static MotorMode moto_mode = FOC;
+static MotorMode motor_mode = FOC;
 
 void motor_hall_hybrid_tick();
 
@@ -23,28 +23,23 @@ void init_hall_hybrid(){
 
 void init_hybrid_pwm_pins(){
     // Initalizing motor pins
-    pwmWrite(U_IN_PIN, 0);
-    digitalWrite(U_IN_PIN, LOW);
-    pwmWrite(U_IN_PIN, 0);
-    digitalWrite(U_IN_PIN, LOW);
-    pwmWrite(V_IN_PIN, 0);
-    digitalWrite(V_IN_PIN, LOW);
-    pwmWrite(W_IN_PIN, 0);
-    digitalWrite(W_IN_PIN, LOW);
-    pwmWrite(U_SD_PIN, 0);
-    digitalWrite(U_SD_PIN, LOW);
-    pwmWrite(V_SD_PIN, 0);
-    digitalWrite(V_SD_PIN, LOW);
-    pwmWrite(W_SD_PIN, 0);
-    digitalWrite(W_SD_PIN, LOW);
 
-    pinMode(U_SD_PIN, OUTPUT);
-    pinMode(V_SD_PIN, OUTPUT);
-    pinMode(W_SD_PIN, OUTPUT);
+  // Initalizing motor pins
+  pinMode(U_SD_PIN, OUTPUT);
+  digitalWrite(U_SD_PIN, LOW);
+  pinMode(V_SD_PIN, OUTPUT);
+  digitalWrite(V_SD_PIN, LOW);
+  pinMode(W_SD_PIN, OUTPUT);
+  digitalWrite(W_SD_PIN, LOW);
 
-    pinMode(U_IN_PIN, PWM);
-    pinMode(V_IN_PIN, PWM);
-    pinMode(W_IN_PIN, PWM);
+  pinMode(U_IN_PIN, PWM);
+  pwmWrite(U_IN_PIN, 0);
+  pinMode(V_IN_PIN, PWM);
+  pwmWrite(V_IN_PIN, 0);
+  pinMode(W_IN_PIN, PWM);
+  pwmWrite(W_IN_PIN, 0);
+
+
 }
 
 void motor_hybrid_irq(){
@@ -52,15 +47,15 @@ void motor_hybrid_irq(){
 }
 
 void switch_to_hall(){
-  moto_mode = HALL;
-  
+  motor_mode = HALL;
+
   enable_motor_foc(false);
   enable_motor_hall(true);
 }
 
 void switch_to_foc(){
-  moto_mode = FOC;
-  
+  motor_mode = FOC;
+
   enable_motor_foc(true);
   enable_motor_hall(false);
 }
@@ -105,11 +100,12 @@ void init_hybrid_timers(){
 }
 
 void motor_hybrid_init(){
-    init_hall_hybrid();
-    init_hybrid_timers();
-    init_hybrid_pwm_pins();
-
+  ///   init_hall_hybrid();
+  init_hybrid_timers();
+  init_hybrid_pwm_pins();
+  switch_to_foc();
 }
+
 void motor_hybrid_set(bool enable, int value){
     motor_foc_set(enable, value);
     motor_hall_set(enable, value);
@@ -117,7 +113,7 @@ void motor_hybrid_set(bool enable, int value){
 
 void motor_hybrid_tick(){
     motor_foc_tick();
-    motor_hall_tick();
+    /// motor_hall_tick();
 }
 bool motor_hybrid_is_on(){
     return motor_foc_is_on();
@@ -134,4 +130,3 @@ TERMINAL_COMMAND(hyb_tare, "Tare hybrid")
 {
     launch_tare_motor_hybrid();
 }
-
