@@ -9,10 +9,21 @@
 // Flash address to write/read infos
 #define INFOS_FLASH_ADDR    0x0801FC00
 
+int IDs[11]={7,0,1,8,2,4,9,10,3,5,6}; //The coding of IDs from hall values
+
+int id_from_hall(bool hall1, bool hall2, bool hall3, bool hall4)
+{
+  int index=(hall1) + (hall2<<1) + (hall3<<2) + (hall4<<3);
+  if(index<11)
+    return IDs[index];
+  else
+    return -1;
+}
+
 struct robot_infos
 {
-    int id;
-    bool kickerInverted;
+  int id;
+  bool kickerInverted;
 };
 
 static struct robot_infos infos;
@@ -32,14 +43,14 @@ int infos_get_id()
 
 bool infos_kicker_inverted()
 {
-    return infos.kickerInverted;    
+    return infos.kickerInverted;
 }
 
 TERMINAL_COMMAND(infos, "ID")
 {
     terminal_io()->println("ID:");
     terminal_io()->println(infos.id);
-    
+
     terminal_io()->println("Kicker inverted:");
     terminal_io()->println((int)infos.kickerInverted);
 

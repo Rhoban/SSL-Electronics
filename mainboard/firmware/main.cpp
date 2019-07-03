@@ -17,6 +17,8 @@
 #include "infos.h"
 #include "odometry.h"
 
+bool developer_mode=false;
+
 /**
  * Setup function
  */
@@ -37,8 +39,6 @@ void setup()
     //To set in master for Match
     // infos_set(-1, false);
 
-    //To set in master for Developers
-    // infos_set(-2, false);
 /*                                                                           */
 /*****************************************************************************/
 
@@ -47,20 +47,25 @@ void setup()
     // Buzzer
     buzzer_init();
     delay_us(1000);
-    int hall1=mux_sample(HALL1_ADDR);
-    delay_us(10000);
-    int hall2=mux_sample(HALL2_ADDR);
-    delay_us(10000);
-    int hall3=mux_sample(HALL3_ADDR);
-    delay_us(10000);
-    int hall4=mux_sample(HALL4_ADDR);
+    bool h1=get_hall(HALL1_ADDR);
+    // delay_us(1000);
+    bool h2=get_hall(HALL2_ADDR);
+    // delay_us(1000);
+    bool h3=get_hall(HALL3_ADDR);
+    // delay_us(1000);
+    bool h4=get_hall(HALL4_ADDR);
 
 
+    int robot_id=id_from_hall(h1,h2,h3,h4);
+
+    if(robot_id<=6) //IF IT IS A VALID ID
+    {
+      if(robot_id!=infos_get_id())
+        infos_set(robot_id, false);
+    }
 
 
-    bool developer_mode=false;
-
-    if(hall1>2000&&hall2>2000&&hall3>2000&&hall4>2000) //no magnet
+    if(!h1 && !h2 && !h3 && !h4) //no magnet
       developer_mode=true;
 
 
@@ -69,19 +74,27 @@ void setup()
       buzzer_beep(C5,50);
       buzzer_wait_play();
       delay_us(50000);
-      buzzer_wait_play();
       buzzer_beep(C5,50);
       buzzer_wait_play();
-      delay_us(50000);
-      buzzer_wait_play();
+
 
     }
     else{
       //THE ID
-      buzzer_beep(C6,50);
-      buzzer_wait_play();
-      delay_us(100000);
-      buzzer_wait_play();
+      int id=infos_get_id();
+      if(id==0)
+      {
+        buzzer_beep(C7,300);
+        buzzer_wait_play();
+
+      }
+      else
+        for(int i=1;i<=id;i++)
+        {
+          buzzer_beep(C7,65);
+          buzzer_wait_play();
+          delay_us(65000);
+        }
 
     }
 
@@ -239,4 +252,29 @@ TERMINAL_COMMAND(hall, "Configuration hall")
   terminal_io()->println("");
 
 
+}
+
+TERMINAL_COMMAND(hallid, "ID from hall")
+{
+  bool h1=get_hall(HALL1_ADDR);
+  bool h2=get_hall(HALL2_ADDR);
+  bool h3=get_hall(HALL3_ADDR);
+  bool h4=get_hall(HALL4_ADDR);
+
+  // terminal_io()->println(h1);
+  // terminal_io()->println(h2);
+  // terminal_io()->println(h3);
+  // terminal_io()->println(h4);
+
+
+  // bool developer_mode=false;
+
+  // if(!h1 && !h2 && !h3 && !h4) //no magnet
+  //   developer_mode=true;
+
+  terminal_io()->println(id_from_hall(h1,h2,h3,h4));
+  terminal_io()->println("Dev mode:");
+  terminal_io()->println(developer_mode?1:0);
+  // int index=(h1) + (h2<<1) + (h3<<2) + (h4<<3);
+  // terminal_io()->println(index);
 }

@@ -23,6 +23,7 @@
 #define F5 698
 #define G5 784
 #define C6 1047
+#define C7 2093
 #define B5b 932
 /**
  * Initializes the buzzer
