@@ -246,11 +246,25 @@ void motor_hall_irq(){
 
     if( ! enable_hall ) return;
     int phase = hall_phases[hall_value()];
+
+    if (phase < 0 || phase >= 6) {
+        // XXX: This is not a normal state, not sure what should be done
+        // in this situation
+        set_phases(0, 0, 0, -1);
+    }
+
+    phase += ( (motor_pwm>0)? 1:-1 );
+    if( phase >= 6 ){
+      phase = 0;
+    }
+    if( phase < 0 ){
+      phase = 5;
+    }
     if (phase >= 0 && phase < 6) {
         set_phases(
-            motor_phases[phase][0]*motor_pwm,
-            motor_phases[phase][1]*motor_pwm,
-            motor_phases[phase][2]*motor_pwm,
+            motor_phases[phase][0]*abs(motor_pwm),
+            motor_phases[phase][1]*abs(motor_pwm),
+            motor_phases[phase][2]*abs(motor_pwm),
             phase
         );
     } else {
@@ -274,7 +288,8 @@ void motor_hall_tick()
     motor_hall_irq();
 
     // Current phase
-    int phase = hall_phases[hall_value()];
+    int hall_val = hall_value();
+    int phase = hall_phases[hall_val];
 
     int time = millis();
     if (phase != hall_current_phase) {
@@ -292,10 +307,9 @@ void motor_hall_tick()
 
     if ((time - hall_last_change_moving) > 500 && abs(motor_pwm) >= 500) {
         // Stop everything
-      do{hall_current_phase++;}
-      while(hall_current_phase==-1);
+      //hall_current_phase = ( hall_val + (motor_pwm>0)? 1:-1 ) % 6;
 
-      // security_set_error(SECURITY_HALL_FREEZE);
+      security_set_error(SECURITY_HALL_FREEZE);
     }
 
     if (safe_mode) {
