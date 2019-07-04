@@ -59,7 +59,7 @@ void com_frame_received()
 #ifndef PWM_ONLY_MODE
             servo_hall_set(packet->enable, packet->targetSpeed, packet->pwm);
 #else
-          motor_set(packet->enable, PWM_DRIBBLER);
+          motor_set(packet->enable, packet->targetSpeed);
 #endif
 #endif
 #ifdef USE_HYBRID

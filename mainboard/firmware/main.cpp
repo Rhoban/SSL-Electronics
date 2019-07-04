@@ -73,7 +73,7 @@ void setup()
 /*****************************************************************************/
     /* HERE TO SWITCH BETWEEN DEVMODE/PRODMODE (until the magnets are found) */
 
-    developer_mode=false;
+    // developer_mode=false;
     // infos_set(4, false);
 
 
