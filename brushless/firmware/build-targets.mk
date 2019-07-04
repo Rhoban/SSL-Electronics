@@ -2,9 +2,9 @@
 # Defines here your cpp source files
 # Ex : main.cpp test.cpp ...
 SRC_FILES = main.cpp current.cpp com.cpp servo_foc.cpp \
-    servo_hall.cpp motor.cpp servo.cpp motor_foc.cpp motor_hall.cpp \
+    servo_hall.cpp servo.cpp motor_foc.cpp motor_hall.cpp \
     security.cpp encoder_quadrature.cpp encoder_magnetic.cpp \
-    encoder_none.cpp sin_lut.cpp
+    encoder_none.cpp sin_lut.cpp hybrid.cpp
 
 ifeq ($(ENABLE_RHOCK),yes)
 SRC_FILES += rhock-functions.cpp rhock-stream.cpp

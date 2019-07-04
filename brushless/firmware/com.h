@@ -2,7 +2,7 @@
 #define _COM_H
 
 #include <stdint.h>
-#include "motor.h"
+#include "hybrid.h"
 #include "servo.h"
 #include "ssl.h"
 

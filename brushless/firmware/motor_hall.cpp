@@ -3,7 +3,6 @@
 #include <terminal.h>
 #include "encoder.h"
 #include "hardware.h"
-#include "motor.h"
 #include "motor_hall.h"
 #include "security.h"
 
@@ -28,7 +27,6 @@ static bool motor_on = false;
 static int hall_current_phase = -2;
 static int hall_last_change = 0;
 static int hall_last_change_moving = 0;
-static int encoder_last_ok = 0;
 static bool safe_mode = true;
 
 // Consecutive phases
@@ -55,11 +53,11 @@ static int hall_phases[8] = {
     -1,                     // 0b111 (impossible)
 };
 
-static void _bc_load()
-{
-    // digitalWrite(W_SD_PIN, LOW);
-    // digitalWrite(W_SD_PIN, HIGH);
-}
+//static void _bc_load()
+//{
+//    // digitalWrite(W_SD_PIN, LOW);
+//    // digitalWrite(W_SD_PIN, HIGH);
+//}
 
 static void _init_timer(int number)
 {
@@ -335,7 +333,7 @@ TERMINAL_COMMAND(safe, "Safe mode")
 TERMINAL_COMMAND(pwm, "Motor set PWM")
 {
     if (argc > 0) {
-        motor_set(true, atoi(argv[0]));
+        motor_hall_set(true, atoi(argv[0]));
     } else {
         terminal_io()->print("usage: pwm [0-3000] (current: ");
         terminal_io()->print(abs(motor_pwm));
@@ -371,9 +369,6 @@ TERMINAL_COMMAND(itest, "Interference test")
 bool motor_hall_is_on(){
     return motor_on;
 }
-
-void switch_to_hall();
-void switch_to_foc();
 
 void enable_motor_hall(bool value){
     enable_hall = value;

@@ -4,7 +4,6 @@
 #include <wirish/wirish.h>
 #include <terminal.h>
 #include <watchdog.h>
-#include "motor.h"
 #include "encoder.h"
 #include "servo.h"
 #include "security.h"

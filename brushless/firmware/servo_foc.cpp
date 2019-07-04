@@ -2,7 +2,6 @@
 #include <wirish/wirish.h>
 #include <terminal.h>
 #include "hardware.h"
-#include "motor.h"
 #include "motor_foc.h"
 #include "servo_foc.h"
 #include "encoder.h"
@@ -137,7 +136,7 @@ void reset_asservissement(){
 
 void restart(){
     reset_asservissement();
-    motor_set( true, 0 );
+    motor_foc_set( true, 0 );
 }
 
 TERMINAL_COMMAND(restart, "Restart FOC")
@@ -168,7 +167,7 @@ void control_with_vectorial_command(){
     if( motor_is_tared() and motor_foc_is_on() ){
         #ifdef STOP_OUTSIDE_LIMITS 
         if( theta < min_theta or theta > max_theta ){
-            motor_set( false, 0 );
+            motor_foc_set( false, 0 );
         }
         #endif
 

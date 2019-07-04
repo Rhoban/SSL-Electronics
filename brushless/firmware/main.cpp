@@ -15,6 +15,7 @@
 #include "hardware.h"
 #include "security.h"
 #include "errors.h"
+#include "hybrid.h"
 
 #define TEST_LED
 
@@ -116,7 +117,7 @@ void setup()
   init_pwm_pins();
 
   // Initializing servo
-  //servo_foc_init();
+  servo_foc_init();
   servo_hall_init();
 
   // Starting the watchdog
@@ -129,7 +130,8 @@ void setup()
   digitalWrite(LED_PIN, LOW);
 #endif
 
-  //launch_tare_motor_foc();
+  switch_to_foc();
+  launch_tare_motor_foc();
 }
 
 static int last_warning = 0;
@@ -166,8 +168,7 @@ void loop()
 
     // Updating motor phases, this is also done in the hall pin interrupt but
     // it seems safe to do it often anyway
-    // motor_foc_tick();
-    motor_hall_tick();
+    hybrid_tick();
 
     // Updating current sensor value
     #ifndef CURRENT_DISABLE
@@ -186,7 +187,7 @@ void loop()
     } else {
       // update_hybrid_state();
       // change_motor_mode();
-      //servo_foc_tick();
+      servo_foc_tick();
       servo_hall_tick();
     }
 

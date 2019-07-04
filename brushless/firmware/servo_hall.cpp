@@ -2,7 +2,6 @@
 #include <wirish/wirish.h>
 #include <terminal.h>
 #include "hardware.h"
-#include "motor.h"
 #include "current.h"
 #include "servo_hall.h"
 #include "encoder.h"
@@ -162,7 +161,7 @@ void servo_hall_tick()
     if (security_get_error() != SECURITY_NO_ERROR) {
         error.init();
         cmd.init();
-        motor_set(false, 0);
+        motor_hall_set(false, 0);
     } else {
         if (servo_flag) {
             servo_flag = false;
@@ -191,7 +190,7 @@ void servo_hall_tick()
                 new_cmd = new_cmd_V*PWM_HALL_SUPREMUM/VMAX;
                 cmd.top(new_cmd_V);
 
-                motor_set(true, new_cmd);
+                motor_hall_set(true, new_cmd);
                 servo_public_pwm = new_cmd;
           }
        }
@@ -221,7 +220,7 @@ void servo_hall_set(bool enable, float target, int16_t pwm)
         servo_last_error = 0;
         servo_limited_target = 0;
         current_resample();
-        motor_set(false, 0);
+        motor_hall_set(false, 0);
         security_set_error(SECURITY_NO_ERROR);
     }
 }
@@ -248,7 +247,7 @@ void servo_hall_emergency(){
 }
 void servo_hall_stop(){
     servo_hall_set(false, 0);
-    motor_set(true, 0);
+    motor_hall_set(true, 0);
 }
 
 TERMINAL_COMMAND(step, "Step")
@@ -265,7 +264,7 @@ TERMINAL_COMMAND(step, "Step")
 TERMINAL_COMMAND(clean, "Clean fifo of asserv")
 {
   servo_hall_set(false, 0);
-  motor_set(true, 0);
+  motor_hall_set(true, 0);
   error.init();
   cmd.init();
 }

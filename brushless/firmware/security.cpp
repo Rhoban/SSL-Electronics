@@ -2,8 +2,8 @@
 #include <terminal.h>
 #include "security.h"
 #include "servo.h"
-#include "motor.h"
 #include "errors.h"
+#include "hybrid.h"
 
 static SecurityError security_error = SECURITY_NO_ERROR;
 static SecurityWarning security_warning = SECURITY_NO_WARNING;

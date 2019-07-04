@@ -8,6 +8,7 @@
 #include "security.h"
 #include "servo_hall.h"
 #include "motor_foc.h"
+#include "hybrid.h"
 
 HardwareSPI slave(SLAVE_SPI);
 
@@ -53,27 +54,16 @@ void com_frame_received()
         case DRIVER_PACKET_SET: {
             // Setting the target speed
           COM_READ_PACKET(driver_packet_set)
-          
-          servo_hall_set(packet->enable, packet->targetSpeed, packet->pwm);
-          /// //motor_set(packet->enable, PWM_DRIBBLER);
-          
-          /// save_pwm = packet->pwm;
-          /// if(packet->enable){
-          ///  motor_set(packet->enable, CONFIG_PWM);
-          /// 
-          /// }else{
-          ///  servo_set(false, 0, 0);
-          /// }
-          /// servo_set_speed_consign( packet->targetSpeed );
-
+         
+          hybrid_process_packet(
+            packet->enable, packet->targetSpeed, packet->pwm
+          ); 
         }
         break;
         case DRIVER_PACKET_PARAMS: {
             // Setting the PID parameters
             COM_READ_PACKET(driver_packet_params)
             //set_motor_speed_pid(packet->kp, packet->ki, packet->kd);
-            //const float k_speed_d = 0;
-            //servo_set_pid(K_SPEED_P, K_SPEED_I, k_speed_d);
         }
         break;
         default:
@@ -135,10 +125,10 @@ static void slave_irq()
         } else {
             answer.status = 0x80|security_get_error();
         }
-        answer.speed = servo_get_speed();
 
-        /// answer.pwm = save_pwm;//motor_get_pwm();
-        answer.pwm = servo_get_pwm();
+        answer.speed = hybrid_get_speed();
+
+        answer.pwm = hybrid_get_pwm();
         
         answer.enc_cnt = encoder_position();
         answer_ptr = (uint8_t*)&answer;
