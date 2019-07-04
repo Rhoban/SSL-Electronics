@@ -2,6 +2,9 @@
 #define _COM_H
 
 #include <stdint.h>
+#include "motor.h"
+#include "servo.h"
+#include "ssl.h"
 
 #define DRIVER_PACKET_SET   0x00
 

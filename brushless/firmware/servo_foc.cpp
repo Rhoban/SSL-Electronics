@@ -396,8 +396,6 @@ TERMINAL_COMMAND(info, "Info")
     terminal_io()->println(manual_speed);
     terminal_io()->print("  open loop : ");
     terminal_io()->println(open_loop);
-    terminal_io()->print("  motor on : ");
-    terminal_io()->println(motor_is_on());
 
     terminal_io()->print("  speed_error : ");
     terminal_io()->println(speed_error);

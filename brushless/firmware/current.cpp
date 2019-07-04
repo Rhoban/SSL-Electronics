@@ -3,7 +3,6 @@
 #include <terminal.h>
 #include "hardware.h"
 #include "current.h"
-#include "motor.h"
 #include "security.h"
 
 // Current sensing
