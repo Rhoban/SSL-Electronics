@@ -122,9 +122,9 @@
     #define REVERSE_PHASE
     #define OPEN_LOOP_FOC false //true
 // #define USE_FOC
-// #define USE_HYBRID
+ #define USE_HYBRID
 //ONLY FOR DRIBBLER
-#define USE_HALL
+//œ #define USE_HALL
 #if defined(USE_HALL)
  #define PWM_ONLY_MODE //until a velocity controller is done
   #define PWM_DRIBBLER -1000
