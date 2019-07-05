@@ -13,10 +13,16 @@
 #include "hardware.h"
 #include "info.h"
 #include <flash_write.h>
-
+#include "motor_foc.h"
 
 #define TEST_LED
-static bool motor_is_tared=false;
+
+//ONLY ONCE WHEN CONFIGURING THE MOTOR
+#define SHOULD_DO_THE_TARE
+//////
+
+
+static bool is_tared=false;
 static struct motor_info info;
 /**
  * Setup function
@@ -26,13 +32,22 @@ void setup()
   // init();
   // info_init();
 
+
+#ifndef SHOULD_DO_THE_TARE
   //Read the f*cking flash
-
   flash_read(INFO_FLASH_ADDR, (void *)&info, sizeof(motor_info));
-
-  // setupFLASH();
-  // flashUnlock();
-
+  set_origin(info.tare_value);
+#else
+  //WE WRITE THE TARE INTO THE FLASH
+  //1) Activate SHOULD_DO_THE_TARE
+  //2) Start the motor and type the tare cmd in terminak
+  //3) put the returned value below
+  //4) compile/upload/restart
+  //5) Comment the SHOULD_DO_THE_TARE
+  //6) compile/upload/restart
+  info.tare_value=42; //PUT HERE THE VALUE GIVEN BY THE TARE CMD
+  info_set(info);
+#endif
 
 
 
@@ -63,10 +78,12 @@ void setup()
   digitalWrite(LED_PIN, LOW);
 #endif
 
-  if(!motor_is_tared){
-    motor_is_tared=true;
+#ifdef SHOULD_DO_THE_TARE
+  if(!is_tared){
+    is_tared=true;
     launch_tare_motor();
   }
+#endif
 }
 
 
@@ -137,4 +154,12 @@ TERMINAL_COMMAND(save_info, "Save info on flash")
 {
   info_set(info);
   terminal_io()->println("Done");
+}
+
+
+TERMINAL_COMMAND(show_tare_flash, "Show read tare info")
+{
+  terminal_io()->print("Tare: ");
+  terminal_io()->println(info.tare_value);
+
 }

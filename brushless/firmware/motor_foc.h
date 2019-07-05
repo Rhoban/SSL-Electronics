@@ -72,6 +72,8 @@ void set_fixed_theta(bool value);
 
 
 void motor_irq();
-  
+
 void enable_motor_foc(bool);
+void set_origin(int origin);
+
 #endif

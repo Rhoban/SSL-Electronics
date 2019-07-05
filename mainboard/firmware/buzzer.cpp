@@ -177,7 +177,7 @@ void buzzer_init()
   pwmWrite(BUZZER_PIN, 0);
 }
 
-void buzzer_play_note(int note)
+void buzzer_play_note(int note, int power)
 {
   timer.pause();
   timer.setPrescaleFactor(72000000 / (note * 100));
@@ -190,7 +190,7 @@ void buzzer_play_note(int note)
     timer.refresh();
     timer.resume();
     pinMode(BUZZER_PIN, PWM);
-    pwmWrite(BUZZER_PIN, 50);
+    pwmWrite(BUZZER_PIN, power);
   }
 }
 

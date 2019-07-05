@@ -995,6 +995,11 @@ void enable_motor_foc(bool value){
   enable_foc = value;
 }
 
+void set_origin(int origin)
+{
+  angle_origin=origin;
+}
+
 TERMINAL_COMMAND(enable_foc, "Enable foc"){
   if (argc == 1) {
     int val = atoi(argv[0]);

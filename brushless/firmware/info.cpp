@@ -1,5 +1,5 @@
 #include "info.h"
-
+#include "hardware.h"
 
 
 bool flashErasePage(u32 pageAddr) {
@@ -40,11 +40,26 @@ bool flashWriteWord(u32 addr, u32 word) {
 
   /* apparently we need not write to FLASH_AR and can
      simply do a native write of a half word */
-  while (GET_REG(FLASH_SR) & FLASH_SR_BSY) {}
+  while (GET_REG(FLASH_SR) & FLASH_SR_BSY) {
+    // digitalWrite(LED_PIN, LOW);
+    // delay_us(1000);
+    // digitalWrite(LED_PIN, HIGH);
+    // delay_us(10000);
+  }
   *(flashAddr + 0x01) = (vu16)hhWord;
-  while (GET_REG(FLASH_SR) & FLASH_SR_BSY) {}
+  while (GET_REG(FLASH_SR) & FLASH_SR_BSY) {
+    // digitalWrite(LED_PIN, LOW);
+    // delay_us(1000);
+    // digitalWrite(LED_PIN, HIGH);
+    // delay_us(10000);
+  }
   *(flashAddr) = (vu16)lhWord;
-  while (GET_REG(FLASH_SR) & FLASH_SR_BSY) {}
+  while (GET_REG(FLASH_SR) & FLASH_SR_BSY) {
+    // digitalWrite(LED_PIN, LOW);
+    // delay_us(1000);
+    // digitalWrite(LED_PIN, HIGH);
+    // delay_us(10000);
+  }
 
   rwmVal &= 0xFFFFFFFE;
   SET_REG(FLASH_CR, rwmVal);
@@ -99,6 +114,7 @@ bool writeChunk(u32 *ptr, int size, const char *data)
 
 void info_set(motor_info data)
 {
+  noInterrupts();
   setupFLASH();
   flashUnlock();
 
@@ -106,7 +122,7 @@ void info_set(motor_info data)
 
   for (int i=0; i<n; i+=PAGE_SIZE) {
     int size = 0;
-    u32* chunk = (u32 *)(BOOTLOADER_FLASH + i);
+    u32* chunk = (u32 *)(INFO_FLASH_ADDR + i);
 
     size = n-i;
     if (size > PAGE_SIZE) size = PAGE_SIZE;
@@ -117,5 +133,5 @@ void info_set(motor_info data)
   }
 
   flashLock();
-
+  interrupts();
 }
