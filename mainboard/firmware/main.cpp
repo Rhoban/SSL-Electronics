@@ -50,6 +50,7 @@ void setup()
     // Buzzer
     buzzer_init();
     delay_us(1000);
+
     bool h1=get_hall(HALL1_ADDR);
     // delay_us(1000);
     bool h2=get_hall(HALL2_ADDR);
@@ -70,13 +71,21 @@ void setup()
 
     if(!h1 && !h2 && !h3 && !h4){ //no magnet
       developer_mode=true; //THIS IS A GLOBAL
-      barbu_mode = true; 
+      barbu_mode = true;
     }
     else
-        barbu_mode = false;
+      barbu_mode = false;
 
 
-    
+    if(!developer_mode)
+    {
+
+      ///RICKroll
+      buzzer_play(RICKROLL);
+      buzzer_wait_play();
+      delay_us(2000000);
+
+    }
 
 /*****************************************************************************/
     /* HERE TO SWITCH BETWEEN DEVMODE/PRODMODE (until the magnets are found) */

@@ -29,6 +29,64 @@ struct buzzer_note {
 // };
 
 
+static struct buzzer_note rickroll[] = {
+
+  {B4b, 100},
+  {0, 20},
+  {C5, 100},
+  {0, 20},
+  {D5b, 100},
+  {0, 20},
+  {B4b, 100},
+  {0, 20},
+  {F5, 212},
+  {0, 20},
+  {F5, 212},
+  {0, 20},
+  {E5b, 312},
+  {0, 20},
+
+  {B4b, 100},
+  {0, 20},
+  {C5, 100},
+  {0, 20},
+  {D5b, 100},
+  {0, 20},
+  {B4b, 100},
+  {0, 20},
+  {E5b, 212},
+  {0, 20},
+  {E5b, 212},
+  {0, 20},
+  {D5b, 312},
+  {0, 20},
+
+
+  {B4b, 100},
+  {0, 20},
+  {C5, 100},
+  {0, 20},
+  {D5b, 100},
+  {0, 20},
+  {B4b, 100},
+  {0, 20},
+
+  {D5b, 212},
+  {0, 20},
+  {E5b, 212},
+  {0, 20},
+  {C5, 212},
+  {0, 212},
+  {A5b, 112},
+  {0, 20},
+
+  {E5b, 312},
+  {0, 20},
+  {D5b, 624},
+  {0, 20},
+  {0, 0}
+};
+
 static struct buzzer_note chord_boot[] = {
   {C5, 50},
   {E5, 50},
@@ -65,46 +123,46 @@ static struct buzzer_note chord_boot_dev[] = {
 // };
 
 static struct buzzer_note melody_alert[] = {
-    {2000, 200},
-    {200, 200},
-    {2000, 200},
-    {200, 200},
-    {0, 0}
+  {2000, 200},
+  {200, 200},
+  {2000, 200},
+  {200, 200},
+  {0, 0}
 };
 
 static struct buzzer_note melody_alert_fast[] = {
-    {2000, 100},
-    {200, 100},
-    {2000, 100},
-    {200, 100},
-    {2000, 100},
-    {200, 100},
-    {0, 0}
+  {2000, 100},
+  {200, 100},
+  {2000, 100},
+  {200, 100},
+  {2000, 100},
+  {200, 100},
+  {0, 0}
 };
 
 static struct buzzer_note melody_warning[] = {
-    {800, 200},
-    {400, 200},
-    {200, 0},
-    {200, 400},
-    {0, 0}
+  {800, 200},
+  {400, 200},
+  {200, 0},
+  {200, 400},
+  {0, 0}
 };
 
 static struct buzzer_note melody_begin[] = {
-    {800, 200},
-    {1000, 200},
-    {0, 0},
+  {800, 200},
+  {1000, 200},
+  {0, 0},
 };
 
 static struct buzzer_note melody_end[] = {
-    {1000, 200},
-    {800, 200},
-    {0, 0},
+  {1000, 200},
+  {800, 200},
+  {0, 0},
 };
 
 static struct buzzer_note melody_custom[] = {
-    {0, 0},
-    {0, 0}
+  {0, 0},
+  {0, 0}
 };
 
 // Status
@@ -114,111 +172,113 @@ static int melody_st;
 
 void buzzer_init()
 {
-    melody = NULL;
-    pinMode(BUZZER_PIN, PWM);
-    pwmWrite(BUZZER_PIN, 0);
+  melody = NULL;
+  pinMode(BUZZER_PIN, PWM);
+  pwmWrite(BUZZER_PIN, 0);
 }
 
 void buzzer_play_note(int note)
 {
-    timer.pause();
-    timer.setPrescaleFactor(72000000 / (note * 100));
-    timer.setOverflow(100);
+  timer.pause();
+  timer.setPrescaleFactor(72000000 / (note * 100));
+  timer.setOverflow(100);
 
-    if (note == 0) {
-        pinMode(BUZZER_PIN, OUTPUT);
-        digitalWrite(BUZZER_PIN, LOW);
-    } else {
-        timer.refresh();
-        timer.resume();
-        pinMode(BUZZER_PIN, PWM);
-        pwmWrite(BUZZER_PIN, 50);
-    }
+  if (note == 0) {
+    pinMode(BUZZER_PIN, OUTPUT);
+    digitalWrite(BUZZER_PIN, LOW);
+  } else {
+    timer.refresh();
+    timer.resume();
+    pinMode(BUZZER_PIN, PWM);
+    pwmWrite(BUZZER_PIN, 50);
+  }
 }
 
 static void buzzer_enter(struct buzzer_note *note)
 {
-    buzzer_play_note(note->freq);
-    melody = note;
-    melody_st = millis();
+  buzzer_play_note(note->freq);
+  melody = note;
+  melody_st = millis();
 
-    if (note->freq == 0 && note->duration == 0) {
-        if (melody_repeat != NULL) {
-            buzzer_enter(melody_repeat);
-        } else {
-            melody = NULL;
-        }
+  if (note->freq == 0 && note->duration == 0) {
+    if (melody_repeat != NULL) {
+      buzzer_enter(melody_repeat);
+    } else {
+      melody = NULL;
     }
+  }
 }
 
 void buzzer_play(unsigned int melody_num, bool repeat)
 {
-    struct buzzer_note *to_play = NULL;
+  struct buzzer_note *to_play = NULL;
 
-    if (melody_num == MELODY_BOOT) {
-      // to_play = &melody_boot[0];
-      to_play = &chord_boot[0];
+  if (melody_num == MELODY_BOOT) {
+    // to_play = &melody_boot[0];
+    to_play = &chord_boot[0];
 
-    } else if (melody_num == MELODY_ALERT) {
-        to_play = &melody_alert[0];
-    } else if (melody_num == MELODY_ALERT_FAST) {
-        to_play = &melody_alert_fast[0];
-    } else if (melody_num == MELODY_WARNING) {
-        to_play = &melody_warning[0];
-    } else if (melody_num == MELODY_BEETHOVEN) {
-      to_play = &chord_boot[0];
-    } else if (melody_num == MELODY_BEGIN) {
-        to_play = &melody_begin[0];
-    } else if (melody_num == MELODY_END) {
-        to_play = &melody_end[0];
-    } else if (melody_num == MELODY_CUSTOM) {
-        to_play = &melody_custom[0];
-    }else if (melody_num == MELODY_BOOT_DEV) {
-      to_play = &chord_boot_dev[0];
+  } else if (melody_num == MELODY_ALERT) {
+    to_play = &melody_alert[0];
+  } else if (melody_num == MELODY_ALERT_FAST) {
+    to_play = &melody_alert_fast[0];
+  } else if (melody_num == MELODY_WARNING) {
+    to_play = &melody_warning[0];
+  } else if (melody_num == MELODY_BEETHOVEN) {
+    to_play = &chord_boot[0];
+  } else if (melody_num == MELODY_BEGIN) {
+    to_play = &melody_begin[0];
+  } else if (melody_num == MELODY_END) {
+    to_play = &melody_end[0];
+  } else if (melody_num == MELODY_CUSTOM) {
+    to_play = &melody_custom[0];
+  }else if (melody_num == MELODY_BOOT_DEV) {
+    to_play = &chord_boot_dev[0];
+  }else if (melody_num == RICKROLL) {
+    to_play = &rickroll[0];
 
-    } else {
-        melody = NULL;
-    }
+  } else {
+    melody = NULL;
+  }
 
-    if (to_play) {
-        melody_repeat = repeat ? to_play : NULL;
-        buzzer_enter(to_play);
-    }
+  if (to_play) {
+    melody_repeat = repeat ? to_play : NULL;
+    buzzer_enter(to_play);
+  }
 }
 
 void buzzer_tick()
 {
-    if (melody != NULL) {
-        if (millis()-melody_st > melody->duration) {
-            buzzer_enter(melody+1);
-        }
+  if (melody != NULL) {
+    if (millis()-melody_st > melody->duration) {
+      buzzer_enter(melody+1);
     }
+  }
 }
 
 void buzzer_stop()
 {
-    buzzer_play_note(0);
-    melody = NULL;
-    melody_repeat = NULL;
+  buzzer_play_note(0);
+  melody = NULL;
+  melody_repeat = NULL;
 }
 
 bool buzzer_is_playing()
 {
-    return melody != NULL;
+  return melody != NULL;
 }
 
 void buzzer_wait_play()
 {
-    while (buzzer_is_playing()) {
-        buzzer_tick();
-    }
+  while (buzzer_is_playing()) {
+    buzzer_tick();
+  }
 }
 
 void buzzer_beep(unsigned int freq, unsigned int duration)
 {
-    melody_custom[0].freq = freq;
-    melody_custom[0].duration = duration;
-    buzzer_play(MELODY_CUSTOM);
+  melody_custom[0].freq = freq;
+  melody_custom[0].duration = duration;
+  buzzer_play(MELODY_CUSTOM);
 }
 
 #ifdef HAS_TERMINAL

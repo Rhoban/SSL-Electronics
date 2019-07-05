@@ -17,7 +17,17 @@
 #define MELODY_CUSTOM     6
 #define MELODY_BEETHOVEN     7
 #define MELODY_BOOT_DEV       8
+#define RICKROLL       9
+
+#define A5 880
+#define A5b 830
+
+#define B4 494
+#define B4b 466
 #define C5 523 //C note in Hz
+#define C5d 554
+#define D5 587
+#define D5b 554
 #define E5 659
 #define E5b 622
 #define F5 698
@@ -25,6 +35,7 @@
 #define C6 1047
 #define C7 2093
 #define B5b 932
+#define F5 698
 /**
  * Initializes the buzzer
  */

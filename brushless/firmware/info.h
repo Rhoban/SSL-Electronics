@@ -64,7 +64,7 @@ typedef struct {
 struct motor_info
 {
   int tare_value;
-};
+} __attribute__((packed));
 
 
 bool flashErasePage(u32 pageAddr);

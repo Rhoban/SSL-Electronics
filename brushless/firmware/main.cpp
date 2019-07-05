@@ -133,7 +133,7 @@ TERMINAL_COMMAND(read_info, "Read motor info in flash")
   terminal_io()->println(info.tare_value);
 }
 
-TERMINAL_COMMAND(fave_info, "Save info on flash")
+TERMINAL_COMMAND(save_info, "Save info on flash")
 {
   info_set(info);
   terminal_io()->println("Done");
