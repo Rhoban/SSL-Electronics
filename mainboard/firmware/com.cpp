@@ -616,6 +616,8 @@ void com_send_status_to_master()
 
 TERMINAL_PARAMETER_INT(actions, "actions", 0);
 
+
+
 void com_process_master()
 {
     if (com_master_frame[0] == INSTRUCTION_MASTER) {
@@ -657,23 +659,29 @@ void com_process_master()
             }
 
 
+            
+
             // Kicking
-            if (ir_present()) {
-                bool inverted = infos_kicker_inverted();
-                if ((master_packet->actions & ACTION_KICK1) &&
-                    !(my_actions & ACTION_KICK1)) {
-                    kicker_kick(inverted ? 0 : 1, master_packet->kickPower*25);
-                }
+            if ((my_actions & ACTION_KICK1) || (my_actions & ACTION_KICK2) || ir_present_now()) {
+                if(kicker_cap_voltage() > 80.0){
+                    // drivers_set_safe(4, true, 0);
+                    bool inverted = infos_kicker_inverted();
+                    if ((master_packet->actions & ACTION_KICK1) &&
+                        !(my_actions & ACTION_KICK1)) {
+                        kicker_kick(inverted ? 0 : 1, master_packet->kickPower*30);
+                    }
 
-                if ((master_packet->actions & ACTION_KICK2) &&
-                    !(my_actions & ACTION_KICK2)) {
-                    kicker_kick(inverted ? 1 : 0, master_packet->kickPower*25);
-                }
+                    if ((master_packet->actions & ACTION_KICK2) &&
+                        !(my_actions & ACTION_KICK2)) {
+                        kicker_kick(inverted ? 1 : 0, master_packet->kickPower*30);
+                    }
 
-                my_actions = master_packet->actions;
-            } else {
-                my_actions = master_packet->actions;
-                my_actions &= ~(ACTION_KICK1 | ACTION_KICK2);
+                    my_actions = master_packet->actions;
+                } else {
+
+                    my_actions = master_packet->actions;
+                    my_actions &= ~(ACTION_KICK1 | ACTION_KICK2);
+                }
             }
         } else {
             buzzer_play(MELODY_ALERT_FAST, false);

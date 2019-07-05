@@ -4,16 +4,24 @@
 #include "ir.h"
 #include "hardware.h"
 #include <watchdog.h>
+#include "drivers.h"
 
 volatile bool ir_detected = false;
 volatile int ir_value = 0;
 volatile int presentSince = 0;
 
+extern bool barbu_mode;
+
+static bool ir_dribble_start = false;
+static int start_dribble_time = millis();
 void ir_init()
 {
     pinMode(IR_EMIT, OUTPUT);
     digitalWrite(IR_EMIT, LOW);
     pinMode(IR_RECEIVE, INPUT_ANALOG);
+
+    ir_dribble_start = false;
+    start_dribble_time = millis();
 
     ir_value = 0;
 }
@@ -21,7 +29,7 @@ void ir_init()
 
 bool ir_present()
 {
-  return (millis() - presentSince) > 20;
+  return (millis() - presentSince) > 1;
 }
 
 bool ir_present_now()
@@ -29,9 +37,12 @@ bool ir_present_now()
   return ir_detected;
 }
 
+
 void ir_tick()
 {
     static int lastSample = 0;
+
+
 
     if (millis() - lastSample > 1) {
         lastSample = millis();
@@ -44,10 +55,18 @@ void ir_tick()
         if (ir_value > IR_THRESHOLD) {
           ir_detected = false;
           presentSince = millis(); //reset the presence timer
+          if(barbu_mode == false){
+            if((millis() - start_dribble_time) > 500){
+                drivers_set(4, true, 300);
+            }
+          }
         } else {
           ir_detected = true;
+          if(barbu_mode == false){
+            drivers_set(4, true, 1000);
+            start_dribble_time = millis();
+          }
         }
-
     }
 }
 
