@@ -11,7 +11,7 @@
 static bool clearing = false;
 static int clear = 0;
 static bool charging = false;
-
+extern bool barbu_mode;
 
 #if BOARD == GREG
   #define KICKER_OFF HIGH
@@ -114,6 +114,10 @@ void kicker_init()
     digitalWrite(KICKER1_PIN, KICKER_OFF);
     pinMode(KICKER2_PIN, OUTPUT);
     digitalWrite(KICKER2_PIN, KICKER_OFF);
+
+    if(barbu_mode == false){
+        kicker_boost_enable(true);
+    }
 }
 
 void kicker_clear()

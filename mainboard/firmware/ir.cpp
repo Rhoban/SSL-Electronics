@@ -10,6 +10,7 @@ volatile bool ir_detected = false;
 volatile int ir_value = 0;
 volatile int presentSince = 0;
 
+extern bool barbu_mode;
 
 static bool ir_dribble_start = false;
 static int start_dribble_time = millis();
@@ -54,15 +55,19 @@ void ir_tick()
         if (ir_value > IR_THRESHOLD) {
           ir_detected = false;
           presentSince = millis(); //reset the presence timer
+          if(barbu_mode == false){
             if((millis() - start_dribble_time) > 500){
-                    drivers_set(4, true, 300);
-                }
+                drivers_set(4, true, 300);
+            }
+          }
         } else {
           ir_detected = true;
-                drivers_set(4, true, 1000);
-                start_dribble_time = millis();
-            }
+          if(barbu_mode == false){
+            drivers_set(4, true, 1000);
+            start_dribble_time = millis();
+          }
         }
+    }
 }
 
 void ir_diagnostic()
