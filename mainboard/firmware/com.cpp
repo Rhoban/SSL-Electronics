@@ -60,6 +60,7 @@ static int com_txing[3] = {0};
 
 static bool com_module_present[3] = {true};
 static int com_module_last_missing[3] = {0};
+extern bool barbu_mode;
 
 #define VALUE_TO_STRING(x) #x
 #define VALUE(x) VALUE_TO_STRING(x)
@@ -630,6 +631,9 @@ void com_process_master()
 
         // Driving wheels
         if ((master_packet->actions & ACTION_ON)) {
+            if(barbu_mode == false){
+                kicker_boost_enable(true);
+            }
             if(master_packet->actions & ACTION_TARE_ODOM) {
                 odometry_tare((master_packet->x_speed)/1000.0, (master_packet->y_speed)/1000.0, (master_packet->t_speed)/10000.0);
                 //odometry_tare(0.0, 0.0, 0.0);
