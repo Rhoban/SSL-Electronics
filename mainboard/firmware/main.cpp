@@ -20,6 +20,7 @@
  * Setup function
  */
 
+bool barbu_mode = true;
 
 
 void setup()
@@ -67,8 +68,15 @@ void setup()
     }
 
 
-    if(!h1 && !h2 && !h3 && !h4) //no magnet
+    if(!h1 && !h2 && !h3 && !h4){ //no magnet
       developer_mode=true; //THIS IS A GLOBAL
+      barbu_mode = true; 
+    }
+    else
+        barbu_mode = false;
+
+
+    
 
 /*****************************************************************************/
     /* HERE TO SWITCH BETWEEN DEVMODE/PRODMODE (until the magnets are found) */
