@@ -905,9 +905,22 @@ TERMINAL_COMMAND(info_motor, "Info on motor")
 
 TERMINAL_COMMAND(tare, "Tare origin")
 {
-    tare_is_set = false;
-    start_to_tare_motor();
+  tare_is_set = false;
+  start_to_tare_motor();
 
+}
+
+TERMINAL_COMMAND(show_tare, "Show tare value")
+{
+  if(tare_is_set)
+  {
+
+    terminal_io()->print("Tare value : ");
+    terminal_io()->println(angle_origin);
+
+  }
+  else
+    terminal_io()->println("You should tare first");
 }
 
 //TERMINAL_COMMAND(save, "Save origin")

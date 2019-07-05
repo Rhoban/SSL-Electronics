@@ -11,9 +11,13 @@
 #include "com.h"
 #include "servo.h"
 #include "hardware.h"
+#include "info.h"
+#include <flash_write.h>
+
 
 #define TEST_LED
 static bool motor_is_tared=false;
+static struct motor_info info;
 /**
  * Setup function
  */
@@ -21,6 +25,15 @@ void setup()
 {
   // init();
   // info_init();
+
+  //Read the f*cking flash
+
+  flash_read(INFO_FLASH_ADDR, (void *)&info, sizeof(motor_info));
+
+  // setupFLASH();
+  // flashUnlock();
+
+
 
 
   // Initalizing communication
@@ -109,4 +122,19 @@ void loop()
 TERMINAL_COMMAND(term, "term test")
 {
     terminal_io()->println("term works !");
+}
+
+
+
+TERMINAL_COMMAND(read_info, "Read motor info in flash")
+{
+  flash_read(INFO_FLASH_ADDR, (void *)&info, sizeof(motor_info));
+  terminal_io()->print("Flash value: ");
+  terminal_io()->println(info.tare_value);
+}
+
+TERMINAL_COMMAND(fave_info, "Save info on flash")
+{
+  info_set(info);
+  terminal_io()->println("Done");
 }

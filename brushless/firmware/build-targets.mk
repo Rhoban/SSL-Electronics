@@ -4,7 +4,7 @@
 SRC_FILES = main.cpp current.cpp com.cpp servo_hybrid.cpp servo_foc.cpp \
     servo_hall.cpp servo.cpp motor_hybrid.cpp motor_foc.cpp motor_hall.cpp \
     motor.cpp security.cpp encoder_quadrature.cpp encoder_magnetic.cpp \
-    encoder_none.cpp sin_lut.cpp
+    encoder_none.cpp sin_lut.cpp info.cpp
 
 ifeq ($(ENABLE_RHOCK),yes)
 SRC_FILES += rhock-functions.cpp rhock-stream.cpp

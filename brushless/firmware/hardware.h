@@ -3,6 +3,10 @@
 
 #include "ssl.h"
 
+// Flash address to write/read infos
+#define INFO_FLASH_ADDR    0x0801FC00
+
+
 // Defines the driver type (see below)
 #define DRIVER_TYPE     TYPE_70W
 
