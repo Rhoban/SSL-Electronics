@@ -150,7 +150,15 @@ void drivers_init()
   }
 
   for (int k=0; k<5; k++) {
-    drivers_present[k] = drivers_ping(k);
+    bool ret=false;
+    while(!ret){
+      digitalWrite(BOARD_LED_PIN, HIGH);
+      ret=drivers_ping(k);
+      delay(10);
+      watchdog_feed();
+      digitalWrite(BOARD_LED_PIN, LOW);
+    }
+    drivers_present[k] = ret;
   }
 }
 

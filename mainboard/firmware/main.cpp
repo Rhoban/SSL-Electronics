@@ -133,7 +133,7 @@ void setup()
       buzzer_beep(C5,50);
     buzzer_wait_play();
     // Initalizing drivers
-    drivers_init();
+    voltage_init();
     delay_us(800000);
 
     if(developer_mode)
@@ -157,7 +157,9 @@ void setup()
     ir_init();
     delay_us(800000);
     // Voltage measure
-    voltage_init();
+
+
+    drivers_init();
 
     if (com_is_all_ok() ) { // && drivers_is_all_ok()) {
       // buzzer_play(MELODY_BEETHOVEN);
@@ -172,7 +174,6 @@ void setup()
     }
 
     terminal_init(&SerialUSB);
-
 
     // Reiniting com
     com_init();
