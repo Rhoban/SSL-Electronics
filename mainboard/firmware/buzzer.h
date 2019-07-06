@@ -1,6 +1,8 @@
 #ifndef _BUZZER_H
 #define _BUZZER_H
 
+#define BUZZER_POWER 70
+
 // When the robot starts
 #define MELODY_BOOT       0
 
@@ -75,6 +77,6 @@ void buzzer_wait_play();
  */
 void buzzer_beep(unsigned int freq, unsigned int duration);
 
-void buzzer_play_note(int note);
+void buzzer_play_note(int note, int power=BUZZER_POWER);
 
 #endif
