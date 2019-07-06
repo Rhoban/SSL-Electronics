@@ -164,6 +164,8 @@ void kicker_kick(int kicker, int power)
     }
 }
 
+bool was_charging = false;
+
 void kicker_tick()
 {
     static int lastClear = millis();
@@ -173,6 +175,15 @@ void kicker_tick()
     if (millis() - lastSample > 5) {
       float voltage = 3.0*mux_sample(CAP_ADDR)/4096;
       voltage = voltage*(CAP_R1+CAP_R2)/CAP_R2;
+
+      if(voltage >= 160 && was_charging == true){
+          disable_boost();
+          was_charging = false;
+      }
+      else if((voltage <= 140) && (was_charging == false)){
+          enable_boost();
+          was_charging = true;
+      }
 
       lastSample = millis();
       cap = voltage*0.99 + cap*0.01;
