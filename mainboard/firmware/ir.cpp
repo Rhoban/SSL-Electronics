@@ -29,7 +29,7 @@ void ir_init()
 
 bool ir_present()
 {
-  return (millis() - presentSince) > 1;
+  return (millis() - presentSince) > 30;
 }
 
 bool ir_present_now()

@@ -659,7 +659,7 @@ void com_process_master()
             if (master_packet->actions & ACTION_CHARGE) {
                 kicker_boost_enable(true);
             } else {
-                kicker_boost_enable(false);
+                kicker_boost_enable(true);
             }
 
 
@@ -696,7 +696,7 @@ void com_process_master()
             drivers_set(3, false, 0);
             drivers_set(4, false, 0);
             my_actions = 0;
-            kicker_boost_enable(false);
+            kicker_boost_enable(true);
         }
     } else if (com_master_frame[0] == INSTRUCTION_PARAMS) {
         struct packet_params *params;
@@ -829,7 +829,7 @@ void com_tick()
       } else {
         if (com_has_master) {
           com_has_master = false;
-          kicker_boost_enable(false); // Stopping the charge
+          kicker_boost_enable(true); // Stopping the charge
           // buzzer_play(MELODY_END);
         }
         my_actions = 0;
@@ -936,7 +936,7 @@ TERMINAL_COMMAND(em, "Emergency")
         }
     }
 
-    kicker_boost_enable(false);
+    // kicker_boost_enable(false);
 }
 
 TERMINAL_COMMAND(version, "")
