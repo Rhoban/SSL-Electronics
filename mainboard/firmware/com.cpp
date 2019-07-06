@@ -696,7 +696,7 @@ void com_process_master()
             drivers_set(3, false, 0);
             drivers_set(4, false, 0);
             my_actions = 0;
-            kicker_boost_enable(true);
+            kicker_boost_enable(false);
         }
     } else if (com_master_frame[0] == INSTRUCTION_PARAMS) {
         struct packet_params *params;
