@@ -39,4 +39,6 @@ int servo_hall_get_pwm();
 void servo_hall_emergency();
 void servo_hall_stop();
 
+void reset_hall_error();
+
 #endif

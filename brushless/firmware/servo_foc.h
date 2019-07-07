@@ -58,4 +58,5 @@ void servo_foc_register_get_theta_csg(
     int (*fct)( int update_frequence)
 );
 
+void reset_foc_error();
 #endif

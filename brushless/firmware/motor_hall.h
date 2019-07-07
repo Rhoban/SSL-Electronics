@@ -24,5 +24,7 @@ bool motor_hall_is_on();
 
 void enable_motor_hall(bool);
 
+void set_hall_motor_pwm( int );
+
 #define PWM_HALL_SUPREMUM 3000
 #endif

@@ -10,7 +10,7 @@
 #define PWM_MIN ((PWM_MIN_PERCENT*PWM_SUPREMUM)/100)
 #define PWM_MAX ((PWM_MAX_PERCENT*PWM_SUPREMUM)/100)
 
-static bool enable_hall = true;
+static bool enable_hall = false;
 
 // Motor pins
 static int motor_pins[6] = {
@@ -210,15 +210,31 @@ TERMINAL_COMMAND(hall, "Test the hall sensors")
     terminal_io()->println();
 }
 
+
 void motor_hall_set(bool enable, int value)
 {
     motor_on = enable;
 
-    if (value > 0) value += PWM_MIN;
-    if (value < 0) value -= PWM_MIN;
+    if (abs(value) < PWM_MIN ){
+      if( value > 0 ){
+        value = PWM_MIN;
+      }else{
+        value = -PWM_MIN;
+      }
+    }
 
     if (value < -PWM_MAX) value = -PWM_MAX;
     if (value > PWM_MAX) value = PWM_MAX;
+
+    #define LIM_DIFF_PWM 5
+    int diff = value - motor_pwm;
+    if( abs(diff) > LIM_DIFF_PWM ){
+      if( diff > 0 ){
+         value = motor_pwm + LIM_DIFF_PWM;
+      }else{
+         value = motor_pwm - LIM_DIFF_PWM;
+      }
+    } 
 
     motor_pwm = value;
 }
@@ -374,6 +390,22 @@ void enable_motor_hall(bool value){
     enable_hall = value;
 }
 
+void set_hall_motor_pwm(int value){
+    if (abs(value) < PWM_MIN ){
+      if( value > 0 ){
+        value = PWM_MIN;
+      }else{
+        value = -PWM_MIN;
+      }
+    }
+
+    if (value < -PWM_MAX) value = -PWM_MAX;
+    if (value > PWM_MAX) value = PWM_MAX;
+
+    motor_pwm = value;
+}
+
+#if 0
 TERMINAL_COMMAND(enable_hall, "Enable hall"){
     if (argc == 1) {
         int val = atoi(argv[0]);
@@ -384,3 +416,4 @@ TERMINAL_COMMAND(enable_hall, "Enable hall"){
         }
     }
 }
+#endif

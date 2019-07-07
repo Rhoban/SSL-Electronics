@@ -8,8 +8,7 @@
 #include "security.h"
 #include "motor_hall.h"
 
-class fifo{
-  public:
+struct fifo{
     fifo();
     fifo(int _length);
     ~fifo();
@@ -19,7 +18,6 @@ class fifo{
     int get_Length();
     double get_Value(int _pos);
 
-  private:
     int length;
     double *data;
     void pop();
@@ -40,7 +38,7 @@ static float servo_speed = 0;
 static volatile int16_t servo_public_pwm = 0;
 
 #define VMAX 20
-#define VLIMIT 18
+#define VLIMIT 10
 #define NBR_COEF 4
 
 #define ASSERV_FPI 1
@@ -205,6 +203,12 @@ TERMINAL_COMMAND(dbg, "Dbg servo")
     terminal_io()->println(servo_last_error);
     terminal_io()->println("Acc: ");
     terminal_io()->println(servo_acc);
+}
+
+void reset_hall_error(){
+  for( unsigned int i=0; i<NBR_COEF; i++ ){
+    error.data[i] = 0;
+  }
 }
 
 void servo_hall_set(bool enable, float target, int16_t pwm)

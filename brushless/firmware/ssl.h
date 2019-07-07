@@ -124,7 +124,7 @@
 // #define USE_FOC
  #define USE_HYBRID
 //ONLY FOR DRIBBLER
-//œ #define USE_HALL
+//  #define USE_HALL
 #if defined(USE_HALL)
  #define PWM_ONLY_MODE //until a velocity controller is done
   #define PWM_DRIBBLER -1000

@@ -150,7 +150,9 @@ void drivers_init()
   }
 
   for (int k=0; k<5; k++) {
-    drivers_present[k] = drivers_ping(k);
+    while(!( drivers_present[k] = drivers_ping(k)) ){
+      delay_us(1000);
+    }
   }
 }
 
@@ -169,6 +171,64 @@ TERMINAL_COMMAND(scan, "Scan for drivers")
         }
     }
 }
+
+TERMINAL_COMMAND(test, "Set speed for one driver")
+{
+    int min_v = atof(argv[0]);
+    int max_v = atof(argv[1]);
+
+    float init_speed = 0.0;
+    float min_speed = min_v;
+    float max_speed = max_v;
+
+    if (argc != 2) {
+        terminal_io()->println("Usage: set [driver] [speed]");
+    } else {
+        for( int i = 0 ; i<4; i++ ) drivers_set_safe(i, true, init_speed);
+        int last_time = micros();
+        int cnt = 0;
+        while (!SerialUSB.available()) {
+            int time = micros();
+            if( cnt % 2 == 0 ){
+              for( int i = 0 ; i<4; i++ ){
+                drivers_set_safe(i, true, max_speed);
+                delay(5);
+              };
+            }else{
+              for( int i = 0 ; i<4; i++ ){
+                  delay(5);
+                  drivers_set_safe(i, true, min_speed);
+              }
+            }
+            if( time - last_time > 5000000 ){
+              last_time = time;
+              if( cnt % 2 == 0 ){
+                terminal_io()->println("MAX");
+              }else{
+                terminal_io()->println("MIN");
+              }
+              cnt ++;
+            }
+            drivers_tick();
+            buzzer_tick();
+
+// Remove of steve Debug
+// //GROS DEBUG
+//            digitalWrite(IR_EMIT, HIGH);
+//            int value = analogRead(IR_RECEIVE);
+//            digitalWrite(IR_EMIT, LOW);
+//            terminal_io()->println(value);
+//            delay(5);
+//            /////////
+
+
+            watchdog_feed();
+            delay(5);
+        }
+    }
+}
+
+
 
 TERMINAL_COMMAND(set, "Set speed for one driver")
 {

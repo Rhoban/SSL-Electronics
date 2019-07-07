@@ -150,7 +150,7 @@ void setup()
     // Voltage measure
     voltage_init();
 
-    if (com_is_all_ok() ) { // && drivers_is_all_ok()) {
+    if ( com_is_all_ok() ) { // && drivers_is_all_ok()) {
       // buzzer_play(MELODY_BEETHOVEN);
       if(developer_mode)
         buzzer_play(MELODY_BOOT_DEV);
@@ -161,7 +161,6 @@ void setup()
     } else {
       buzzer_play(MELODY_WARNING);
     }
-
     terminal_init(&SerialUSB);
 
 

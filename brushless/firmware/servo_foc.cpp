@@ -667,3 +667,14 @@ TERMINAL_COMMAND(in, "Info servo")
 }
 
 
+void reset_foc_error(){
+  speed_error = 0;
+  speed_p = 0;
+  limited_theta_error = 0;
+  theta_error = 0;
+  speed_i__acc_sum = 0;
+  speed_load = 0;
+  voltage_i__acc_sum = 0;
+  voltage_load = 0;
+  electromagnetic_force = 0;
+}

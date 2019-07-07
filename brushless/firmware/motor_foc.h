@@ -74,4 +74,6 @@ void set_fixed_theta(bool value);
 void motor_irq();
   
 void enable_motor_foc(bool);
+
+int get_max_foc_pwm();
 #endif
