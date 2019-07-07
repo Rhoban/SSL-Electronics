@@ -53,6 +53,7 @@
   // For SPI based encoders
   #define ENCODER_SPI         2
   #define ENCODER_SELECT_PIN  PB12
+  #define ENCODER_SELECT_PIN_2  PC9
   #define ENCODER_INDEX_PIN   12 // Used to make a shift bit to define PB12
 
   // Current sensing

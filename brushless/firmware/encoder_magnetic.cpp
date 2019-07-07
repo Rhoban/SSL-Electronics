@@ -351,9 +351,9 @@ static void init_timer()
 void encoder_init()
 {
     // Initializing pins
-    digitalWrite(ENCODER_SELECT_PIN, HIGH);
     encoder.begin(SPI_18MHZ, MSBFIRST, SPI_MODE_LOW_FALLING);
     pinMode(ENCODER_SELECT_PIN, OUTPUT);
+    digitalWrite(ENCODER_SELECT_PIN, HIGH);
 
     init_timer();
     
