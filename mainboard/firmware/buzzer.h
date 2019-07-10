@@ -1,7 +1,7 @@
 #ifndef _BUZZER_H
 #define _BUZZER_H
 
-#define BUZZER_POWER 70
+#define BUZZER_POWER 50
 
 // When the robot starts
 #define MELODY_BOOT       0
@@ -38,6 +38,7 @@
 #define C7 2093
 #define B5b 932
 #define F5 698
+
 /**
  * Initializes the buzzer
  */

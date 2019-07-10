@@ -1,10 +1,10 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <terminal.h>
-#include "buzzer.h"
 #include "com.h"
 #include "mux.h"
 #include <wirish/wirish.h>
+#include "buzzer.h"
 #include <watchdog.h>
 #include "kicker.h"
 #include "kinematic.h"
@@ -29,6 +29,8 @@ static bool com_should_transmit[MAX_ROBOTS] = {false};
 // Status replies from robots
 static struct packet_robot com_statuses[MAX_ROBOTS];
 static bool com_has_status[MAX_ROBOTS] = {false};
+
+static struct buzzer_note note_now = {0,0};
 
 // Parmeters to send to robot
 // static struct packet_params com_master_params; //NOT USED
@@ -618,7 +620,6 @@ void com_send_status_to_master()
 TERMINAL_PARAMETER_INT(actions, "actions", 0);
 
 
-
 void com_process_master()
 {
     if (com_master_frame[0] == INSTRUCTION_MASTER) {
@@ -698,13 +699,33 @@ void com_process_master()
             my_actions = 0;
             kicker_boost_enable(false);
         }
-    } else if (com_master_frame[0] == INSTRUCTION_PARAMS) {
-        struct packet_params *params;
-        params = (struct packet_params*)(com_master_frame+1);
-
-        // Setting PID parmeters
-        drivers_set_params(params->kp, params->ki, params->kd);
     }
+    else if (com_master_frame[0] == MUSIC_PARAMS){
+         struct packet_music *music_params;
+         music_params = (struct packet_music*)(com_master_frame + 1);
+
+        if(music_params->instrument & SOUND_ON){
+            if(music_params->instrument & BEEPER){
+                buzzer_beep(music_params->note, music_params->duration);
+                buzzer_wait_play();
+            }
+            if(music_params->instrument & KICK){
+                kicker_kick(1,1000);
+            }
+            if(music_params->instrument & CHIP_KICK){
+                kicker_kick(0,1000);
+            }
+            if(music_params->instrument & DRIBBLER){
+                drivers_set(4, true, 1000);
+            }
+            else
+            {
+                drivers_set(4, false, 0);
+            }
+            
+        }
+
+     }
 }
 
 void com_tick()
@@ -714,7 +735,7 @@ void com_tick()
 // Comment to debug on shell
 #define BINARY
 
-       // Entering master infinite loop
+       // Entering master infinite loop 
       while (com_master) {
         // Feed the watchdog
         watchdog_feed();

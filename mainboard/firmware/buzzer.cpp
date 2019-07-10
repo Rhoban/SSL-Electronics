@@ -2,16 +2,18 @@
 #include <wirish/wirish.h>
 #include <terminal.h>
 #include "hardware.h"
+#include "watchdog.h"
 #include "buzzer.h"
+
+struct buzzer_note {
+    unsigned int freq;
+    unsigned int duration;
+};
 
 // Config
 HardwareTimer           timer(BUZZER_TIMER);
 
 // Partitions
-struct buzzer_note {
-    unsigned int freq;
-    unsigned int duration;
-};
 // static struct buzzer_note beethoven_boot[] = {
 //     {440, 200},
 //     {0, 10},
@@ -166,6 +168,8 @@ static struct buzzer_note melody_custom[] = {
 };
 
 // Status
+static struct buzzer_note *note_now;
+
 static struct buzzer_note *melody;
 static struct buzzer_note *melody_repeat;
 static int melody_st;
@@ -271,6 +275,7 @@ void buzzer_wait_play()
 {
   while (buzzer_is_playing()) {
     buzzer_tick();
+    watchdog_feed();
   }
 }
 

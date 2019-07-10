@@ -57,7 +57,7 @@ void ir_tick()
           presentSince = millis(); //reset the presence timer
           if(barbu_mode == false){
             if((millis() - start_dribble_time) > 500){
-                drivers_set(4, true, 300);
+                drivers_set(4, false, 0);
             }
           }
         } else {

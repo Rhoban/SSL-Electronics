@@ -50,6 +50,30 @@ struct packet_robot {
 
 } __attribute__((packed));
 
+
+#define MUSIC_PARAMS       0x02
+struct packet_music {
+
+    #define SOUND_ON  (1<<0)   
+    #define BEEPER    (1<<1)   
+    #define KICK      (1<<2)  
+    #define CHIP_KICK (1<<3)   
+    #define DRIBBLER  (1<<5)   
+
+    uint8_t instrument;
+    uint16_t note;
+    uint16_t duration;
+
+} __attribute__((packed));
+
+struct buzzer_note {
+    unsigned int freq;
+    unsigned int duration;
+};
+
+// void buzzer_play(unsigned int melody, bool repeat=false);
+
+
 void com_init();
 
 void com_tick();

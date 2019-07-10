@@ -80,10 +80,10 @@ void setup()
     if(!developer_mode)
     {
 
-      ///RICKroll
-      buzzer_play(RICKROLL);
-      buzzer_wait_play();
-      delay_us(2000000);
+    //   ///RICKroll
+    //   buzzer_play(RICKROLL);
+    //   buzzer_wait_play();
+    //   delay_us(2000000);
 
     }
 
