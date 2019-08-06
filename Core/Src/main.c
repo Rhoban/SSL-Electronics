@@ -1,13 +1,14 @@
-/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file           : main.c
   * @brief          : Main program body
   ******************************************************************************
   * @attention
-  *
+*
   * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
   * All rights reserved.</center></h2>
+  * <h2><center>&copy; Copyright (c) 2019 Adrien Boussicault .
+  * All rights reserved. (User code modification)</center></h2>
   *
   * This software component is licensed by ST under BSD 3-Clause license,
   * the "License"; You may not use this file except in compliance with the
@@ -21,10 +22,12 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "usb_device.h"
-
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <terminal.h>
+#include "debug.h"
+#include "usbd_cdc_if.h"
+#include <jump_to_bootloader.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -45,7 +48,6 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -57,7 +59,37 @@ static void MX_GPIO_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+TERMINAL_PARAMETER_INT(var1, "Variable 1", 1)
+TERMINAL_PARAMETER_FLOAT(var2, "Variable 2", 2.0/3.0)
+TERMINAL_PARAMETER_DOUBLE(var3, "Variable 3", 2.0/3.0)
+TERMINAL_PARAMETER_BOOL(var4, "Variable 4", true)
 
+TERMINAL_COMMAND(version, "firmware version")
+{
+  terminal_println(FIRMWARE_VERSION);
+}
+
+
+TERMINAL_COMMAND(show_var, "Show all variables")
+{
+  if(argc > 0){
+    terminal_println("This command do not need arguments.");
+  }else{
+    terminal_print("var1 : ");
+    terminal_println_int(var1);
+    terminal_print("var2 : ");
+    terminal_println_float(var2);
+    terminal_print("var3 : ");
+    terminal_println_double(var3);
+    terminal_print("var4 : ");
+    terminal_println_int(var4);
+  }
+}
+
+TERMINAL_COMMAND(jump_to_bootloader, "Execute the bootloader")
+{
+  jump_to_bootloader();
+}
 /* USER CODE END 0 */
 
 /**
@@ -91,13 +123,17 @@ int main(void)
   MX_GPIO_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
-
+  get_serial()->init();
+  terminal_init(get_serial());
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    get_serial()->tick();
+    terminal_tick();
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -159,10 +195,9 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE(); // FOR JTAG
 
 }
-
-/* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
 
@@ -174,9 +209,9 @@ void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
-
   /* USER CODE END Error_Handler_Debug */
 }
+
 
 #ifdef  USE_FULL_ASSERT
 /**

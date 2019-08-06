@@ -31,7 +31,6 @@
 #include "usbd_cdc.h"
 
 /* USER CODE BEGIN INCLUDE */
-
 /* USER CODE END INCLUDE */
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
@@ -49,7 +48,6 @@
   * @{
   */
 /* USER CODE BEGIN EXPORTED_DEFINES */
-
 /* USER CODE END EXPORTED_DEFINES */
 
 /**
@@ -106,7 +104,12 @@ extern USBD_CDC_ItfTypeDef USBD_Interface_fops_FS;
 uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);
 
 /* USER CODE BEGIN EXPORTED_FUNCTIONS */
-
+// Len is lesser or equal to USB_RX_DATA_SIZE.
+uint32_t usb_is_configured();
+void usb_pop_received_data( uint8_t* usb_data, uint32_t* len);
+_Bool usb_available();
+char usb_pop_char();
+_Bool usb_output_is_full();
 /* USER CODE END EXPORTED_FUNCTIONS */
 
 /**

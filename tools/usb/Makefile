@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # Copyright (C) 2019  Adrien Boussicault <adrien.boussicault@labri.fr>
 #
 # This program is free software: you can redistribute it and/or
@@ -16,4 +14,12 @@
 # License along with this program.  If not, see
 # <http://www.gnu.org/licenses/>.
 
-make GCC_PATH=/home_extra/boussica/gcc-arm-none-eabi-8-2019-q3-update/bin
+all: usbreset
+
+usbreset: usbreset.c
+	gcc usbreset.c -o usbreset
+
+clean:
+	-rm usbreset
+
+.PHONY: all

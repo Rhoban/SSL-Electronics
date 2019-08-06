@@ -1,15 +1,135 @@
-# Add Udev permition
+> Copyright (C) 2019  Adrien Boussicault <adrien.boussicault@labri.fr>
+>
+> This program is free software: you can redistribute it and/or
+> modify it under the terms of the GNU Lesser General Public
+> License as published by the Free Software Foundation, either
+> version 3 of the License, or (at your option) any later version.
+>
+> This program is distributed in the hope that it will be useful,
+> but WITHOUT ANY WARRANTY; without even the implied warranty of
+> MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+> Lesser General Public License for more details.
+>
+> You should have received a copy of the GNU Lesser General Public
+> License along with this program.  If not, see
+> <http://www.gnu.org/licenses/>.
 
-## add you USER in the group of plugdev : 
+##################
+# Installation : #
+##################
+
+Install the following package :
+
+sudo apt-get install dfu-util cu build-essential
+
+Uninstall the modemmanager : 
+
+sudo apt-get remove modemmanager
+
+( The modmeManger will grab the serial line of the USB : /dev/ttyACM0;
+if you are using this service, you should prefer do desactivate them with the
+following command : systemctl stop ModemManager.service )
+
+Add Udev permition to have access to /dev/ttyACMO
 
 sudo adduser USER plugdev
+sudo adduser USER dialout
 
-## add udev rules to detect USB lines
+Add/edit the file /etc/udev/rules.d/42-cycloide.rules and add the following 
+lines :
 
-Add/edit the file : /etc/udev/rules.d/42-cycloide.rules
-and add the following lines :
+ATTRS{idProduct}=="4567", ATTRS{idVendor}=="f123", MODE="664", GROUP="plugdev" SYMLINK+="brushless"
+ATTRS{idProduct}=="5740", ATTRS{idVendor}=="0483", MODE="664", GROUP="plugdev" SYMLINK+="stm32"
 
-ATTRS{idVendor}=="F123", ATTRS{idProduct}=="4567", SUBSYSTEMS=="usb",           
-ACTION=="add", MODE="0666", GROUP="plugdev"
+The first line is for the normal mode. It allow to comunicate with the 
+brushless. The second one is used to flash the firmware.
 
-Now reboot the computer
+Restart the udev service :
+ 
+sudo /etc/init.d/udev restart
+
+Download the last ARM compilator from the website :
+
+https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads
+
+And install the compilator in a chosen ARM_DIRECTORY directory.
+
+OPTIONAL INSTALLATION :
+
+You can install JLink tools in order to use JTAG to flash or print.
+Go to the website :  
+
+#########################################
+# Compile the application               #
+#########################################
+
+Jute type
+
+make GCC_PATH=<ARM_DIRECTORY>/bin
+
+###################
+# Flash the board #
+###################
+
+Three solution are possible dependong of the situation.
+IF THE BOARD HAVE NOT YET BEEN FLASHED, YOU SHOULD USE SOLUTION 1) OR 2).
+Solution 3) is the most simple one and it is used to update the firmware (we 
+need the board to be yet flashed).
+
+Short description of the 3 solutions : 
+ 1) FLASH BY USB USING THE RESET AND BOOT0 BUTTONS
+   This solution doesn't need the board to be yet flashed.
+   This solution need USB wire and and an access to the BOOT0 and RESET buttons
+   of the board
+ 2) FLASH BY JTAG USING THE JLink SOFWTARE
+   This solution doesn't need the board to be yet flashed.
+   This solution need an USB wire (for the power) and a JTAG for the connection.
+   This solution Use JLink software (see Optional installation)
+   The JLink software download just the part of the memory that have changed.
+   So the flash operation are fast and the life of the flash memory is 
+   increased.
+ 3) FLASH BY USB WITHOUT USING THE RESET BUTTONS
+   This solution need the board to be yet flashed
+   ( by using 1) or  2) ).
+   This solution just need a USB wire ! :)
+   This solution DO NOT require an acess to the BOOT0 and RESET button ! :)
+
+
+1) FLASH BY USB USING THE RESET AND BOOT0 BUTTONS
+
+ Connect the USB wire.
+
+ Press and hold the BOOT0 button, then press and realease de RESET button,
+ and finally release the BOOT0 button.
+
+ Type the command :
+ ./first_flash_with_usb_and_reset_button.sh
+
+2) FLASH BY JTAG USING THE JLink SOFWTARE
+
+ ./jtag_flash.sh
+
+3) FLASH BY USB WITHOUT THE RESET BUTTONS
+
+ ./usb_flash.sh
+
+########################
+# Connect to the board #
+########################
+
+First Connect the USB wire.
+
+Execute the command 
+
+dmesg
+
+to know on which device the board is connected (usualy it is /dev/ttyACM0).
+
+Open a command line into the board by typing:
+
+cu -l /dev/ttyACM0
+
+Enjoy :) 
+(In the command line, help is the first helpfull command to know)
+
+

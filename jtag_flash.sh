@@ -16,4 +16,4 @@
 # License along with this program.  If not, see
 # <http://www.gnu.org/licenses/>.
 
-make GCC_PATH=/home_extra/boussica/gcc-arm-none-eabi-8-2019-q3-update/bin
+JLinkExe -device STM32F401RB -if JTAG -speed 4000 -jtagconf -1,-1 -CommanderScript tools/jlink_files/flash_board.jlink

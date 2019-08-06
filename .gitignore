@@ -1,1 +1,5 @@
 build
+*.sav
+*.swp
+*.old
+tags

@@ -9,6 +9,9 @@
   *
   * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
   * All rights reserved.</center></h2>
+  * <h2><center>&copy; Copyright (c) 2019 Adrien Boussicault 
+  * <adrien.boussicault@labri.fr> (Moficiation of USER CODE 6 in 
+  * CDC_Receive_FS())</center></h2>
   *
   * This software component is licensed by ST under Ultimate Liberty license
   * SLA0044, the "License"; You may not use this file except in compliance with
@@ -23,7 +26,7 @@
 #include "usbd_cdc_if.h"
 
 /* USER CODE BEGIN INCLUDE */
-
+#include <serial_usb.h>
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -65,8 +68,8 @@
 /* USER CODE BEGIN PRIVATE_DEFINES */
 /* Define size for the receive and transmit buffer over CDC */
 /* It's up to user to redefine and/or remove those define */
-#define APP_RX_DATA_SIZE  1000
-#define APP_TX_DATA_SIZE  1000
+#define APP_RX_DATA_SIZE  USB_RX_DATA_SIZE
+#define APP_TX_DATA_SIZE  USB_TX_DATA_SIZE
 /* USER CODE END PRIVATE_DEFINES */
 
 /**
@@ -99,7 +102,6 @@ uint8_t UserRxBufferFS[APP_RX_DATA_SIZE];
 uint8_t UserTxBufferFS[APP_TX_DATA_SIZE];
 
 /* USER CODE BEGIN PRIVATE_VARIABLES */
-
 /* USER CODE END PRIVATE_VARIABLES */
 
 /**
@@ -132,7 +134,6 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length);
 static int8_t CDC_Receive_FS(uint8_t* pbuf, uint32_t *Len);
 
 /* USER CODE BEGIN PRIVATE_FUNCTIONS_DECLARATION */
-
 /* USER CODE END PRIVATE_FUNCTIONS_DECLARATION */
 
 /**
@@ -246,6 +247,7 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
   /* USER CODE END 5 */
 }
 
+
 /**
   * @brief  Data received over USB OUT endpoint are sent over CDC interface
   *         through this function.
@@ -263,8 +265,19 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 {
   /* USER CODE BEGIN 6 */
-  USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
-  USBD_CDC_ReceivePacket(&hUsbDeviceFS);
+  if (hUsbDeviceFS.dev_state != USBD_STATE_CONFIGURED){
+    return USBD_FAIL;
+  }
+  if((Buf == NULL) || (Len == NULL) || (*Len <= 0)){
+    return USBD_FAIL;
+  }
+  while( 
+      USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]) != USBD_OK
+  );
+  while(
+      USBD_CDC_ReceivePacket(&hUsbDeviceFS) != USBD_OK
+  );
+  collect_received_data(Buf, *Len);
   return (USBD_OK);
   /* USER CODE END 6 */
 }

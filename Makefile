@@ -16,6 +16,9 @@
 TARGET = usb
 
 
+FIRMWARE_VERSION:="`git rev-parse HEAD`_`date '+%Y/%m/%d_%HH%M'`_`whoami`"
+
+
 ######################################
 # building variables
 ######################################
@@ -37,6 +40,12 @@ BUILD_DIR = build
 # C sources
 C_SOURCES =  \
 Core/Src/main.c \
+Core/Src/terminal.c \
+Core/Src/serial.c \
+Core/Src/jump_to_bootloader.c \
+Core/Src/print_float.c \
+Core/Src/print_double.c \
+Core/Src/serial_usb.c \
 Core/Src/stm32f4xx_it.c \
 Core/Src/stm32f4xx_hal_msp.c \
 USB_DEVICE/App/usb_device.c \
@@ -112,7 +121,8 @@ MCU = $(CPU) -mthumb $(FPU) $(FLOAT-ABI)
 AS_DEFS = 
 
 # C defines
-C_DEFS =  \
+C_DEFS :=  \
+-DFIRMWARE_VERSION=\"$(FIRMWARE_VERSION)\" \
 -DUSE_HAL_DRIVER \
 -DSTM32F401xC \
 -DUSE_HAL_DRIVER \
