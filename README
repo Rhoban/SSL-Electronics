@@ -1,0 +1,15 @@
+# Add Udev permition
+
+## add you USER in the group of plugdev : 
+
+sudo adduser USER plugdev
+
+## add udev rules to detect USB lines
+
+Add/edit the file : /etc/udev/rules.d/42-cycloide.rules
+and add the following lines :
+
+ATTRS{idVendor}=="F123", ATTRS{idProduct}=="4567", SUBSYSTEMS=="usb",           
+ACTION=="add", MODE="0666", GROUP="plugdev"
+
+Now reboot the computer
