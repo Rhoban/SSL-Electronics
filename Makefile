@@ -13,7 +13,7 @@
 ######################################
 # target
 ######################################
-TARGET = usb
+TARGET = brushless
 
 
 FIRMWARE_VERSION:="`git rev-parse HEAD`_`date '+%Y/%m/%d_%HH%M'`_`whoami`"

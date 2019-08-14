@@ -74,7 +74,7 @@ display "We flash the board"
       exit 1000
     fi
   fi
-  dfu-util -s 0x08000000 -a $alt -d 0483:df11 -D build/usb.bin
+  dfu-util -s 0x08000000 -a $alt -d 0483:df11 -D build/brushless.bin
 )
 check_sucess $?
 
