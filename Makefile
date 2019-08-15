@@ -23,9 +23,15 @@ FIRMWARE_VERSION:="`git rev-parse HEAD`_`date '+%Y/%m/%d_%HH%M'`_`whoami`"
 # building variables
 ######################################
 # debug build?
-DEBUG = 1
+DEBUG = 0
 # optimization
-OPT = -Og
+ifeq ($(DEBUG), 1)
+OPT = -Werror -DDEBUG -Og
+LDOPT = -u _printf_float
+else
+OPT = -DDEBUG -O2
+LDOPT = -u _printf_float
+endif
 
 
 #######################################
@@ -42,6 +48,8 @@ C_SOURCES =  \
 Core/Src/main.c \
 Core/Src/terminal.c \
 Core/Src/serial.c \
+Core/Src/debug.c \
+Core/Src/time.c \
 Core/Src/jump_to_bootloader.c \
 Core/Src/print_float.c \
 Core/Src/print_double.c \
@@ -169,7 +177,7 @@ LDSCRIPT = STM32F401RBTx_FLASH.ld
 # libraries
 LIBS = -lc -lm -lnosys 
 LIBDIR = 
-LDFLAGS = $(MCU) -specs=nano.specs -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(BUILD_DIR)/$(TARGET).map,--cref -Wl,--gc-sections
+LDFLAGS = $(MCU) -specs=nano.specs -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(BUILD_DIR)/$(TARGET).map,--cref -Wl,--gc-sections $(LDOPT)
 
 # default action: build all
 all: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET).bin

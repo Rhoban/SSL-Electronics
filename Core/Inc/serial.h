@@ -21,6 +21,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#define TERMINAL_FD 42
+#define JTAG_FD 41
+
 typedef struct {
   void (*init)();
   bool (*is_init)() ;

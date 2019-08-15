@@ -30,6 +30,7 @@
 #include "debug.h"
 #include "usbd_cdc_if.h"
 #include <jump_to_bootloader.h>
+#include <time.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -113,6 +114,31 @@ TERMINAL_COMMAND(jump_to_bootloader, "Execute the bootloader")
 {
   jump_to_bootloader();
 }
+
+TERMINAL_COMMAND(info, "info")
+{
+  terminal_print("Systick load : ");
+  terminal_println_int(SysTick->LOAD);
+}
+
+TERMINAL_COMMAND(test_us, "test micro oscillation on LED.")
+{
+  while(1){
+    delay_us(1);
+    HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+  }
+}
+
+#ifdef DEBUG
+TERMINAL_COMMAND(test_ms, "test milli oscillation on LED.")
+{
+  while(1){
+    DELAY_MS(1);
+    HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+  }
+}
+#endif
+
 /* USER CODE END 0 */
 
 /**
@@ -185,9 +211,10 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLM = 4;
-  RCC_OscInitStruct.PLL.PLLN = 168;
+  RCC_OscInitStruct.PLL.PLLM = CLK_PLLM;
+  RCC_OscInitStruct.PLL.PLLN = CLK_PLLN;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
+  _Static_assert( CLK_PLLP == RCC_PLLP_DIV4, "");
   RCC_OscInitStruct.PLL.PLLQ = 7;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {

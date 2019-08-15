@@ -24,6 +24,7 @@
 #include "debug.h"
 #include "print_float.h"
 #include "print_double.h"
+#include <terminal.h>
 
 extern serial_t serial_usb;
 serial_t* get_serial_usb();
@@ -32,19 +33,29 @@ serial_t* get_serial(){
   return get_serial_usb();
 }
 
-//int __io_putchar(int ch){
-//  // get_serial()->write_char(ch); // We print on USB
-//  ITM_SendChar(ch); // We print on JTAG
-//  return ch;
-//}
-//
-//int _write(int file, char *ptr, int len){
-//  int idx;
-//  for(idx = 0; idx < len; idx++){
-//    __io_putchar(*ptr++);
-//  }
-//  return len;
-//}
+int __io_putchar(int ch){
+  // get_serial()->write_char(ch); // We print on USB
+  ITM_SendChar(ch); // We print on JTAG
+  return ch;
+}
+
+int _write(int file, char *ptr, int len){
+  int idx;
+  for(idx = 0; idx < len; idx++){
+    switch( file ){
+      case 41 : 
+        __io_putchar(*ptr++);
+        break;
+      case 42 :
+      default:
+        if(*ptr == '\n'){
+          terminal_print_char('\r');
+        }
+        terminal_print_char(*ptr++);
+    } 
+  }
+  return len;
+}
 
 static char eol[2] = "\r\n";
 

@@ -19,23 +19,57 @@
 #pragma once
 
 #include "terminal.h"
+#include <serial.h>
 
-//#include <stdio.h>
-// Print string for debug
-//#define PRINTD(format, ...) printf("d: " format " - %s : %d\n", ##__VA_ARGS__, __FILE__, __LINE__ )
+#include <stdio.h>
+#include <time.h>
 
-#define INTERNAL_PRINT(v, name) \
-  terminal_print("d: "); \
-  terminal_ ## name (v); \
-  terminal_print(" - " __FILE__); \
-  terminal_print(":"); \
-  terminal_println_int( __LINE__ );
+#ifdef DEBUG
+#define DPRINTF(fd, format, ...) dprintf(fd, "D " format "\n", ##__VA_ARGS__ )
+//#define DPRINTF(fd, format, ...) dprintf(fd, "D: " format " - %s : %d\n", ##__VA_ARGS__, __FILE__, __LINE__ )
 
-#define INTERNAL_PRINT1(v, name) INTERNAL_PRINT(v, print_ ## name )
-#define INTERNAL_PRINT2(v, name) INTERNAL_PRINT(v, print)
+// Printing debug on JTAG
+#define PRINTJ(format, ...) DPRINTF( JTAG_FD, format, ##__VA_ARGS__ )
 
-#define PRINTI(v) INTERNAL_PRINT1(v, int)
-#define PRINTF(v) INTERNAL_PRINT1(v, float)
-#define PRINTD(v) INTERNAL_PRINT1(v, double)
-#define PRINTB(v) INTERNAL_PRINT1(v, bool)
-#define PRINTS(v) INTERNAL_PRINT2(v, bool) // bool parameter is not used
+// Printing debug on terminal
+#define PRINTT(format, ...) DPRINTF( TERMINAL_FD, format, ##__VA_ARGS__ )
+
+#define FREQT(t) print_freq(t, TERMINAL_FD)
+#define FREQJ(t) print_freq(t, JTAG_FD)
+
+
+static inline void DELAY_MS(uint32_t milli) {
+  uint32_t deadline = time_get_us()+milli*1000;
+  while (time_get_us() < deadline ) {
+    asm("nop");
+  }
+}
+
+
+#define DPRINT_PERIODIC(fd, period, name, format, ... ) {\
+    static volatile uint32_t _time_ ##name = 0; \
+    uint32_t _time_2_ ##name = time_get_us(); \
+    if( _time_2_ ##name - _time_ ##name >= 1000*period){ \
+      DPRINTF(fd, format, ##__VA_ARGS__ ); \
+      _time_ ##name = time_get_us(); \
+    }\
+  }
+
+#define PRINTJ_PERIODIC(period, name, format, ... ) \
+  DPRINT_PERIODIC(JTAG_FD, period, name, format, ##__VA_ARGS__ )
+
+#define PRINTT_PERIODIC(period, name, format, ... ) \
+  DPRINT_PERIODIC(TERMINAL_FD, period, name, format, ##__VA_ARGS__ )
+
+// Print the frequence of the calls of 
+// print_freq.
+// The parameter milis is the printing period 
+// of the result in a file descriptor.
+// fd is the "file descriptor".
+// Usual file descriptors are TERMINAL_FD and HTAG_FD .
+void print_freq(uint32_t milis, int fd);
+
+
+#endif
+
+
