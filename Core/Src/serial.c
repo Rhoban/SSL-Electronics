@@ -72,6 +72,10 @@ void serial_println_char(serial_t* serial, char c){
 }
 
 void serial_print_uint_base(serial_t* serial, uint32_t n, uint8_t base){
+  if(n==0){
+    serial_print_char(serial, '0');
+    return;
+  }
   #define NB_BIT_OF_CHAR 8
   uint8_t buf[sizeof(n)*NB_BIT_OF_CHAR]; // Size max is for an integer in base 2.
   uint32_t i = 0;

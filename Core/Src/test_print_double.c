@@ -16,7 +16,7 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#include "debug.h"
+#define PRINTD(format, ...) printf("D: " format " - %s : %d\n", ##__VA_ARGS__, __FILE__, __LINE__ )
 
 #define CONFIGURE_TO_PRINT_DOUBLE
 #include "print_real.h"

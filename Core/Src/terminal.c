@@ -569,3 +569,19 @@ float terminal_atof(char *str)
 
     return f;
 }
+
+
+void terminal_print_hexa(uint8_t* buf, uint32_t n){
+  uint8_t first=0, last=0;
+  for( uint32_t i=0; i<n; i++ ){
+    first = buf[i] >> 4;
+    last = buf[i] & 0x0F;
+    print_char( 'x' );
+    print_char( (first < 10 ? '0' : 'A'-10) + first );
+    print_char( (last < 10 ? '0' : 'A'-10) + last );
+  }
+}
+void terminal_println_hexa(uint8_t* buf, uint32_t n){
+  terminal_print_hexa(buf,1);
+  println("");
+}

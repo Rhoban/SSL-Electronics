@@ -149,6 +149,8 @@ void terminal_println_float(float f);
 void terminal_print_double(double f);
 void terminal_println_double(double f);
 void terminal_print_char(char c);
+void terminal_print_hexa(uint8_t* buf, uint32_t n);
+void terminal_println_hexa(uint8_t* buf, uint32_t n);
 
 /**
  * ----------------------------------------------------------------------------

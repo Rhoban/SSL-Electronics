@@ -20,6 +20,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <math.h>
 
 // TO USE THAT FILE, include it in yout .C and before define the followinf
 // DEFINE
@@ -30,17 +31,7 @@
   #define FLOAT_BIAS 127
   #define FLOAT_MAX_PRECISION 7
   #define SIZE_MAX_EXPONENT_PRINT 4 // 1 ('e') + 1 sign exponent + 2 (exponent) 
-  
-  #define SIZE_OF_FLOAT 32
-  #define BITS_INTEGER uint32_t
-  #define TYPE_SIGN uint32_t
-  #define TYPE_EXPONENT uint32_t
-  #define TYPE_MANTISSA uint32_t
-  #define FLOAT_INTEGER uint32_t
-  #define ONE 1u
-  #define ZERO 0u
   #define TYPE_FLOAT float
-
 #endif
 
 #ifdef CONFIGURE_TO_PRINT_DOUBLE
@@ -50,20 +41,11 @@
   #define FLOAT_BIAS 1023
   #define FLOAT_MAX_PRECISION 15
   #define SIZE_MAX_EXPONENT_PRINT 5 // 1 ('e') + 1 sign exponent + 3 (exponent) 
-  #define SIZE_OF_FLOAT 64
-  #define TYPE_SIGN uint32_t
-  #define TYPE_EXPONENT uint32_t
-  #define TYPE_MANTISSA uint64_t
-  #define FLOAT_INTEGER uint64_t
-  #define ONE 1ull
-  #define ZERO 0ull
   #define TYPE_FLOAT double
-
 #endif
 
 #define FLOAT_MAX_PRINT_SPACE (FLOAT_MAX_PRECISION+SIZE_MAX_EXPONENT_PRINT+3)
   // en scientifique : PRECISON + EXPONNENT + 1 (sign) + 1('.') + 1(\0)  
-#define BITWISE_CAST(x, type) (* ((type*) ((void*) &x)))
 
 #define SIZE_INTEGER_IN_SCIENTIFIC 6 // It's convenient to read
 #define SIZE_RATIONAL_IN_SCIENTIFIC SIZE_MAX_EXPONENT_PRINT // To print the maximal precision allowed.
@@ -71,7 +53,7 @@
 // See How to Article 
 // Print Floating-Point Numbers Accurately, Guy L. teele Jr. & Jon L White
 // 90 Conf. Prog. Lang. Design and Implementation. 1990.
-inline void fixed_point_fraction(
+inline static void fixed_point_fraction(
   TYPE_FLOAT f, // the input of a strictly positive real.
   //uint32_t p,
   const uint32_t B, // The radix of the output
@@ -98,32 +80,11 @@ inline void fixed_point_fraction(
   *N = k; 
 }
 
-inline void floating_point_print(
+inline static void floating_point_print(
   TYPE_FLOAT v, uint32_t B, uint8_t* buf, uint32_t* N, uint32_t Nmax
 ){
-  TYPE_SIGN sign = BITWISE_CAST(v, FLOAT_INTEGER) >> (
-    FLOAT_EXPONENT_SIZE + FLOAT_MANTISSA_SIZE
-  );
-  TYPE_EXPONENT exponent = (
-    (
-      BITWISE_CAST(v, FLOAT_INTEGER) >> FLOAT_MANTISSA_SIZE 
-    ) & (
-      ~( ONE<<FLOAT_EXPONENT_SIZE )
-    ) 
-  );
-  TYPE_MANTISSA mantissa = (
-    BITWISE_CAST(v, FLOAT_INTEGER) & (
-      ( (~ZERO) << (FLOAT_EXPONENT_SIZE + FLOAT_SIGN_SIZE) ) >> 
-      (FLOAT_EXPONENT_SIZE + FLOAT_SIGN_SIZE)
-    )
-  );
-
-  if( exponent == (
-    ( (~ZERO) << (FLOAT_MANTISSA_SIZE + FLOAT_SIGN_SIZE) ) >>
-    (FLOAT_MANTISSA_SIZE + FLOAT_SIGN_SIZE) 
-  ) ){
-    if(mantissa == 0){
-      if(sign){
+  if( isinf(v) ){
+      if(v<0){
         buf[0] = '-';
       }else{
         buf[0] = '+';
@@ -133,17 +94,17 @@ inline void floating_point_print(
       buf[3] = 'f';
       buf[4] = '\0';
       *N = 5;
-    }else{
+      return;
+  }
+  if( isnan(v) ){
       buf[0] = 'n';
       buf[1] = 'a';
       buf[2] = 'n';
       buf[3] = '\0';
       *N = 4;
-    }
-    return;
+      return;
   }
-
-  if( mantissa == 0 && exponent == 0 ){
+  if( v == 0.0 ){
     buf[0] = '0';
     buf[1] = '\0';
     *N = 2;
@@ -151,11 +112,11 @@ inline void floating_point_print(
   }
 
   *N = 0;
-  if(sign){
+  if(v<0){
     buf[(*N)++] = '-';
     v = -v;
   }
-
+  
   // We compute x the exponent for the scientific mode 
   // v = v' * B**x < b**p * B**x = term 
   int32_t x = 0;
@@ -172,20 +133,20 @@ inline void floating_point_print(
     term /= B;
     vp *= B;
   }
-  // We disable scientfic when exponant is small
-  int precision = mantissa == 0 ? FLOAT_MAX_PRECISION : FLOAT_MAX_PRECISION-1 ;
+  // We disable scientfic when exponent is small
+  int exp; 
+  TYPE_FLOAT significand = 2*frexpf( v, &exp );
+  uint32_t precision = significand == 1.0 ? FLOAT_MAX_PRECISION : FLOAT_MAX_PRECISION-1 ;
   if( x < SIZE_INTEGER_IN_SCIENTIFIC && x > 0 ){
     while( x!= 0){
       precision--;
       x--;
-      term /= B;
       vp *= B;
     }
   }else if( x >= -SIZE_RATIONAL_IN_SCIENTIFIC && x < 0 ){
     while( x!= 0){
       precision++;
       x++;
-      term *= B;
       vp /= B;
     }
   }
