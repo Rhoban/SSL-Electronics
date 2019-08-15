@@ -93,6 +93,22 @@ TERMINAL_COMMAND(show_var, "Show all variables")
   }
 }
 
+TERMINAL_COMMAND(led, "Set led")
+{
+  if(argc == 0){
+    HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+  }else if(argc == 1){
+    if( atoi(argv[0])==1 ){
+      HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+    }else{
+      HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+    }
+  }else{
+    terminal_println("Usage: led [1|0]");
+  }
+}
+
+
 TERMINAL_COMMAND(jump_to_bootloader, "Execute the bootloader")
 {
   jump_to_bootloader();
@@ -329,6 +345,9 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(ENC_INT_CS_GPIO_Port, ENC_INT_CS_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
@@ -336,6 +355,13 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(ENC_EXT_CS_GPIO_Port, ENC_EXT_CS_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin : LED_Pin */
+  GPIO_InitStruct.Pin = LED_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(LED_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : ENC_INT_CS_Pin */
   GPIO_InitStruct.Pin = ENC_INT_CS_Pin;
