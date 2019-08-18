@@ -31,6 +31,7 @@
 #include "usbd_cdc_if.h"
 #include <jump_to_bootloader.h>
 #include <time.h>
+#include <encoder.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -139,6 +140,20 @@ TERMINAL_COMMAND(test_ms, "test milli oscillation on LED.")
 }
 #endif
 
+void HAL_SPI_ErrorCallback(SPI_HandleTypeDef* hspi){
+  if(hspi == &hspi2){
+    PRINTJ("ERR");
+  }
+}
+
+void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef* hspi){
+  if(hspi == &hspi2){
+    encoder_spi_call_back();
+  }
+}
+
+TERMINAL_PARAMETER_BOOL(st, "decl", false);
+
 /* USER CODE END 0 */
 
 /**
@@ -174,6 +189,7 @@ int main(void)
   MX_TIM1_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
+  encoder_init(&hspi2, ENC_INT_CS_GPIO_Port,ENC_INT_CS_Pin);
   get_serial()->init();
   terminal_init(get_serial());
   /* USER CODE END 2 */
@@ -182,6 +198,14 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    COUNTDOWN(tmp,100){
+      if( st ){
+        HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+        start_read_encoder_position();
+        //PRINTJ_PERIODIC(1000, tt, "%ld", tt);
+      }
+    }
+    encoder_tick();
     get_serial()->tick();
     terminal_tick();
 
