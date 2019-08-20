@@ -31,8 +31,17 @@ typedef enum {
   AS5047D_TX_CMD_ADDRESS = 16, // Invalid adress for the command
   AS5047D_TX_CMD_FRAME = 32, // This is a non compliant SPI frame.
   AS5047D_SPI_BUSY = 64, // This is a non compliant SPI frame.
-  AS5047D_SPI_ERROR = 128 // This is a non compliant SPI frame.
+  AS5047D_SPI_ERROR = 128, // This is a non compliant SPI frame.
+  AS5047D_SPI_CRASH = 256 // The spi has crached ans is restarting.
 } as5047d_error_t;
+
+typedef struct {
+  bool mfs_too_low; // (mfs = Magnetic field strentgh)
+  bool mfs_too_high; // (mfs = Magnetic field strentgh)
+  bool cordi_overflow;
+  bool offset_compensation_is_ready;
+  uint8_t automatic_gain_control;
+} as5047d_diagnostic_t;
 
 typedef struct {
   uint8_t pTxData[2];
@@ -42,10 +51,7 @@ typedef struct {
   volatile as5047d_error_t error;
 
   volatile int32_t state;
-
-  uint16_t magnetic;
-  uint16_t angle;
-  uint16_t corrected_angle;
+  uint16_t data;
   
   SPI_HandleTypeDef* hspi;
   GPIO_TypeDef* gpio_port_cs;
@@ -56,9 +62,17 @@ void as5047d_init(
   as5047d_t* as5047d, 
   SPI_HandleTypeDef* hspi, GPIO_TypeDef*  gpio_port_cs, uint16_t gpio_pin_cs
 );
-bool as5047d_start_reading_dynamic_angle(as5047d_t* as5047d);
+
+void as5047d_data_to_diagnostic(
+  as5047d_t* as5047d, as5047d_diagnostic_t * diagnostic
+);
+
+inline uint16_t as5047d_data_to_angle(as5047d_t* as5047d){
+  return as5047d->data;
+}
 
 void as5047d_spi_call_back(as5047d_t* as5047d);
+void as5047d_error_spi_call_back(as5047d_t* as5047d);
 
 /*
  * Start to read a dynamic angle with an error compensation.
@@ -69,3 +83,4 @@ void as5047d_spi_call_back(as5047d_t* as5047d);
  * (a reading process is yet in progress).
  */
 bool as5047d_start_reading_dynamic_angle(as5047d_t* as5047d);
+bool as5047d_start_reading_diagnostic(as5047d_t* as5047d);

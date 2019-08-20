@@ -24,7 +24,6 @@
 #include <stdio.h>
 #include <time.h>
 
-#ifdef DEBUG
 #define DPRINTF(fd, format, ...) dprintf(fd, "D " format "\n", ##__VA_ARGS__ )
 //#define DPRINTF(fd, format, ...) dprintf(fd, "D: " format " - %s : %d\n", ##__VA_ARGS__, __FILE__, __LINE__ )
 
@@ -98,7 +97,5 @@ void print_freq(uint32_t milis, int fd);
 
 #define WATCHJ(name, condition, cooldown_ms, format, ...) DWATCH(JTAG_FD, name, condition, cooldown_ms, format, ##__VA_ARGS__)
 #define WATCHT(name, condition, cooldown_ms, format, ...) DWATCH(TERMINAL_FD, name, condition, cooldown_ms, format, ##__VA_ARGS__)
-
-#endif
 
 

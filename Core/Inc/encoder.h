@@ -11,3 +11,4 @@ void start_read_encoder_position();
 float encoder_angle();
 void encoder_spi_call_back();
 
+void encoder_error_spi_call_back();

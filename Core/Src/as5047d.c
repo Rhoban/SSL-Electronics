@@ -120,7 +120,7 @@
 //
 #define MAGL_BIT 11 // Magnetic field strength too low; AGC=0xFF
 #define MAGH_BIT 10 // Magnetic field strength too high; AGC=0x00
-#define COF_BIT 10 // CORDIC overflow
+#define COF_BIT 9 // CORDIC overflow
 #define LF_BIT 8 // Offset compensation : 
                  // 0:internal offset loops not ready regulated
                  // 1:internal offset loop finished
@@ -145,11 +145,32 @@
 #define DAECANG_SIZE 14 // The size of the bits 13:0 containing the dynamic 
                         // angle error compensation
 
+static inline void activate_cs(as5047d_t* as5047d){
+  HAL_GPIO_WritePin(
+    as5047d->gpio_port_cs, as5047d->gpio_pin_cs, GPIO_PIN_RESET
+  );
+  DELAY_AT_LEAST_NS(350); // See datasheet of as5047d .
+}
+static inline void disactivate_cs(as5047d_t* as5047d){
+  HAL_GPIO_WritePin(
+    as5047d->gpio_port_cs, as5047d->gpio_pin_cs, GPIO_PIN_SET
+  );
+  DELAY_AT_LEAST_NS(350); // See datasheet of as5047d .
+}
+
+static inline void reset_comunication(as5047d_t* as5047d){
+  // Perhaps the device it yet selected, so, we stop first disactivate the cs.
+  disactivate_cs(as5047d);
+  
+  // The last command could we a write comand. So, we drop the next packet. 
+  activate_cs(as5047d);
+  disactivate_cs(as5047d);
+}
 
 typedef enum {
   sleeping,
   sending_a_reading_command,
-  waiting_the_angle_measure,
+  waiting_data,
   sending_the_error_register_command,
   waiting_for_error_register
 } Encoder_state; 
@@ -165,11 +186,10 @@ static inline bool even_parity_check( uint16_t x ){
     return !((~x) & 1);
 }
 
+
 static inline bool transmit_and_receipt_packet(as5047d_t* as5047d){
   // We open a comunication
-  HAL_GPIO_WritePin(
-    as5047d->gpio_port_cs, as5047d->gpio_pin_cs, GPIO_PIN_RESET
-  );
+  activate_cs(as5047d);
 
   HAL_StatusTypeDef status = HAL_SPI_TransmitReceive_IT(
     as5047d->hspi, as5047d->pTxData, as5047d->pRxData, PACKET_SIZE
@@ -184,9 +204,7 @@ static inline bool transmit_and_receipt_packet(as5047d_t* as5047d){
       as5047d->error |= AS5047D_SPI_BUSY;
     }
     // We close the comunication
-    HAL_GPIO_WritePin(
-      as5047d->gpio_port_cs, as5047d->gpio_pin_cs, GPIO_PIN_SET
-    );
+    disactivate_cs(as5047d);
     as5047d->state = sleeping;
     as5047d->is_ready = true;
     return false;
@@ -207,16 +225,35 @@ bool as5047d_start_reading_dynamic_angle(as5047d_t* as5047d){
   return transmit_and_receipt_packet(as5047d);
 }
 
+bool as5047d_start_reading_diagnostic(as5047d_t* as5047d){
+  if( as5047d->state != sleeping ) return false;
+  as5047d->is_ready = false;
+
+  as5047d->state = sending_a_reading_command;
+  as5047d->error = AS5047D_OK;
+ 
+  // We send a reading command to obtain an angle
+  as5047d->pTxData[0] = FIRST(RCMD(DIAAGC_ADD));
+  as5047d->pTxData[1] = LAST(RCMD(DIAAGC_ADD));
+  return transmit_and_receipt_packet(as5047d);
+}
+
+void as5047d_error_spi_call_back(as5047d_t* as5047d){
+  reset_comunication(as5047d);
+ 
+  // We raise an error.
+  as5047d->error |= (AS5047D_ERROR | AS5047D_SPI_CRASH);
+  
+  // We finish to reset the spi communication.
+  as5047d->state = sleeping;
+  as5047d->is_ready = true;
+  
+}
+
 void as5047d_spi_call_back(as5047d_t* as5047d){
   // First, we release the chip select to allow the device to start the
   // calculus it have to perform
-  HAL_GPIO_WritePin(
-    as5047d->gpio_port_cs, as5047d->gpio_pin_cs, GPIO_PIN_SET
-  );
-
-  // We wait 1 us to allow the device to finish the calculus associated 
-  // with the last command.
-  delay_us(1);
+  disactivate_cs(as5047d);
 
   // We build the received pachet
   int16_t packet = CONCATENATE(as5047d->pRxData[0], as5047d->pRxData[1]);
@@ -238,7 +275,7 @@ void as5047d_spi_call_back(as5047d_t* as5047d){
         as5047d->state = sending_the_error_register_command;
         break;
       case sending_the_error_register_command :
-      case waiting_the_angle_measure :
+      case waiting_data :
         as5047d->pTxData[0] = FIRST(RCMD(NOP_ADD)); // Nothing to ask
         as5047d->pTxData[1] = LAST(RCMD(NOP_ADD)); // we just have to wait the 
                                                   // answer at the last error 
@@ -275,10 +312,10 @@ void as5047d_spi_call_back(as5047d_t* as5047d){
         as5047d->pTxData[1] = LAST(RCMD(ERRFL_ADD));
    
         // We change or state before transmiting some new data.
-        as5047d->state = waiting_the_angle_measure;
+        as5047d->state = waiting_data;
         break;
-      case waiting_the_angle_measure :
-        as5047d->corrected_angle = packet & RMASK(DATA_SIZE);
+      case waiting_data :
+        as5047d->data = packet & RMASK(DATA_SIZE);
         as5047d->state = sleeping;
         break;
       default:
@@ -300,7 +337,16 @@ void as5047d_init(
   as5047d->hspi = hspi;
   as5047d->gpio_port_cs=gpio_port_cs;
   as5047d->gpio_pin_cs=gpio_pin_cs;
-  HAL_GPIO_WritePin(
-    as5047d->gpio_port_cs, as5047d->gpio_pin_cs, GPIO_PIN_SET
-  );
+  reset_comunication(as5047d);
 }
+
+void as5047d_data_to_diagnostic(
+  as5047d_t* as5047d, as5047d_diagnostic_t * diagnostic
+){
+  diagnostic->mfs_too_low = as5047d->data & (1u << MAGL_BIT);
+  diagnostic->mfs_too_high = as5047d->data & (1u << MAGH_BIT);
+  diagnostic->cordi_overflow = as5047d->data & (1u << COF_BIT);
+  diagnostic->offset_compensation_is_ready = as5047d->data & (1u << LF_BIT);
+  diagnostic->automatic_gain_control = as5047d->data & RMASK(AGC_SIZE);
+}
+

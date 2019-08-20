@@ -23,13 +23,14 @@ FIRMWARE_VERSION:="`git rev-parse HEAD`_`date '+%Y/%m/%d_%HH%M'`_`whoami`"
 # building variables
 ######################################
 # debug build?
+#DEBUG = 1
 DEBUG = 0
 # optimization
 ifeq ($(DEBUG), 1)
 OPT = -Werror -DDEBUG -Og
 LDOPT = -u _printf_float
 else
-OPT = -DDEBUG -O2
+OPT = -Werror -O3
 LDOPT = -u _printf_float
 endif
 
@@ -46,13 +47,17 @@ BUILD_DIR = build
 # C sources
 C_SOURCES =  \
 Core/Src/main.c \
+Core/Src/errors.c \
 Core/Src/terminal.c \
-Core/Src/serial.c \
+core/src/serial.c \
+core/src/system.c \
 Core/Src/debug.c \
 Core/Src/time.c \
 Core/Src/jump_to_bootloader.c \
 Core/Src/print_float.c \
 Core/Src/print_double.c \
+Core/Src/encoder.c \
+Core/Src/as5047d.c \
 Core/Src/serial_usb.c \
 Core/Src/stm32f4xx_it.c \
 Core/Src/stm32f4xx_hal_msp.c \

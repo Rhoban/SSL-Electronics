@@ -23,60 +23,28 @@
 #include "usbd_cdc_if.h"
 #include "debug.h"
 
-uint32_t queue_head;
-uint32_t queue_tail;
-
-// THE QUEUE 
-//       <=  Tail ----- Head  <=   
-uint8_t usb_queue[USB_RX_DATA_SIZE];
+#include <queue.h>
+define_and_declare_queue(uint8_t, usb_queue, USB_RX_DATA_SIZE)
 
 static uint32_t buffer_size = 0;
 static uint8_t buffer[USB_TX_DATA_SIZE];
 static bool usb_is_init = false;
 
-inline uint32_t next_index(uint32_t id){
-  _Static_assert(
-    IS_POW_2(USB_RX_DATA_SIZE), "Have to be a 2^N"
-  );
-  return (id+1)&(USB_RX_DATA_SIZE-1);
-}
-inline bool queue_is_empty(){
-  return queue_head == queue_tail;
-}
 inline bool usb_have_inputs(){
-  return !queue_is_empty();
-}
-inline bool queue_is_full(){
-  return next_index(queue_head) == queue_tail;
+  return !usb_queue_is_empty(&usb_queue);
 }
 inline bool usb_output_is_full(){
-  return queue_is_full();
-}
-inline void append_queue(uint8_t e){
-  if( queue_is_full() ) return;
-  usb_queue[queue_head] = e;
-  queue_head = next_index(queue_head);
+  return usb_queue_is_full(&usb_queue);
 }
 void collect_received_data(uint8_t* buf, uint8_t len){
-  for( uint32_t i=0; i<len; i++ ){
-    append_queue(buf[i]);   
-  }
-}
-inline uint8_t pop_queue(){
-  uint8_t tail = usb_queue[queue_tail];
-  queue_tail = next_index(queue_tail);
-  return tail; 
+  usb_queue_fill(&usb_queue, buf, len);
 }
 
 /*
  * Pop all data from usb into usb_data.
  */
 void usb_pop_received_data( uint8_t* usb_data, uint32_t* len){
-  *len = 0;
-  while(!queue_is_empty()){
-    usb_data[*len] = pop_queue();
-    (*len)++;
-  }
+  usb_queue_collect(&usb_queue, usb_data, len);
 }
 
 
@@ -109,12 +77,12 @@ void serial_usb_tick(){
 }
 
 bool serial_usb_available(){
-  return !queue_is_empty();
+  return !usb_queue_is_empty(&usb_queue);
 }
 
 char serial_usb_read(){
-  if( !queue_is_empty() ){
-    return pop_queue();
+  if( !usb_queue_is_empty(&usb_queue) ){
+    return usb_queue_pop(&usb_queue);
   }
   return 0;
 }

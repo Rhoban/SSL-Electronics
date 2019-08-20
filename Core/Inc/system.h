@@ -18,11 +18,8 @@
 
 #pragma once
 
-// give the next id ( (id+1)%size ) when
-// size is a power of 2. 
-#define NEXT(id, size) ((id+1)&(size-1))
-// give the prev id ( (id-1)%size ) when
-// size is a power of 2. 
-#define PREV(id, size) ( (id+(size-1))&(size-1))
-#define RMASK(nb) ( ~( ((~0u) >> nb) << nb ) )
-#define LMASK(nb) ( ~( ((~0u) << nb) >> nb ) )
+void system_init();
+void system_emergency();
+void system_restart();
+void system_tick();
+void system_start_bootloader();

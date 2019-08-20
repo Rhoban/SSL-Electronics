@@ -29,9 +29,9 @@
 #include <terminal.h>
 #include "debug.h"
 #include "usbd_cdc_if.h"
-#include <jump_to_bootloader.h>
 #include <time.h>
 #include <encoder.h>
+#include <system.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -78,23 +78,6 @@ TERMINAL_COMMAND(version, "firmware version")
   terminal_println(FIRMWARE_VERSION);
 }
 
-
-TERMINAL_COMMAND(show_var, "Show all variables")
-{
-  if(argc > 0){
-    terminal_println("This command do not need arguments.");
-  }else{
-    terminal_print("var1 : ");
-    terminal_println_int(var1);
-    terminal_print("var2 : ");
-    terminal_println_float(var2);
-    terminal_print("var3 : ");
-    terminal_println_double(var3);
-    terminal_print("var4 : ");
-    terminal_println_int(var4);
-  }
-}
-
 TERMINAL_COMMAND(led, "Set led")
 {
   if(argc == 0){
@@ -108,18 +91,6 @@ TERMINAL_COMMAND(led, "Set led")
   }else{
     terminal_println("Usage: led [1|0]");
   }
-}
-
-
-TERMINAL_COMMAND(jump_to_bootloader, "Execute the bootloader")
-{
-  jump_to_bootloader();
-}
-
-TERMINAL_COMMAND(info, "info")
-{
-  terminal_print("Systick load : ");
-  terminal_println_int(SysTick->LOAD);
 }
 
 TERMINAL_COMMAND(test_us, "test micro oscillation on LED.")
@@ -140,9 +111,17 @@ TERMINAL_COMMAND(test_ms, "test milli oscillation on LED.")
 }
 #endif
 
+TERMINAL_COMMAND(test_ns, "test milli oscillation on LED.")
+{
+  while(1){
+    DELAY_AT_LEAST_NS(350);
+    HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+  }
+}
+
 void HAL_SPI_ErrorCallback(SPI_HandleTypeDef* hspi){
   if(hspi == &hspi2){
-    PRINTJ("ERR");
+    encoder_error_spi_call_back();
   }
 }
 
@@ -192,17 +171,20 @@ int main(void)
   encoder_init(&hspi2, ENC_INT_CS_GPIO_Port,ENC_INT_CS_Pin);
   get_serial()->init();
   terminal_init(get_serial());
+
+  system_init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    system_tick();
     COUNTDOWN(tmp,100){
       if( st ){
         HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+        // HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
         start_read_encoder_position();
-        //PRINTJ_PERIODIC(1000, tt, "%ld", tt);
       }
     }
     encoder_tick();
