@@ -30,6 +30,19 @@
 _Static_assert(((CLK_HSE*CLK_PLLN/(CLK_PLLM*CLK_PLLP)) == CLK_SYSCLK), "");
 _Static_assert(CLK_HSE==HSE_VALUE, "");
 
+
+static inline void _delay_us_(uint32_t nb) {
+    /* fudge for function call overhead  */
+    nb--;
+    asm volatile("   mov r0, %[nb]          \n\t"
+                 "1: subs r0, #1            \n\t"
+                 "   bhi 1b                 \n\t"
+                 :
+                 : [nb] "r" (nb)
+                 : "r0");
+}
+
+
 /**
  * @brief Delay the given number of microseconds.
  *
@@ -44,17 +57,12 @@ _Static_assert(CLK_HSE==HSE_VALUE, "");
  * @param us Number of microseconds to delay.
  */
 static inline void delay_us(uint32_t us) {
-    us *= STM32_DELAY_US_MULT;
-
+  us *= STM32_DELAY_US_MULT;
     /* fudge for function call overhead  */
-    us--;
-    asm volatile("   mov r0, %[us]          \n\t"
-                 "1: subs r0, #1            \n\t"
-                 "   bhi 1b                 \n\t"
-                 :
-                 : [us] "r" (us)
-                 : "r0");
+  _delay_us_(us);
 }
+
+#define DELAY_AT_LEAST_NS(ns) _delay_us_( 1 + (ns*STM32_DELAY_US_MULT)/1000 );
 
 //
 // Be carefull ! The time of time_get_us() restarts at 0 when it try to reachs 
