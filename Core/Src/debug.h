@@ -70,6 +70,35 @@ static inline void DELAY_MS(uint32_t milli) {
 void print_freq(uint32_t milis, int fd);
 
 
+#define EXECUTE_ONETIME(name, condition) \
+    static volatile uint32_t _assertion_ ##name = 0; \
+    if( (_assertion_ ##name == 0) && (condition) && (_assertion_ ##name ++ == 0) )
+
+
+#define DASSERTION(fd, name, condition, format, ...) \
+  { \
+    EXECUTE_ONETIME(name, !(condition)) \
+    { \
+      DPRINTF(fd, format, ##__VA_ARGS__); \
+    } \
+  }
+
+#define ASSERTIONJ(name, condition, format, ...) DASSERTION(JTAG_FD, name, condition, format, ##__VA_ARGS__)
+#define ASSERTIONT(name, condition, format, ...) DASSERTION(TERMINAL_FD, name, condition, format, ##__VA_ARGS__)
+
+#define DWATCH(fd, name, condition, cooldown_ms, format, ...) \
+  { \
+    static uint32_t _watch_last_time_ ##name = 0; \
+    uint32_t _watch_time ##name = time_get_us(); \
+    if( (condition) && ((_watch_time ##name - _watch_last_time_ ##name) >= 1000*cooldown_ms) ){ \
+      _watch_last_time_ ##name = _watch_time ##name; \
+      DPRINTF(fd, format, ##__VA_ARGS__); \
+    } \
+  }
+
+#define WATCHJ(name, condition, cooldown_ms, format, ...) DWATCH(JTAG_FD, name, condition, cooldown_ms, format, ##__VA_ARGS__)
+#define WATCHT(name, condition, cooldown_ms, format, ...) DWATCH(TERMINAL_FD, name, condition, cooldown_ms, format, ##__VA_ARGS__)
+
 #endif
 
 
