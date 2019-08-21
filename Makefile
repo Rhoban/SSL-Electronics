@@ -51,7 +51,6 @@ Core/Src/errors.c \
 Core/Src/terminal.c \
 core/src/serial.c \
 core/src/system.c \
-Core/Src/debug.c \
 Core/Src/time.c \
 Core/Src/jump_to_bootloader.c \
 Core/Src/print_float.c \

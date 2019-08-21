@@ -23,6 +23,8 @@
 
 #include <stdio.h>
 #include <time.h>
+#include <tools.h>
+#include <assertion.h>
 
 #define DPRINTF(fd, format, ...) dprintf(fd, "D " format "\n", ##__VA_ARGS__ )
 //#define DPRINTF(fd, format, ...) dprintf(fd, "D: " format " - %s : %d\n", ##__VA_ARGS__, __FILE__, __LINE__ )
@@ -36,6 +38,25 @@
 #define FREQT(t) print_freq(t, TERMINAL_FD)
 #define FREQJ(t) print_freq(t, JTAG_FD)
 
+#define FREQ(name, nb_sample) \
+  static float name; \
+  { \
+    _Static_assert( IS_POW_2(nb_sample), "Have to be a 2^N" ); \
+    static uint32_t name ## _freq_delta[nb_sample] = {0}; \
+    static uint32_t name ## _freq_pos = 0; \
+    static uint32_t name ## _freq_last_time_delta = 0; \
+    static int32_t name ## _freq_sum_delta = 0; \
+    uint32_t name ## _freq_time = time_get_us(); \
+    name ## _freq_sum_delta -= name ## _freq_delta[name ## _freq_pos]; \
+    name ## _freq_sum_delta += ( \
+      name ## _freq_delta[name ## _freq_pos] = ( \
+        name ## _freq_time - name ## _freq_last_time_delta \
+      ) \
+    ); \
+    name ## _freq_pos = NEXT(name ## _freq_pos, nb_sample); \
+    name ## _freq_last_time_delta = name ## _freq_time; \
+    name = (1000000.0*nb_sample)/name ## _freq_sum_delta; \
+  }
 
 static inline void DELAY_MS(uint32_t milli) {
   uint32_t deadline = time_get_us()+milli*1000;
