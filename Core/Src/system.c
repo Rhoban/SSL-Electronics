@@ -36,12 +36,12 @@ void system_restart(){
 void system_tick(){
   if( has_error() ){
     system_emergency();
-    WATCHJ(sys_err_j, true, 2000, "E");
-    WATCHT(sys_err_t, true, 2000, "E");
+    WATCHJ(true, 2000, "E");
+    WATCHT(true, 2000, "E");
   }
   if( has_warning() ){
-    WATCHJ(sys_warn_j, true, 2000, "W");
-    WATCHT(sys_warn_t, true, 2000, "W");
+    WATCHJ(true, 2000, "W");
+    WATCHT(true, 2000, "W");
   }
 }
 

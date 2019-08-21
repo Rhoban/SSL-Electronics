@@ -35,27 +35,24 @@
 // Printing debug on terminal
 #define PRINTT(format, ...) DPRINTF( TERMINAL_FD, format, ##__VA_ARGS__ )
 
-#define FREQT(t) print_freq(t, TERMINAL_FD)
-#define FREQJ(t) print_freq(t, JTAG_FD)
-
-#define FREQ(name, nb_sample) \
-  static float name; \
+#define FREQ(variable_name, nb_sample) \
+  static float variable_name; \
   { \
     _Static_assert( IS_POW_2(nb_sample), "Have to be a 2^N" ); \
-    static uint32_t name ## _freq_delta[nb_sample] = {0}; \
-    static uint32_t name ## _freq_pos = 0; \
-    static uint32_t name ## _freq_last_time_delta = 0; \
-    static int32_t name ## _freq_sum_delta = 0; \
-    uint32_t name ## _freq_time = time_get_us(); \
-    name ## _freq_sum_delta -= name ## _freq_delta[name ## _freq_pos]; \
-    name ## _freq_sum_delta += ( \
-      name ## _freq_delta[name ## _freq_pos] = ( \
-        name ## _freq_time - name ## _freq_last_time_delta \
+    static uint32_t variable_name ## _freq_delta[nb_sample] = {0}; \
+    static uint32_t variable_name ## _freq_pos = 0; \
+    static uint32_t variable_name ## _freq_last_time_delta = 0; \
+    static int32_t variable_name ## _freq_sum_delta = 0; \
+    uint32_t variable_name ## _freq_time = time_get_us(); \
+    variable_name ## _freq_sum_delta -= variable_name ## _freq_delta[variable_name ## _freq_pos]; \
+    variable_name ## _freq_sum_delta += ( \
+      variable_name ## _freq_delta[variable_name ## _freq_pos] = ( \
+        variable_name ## _freq_time - variable_name ## _freq_last_time_delta \
       ) \
     ); \
-    name ## _freq_pos = NEXT(name ## _freq_pos, nb_sample); \
-    name ## _freq_last_time_delta = name ## _freq_time; \
-    name = (1000000.0*nb_sample)/name ## _freq_sum_delta; \
+    variable_name ## _freq_pos = NEXT(variable_name ## _freq_pos, nb_sample); \
+    variable_name ## _freq_last_time_delta = variable_name ## _freq_time; \
+    variable_name = (1000000.0*nb_sample)/variable_name ## _freq_sum_delta; \
   }
 
 static inline void DELAY_MS(uint32_t milli) {
@@ -90,33 +87,36 @@ static inline void DELAY_MS(uint32_t milli) {
 void print_freq(uint32_t milis, int fd);
 
 
-#define EXECUTE_ONETIME(name, condition) \
-    static volatile uint32_t _assertion_ ##name = 0; \
-    if( (_assertion_ ##name == 0) && (condition) && (_assertion_ ##name ++ == 0) )
+#define EXECUTE_ONETIME(condition) \
+    static volatile uint32_t _assertion_ ## __COUNTER__ = 0; \
+    if( \
+      (_assertion_ ## __COUNTER__ == 0) && (condition) && \
+      (_assertion_ ## __COUNTER__ ++ == 0) \
+    )
 
 
-#define DASSERTION(fd, name, condition, format, ...) \
+#define DASSERTION(fd, condition, format, ...) \
   { \
-    EXECUTE_ONETIME(name, !(condition)) \
+    EXECUTE_ONETIME(!(condition)) \
     { \
       DPRINTF(fd, format, ##__VA_ARGS__); \
     } \
   }
 
-#define ASSERTIONJ(name, condition, format, ...) DASSERTION(JTAG_FD, name, condition, format, ##__VA_ARGS__)
-#define ASSERTIONT(name, condition, format, ...) DASSERTION(TERMINAL_FD, name, condition, format, ##__VA_ARGS__)
+#define ASSERTIONJ(condition, format, ...) DASSERTION(JTAG_FD, condition, format, ##__VA_ARGS__)
+#define ASSERTIONT(condition, format, ...) DASSERTION(TERMINAL_FD, condition, format, ##__VA_ARGS__)
 
-#define DWATCH(fd, name, condition, cooldown_ms, format, ...) \
+#define DWATCH(fd, condition, cooldown_ms, format, ...) \
   { \
-    static uint32_t _watch_last_time_ ##name = 0; \
-    uint32_t _watch_time ##name = time_get_us(); \
-    if( (condition) && ((_watch_time ##name - _watch_last_time_ ##name) >= 1000*cooldown_ms) ){ \
-      _watch_last_time_ ##name = _watch_time ##name; \
+    static uint32_t _watch_last_time_ ## __COUNTER__ = 0; \
+    uint32_t _watch_time ## __COUNTER__ = time_get_us(); \
+    if( (condition) && ((_watch_time ## __COUNTER__ - _watch_last_time_ ## __COUNTER__) >= 1000*cooldown_ms) ){ \
+      _watch_last_time_ ## __COUNTER__ = _watch_time ## __COUNTER__; \
       DPRINTF(fd, format, ##__VA_ARGS__); \
     } \
   }
 
-#define WATCHJ(name, condition, cooldown_ms, format, ...) DWATCH(JTAG_FD, name, condition, cooldown_ms, format, ##__VA_ARGS__)
-#define WATCHT(name, condition, cooldown_ms, format, ...) DWATCH(TERMINAL_FD, name, condition, cooldown_ms, format, ##__VA_ARGS__)
+#define WATCHJ(condition, cooldown_ms, format, ...) DWATCH(JTAG_FD, condition, cooldown_ms, format, ##__VA_ARGS__)
+#define WATCHT(condition, cooldown_ms, format, ...) DWATCH(TERMINAL_FD, condition, cooldown_ms, format, ##__VA_ARGS__)
 
 

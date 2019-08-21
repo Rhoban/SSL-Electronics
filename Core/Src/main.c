@@ -180,12 +180,14 @@ int main(void)
   while (1)
   {
     system_tick();
-    COUNTDOWN(tmp,100){
+    COUNTDOWN(100){
+      FREQ(frequence, 8);
       if( st ){
         HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
         // HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
         start_read_encoder_position();
       }
+      WATCHJ(true, 2000, "%.3f Khz", frequence/1000);
     }
     encoder_tick();
     get_serial()->tick();

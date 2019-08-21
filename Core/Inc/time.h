@@ -102,9 +102,9 @@ void reset_countdown(countdown_t * countdown);
 void tick_countdown(countdown_t * countdown);
 bool update_countdown(countdown_t * countdown);
 
-#define COUNTDOWN(name, period) \
-  static countdown_t _countdown_ ##name = {.period_us=period, .counter=0, .time=0}; \
-  if( update_countdown( & _countdown_ ##name ) )
+#define COUNTDOWN(period) \
+  static countdown_t _countdown_ ## __COUNTER__ = {.period_us=period, .counter=0, .time=0}; \
+  if( update_countdown( & _countdown_ ## __COUNTER__ ) )
 
 
 #if 0 // Somm other implemenation :)
