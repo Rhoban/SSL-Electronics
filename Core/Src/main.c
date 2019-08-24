@@ -38,9 +38,11 @@
 #define TIM1_PERIOD PWM_PERIOD
 #define TIM2_PERIOD 2*PWM_PERIOD
 #define TIM3_PERIOD 2*PWM_PERIOD*ENCODER_PERIOD
+#define TIM4_PERIOD 4
 #define TIM1_PRESCALAR 0
 #define TIM2_PRESCALAR 0
 #define TIM3_PRESCALAR 0
+#define TIM4_PRESCALAR 0
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -64,6 +66,7 @@ SPI_HandleTypeDef hspi2;
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
+TIM_HandleTypeDef htim4;
 
 /* USER CODE BEGIN PV */
 /* USER CODE END PV */
@@ -75,6 +78,7 @@ static void MX_SPI2_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -141,6 +145,53 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef* hspi){
 
 TERMINAL_PARAMETER_BOOL(st, "decl", false);
 
+void start_and_synchronize_timers(){
+  // We start timer 1, 2 and 4
+  if( HAL_TIM_Base_Start(&htim1) != HAL_OK ){
+    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
+  }
+  if( HAL_TIM_Base_Start(&htim2) != HAL_OK ){
+    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
+  }
+  if( HAL_TIM_Base_Start(&htim3) != HAL_OK ){
+    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
+  }
+
+  //
+  // Now, we will synchronize all timer by using the timer 4
+  // Timer 4 is configured to send a trigger output (whose name is ITR3)
+  // at each update.
+  // Timer 1, 2, 3 are in slave mode, configured in reset mode and are waiting
+  // for an input signal from TIM 4 (by using ITR3) to be reseted.
+  //  
+  if( HAL_TIM_Base_Start(&htim4) != HAL_OK ){
+     raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
+  }
+  delay_us(1); // We wait a little, to give time to TIM4 to be updated() (and 
+  //DELAY_MS(10000); // We wait a little, to give time to TIM4 to be updated() (and 
+                // ant trigger an output signal.
+  if( HAL_TIM_Base_Stop(&htim4) != HAL_OK ){
+    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
+  }
+
+  // We can now start Output compare and interuption for timer 1, 2 and 3.
+  if( HAL_TIM_OC_Start(&htim3, TIM_CHANNEL_1) != HAL_OK){
+    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
+  };
+  if( HAL_TIM_OC_Start_IT(&htim3, TIM_CHANNEL_1) != HAL_OK){
+    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
+  };
+
+  if( HAL_TIM_Base_Start_IT(&htim3) != HAL_OK ){
+    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
+  }
+  if( HAL_TIM_Base_Start_IT(&htim2) != HAL_OK ){
+    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
+  };
+  if( HAL_TIM_Base_Start_IT(&htim3) != HAL_OK ){
+    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
+  }
+}
 /* USER CODE END 0 */
 
 /**
@@ -176,6 +227,7 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM2_Init();
   MX_TIM3_Init();
+  MX_TIM4_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
   
@@ -184,31 +236,7 @@ int main(void)
   get_serial()->init();
   terminal_init(get_serial());
 
-  if( HAL_TIM_Base_Start(&htim1) != HAL_OK ){
-    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
-  }
-  if( HAL_TIM_Base_Start(&htim2) != HAL_OK ){
-    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
-  }
-  if( HAL_TIM_Base_Start(&htim3) != HAL_OK ){
-    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
-  }
-  if( HAL_TIM_OC_Start(&htim3, TIM_CHANNEL_1) != HAL_OK){
-    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
-  };
-  if( HAL_TIM_OC_Start_IT(&htim3, TIM_CHANNEL_1) != HAL_OK){
-    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
-  };
-  if( HAL_TIM_Base_Start_IT(&htim3) != HAL_OK ){
-    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
-  }
-  if( HAL_TIM_Base_Start_IT(&htim2) != HAL_OK ){
-    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
-  };
-  if( HAL_TIM_Base_Start_IT(&htim3) != HAL_OK ){
-    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
-  }
-
+  start_and_synchronize_timers();
   system_init();
   /* USER CODE END 2 */
 
@@ -362,7 +390,7 @@ static void MX_TIM1_Init(void)
     main_error_handler(__LINE__);
   }
   sSlaveConfig.SlaveMode = TIM_SLAVEMODE_RESET;
-  sSlaveConfig.InputTrigger = TIM_TS_ITR0;
+  sSlaveConfig.InputTrigger = TIM_TS_ITR3;
   if (HAL_TIM_SlaveConfigSynchro(&htim1, &sSlaveConfig) != HAL_OK)
   {
     main_error_handler(__LINE__);
@@ -445,7 +473,7 @@ static void MX_TIM2_Init(void)
     main_error_handler(__LINE__);
   }
   sSlaveConfig.SlaveMode = TIM_SLAVEMODE_RESET;
-  sSlaveConfig.InputTrigger = TIM_TS_ITR0;
+  sSlaveConfig.InputTrigger = TIM_TS_ITR3;
   if (HAL_TIM_SlaveConfigSynchro(&htim2, &sSlaveConfig) != HAL_OK)
   {
     main_error_handler(__LINE__);
@@ -502,7 +530,7 @@ static void MX_TIM3_Init(void)
     main_error_handler(__LINE__);
   }
   sSlaveConfig.SlaveMode = TIM_SLAVEMODE_RESET;
-  sSlaveConfig.InputTrigger = TIM_TS_ITR0;
+  sSlaveConfig.InputTrigger = TIM_TS_ITR3;
   if (HAL_TIM_SlaveConfigSynchro(&htim3, &sSlaveConfig) != HAL_OK)
   {
     main_error_handler(__LINE__);
@@ -524,6 +552,51 @@ static void MX_TIM3_Init(void)
   /* USER CODE BEGIN TIM3_Init 2 */
 
   /* USER CODE END TIM3_Init 2 */
+
+}
+
+/**
+  * @brief TIM4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM4_Init(void)
+{
+
+  /* USER CODE BEGIN TIM4_Init 0 */
+
+  /* USER CODE END TIM4_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM4_Init 1 */
+
+  /* USER CODE END TIM4_Init 1 */
+  htim4.Instance = TIM4;
+  htim4.Init.Prescaler = TIM4_PRESCALAR;
+  htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim4.Init.Period = TIM4_PERIOD;
+  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim4, &sClockSourceConfig) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_ENABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+  /* USER CODE BEGIN TIM4_Init 2 */
+
+  /* USER CODE END TIM4_Init 2 */
 
 }
 

@@ -70,7 +70,6 @@ void encoder_spi_call_back(){
 void encoder_tick(){
   if( start && encoder.is_ready ){
     if(!encoder.error){
-      HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
       PRINTJ_PERIODIC(1000, enc, "%d", as5047d_data_to_angle(&encoder) );
     }else{
       if(
