@@ -18,10 +18,22 @@
 
 #pragma once
 
-#include <assertion.h>
+#define SUB_PRIORITY 0
 
-#define USB_TX_DATA_SIZE 4096
-#define USB_RX_DATA_SIZE 1024 // Should be a 2^N
+#define MAINBOARD_SPI_PRIORITY 1 
+#define MAINBOARD_SPI_SUBPRIORITY SUB_PRIORITY
 
-void collect_received_data(uint8_t* buf, uint8_t len);
-void Usb_Error_Handler(uint32_t val);
+#define ENCODER_SPI_PRIORITY 2
+#define ENCODER_SPI_SUBPRIORITY SUB_PRIORITY
+
+#define ENCODER_PRIORITY 3
+#define ENCODER_SUBPRIORITY SUB_PRIORITY
+
+#define PWM_DUTY_CYCLE_PRIORITY 4
+#define PWM_DUTY_CYCLE_SUBPRIORITY SUB_PRIORITY
+
+#define SYSTEM_PRIORITY 5
+#define SYSTEM_SUBPRIORITY SUB_PRIORITY
+
+#define USB_PRIORITY 6
+#define USB_SUBPRIORITY SUB_PRIORITY

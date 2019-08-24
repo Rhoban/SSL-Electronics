@@ -120,3 +120,5 @@ void print_freq(uint32_t milis, int fd);
 #define WATCHT(condition, cooldown_ms, format, ...) DWATCH(TERMINAL_FD, condition, cooldown_ms, format, ##__VA_ARGS__)
 
 
+#define HELP1(v) h ## v = v;
+#define HELP2(v) TERMINAL_PARAMETER_INT( h ## v , "", 0 )

@@ -18,6 +18,10 @@
 
 #pragma once
 
+typedef enum {
+  HAL_INITIALISATION = 1
+} error_system_t;
+
 void system_init();
 void system_emergency();
 void system_restart();

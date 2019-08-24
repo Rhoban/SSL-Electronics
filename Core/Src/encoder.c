@@ -77,11 +77,15 @@ void encoder_tick(){
           encoder.error & 
           (AS5047D_ERROR | AS5047D_SPI_ERROR | AS5047D_SPI_CRASH)
       ){
-        const error_t e = { WARNING_ENCODER_ERROR_ON_AS5047D, encoder.error };
-        append_error(e);
+        if(encoder.error & AS5047D_SPI_ERROR){
+          raise_error(ERROR_ENCODER_SPI_TRANSMITRECEIVE, encoder.error);
+        }
+        if(encoder.error & AS5047D_SPI_CRASH){
+          raise_error(ERROR_ENCODER_SPI_CRASH, encoder.error);
+        }
+        raise_error(ERROR_ENCODER_AT_LINE, __LINE__);
       }else{
-        const warning_t w = { WARNING_ENCODER_ERROR_ON_AS5047D, encoder.error };
-        append_warning(w);
+        raise_warning(WARNING_ENCODER_ERROR_ON_AS5047D, encoder.error);
       }  
     }
     start = false;

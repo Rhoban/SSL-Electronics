@@ -53,7 +53,7 @@ extern "C" {
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 
 /* Exported functions prototypes ---------------------------------------------*/
-void Error_Handler(void);
+void main_error_handler(uint32_t);
 
 /* USER CODE BEGIN EFP */
 

@@ -32,6 +32,15 @@
 #include <time.h>
 #include <encoder.h>
 #include <system.h>
+#include <errors.h>
+#include <frequence_definitions.h>
+
+#define TIM1_PERIOD PWM_PERIOD
+#define TIM2_PERIOD 2*PWM_PERIOD
+#define TIM3_PERIOD 2*PWM_PERIOD*ENCODER_PERIOD
+#define TIM1_PRESCALAR 0
+#define TIM2_PRESCALAR 0
+#define TIM3_PRESCALAR 0
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -53,6 +62,8 @@
 SPI_HandleTypeDef hspi2;
 
 TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim3;
 
 /* USER CODE BEGIN PV */
 /* USER CODE END PV */
@@ -62,17 +73,14 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_TIM1_Init(void);
+static void MX_TIM2_Init(void);
+static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-TERMINAL_PARAMETER_INT(var1, "Variable 1", 1)
-TERMINAL_PARAMETER_FLOAT(var2, "Variable 2", 2.0/3.0)
-TERMINAL_PARAMETER_DOUBLE(var3, "Variable 3", 2.0/3.0)
-TERMINAL_PARAMETER_BOOL(var4, "Variable 4", true)
-
 TERMINAL_COMMAND(version, "firmware version")
 {
   terminal_println(FIRMWARE_VERSION);
@@ -166,11 +174,40 @@ int main(void)
   MX_GPIO_Init();
   MX_SPI2_Init();
   MX_TIM1_Init();
+  MX_TIM2_Init();
+  MX_TIM3_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
+  
   encoder_init(&hspi2, ENC_INT_CS_GPIO_Port,ENC_INT_CS_Pin);
+  
   get_serial()->init();
   terminal_init(get_serial());
+
+  if( HAL_TIM_Base_Start(&htim1) != HAL_OK ){
+    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
+  }
+  if( HAL_TIM_Base_Start(&htim2) != HAL_OK ){
+    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
+  }
+  if( HAL_TIM_Base_Start(&htim3) != HAL_OK ){
+    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
+  }
+  if( HAL_TIM_OC_Start(&htim3, TIM_CHANNEL_1) != HAL_OK){
+    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
+  };
+  if( HAL_TIM_OC_Start_IT(&htim3, TIM_CHANNEL_1) != HAL_OK){
+    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
+  };
+  if( HAL_TIM_Base_Start_IT(&htim3) != HAL_OK ){
+    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
+  }
+  if( HAL_TIM_Base_Start_IT(&htim2) != HAL_OK ){
+    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
+  };
+  if( HAL_TIM_Base_Start_IT(&htim3) != HAL_OK ){
+    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
+  }
 
   system_init();
   /* USER CODE END 2 */
@@ -180,6 +217,7 @@ int main(void)
   while (1)
   {
     system_tick();
+#if 0
     COUNTDOWN(100){
       FREQ(frequence, 8);
       if( st ){
@@ -189,6 +227,7 @@ int main(void)
       }
       WATCHJ(true, 2000, "%.3f Khz", frequence/1000);
     }
+#endif
     encoder_tick();
     get_serial()->tick();
     terminal_tick();
@@ -226,7 +265,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLQ = 7;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
-    Error_Handler();
+    main_error_handler(__LINE__);
   }
   /** Initializes the CPU, AHB and APB busses clocks 
   */
@@ -239,7 +278,7 @@ void SystemClock_Config(void)
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
-    Error_Handler();
+    main_error_handler(__LINE__);
   }
 }
 
@@ -273,7 +312,7 @@ static void MX_SPI2_Init(void)
   hspi2.Init.CRCPolynomial = 10;
   if (HAL_SPI_Init(&hspi2) != HAL_OK)
   {
-    Error_Handler();
+    main_error_handler(__LINE__);
   }
   /* USER CODE BEGIN SPI2_Init 2 */
 
@@ -294,6 +333,7 @@ static void MX_TIM1_Init(void)
   /* USER CODE END TIM1_Init 0 */
 
   TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_SlaveConfigTypeDef sSlaveConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
   TIM_OC_InitTypeDef sConfigOC = {0};
   TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig = {0};
@@ -302,30 +342,36 @@ static void MX_TIM1_Init(void)
 
   /* USER CODE END TIM1_Init 1 */
   htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 21;
+  htim1.Init.Prescaler = TIM1_PRESCALAR;
   htim1.Init.CounterMode = TIM_COUNTERMODE_CENTERALIGNED3;
-  htim1.Init.Period = 400;
+  htim1.Init.Period = TIM1_PERIOD;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
   {
-    Error_Handler();
+    main_error_handler(__LINE__);
   }
   sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
   if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK)
   {
-    Error_Handler();
+    main_error_handler(__LINE__);
   }
   if (HAL_TIM_PWM_Init(&htim1) != HAL_OK)
   {
-    Error_Handler();
+    main_error_handler(__LINE__);
+  }
+  sSlaveConfig.SlaveMode = TIM_SLAVEMODE_RESET;
+  sSlaveConfig.InputTrigger = TIM_TS_ITR0;
+  if (HAL_TIM_SlaveConfigSynchro(&htim1, &sSlaveConfig) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
   }
   sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
   if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
   {
-    Error_Handler();
+    main_error_handler(__LINE__);
   }
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
   sConfigOC.Pulse = 0;
@@ -336,15 +382,15 @@ static void MX_TIM1_Init(void)
   sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
   if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
   {
-    Error_Handler();
+    main_error_handler(__LINE__);
   }
   if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
   {
-    Error_Handler();
+    main_error_handler(__LINE__);
   }
   if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
   {
-    Error_Handler();
+    main_error_handler(__LINE__);
   }
   sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_DISABLE;
   sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
@@ -355,12 +401,129 @@ static void MX_TIM1_Init(void)
   sBreakDeadTimeConfig.AutomaticOutput = TIM_AUTOMATICOUTPUT_DISABLE;
   if (HAL_TIMEx_ConfigBreakDeadTime(&htim1, &sBreakDeadTimeConfig) != HAL_OK)
   {
-    Error_Handler();
+    main_error_handler(__LINE__);
   }
   /* USER CODE BEGIN TIM1_Init 2 */
 
   /* USER CODE END TIM1_Init 2 */
   HAL_TIM_MspPostInit(&htim1);
+
+}
+
+/**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_SlaveConfigTypeDef sSlaveConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = TIM2_PRESCALAR;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = TIM2_PERIOD;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+  sSlaveConfig.SlaveMode = TIM_SLAVEMODE_RESET;
+  sSlaveConfig.InputTrigger = TIM_TS_ITR0;
+  if (HAL_TIM_SlaveConfigSynchro(&htim2, &sSlaveConfig) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
+
+}
+
+/**
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_SlaveConfigTypeDef sSlaveConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = TIM3_PRESCALAR;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = TIM3_PERIOD;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+  if (HAL_TIM_OC_Init(&htim3) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+  sSlaveConfig.SlaveMode = TIM_SLAVEMODE_RESET;
+  sSlaveConfig.InputTrigger = TIM_TS_ITR0;
+  if (HAL_TIM_SlaveConfigSynchro(&htim3, &sSlaveConfig) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+  sConfigOC.OCMode = TIM_OCMODE_TIMING;
+  sConfigOC.Pulse = ENC_SPI_DELAY;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_OC_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
 
 }
 
@@ -429,11 +592,11 @@ static void MX_GPIO_Init(void)
   * @brief  This function is executed in case of error occurrence.
   * @retval None
   */
-void Error_Handler(void)
+void main_error_handler(uint32_t value)
 {
-  /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
-  /* USER CODE END Error_Handler_Debug */
+  /* USER CODE BEGIN main_error_handler_Debug */
+  raise_error(ERROR_STM32_HAL_LIBRARY, value);
+  /* USER CODE END main_error_handler_Debug */
 }
 
 #ifdef  USE_FULL_ASSERT
