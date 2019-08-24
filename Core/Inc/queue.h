@@ -31,8 +31,6 @@
     type queue[size]; \
   } name ## _queue_t; \
   \
-  name ## _queue_t name; \
-  \
   inline _Bool name ## _is_empty(name ## _queue_t * name){ \
     return name->head == name->tail; \
   } \
@@ -73,9 +71,9 @@
     return (name->head - name->tail) & (size-1); \
   }
 
-#define declare_queue(name) name ## _queue_t name;
+#define declare_static_queue(name) static name ## _queue_t name = {0, 0};
 
-#define define_and_declare_queue(type, name, size) \
+#define define_and_declare_static_queue(type, name, size) \
   define_queue_headers(type, name, size) \
-  declare_queue(name);
+  declare_static_queue(name);
   

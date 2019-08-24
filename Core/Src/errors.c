@@ -19,10 +19,9 @@
 #include <errors.h>
 #include <queue.h>
 #include <terminal.h>
-
 #define NUMBER_OF_ERRORS 16
 
-define_and_declare_queue(error_t, errors, NUMBER_OF_ERRORS)
+define_and_declare_static_queue(error_t, errors, NUMBER_OF_ERRORS)
 
 /*
  * This function return true if we want to keep the warning.
@@ -60,7 +59,7 @@ void print_error(const error_t * e){
 
 #define NUMBER_OF_WARNINGS 32
 
-define_and_declare_queue(warning_t, warnings, NUMBER_OF_WARNINGS)
+define_and_declare_static_queue(warning_t, warnings, NUMBER_OF_WARNINGS)
 
 /*
  * This function return true if we want to keep the error.

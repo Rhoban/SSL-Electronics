@@ -24,16 +24,16 @@
 #include "debug.h"
 
 #include <queue.h>
-define_and_declare_queue(uint8_t, usb_queue, USB_RX_DATA_SIZE)
+define_and_declare_static_queue(uint8_t, usb_queue, USB_TX_DATA_SIZE)
 
 static uint32_t buffer_size = 0;
 static uint8_t buffer[USB_TX_DATA_SIZE];
 static bool usb_is_init = false;
 
-inline bool usb_have_inputs(){
+bool usb_have_inputs(){
   return !usb_queue_is_empty(&usb_queue);
 }
-inline bool usb_output_is_full(){
+bool usb_output_is_full(){
   return usb_queue_is_full(&usb_queue);
 }
 void collect_received_data(uint8_t* buf, uint8_t len){
