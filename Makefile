@@ -23,11 +23,11 @@ FIRMWARE_VERSION:="`git rev-parse HEAD`_`date '+%Y/%m/%d_%HH%M'`_`whoami`"
 # building variables
 ######################################
 # debug build?
-#DEBUG = 1
-DEBUG = 0
+DEBUG = 1
+#DEBUG = 0
 # optimization
 ifeq ($(DEBUG), 1)
-OPT = -Werror -DDEBUG -Og
+OPT = -Werror -DDEBUG -DUSE_FULL_ASSERT -Og
 LDOPT = -u _printf_float
 else
 OPT = -Werror -O3

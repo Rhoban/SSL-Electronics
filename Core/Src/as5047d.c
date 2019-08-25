@@ -311,6 +311,7 @@ void as5047d_spi_call_back(as5047d_t* as5047d){
         as5047d->state = sleeping;
         break;
       default: 
+        assert_param(false);
         break;
     }
   }else{
@@ -331,6 +332,7 @@ void as5047d_spi_call_back(as5047d_t* as5047d){
         as5047d->state = sleeping;
         break;
       default:
+        assert_param(false);
         break;
     }
   }

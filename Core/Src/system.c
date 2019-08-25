@@ -48,26 +48,13 @@ void system_tick(){
     WATCHT(true, 2000, "W");
   }
 }
-#include <main.h>
+
+// Redefine the filter defined in error.c.
 filter_rule_t filter_error(const error_t* e){
-  #ifdef DEBUG
-  if( 
-    e->code == ERROR_ENCODER
-    &&
-    e->value == (AS5047D_ERROR | AS5047D_SPI_BUSY)
-  ){
-    COUNTDOWN(5000000){ // Filter each 5 seconds
-      return FILTER;
-    }
-    return IGNORE;
-  }
-  #endif
   return TAKE_IT;
 }
 
-TERMINAL_PARAMETER_INT(nb_filtered_warning, "", 0);
-
-// Overload the default filter for warnings  defined in error.c.
+// Redefine the filter defined in error.c.
 filter_rule_t filter_warning(const warning_t* w){
   return TAKE_IT;
 }
