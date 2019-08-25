@@ -12,3 +12,7 @@ float encoder_angle();
 void encoder_spi_call_back();
 
 void encoder_error_spi_call_back();
+
+// This function is automatically called by an interruption with a given 
+// priority
+void encoder_compute_angle();

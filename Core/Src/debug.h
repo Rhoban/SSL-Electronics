@@ -35,6 +35,8 @@
 // Printing debug on terminal
 #define PRINTT(format, ...) DPRINTF( TERMINAL_FD, format, ##__VA_ARGS__ )
 
+// Define a static variable `variable_name` and update it by computing the 
+// frequence in Hz of all "calls of that MACRO".
 #define FREQ(variable_name, nb_sample) \
   static float variable_name; \
   { \
@@ -63,20 +65,20 @@ static inline void DELAY_MS(uint32_t milli) {
 }
 
 
-#define DPRINT_PERIODIC(fd, period, name, format, ... ) {\
-    static volatile uint32_t _time_ ##name = 0; \
-    uint32_t _time_2_ ##name = time_get_us(); \
-    if( _time_2_ ##name - _time_ ##name >= 1000*period){ \
+#define DPRINT_PERIODIC(fd, period, format, ... ) {\
+    static volatile uint32_t _time_ ## __COUNTER__ = 0; \
+    uint32_t _time_2_ ## __COUNTER__ = time_get_us(); \
+    if( _time_2_ ## __COUNTER__ - _time_ ## __COUNTER__ >= 1000*period){ \
       DPRINTF(fd, format, ##__VA_ARGS__ ); \
-      _time_ ##name = time_get_us(); \
+      _time_ ## __COUNTER__ = time_get_us(); \
     }\
   }
 
-#define PRINTJ_PERIODIC(period, name, format, ... ) \
-  DPRINT_PERIODIC(JTAG_FD, period, name, format, ##__VA_ARGS__ )
+#define PRINTJ_PERIODIC(period, format, ... ) \
+  DPRINT_PERIODIC(JTAG_FD, period, format, ##__VA_ARGS__ )
 
-#define PRINTT_PERIODIC(period, name, format, ... ) \
-  DPRINT_PERIODIC(TERMINAL_FD, period, name, format, ##__VA_ARGS__ )
+#define PRINTT_PERIODIC(period, format, ... ) \
+  DPRINT_PERIODIC(TERMINAL_FD, period, format, ##__VA_ARGS__ )
 
 // Print the frequence of the calls of 
 // print_freq.

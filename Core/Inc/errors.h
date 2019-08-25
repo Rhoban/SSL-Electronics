@@ -25,11 +25,12 @@ typedef enum {
   ERROR_DEBUG=1,
   ERROR_SYSTEM_INITIALISATION=2,
   ERROR_USB_INITIALISATION=3,
-  ERROR_ENCODER_AT_LINE=4,
-  ERROR_ENCODER_SPI_TRANSMITRECEIVE=5,
-  ERROR_ENCODER_SPI_CRASH=6,
-  ERROR_TIMER_INIT_AT_LINE=7,
-  ERROR_STM32_HAL_LIBRARY=8
+  ERROR_ENCODER=4,
+  ERROR_ENCODER_NB_TRANSMITRECEIVE=5,
+  ERROR_ENCODER_SPI_TRANSMITRECEIVE=6,
+  ERROR_ENCODER_SPI_CRASH=7,
+  ERROR_TIMER_INIT_AT_LINE=8,
+  ERROR_STM32_HAL_LIBRARY=9
 } error_code_t;
 
 inline const char* error_to_string( error_code_t e ){
@@ -40,8 +41,10 @@ inline const char* error_to_string( error_code_t e ){
       return "ERROR_SYSTEM_INITIALISATION";
     case ERROR_USB_INITIALISATION:
       return "ERROR_USB_INITIALISATION";
-    case ERROR_ENCODER_AT_LINE:
-      return "ERROR_ENCODER_AT_LINE";
+    case ERROR_ENCODER:
+      return "ERROR_ENCODER";
+    case ERROR_ENCODER_NB_TRANSMITRECEIVE:
+      return "ERROR_ENCODER_NB_TRANSMITRECEIVE";
     case ERROR_ENCODER_SPI_TRANSMITRECEIVE:
       return "ERROR_ENCODER_SPI_TRANSMITRECEIVE";
     case ERROR_ENCODER_SPI_CRASH:
@@ -113,3 +116,12 @@ void clear_warnings();
 void clear_filtered_warnings();
 void print_warning(const warning_t * w, bool verbose);
 
+typedef enum {
+  TAKE_IT,
+  IGNORE,
+  FILTER
+} filter_rule_t;
+
+// Could be redefined
+filter_rule_t filter_error(const error_t* e);
+filter_rule_t filter_warning(const warning_t* w);

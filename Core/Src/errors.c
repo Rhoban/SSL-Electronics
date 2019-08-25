@@ -27,8 +27,8 @@ define_and_declare_static_queue(error_t, filtered_errors, NUMBER_OF_ERRORS)
 /*
  * This function return true if we want to keep the warning.
  */
- __attribute__((weak)) bool filter_error(const error_t* e){
-  return true;
+ __attribute__((weak)) filter_rule_t filter_error(const error_t* e){
+  return TAKE_IT;
 }
 
 bool has_errors(){
@@ -50,10 +50,13 @@ bool filtered_error_queue_is_full(){
   return filtered_errors_is_full(&filtered_errors);
 }
 void append_error(error_t e){
-  if( filter_error(&e) ){
-    errors_append(&errors, e);
-  }else{
-    filtered_errors_append(&filtered_errors, e);
+  switch( filter_error(&e) ){
+    case FILTER : 
+      filtered_errors_append(&filtered_errors, e);
+    case IGNORE :
+      break;
+    default:
+      errors_append(&errors, e);
   }
 }
 void raise_error(error_code_t code, uint32_t value){
@@ -77,12 +80,14 @@ void print_error(const error_t * e, bool verbose){
   terminal_print("E ");
   if( verbose ){
     terminal_print(error_to_string(e->code));
+    terminal_print("(");
+    terminal_print_int( e->code );
+    terminal_print("), ");
+  }else{
+    terminal_print_int( e->code );
+    terminal_print(", ");
   }
-  terminal_print(" ");
-  terminal_print_int( e->code );
-  terminal_print("(");
-  terminal_print_int( e->value );
-  terminal_println(")");
+  terminal_println_int( e->value );
 }
 
 #define NUMBER_OF_WARNINGS 32
@@ -93,8 +98,8 @@ define_and_declare_static_queue(warning_t, filtered_warnings, NUMBER_OF_ERRORS)
 /*
  * This function return true if we want to keep the warning.
  */
-__attribute__((weak)) bool filter_warning(const warning_t* w){
-  return true;
+__attribute__((weak)) filter_rule_t filter_warning(const warning_t* w){
+  return TAKE_IT;
 }
 
 bool has_warnings(){
@@ -116,10 +121,14 @@ bool filtered_warning_queue_is_full(){
   return filtered_warnings_is_full(&filtered_warnings);
 }
 void append_warning(warning_t w){
-  if( filter_warning(&w) ){
-    warnings_append(&warnings, w);
-  }else{
-    filtered_warnings_append(&filtered_warnings, w);
+  switch( filter_warning(&w) ){
+    case FILTER:
+      filtered_warnings_append(&filtered_warnings, w);
+      break;
+    case IGNORE:
+      break;
+    default:
+      warnings_append(&warnings, w);
   }
 }
 void raise_warning(warning_code_t code, uint32_t value){
@@ -143,11 +152,13 @@ void print_warning(const warning_t * w, bool verbose){
   terminal_print("W ");
   if( verbose ){
     terminal_print(warning_to_string(w->code));
+    terminal_print("(");
+    terminal_print_int( w->code );
+    terminal_print("), ");
+  }else{
+    terminal_print_int( w->code );
+    terminal_print(", ");
   }
-  terminal_print(" ");
-  terminal_print_int( w->code );
-  terminal_print("(");
-  terminal_print_int( w->value );
-  terminal_println(")");
+  terminal_println_int( w->value );
 }
 

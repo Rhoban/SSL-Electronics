@@ -50,8 +50,9 @@ typedef struct {
   volatile bool is_ready;
   volatile as5047d_error_t error;
 
+  volatile int32_t nb_transmitreceive;
   volatile int32_t state;
-  uint16_t data;
+  volatile uint16_t data;
   
   SPI_HandleTypeDef* hspi;
   GPIO_TypeDef* gpio_port_cs;
@@ -84,3 +85,5 @@ void as5047d_error_spi_call_back(as5047d_t* as5047d);
  */
 bool as5047d_start_reading_dynamic_angle(as5047d_t* as5047d);
 bool as5047d_start_reading_diagnostic(as5047d_t* as5047d);
+
+void as5047d_call_back_when_finished(as5047d_t* as5047d);

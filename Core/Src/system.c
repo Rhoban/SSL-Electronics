@@ -21,6 +21,8 @@
 #include <terminal.h>
 #include <jump_to_bootloader.h>
 #include "debug.h"
+#include <frequence_definitions.h>
+#include <as5047d.h>
 
 void system_init(){
 }
@@ -46,35 +48,28 @@ void system_tick(){
     WATCHT(true, 2000, "W");
   }
 }
-
-bool filter_error(const error_t* e){
-  return true;
+#include <main.h>
+filter_rule_t filter_error(const error_t* e){
+  #ifdef DEBUG
+  if( 
+    e->code == ERROR_ENCODER
+    &&
+    e->value == (AS5047D_ERROR | AS5047D_SPI_BUSY)
+  ){
+    COUNTDOWN(5000000){ // Filter each 5 seconds
+      return FILTER;
+    }
+    return IGNORE;
+  }
+  #endif
+  return TAKE_IT;
 }
 
 TERMINAL_PARAMETER_INT(nb_filtered_warning, "", 0);
 
 // Overload the default filter for warnings  defined in error.c.
-#include <as5047d.h>
-bool filter_warning(const warning_t* w){
-  #ifdef DEBUG
-  if( 
-    w->code == WARNING_ENCODER_ERROR_ON_AS5047D
-    &&
-    w->value == (AS5047D_ERROR | AS5047D_SPI_BUSY)
-  ){
-    return false;
-  }
-  #else
-  if( 
-    w->code == WARNING_ENCODER_BUSY
-  ){
-    if( nb_filtered_warning++ > 100 ){
-      return true;
-    }
-    return false;
-  }
-  #endif
-  return true;
+filter_rule_t filter_warning(const warning_t* w){
+  return TAKE_IT;
 }
 
 void display_warning( warning_t e, int* cpt){

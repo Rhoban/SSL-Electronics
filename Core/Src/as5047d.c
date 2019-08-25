@@ -145,6 +145,14 @@
 #define DAECANG_SIZE 14 // The size of the bits 13:0 containing the dynamic 
                         // angle error compensation
 
+//
+// If overloaded, this function should be as fast as possible, because its
+// code is executed with the priority of a SPI interruption.
+//
+__weak void as5047d_call_back_when_finished(as5047d_t* as5047d){
+  return;
+}
+
 static inline void activate_cs(as5047d_t* as5047d){
   HAL_GPIO_WritePin(
     as5047d->gpio_port_cs, as5047d->gpio_pin_cs, GPIO_PIN_RESET
@@ -207,14 +215,17 @@ static inline bool transmit_and_receipt_packet(as5047d_t* as5047d){
     disactivate_cs(as5047d);
     as5047d->state = sleeping;
     as5047d->is_ready = true;
+    as5047d_call_back_when_finished(as5047d);
     return false;
   }
+  as5047d->nb_transmitreceive ++;
   return true;
 }
 
 bool as5047d_start_reading_dynamic_angle(as5047d_t* as5047d){
   if( as5047d->state != sleeping ) return false;
   as5047d->is_ready = false;
+  as5047d->nb_transmitreceive = 0;
 
   as5047d->state = sending_a_reading_command;
   as5047d->error = AS5047D_OK;
@@ -228,6 +239,7 @@ bool as5047d_start_reading_dynamic_angle(as5047d_t* as5047d){
 bool as5047d_start_reading_diagnostic(as5047d_t* as5047d){
   if( as5047d->state != sleeping ) return false;
   as5047d->is_ready = false;
+  as5047d->nb_transmitreceive = 0;
 
   as5047d->state = sending_a_reading_command;
   as5047d->error = AS5047D_OK;
@@ -247,7 +259,7 @@ void as5047d_error_spi_call_back(as5047d_t* as5047d){
   // We finish to reset the spi communication.
   as5047d->state = sleeping;
   as5047d->is_ready = true;
-  
+  as5047d_call_back_when_finished(as5047d);
 }
 
 void as5047d_spi_call_back(as5047d_t* as5047d){
@@ -324,6 +336,7 @@ void as5047d_spi_call_back(as5047d_t* as5047d){
   }
   if(as5047d->state == sleeping){
     as5047d->is_ready = true;
+    as5047d_call_back_when_finished(as5047d);
   }else{
     transmit_and_receipt_packet(as5047d);
   }

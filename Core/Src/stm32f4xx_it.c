@@ -62,6 +62,7 @@ extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
 extern SPI_HandleTypeDef hspi2;
 extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim3;
+extern TIM_HandleTypeDef htim5;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -223,7 +224,7 @@ void TIM3_IRQHandler(void)
   if( __HAL_TIM_GET_FLAG(&htim3,TIM_FLAG_CC1) == SET ){
     // Not needed, it is to verify that TIM1 is enable.
     //if(__HAL_TIM_GET_IT_SOURCE(&htim3, TIM_IT_CC1) ==SET){ 
-      start_read_encoder_position();
+    start_read_encoder_position();
     //}
   }
   /* USER CODE END TIM3_IRQn 0 */
@@ -244,6 +245,21 @@ void SPI2_IRQHandler(void)
   /* USER CODE BEGIN SPI2_IRQn 1 */
 
   /* USER CODE END SPI2_IRQn 1 */
+}
+
+/**
+  * @brief This function handles TIM5 global interrupt.
+  */
+void TIM5_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM5_IRQn 0 */
+  if( __HAL_TIM_GET_FLAG(&htim5,TIM_FLAG_CC1) == SET ){
+    encoder_compute_angle();
+  }
+  /* USER CODE END TIM5_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim5);
+  /* USER CODE BEGIN TIM5_IRQn 1 */
+  /* USER CODE END TIM5_IRQn 1 */
 }
 
 /**

@@ -37,58 +37,77 @@ void encoder_init(
   as5047d_init( &encoder, hspi, gpio_port_cs, gpio_pin_cs );
 }
 
-static volatile bool start = false;
-
 typedef enum {
   ENCODER_VALUE_NOT_READY = 1,
   ENCODER_DO_NOT_START = 2
 } encoder_error_t;
 
+extern TIM_HandleTypeDef htim5;
+
 void start_read_encoder_position(){
-  if( start ){
-    const warning_t w = { WARNING_ENCODER_BUSY, ENCODER_VALUE_NOT_READY };
-    append_warning(w);
-    return;
-  }
-  start = true;
   if( !as5047d_start_reading_dynamic_angle(&encoder) ){
-    const warning_t w = { WARNING_ENCODER_BUSY, ENCODER_DO_NOT_START };
-    append_warning(w);
+    raise_warning(WARNING_ENCODER_BUSY, ENCODER_DO_NOT_START);
   }
+}
+
+//
+// This function should be as fast as possible, because its
+// code is executed with the priority of a SPI interruption.
+//
+void as5047d_call_back_when_finished(as5047d_t* as5047d){
+  if( as5047d == &encoder ){
+    // We reset timer 5 to raise an interuption and to execute in a lower priority
+    // the rest of the calculus.  
+    htim5.Instance->CNT = 0;
+  }
+}
+
+//
+// This function is automatically called with an TIM5 interruption. This TIM5
+// interuption is raised by chanel1. This channel is configured in an ouput 
+// compare mode.
+// This interuption is manually raised by reseting the counter of TIM5i by 
+// using the callback function `as5047d_call_back_when_finished()`.
+// 
+// We don't execute this function inside the as5047d callback because the 
+// execution is made under a SPI priority. We want to perform this computation
+// calcul with a lower priority.
+//
+// So, DON'T CALL THIS FUNCTION BY YOURSELF.
+// 
+void encoder_compute_angle(){
+  PRINTJ_PERIODIC(1000, "Calculus");
+  if(encoder.error){
+    if(
+        encoder.error & 
+        (AS5047D_ERROR | AS5047D_SPI_ERROR | AS5047D_SPI_CRASH)
+    ){
+      if(encoder.error & AS5047D_SPI_ERROR){
+        raise_error(ERROR_ENCODER_SPI_TRANSMITRECEIVE, encoder.error);
+      }
+      if(encoder.error & AS5047D_SPI_CRASH){
+        raise_error(ERROR_ENCODER_SPI_CRASH, encoder.error);
+      }
+      if( encoder.error & ~( AS5047D_SPI_ERROR | AS5047D_SPI_CRASH ) ){
+        raise_error(ERROR_ENCODER, encoder.error);
+      }
+    }else{
+      raise_warning(WARNING_ENCODER_ERROR_ON_AS5047D, encoder.error);
+    }
+    return;
+  }  
+  PRINTJ_PERIODIC(1000, "%d", as5047d_data_to_angle(&encoder) );
 }
 
 void encoder_error_spi_call_back(){
   as5047d_error_spi_call_back(&encoder);
-  start = false;
 }
 
 void encoder_spi_call_back(){
   as5047d_spi_call_back(&encoder);
 }
 
-#include <main.h>
 void encoder_tick(){
-  if( start && encoder.is_ready ){
-    if(!encoder.error){
-      PRINTJ_PERIODIC(1000, enc, "%d", as5047d_data_to_angle(&encoder) );
-    }else{
-      if(
-          encoder.error & 
-          (AS5047D_ERROR | AS5047D_SPI_ERROR | AS5047D_SPI_CRASH)
-      ){
-        if(encoder.error & AS5047D_SPI_ERROR){
-          raise_error(ERROR_ENCODER_SPI_TRANSMITRECEIVE, encoder.error);
-        }
-        if(encoder.error & AS5047D_SPI_CRASH){
-          raise_error(ERROR_ENCODER_SPI_CRASH, encoder.error);
-        }
-        raise_error(ERROR_ENCODER_AT_LINE, __LINE__);
-      }else{
-        raise_warning(WARNING_ENCODER_ERROR_ON_AS5047D, encoder.error);
-      }  
-    }
-    start = false;
-  }
 }
 
 TERMINAL_COMMAND(enc, "Read encoder")

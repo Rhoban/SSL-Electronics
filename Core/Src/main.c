@@ -39,10 +39,13 @@
 #define TIM2_PERIOD 2*PWM_PERIOD
 #define TIM3_PERIOD 2*PWM_PERIOD*ENCODER_PERIOD
 #define TIM4_PERIOD 4
+#define TIM5_PERIOD 4294967295
 #define TIM1_PRESCALAR 0
 #define TIM2_PRESCALAR 0
 #define TIM3_PRESCALAR 0
 #define TIM4_PRESCALAR 0
+#define TIM5_PRESCALAR 150 //5000
+#define COMP_DELAY 1
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -67,6 +70,7 @@ TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
+TIM_HandleTypeDef htim5;
 
 /* USER CODE BEGIN PV */
 /* USER CODE END PV */
@@ -79,6 +83,7 @@ static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM4_Init(void);
+static void MX_TIM5_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -156,7 +161,7 @@ void start_and_synchronize_timers(){
   if( HAL_TIM_Base_Start(&htim3) != HAL_OK ){
     raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
   }
-
+  
   //
   // Now, we will synchronize all timer by using the timer 4
   // Timer 4 is configured to send a trigger output (whose name is ITR3)
@@ -191,6 +196,16 @@ void start_and_synchronize_timers(){
   if( HAL_TIM_Base_Start_IT(&htim3) != HAL_OK ){
     raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
   }
+
+    if( HAL_TIM_Base_Start(&htim5) != HAL_OK ){
+      raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
+    }
+    if( HAL_TIM_OC_Start(&htim5, TIM_CHANNEL_1) != HAL_OK){
+      raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
+    };
+    if( HAL_TIM_OC_Start_IT(&htim5, TIM_CHANNEL_1) != HAL_OK){
+      raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
+    };
 }
 /* USER CODE END 0 */
 
@@ -228,6 +243,7 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM3_Init();
   MX_TIM4_Init();
+  MX_TIM5_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
   
@@ -597,6 +613,64 @@ static void MX_TIM4_Init(void)
   /* USER CODE BEGIN TIM4_Init 2 */
 
   /* USER CODE END TIM4_Init 2 */
+
+}
+
+/**
+  * @brief TIM5 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM5_Init(void)
+{
+
+  /* USER CODE BEGIN TIM5_Init 0 */
+
+  /* USER CODE END TIM5_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM5_Init 1 */
+
+  /* USER CODE END TIM5_Init 1 */
+  htim5.Instance = TIM5;
+  htim5.Init.Prescaler = TIM5_PRESCALAR;
+  htim5.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim5.Init.Period = TIM5_PERIOD;
+  htim5.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim5.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim5) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim5, &sClockSourceConfig) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+  if (HAL_TIM_OC_Init(&htim5) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim5, &sMasterConfig) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+  sConfigOC.OCMode = TIM_OCMODE_TIMING;
+  sConfigOC.Pulse = COMP_DELAY;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_OC_ConfigChannel(&htim5, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+  /* USER CODE BEGIN TIM5_Init 2 */
+
+  /* USER CODE END TIM5_Init 2 */
 
 }
 
