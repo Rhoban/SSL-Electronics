@@ -1,0 +1,48 @@
+LED;      // Toggle the led
+LED_ON;   // Turn on the led 
+LED_OFF;  // Turn off the led
+
+PRINTT("%f", 3.2); // print on the terminal
+PRINTJ("%f", 3.2); // print on the jtag
+
+WATCHT( condition, cooldown_ms, "%f", 3.2 );
+                // pritn on the terminal if condition is true
+                // this printing mode have a cooldonwn of `cooldown`
+WATCHJ(...);
+
+PRINTT_PERIODIC(period_ms, "%f", 3.2);  Print on the terminal each `period_ms` ms
+PRINTJ_PERIODIC(...);
+
+ASSERTIONT(condition, "%f", 3.2) // When condition is true, 
+                        // print just one time the text 
+                        // on the terminal.
+ASSERTIONJ
+
+ECECUTE_ONETIME(condition){ // When condition, execute just one time 
+  SOME_CODE                 // SOME_CODE.
+}
+
+COUNTDOWN(time_us){  // Execute SOME_CODE. 
+  SOME_CODE         // Before executing SOME_CODE, we need to wait 
+}                   // at least a cooldown of `times_us`
+
+COOLDOWN     // same as COUNTDOWN
+
+delay_us(time_us) // wait at least time_us second.
+                  // The time could be greater, depending of 
+                  // interruption.
+
+DELAY_MS(time_ms) // Wait for time_ms. this delay use the absolut clock,
+                  // so interruptions do not imply a shift in the delay.
+DELAY_AT_LEAST_NS(time_ns) // try to wait time_ns seconds.
+
+FREQ(variable, nb_sample) // define a variable variable and 
+                    // write on it the computed frequence in Hz of 
+                    // the calls of that MACRO.
+
+// example of usage : 
+FREQ(frequence, 8);
+PRINTT_PERIODIC(1000, "%f Hz", frequence)
+
+time_get_us() // Get the number of microseconds, since the last syclock              // reset.
+
