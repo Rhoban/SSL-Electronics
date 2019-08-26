@@ -50,7 +50,6 @@ typedef struct {
   volatile bool is_ready;
   volatile as5047d_error_t error;
 
-  volatile int32_t nb_transmitreceive;
   volatile int32_t state;
   volatile uint16_t data;
   

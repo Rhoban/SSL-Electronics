@@ -218,14 +218,12 @@ static inline bool transmit_and_receipt_packet(as5047d_t* as5047d){
     as5047d_call_back_when_finished(as5047d);
     return false;
   }
-  as5047d->nb_transmitreceive ++;
   return true;
 }
 
 bool as5047d_start_reading_dynamic_angle(as5047d_t* as5047d){
   if( as5047d->state != sleeping ) return false;
   as5047d->is_ready = false;
-  as5047d->nb_transmitreceive = 0;
 
   as5047d->state = sending_a_reading_command;
   as5047d->error = AS5047D_OK;
@@ -239,7 +237,6 @@ bool as5047d_start_reading_dynamic_angle(as5047d_t* as5047d){
 bool as5047d_start_reading_diagnostic(as5047d_t* as5047d){
   if( as5047d->state != sleeping ) return false;
   as5047d->is_ready = false;
-  as5047d->nb_transmitreceive = 0;
 
   as5047d->state = sending_a_reading_command;
   as5047d->error = AS5047D_OK;
@@ -311,7 +308,7 @@ void as5047d_spi_call_back(as5047d_t* as5047d){
         as5047d->state = sleeping;
         break;
       default: 
-        assert_param(false);
+        ASSERT(false);
         break;
     }
   }else{
@@ -332,7 +329,7 @@ void as5047d_spi_call_back(as5047d_t* as5047d){
         as5047d->state = sleeping;
         break;
       default:
-        assert_param(false);
+        ASSERT(false);
         break;
     }
   }

@@ -29,12 +29,24 @@
 // The clock prescaler for a clock of 84 MHz is 16 : 84Mhz/16 = 5.25MHz
 // (BaudRate = 5.25b/s)
 //
-static as5047d_t encoder;
+static as5047d_t device;
+
+typedef struct {
+  volatile uint16_t dynamic_angle;  
+  volatile as5047d_error_t dynamic_angle_error;  
+
+  as5047d_diagnostic_t diagnostic;
+  as5047d_error_t diagnostic_error;
+
+  float angle;
+} encoder_t;
+
+static encoder_t encoder = {0, 0, {0,0,0,0,0}, AS5047D_OK};
 
 void encoder_init(  
   SPI_HandleTypeDef* hspi, GPIO_TypeDef*  gpio_port_cs, uint16_t gpio_pin_cs
 ){
-  as5047d_init( &encoder, hspi, gpio_port_cs, gpio_pin_cs );
+  as5047d_init( &device, hspi, gpio_port_cs, gpio_pin_cs );
 }
 
 typedef enum {
@@ -45,20 +57,47 @@ typedef enum {
 extern TIM_HandleTypeDef htim5;
 
 void start_read_encoder_position(){
-  if( !as5047d_start_reading_dynamic_angle(&encoder) ){
+  if( !as5047d_start_reading_dynamic_angle(&device) ){
     raise_warning(WARNING_ENCODER_BUSY, ENCODER_DO_NOT_START);
   }
 }
+
+volatile static bool diagnostic_request = false;
+volatile static uint32_t state = 0;
 
 //
 // This function should be as fast as possible, because its
 // code is executed with the priority of a SPI interruption.
 //
 void as5047d_call_back_when_finished(as5047d_t* as5047d){
-  if( as5047d == &encoder ){
-    // We reset timer 5 to raise an interuption and to execute in a lower priority
-    // the rest of the calculus.  
-    htim5.Instance->CNT = 0;
+  if( as5047d == &device ){
+    switch( state ){
+      case 0:
+        encoder.dynamic_angle = as5047d_data_to_angle(&device);
+        encoder.dynamic_angle_error = device.error;
+
+        // We reset timer 5 to raise an interuption and to execute in a lower priority
+        // the rest of the calculus.  
+        htim5.Instance->CNT = 0;
+       
+        if( diagnostic_request ){
+          state = 1;
+          if( !as5047d_start_reading_diagnostic(&device) ){
+            raise_warning(WARNING_ENCODER_BUSY, ENCODER_DO_NOT_START);
+          }
+        }
+        break;
+      case 1:
+        encoder.diagnostic_error = device.error;
+        if(!device.error){
+          as5047d_data_to_diagnostic(&device, &(encoder.diagnostic)); 
+        }
+        state = 0; 
+        diagnostic_request = false;
+        break;
+      default:
+        ASSERT(false);
+    }
   }
 }
 
@@ -77,34 +116,34 @@ void as5047d_call_back_when_finished(as5047d_t* as5047d){
 // 
 void encoder_compute_angle(){
   PRINTJ_PERIODIC(1000, "Calculus");
-  if(encoder.error){
+  if(encoder.dynamic_angle_error){
     if(
-        encoder.error & 
+        encoder.dynamic_angle_error & 
         (AS5047D_ERROR | AS5047D_SPI_ERROR | AS5047D_SPI_CRASH)
     ){
-      if(encoder.error & AS5047D_SPI_ERROR){
-        raise_error(ERROR_ENCODER_SPI_TRANSMITRECEIVE, encoder.error);
+      if(encoder.dynamic_angle_error & AS5047D_SPI_ERROR){
+        raise_error(ERROR_ENCODER_SPI_TRANSMITRECEIVE, encoder.dynamic_angle_error);
       }
-      if(encoder.error & AS5047D_SPI_CRASH){
-        raise_error(ERROR_ENCODER_SPI_CRASH, encoder.error);
+      if(device.error & AS5047D_SPI_CRASH){
+        raise_error(ERROR_ENCODER_SPI_CRASH, encoder.dynamic_angle_error);
       }
-      if( encoder.error & ~( AS5047D_SPI_ERROR | AS5047D_SPI_CRASH ) ){
-        raise_error(ERROR_ENCODER, encoder.error);
+      if( device.error & ~( AS5047D_SPI_ERROR | AS5047D_SPI_CRASH ) ){
+        raise_error(ERROR_ENCODER, encoder.dynamic_angle_error);
       }
     }else{
-      raise_warning(WARNING_ENCODER_ERROR_ON_AS5047D, encoder.error);
+      raise_warning(WARNING_ENCODER_ERROR_ON_AS5047D, encoder.dynamic_angle_error);
     }
     return;
   }  
-  PRINTJ_PERIODIC(1000, "%d", as5047d_data_to_angle(&encoder) );
+  PRINTJ_PERIODIC(1000, "%d", encoder.dynamic_angle );
 }
 
 void encoder_error_spi_call_back(){
-  as5047d_error_spi_call_back(&encoder);
+  as5047d_error_spi_call_back(&device);
 }
 
 void encoder_spi_call_back(){
-  as5047d_spi_call_back(&encoder);
+  as5047d_spi_call_back(&device);
 }
 
 void encoder_tick(){
@@ -112,44 +151,42 @@ void encoder_tick(){
 
 TERMINAL_COMMAND(enc, "Read encoder")
 {
-  start_read_encoder_position();
+  terminal_println_int( encoder.dynamic_angle );
 }
 
 TERMINAL_COMMAND(diagnostic, "encoder diagnostic")
 {
-  as5047d_diagnostic_t diagnostic = {0, 0, 0, 0, 0};
-  as5047d_start_reading_diagnostic(&encoder);
+  diagnostic_request = true;
+  
+  while(diagnostic_request);
 
-  while(!encoder.is_ready);
-    
-  if(!encoder.error){
-    as5047d_data_to_diagnostic(&encoder, &diagnostic); 
+  if(!encoder.diagnostic_error){
     terminal_print( "magnetic field strength :" );
-    if(diagnostic.mfs_too_low){
+    if(encoder.diagnostic.mfs_too_low){
       terminal_println(" too low");
     }
-    if(diagnostic.mfs_too_high){
+    if(encoder.diagnostic.mfs_too_high){
       terminal_println(" too high");
     }
-    if( ( ! diagnostic.mfs_too_high ) && ( ! diagnostic.mfs_too_low ) ){
+    if( ( ! encoder.diagnostic.mfs_too_high ) && ( ! encoder.diagnostic.mfs_too_low ) ){
       terminal_println(" OK");
     }
     terminal_print( "cordi : " );
-    if(diagnostic.cordi_overflow){
+    if(encoder.diagnostic.cordi_overflow){
       terminal_println("OVERFLOW (the measured angle is not reliable)");
     }else{
       terminal_println("OK");
     }
     terminal_print( "offset comensation : " );
-    if(diagnostic.offset_compensation_is_ready){
+    if(encoder.diagnostic.offset_compensation_is_ready){
       terminal_println("OK");
     }else{
       terminal_println("NOT READY");
     }
     terminal_print( "automatic gain control : " );
-    terminal_println_int( diagnostic.automatic_gain_control );
+    terminal_println_int( encoder.diagnostic.automatic_gain_control );
   }else{
     terminal_print("Reading error : ");
-    terminal_println_int(encoder.error);
+    terminal_println_int(encoder.diagnostic_error);
   }
 }
