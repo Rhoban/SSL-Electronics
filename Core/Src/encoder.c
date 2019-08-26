@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2019  Adrien Boussicault <adrien.boussicault@labri.fr>
+ *
+ * This program is free software: you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/>.
+ */
+
 #include <encoder.h>
 #include <as5047d.h>
 #include <terminal.h>
@@ -5,7 +23,8 @@
 #include <stdint.h>
 #include <errors.h>
 #include "debug.h"
-
+#include <frequence_definitions.h>
+#include <filter.h>
 
 //
 // Clock computation
@@ -32,27 +51,75 @@
 static as5047d_t device;
 
 typedef struct {
-  volatile uint16_t dynamic_angle;  
+  butterworth_3_data_t butterworth_filter;
+  
+  uint16_t last_dynamic_angle;  
+  volatile uint16_t dynamic_angle;
+  int32_t absolute_angle;
+
   volatile as5047d_error_t dynamic_angle_error;  
 
   as5047d_diagnostic_t diagnostic;
   as5047d_error_t diagnostic_error;
 
   float angle;
+  float velocity;
 } encoder_t;
 
-static encoder_t encoder = {0, 0, {0,0,0,0,0}, AS5047D_OK};
+typedef enum {
+  NOT_INIT,
+  READING_ANGLE,
+  MAKE_DIAGNOSTIC
+} encoder_state_t;
+volatile static encoder_state_t state = NOT_INIT;
+
+static encoder_t encoder;
+volatile static uint32_t computation_is_done = 0;
 
 void encoder_init(  
   SPI_HandleTypeDef* hspi, GPIO_TypeDef*  gpio_port_cs, uint16_t gpio_pin_cs
 ){
+  encoder.absolute_angle = 0;  
+  encoder.last_dynamic_angle = 0;  
+  encoder.dynamic_angle = 0;
+  encoder.dynamic_angle_error = AS5047D_OK;  
+  clear_diagnostic( &encoder.diagnostic );
+  encoder.diagnostic_error = AS5047D_OK;
+  encoder.angle = 0.0;
+  encoder.velocity = 0.0;
+
+  // To have good result, the buterworth filter should work on small 
+  // values.
+  // So we give a limit_value to the filter and the filter perform
+  // the following computation : 
+  //
+  // real_value = base + small_value
+  // filtered = filter( small_value )
+  // small_value = fmod( filtered, limit_value )
+  // base += filtered - small_value;
+  // 
+  // This limit_value should be smaller as possible to maintain
+  // a good precision.
+  //
+  // To determine that value, we use the maximal velocity
+  // TODO : To improve and to prove ! 
+  const float frame_limit = (
+    (3.0*MAXIMAL_MOTOR_VELOCITY*2*M_PI)/ENCODER_FREQ
+  );
+  init_butterworth_3_pulsation_1256_rad_s(
+    &(encoder.butterworth_filter), frame_limit
+  );
+  
   as5047d_init( &device, hspi, gpio_port_cs, gpio_pin_cs );
 }
 
-typedef enum {
-  ENCODER_VALUE_NOT_READY = 1,
-  ENCODER_DO_NOT_START = 2
-} encoder_error_t;
+void encoder_start(){
+  computation_is_done = 0;
+  state = READING_ANGLE;
+}
+void encoder_stop(){
+  state = NOT_INIT;
+}
 
 extern TIM_HandleTypeDef htim5;
 
@@ -63,7 +130,7 @@ void start_read_encoder_position(){
 }
 
 volatile static bool diagnostic_request = false;
-volatile static uint32_t state = 0;
+
 
 //
 // This function should be as fast as possible, because its
@@ -72,33 +139,66 @@ volatile static uint32_t state = 0;
 void as5047d_call_back_when_finished(as5047d_t* as5047d){
   if( as5047d == &device ){
     switch( state ){
-      case 0:
-        encoder.dynamic_angle = as5047d_data_to_angle(&device);
-        encoder.dynamic_angle_error = device.error;
+      case READING_ANGLE:
+        if( computation_is_done == 0 ){
+          encoder.dynamic_angle = as5047d_data_to_angle(&device);
+          encoder.dynamic_angle_error = device.error;
+          computation_is_done++;
 
-        // We reset timer 5 to raise an interuption and to execute in a lower priority
-        // the rest of the calculus.  
-        htim5.Instance->CNT = 0;
+          // We reset timer 5 to raise an interuption and to execute in a lower priority
+          // the rest of the calculus.  
+          htim5.Instance->CNT = 0;
+        }else{
+            raise_warning(WARNING_ENCODER_LAG, LAG_IN_ANGLE_COMPUTATION);
+        }
        
         if( diagnostic_request ){
-          state = 1;
+          state = MAKE_DIAGNOSTIC;
           if( !as5047d_start_reading_diagnostic(&device) ){
             raise_warning(WARNING_ENCODER_BUSY, ENCODER_DO_NOT_START);
           }
         }
         break;
-      case 1:
+      case MAKE_DIAGNOSTIC:
         encoder.diagnostic_error = device.error;
         if(!device.error){
           as5047d_data_to_diagnostic(&device, &(encoder.diagnostic)); 
         }
-        state = 0; 
+        state = READING_ANGLE; 
         diagnostic_request = false;
+        break;
+      case NOT_INIT:
         break;
       default:
         ASSERT(false);
     }
   }
+}
+
+#define RESOLUTION_ONE_TURN 16384
+_Static_assert( IS_POW_2(RESOLUTION_ONE_TURN), "" );
+static inline uint16_t predict_encoder_angle(
+  uint16_t last_encoder_angle, float velocity
+){ 
+  return last_encoder_angle + (
+    (uint16_t) (
+      velocity*(RESOLUTION_ONE_TURN/(2*M_PI*ENCODER_FREQ))
+    )
+  );
+}
+
+inline int32_t encoder_compute_delta(uint16_t a, uint16_t b)
+{
+    int32_t delta = ((int32_t) b) - ((int32_t) a);
+
+    if (delta > 0x1fff) {
+        delta -= 0x4000;
+    }
+    if (delta < -0x1fff) {
+        delta += 0x4000;
+    }
+
+    return delta;
 }
 
 //
@@ -115,7 +215,9 @@ void as5047d_call_back_when_finished(as5047d_t* as5047d){
 // So, DON'T CALL THIS FUNCTION BY YOURSELF.
 // 
 void encoder_compute_angle(){
-  PRINTJ_PERIODIC(1000, "Calculus");
+  if( (computation_is_done > 1) || (state == NOT_INIT) ) return;
+  computation_is_done++;
+
   if(encoder.dynamic_angle_error){
     if(
         encoder.dynamic_angle_error & 
@@ -133,9 +235,26 @@ void encoder_compute_angle(){
     }else{
       raise_warning(WARNING_ENCODER_ERROR_ON_AS5047D, encoder.dynamic_angle_error);
     }
-    return;
-  }  
-  PRINTJ_PERIODIC(1000, "%d", encoder.dynamic_angle );
+    // We reconstruct a dynamic angle.
+    encoder.dynamic_angle = predict_encoder_angle(
+      encoder.last_dynamic_angle, encoder.velocity
+    );
+  }
+  encoder.absolute_angle += encoder_compute_delta(
+    encoder.dynamic_angle, encoder.last_dynamic_angle
+  );
+  update_butterworth_3_pulsation_1256_rad_s(
+    encoder.absolute_angle/(RESOLUTION_ONE_TURN/(2*M_PI)),
+    &(encoder.butterworth_filter)
+  );
+  encoder.angle = get_filtered_data(&(encoder.butterworth_filter));
+  
+  encoder.last_dynamic_angle = encoder.dynamic_angle;
+  computation_is_done = 0;
+}
+
+TERMINAL_COMMAND(set_origin, "Define the origine"){
+  encoder.absolute_angle = 0;
 }
 
 void encoder_error_spi_call_back(){
@@ -152,6 +271,24 @@ void encoder_tick(){
 TERMINAL_COMMAND(enc, "Read encoder")
 {
   terminal_println_int( encoder.dynamic_angle );
+}
+
+TERMINAL_COMMAND(angle, "angle in tr (0: tr, 1:rad, 2:deg)")
+{
+  if(argc == 0){
+    terminal_println_float( encoder.angle/(2*M_PI) );
+  }else if(argc==1){
+    if( atoi( argv[0] ) == 0 ){
+      terminal_println_float( encoder.angle/(2*M_PI) );
+    }else if( atoi( argv[0] ) == 1 ){
+      terminal_println_float( encoder.angle );
+    }else{
+      terminal_println_float( encoder.angle*360.0/(2*M_PI) );
+    }
+  }else{
+    terminal_println( "usage: angle [0/1/2]" );
+    terminal_println( "   0/1/2 : tr/rad/deg");
+  }
 }
 
 TERMINAL_COMMAND(diagnostic, "encoder diagnostic")

@@ -2,6 +2,11 @@ LED;      // Toggle the led
 LED_ON;   // Turn on the led 
 LED_OFF;  // Turn off the led
 
+raise_error(ERROR_DEBUG, <int number>) // raise an error
+raise_warning(WARNING_DEBUG, <int number>)  
+raise_error(ERROR_STRING, <const char*>) // Raise en error with a given string
+raise_error(ERROR_STRING, <const char*>)
+
 PRINTT("%f", 3.2); // print on the terminal
 PRINTJ("%f", 3.2); // print on the jtag
 
@@ -13,12 +18,16 @@ WATCHJ(...);
 PRINTT_PERIODIC(period_ms, "%f", 3.2);  Print on the terminal each `period_ms` ms
 PRINTJ_PERIODIC(...);
 
+ASSERTION(condition) // Raise an two error, the first one with the line 
+          // the second ond with the name of file.
+          // On the terminal, you can print the error by typing err
+
 ASSERTIONT(condition, "%f", 3.2) // When condition is true, 
                         // print just one time the text 
                         // on the terminal.
 ASSERTIONJ
 
-ECECUTE_ONETIME(condition){ // When condition, execute just one time 
+EXECUTE_ONETIME(condition){ // When condition, execute just one time 
   SOME_CODE                 // SOME_CODE.
 }
 

@@ -1,0 +1,29 @@
+CPPFLAGS= -ICore/Inc -DDEBUG -Wall -Werror -Og -g
+LDLIBS= -lm
+
+SRC_DIR=Core/Src
+BUILD_DIR= build_test
+
+PROGRAMS= \
+	$(BUILD_DIR)/test_filter \
+	$(BUILD_DIR)/test_queue \
+	$(BUILD_DIR)/test_print_float \
+	$(BUILD_DIR)/test_print_double
+
+all: $(BUILD_DIR) $(PROGRAMS)
+
+$(BUILD_DIR)/test_filter: $(BUILD_DIR)/test_filter.o $(BUILD_DIR)/filter.o
+$(BUILD_DIR)/test_queue: $(BUILD_DIR)/test_queue.o
+$(BUILD_DIR)/test_print_float: $(BUILD_DIR)/test_print_float.o
+$(BUILD_DIR)/test_print_double: $(BUILD_DIR)/test_print_double.o
+
+$(BUILD_DIR)/%.o : $(SRC_DIR)/%.c
+	$(COMPILE.c) $(OUTPUT_OPTION) $<
+
+$(BUILD_DIR):
+	mkdir $@
+
+clean:
+	-rm -rf $(BUILD_DIR)
+
+.phony:all clean

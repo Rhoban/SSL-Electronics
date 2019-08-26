@@ -55,6 +55,7 @@ Core/Src/time.c \
 Core/Src/jump_to_bootloader.c \
 Core/Src/print_float.c \
 Core/Src/print_double.c \
+Core/Src/filter.c \
 Core/Src/encoder.c \
 Core/Src/as5047d.c \
 Core/Src/serial_usb.c \

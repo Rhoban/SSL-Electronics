@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <math.h>
+
 // give the next id ( (id+1)%size ) when
 // size is a power of 2. 
 #define NEXT(id, size) ((id+1)&(size-1))
@@ -26,3 +28,13 @@
 #define PREV(id, size) ( (id+(size-1))&(size-1))
 #define RMASK(nb) ( ~( ((~0u) >> nb) << nb ) )
 #define LMASK(nb) ( ~( ((~0u) << nb) >> nb ) )
+
+inline float mod_float(float theta, float quotient){
+  float res = fmod(theta, quotient);
+  return res>=0 ? res : res+quotient;
+}
+
+inline float mod_2_pi(float theta){
+  return mod_float(theta, (2*M_PI));
+}
+

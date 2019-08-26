@@ -246,14 +246,15 @@ int main(void)
   MX_TIM5_Init();
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
-  
-  encoder_init(&hspi2, ENC_INT_CS_GPIO_Port,ENC_INT_CS_Pin);
-  
+
   get_serial()->init();
   terminal_init(get_serial());
-
-  start_and_synchronize_timers();
+  
   system_init();
+  encoder_init(&hspi2, ENC_INT_CS_GPIO_Port,ENC_INT_CS_Pin);
+ 
+  start_and_synchronize_timers();
+  encoder_start();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -757,8 +758,8 @@ void main_error_handler(uint32_t value)
 void assert_failed(uint8_t *file, uint32_t line)
 { 
   /* USER CODE BEGIN 6 */
-  PRINTT("Wrong parameters value: file %s on line %ld", file, line);
-  PRINTJ("Wrong parameters value: file %s on line %ld", file, line);
+  raise_error(ERROR_ASSERTION, line);
+  raise_error(ERROR_STRING, (uint32_t) file);
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */

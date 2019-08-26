@@ -66,8 +66,14 @@ void raise_error(error_code_t code, uint32_t value){
 void process_all_errors(void (*fct)(error_t e, void* data), void* data){
   errors_process(&errors, fct, data);
 }
+void process_n_errors(void (*fct)(error_t e, void* data), void* data, uint32_t n){
+  errors_nprocess(&errors, fct, data, n);
+}
 void process_all_filtered_errors(void (*fct)(error_t e, void* data), void* data){
   filtered_errors_process(&filtered_errors, fct, data);
+}
+void process_n_filtered_errors(void (*fct)(error_t e, void* data), void* data, uint32_t n){
+  filtered_errors_nprocess(&filtered_errors, fct, data, n);
 }
 void clear_errors(){
   errors_clear(&errors);
@@ -87,7 +93,11 @@ void print_error(const error_t * e, bool verbose){
     terminal_print_int( e->code );
     terminal_print(", ");
   }
-  terminal_println_int( e->value );
+  if( e->code == ERROR_STRING ){
+    terminal_println( (char*)e->value );
+  }else{
+    terminal_println_int( e->value );
+  }
 }
 
 #define NUMBER_OF_WARNINGS 32
@@ -138,8 +148,14 @@ void raise_warning(warning_code_t code, uint32_t value){
 void process_all_warnings(void (*fct)(warning_t e, void* data), void* data){
   warnings_process(&warnings, fct, data);
 }
+void process_n_warnings(void (*fct)(warning_t e, void* data), void* data, uint32_t n){
+  warnings_nprocess(&warnings, fct, data, n);
+}
 void process_all_filtered_warnings(void (*fct)(warning_t e, void* data), void* data){
   filtered_warnings_process(&filtered_warnings, fct, data);
+}
+void process_n_filtered_warnings(void (*fct)(warning_t e, void* data), void* data, uint32_t n){
+  filtered_warnings_nprocess(&filtered_warnings, fct, data, n);
 }
 void clear_warnings(){
   warnings_clear(&warnings);
@@ -159,6 +175,10 @@ void print_warning(const warning_t * w, bool verbose){
     terminal_print_int( w->code );
     terminal_print(", ");
   }
-  terminal_println_int( w->value );
+  if(w->code == WARNING_STRING){
+    terminal_println( (char*) w->value );
+  }else{
+    terminal_println_int( w->value );
+  }
 }
 

@@ -43,6 +43,14 @@ typedef struct {
   uint8_t automatic_gain_control;
 } as5047d_diagnostic_t;
 
+inline void clear_diagnostic( as5047d_diagnostic_t* diag){
+  diag->mfs_too_low = false;
+  diag->mfs_too_high = false;
+  diag->cordi_overflow = false;
+  diag->offset_compensation_is_ready = false;
+  diag->automatic_gain_control = 0;
+}
+
 typedef struct {
   uint8_t pTxData[2];
   uint8_t pRxData[2];

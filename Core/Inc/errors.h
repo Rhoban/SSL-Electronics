@@ -23,20 +23,26 @@
 
 typedef enum {
   ERROR_DEBUG=1,
-  ERROR_SYSTEM_INITIALISATION=2,
-  ERROR_USB_INITIALISATION=3,
-  ERROR_ENCODER=4,
-  ERROR_ENCODER_NB_TRANSMITRECEIVE=5,
-  ERROR_ENCODER_SPI_TRANSMITRECEIVE=6,
-  ERROR_ENCODER_SPI_CRASH=7,
-  ERROR_TIMER_INIT_AT_LINE=8,
-  ERROR_STM32_HAL_LIBRARY=9
+  ERROR_STRING=2,
+  ERROR_ASSERTION=3,
+  ERROR_SYSTEM_INITIALISATION=4,
+  ERROR_USB_INITIALISATION=5,
+  ERROR_ENCODER=6,
+  ERROR_ENCODER_NB_TRANSMITRECEIVE=7,
+  ERROR_ENCODER_SPI_TRANSMITRECEIVE=8,
+  ERROR_ENCODER_SPI_CRASH=9,
+  ERROR_TIMER_INIT_AT_LINE=10,
+  ERROR_STM32_HAL_LIBRARY=11
 } error_code_t;
 
 inline const char* error_to_string( error_code_t e ){
   switch( e ){
     case ERROR_DEBUG :
       return "ERROR_DEBUG";
+    case ERROR_ASSERTION :
+      return "ERROR_ASSERTION";
+    case ERROR_STRING :
+      return "ERROR_STRING";
     case ERROR_SYSTEM_INITIALISATION:
       return "ERROR_SYSTEM_INITIALISATION";
     case ERROR_USB_INITIALISATION:
@@ -72,26 +78,35 @@ bool filtered_error_queue_is_full();
 void append_error(error_t e);
 void raise_error(error_code_t code, uint32_t value);
 void process_all_errors(void (*fct)(error_t e, void* data), void* data);
+void process_n_errors(void (*fct)(error_t e, void* data), void* data, uint32_t n);
 void process_all_filtered_errors(void (*fct)(error_t e, void* data), void* data);
+void process_n_filtered_errors(void (*fct)(error_t e, void* data), void* data, uint32_t n);
 void clear_errors();
 void clear_filtered_errors();
 void print_error(const error_t * e, bool verbose);
 
 
 typedef enum {
-  WARNING_LAG = 1,
-  WARNING_ENCODER_BUSY = 2,
-  WARNING_ENCODER_ERROR_ON_AS5047D = 3
+  WARNING_DEBUG = 1,
+  WARNING_STRING = 2,
+  WARNING_LAG = 3,
+  WARNING_ENCODER_BUSY = 4,
+  WARNING_ENCODER_ERROR_ON_AS5047D = 5,
+  WARNING_ENCODER_LAG = 6
 } warning_code_t;
 
 inline const char* warning_to_string( warning_code_t w ){
   switch( w ){
+    case WARNING_DEBUG :
+      return "WARNING_DEBUG"; 
     case WARNING_LAG :
       return "WARNING_LAG"; 
     case WARNING_ENCODER_BUSY :
       return "WARNING_ENCODER_BUSY"; 
     case WARNING_ENCODER_ERROR_ON_AS5047D :
       return "WARNING_ENCODER_ERROR_ON_AS5047D";
+    case WARNING_ENCODER_LAG :
+      return "WARNING_ENCODER_LAG";
     default : 
       return "?";
   }
@@ -111,7 +126,9 @@ bool filtered_warning_queue_is_full();
 void append_warning(warning_t e);
 void raise_warning(warning_code_t code, uint32_t value);
 void process_all_warnings(void (*fct)(warning_t e, void* data), void* data);
+void process_n_warnings(void (*fct)(warning_t e, void* data), void* data, uint32_t n);
 void process_all_filtered_warnings(void (*fct)(warning_t e, void* data), void* data);
+void process_n_filtered_warnings(void (*fct)(warning_t e, void* data), void* data, uint32_t n);
 void clear_warnings();
 void clear_filtered_warnings();
 void print_warning(const warning_t * w, bool verbose);

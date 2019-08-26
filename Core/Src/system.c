@@ -56,6 +56,9 @@ filter_rule_t filter_error(const error_t* e){
 
 // Redefine the filter defined in error.c.
 filter_rule_t filter_warning(const warning_t* w){
+  if( w->code == WARNING_DEBUG ){
+    return FILTER; //IGNORE;
+  }
   return TAKE_IT;
 }
 
@@ -68,6 +71,7 @@ void display_warning( warning_t e, int* cpt){
 }
 
 TERMINAL_COMMAND(warn, "print and flush warnings" ){
+  uint32_t total = nb_warnings();
   uint32_t nb = nb_warnings();
   if( nb==0 ){
     terminal_println("no warnings.");
@@ -81,8 +85,8 @@ TERMINAL_COMMAND(warn, "print and flush warnings" ){
     nb -= atoi(argv[0]);
   }
   bool is_full = warning_queue_is_full();
-  process_all_warnings(
-    (void (*)(warning_t,void*)) display_warning, &nb
+  process_n_warnings(
+    (void (*)(warning_t,void*)) display_warning, &nb, total
   );
   if( is_full ){
     terminal_println("... and more recent warnings.");
@@ -96,6 +100,7 @@ TERMINAL_COMMAND(warn, "print and flush warnings" ){
 }
 
 TERMINAL_COMMAND(fwarn, "print and flush warnings" ){
+  uint32_t total = nb_filtered_warnings();
   uint32_t nb = nb_filtered_warnings();
   if( nb==0 ){
     terminal_println("no filtered warnings.");
@@ -109,8 +114,8 @@ TERMINAL_COMMAND(fwarn, "print and flush warnings" ){
     nb -= atoi(argv[0]);
   }
   bool is_full = filtered_warning_queue_is_full(); 
-  process_all_filtered_warnings(
-    (void (*)(warning_t,void*)) display_warning, &nb
+  process_n_filtered_warnings(
+    (void (*)(warning_t,void*)) display_warning, &nb, total
   );
   if( is_full ){
     terminal_println("... and more recent filtered warnings.");
@@ -126,6 +131,7 @@ void display_error( error_t e, int* cpt){
 }
 
 TERMINAL_COMMAND(err, "print and flush errors" ){
+  uint32_t total = nb_errors();
   uint32_t nb = nb_errors();
   if( nb==0 ){
     terminal_println("no errors.");
@@ -139,8 +145,8 @@ TERMINAL_COMMAND(err, "print and flush errors" ){
     nb -= atoi(argv[0]);
   }
   bool is_full = error_queue_is_full();
-  process_all_errors(
-    (void (*)(error_t,void*)) display_error, &nb
+  process_n_errors(
+    (void (*)(error_t,void*)) display_error, &nb, total
   );
   if( is_full ){
     terminal_println("... and more recent errors.");
@@ -154,6 +160,7 @@ TERMINAL_COMMAND(err, "print and flush errors" ){
 }
 
 TERMINAL_COMMAND(ferr, "print and flush filtered errors" ){
+  uint32_t total = nb_filtered_errors();
   uint32_t nb = nb_filtered_errors();
   if( nb==0 ){
     terminal_println("no filtered errors.");
@@ -167,8 +174,8 @@ TERMINAL_COMMAND(ferr, "print and flush filtered errors" ){
     nb -= atoi(argv[0]);
   }
   bool is_full = filtered_error_queue_is_full();
-  process_all_filtered_errors(
-    (void (*)(error_t,void*)) display_error, &nb
+  process_n_filtered_errors(
+    (void (*)(error_t,void*)) display_error, &nb, total
   );
   if( is_full ){
     terminal_println("... and more recent errors.");

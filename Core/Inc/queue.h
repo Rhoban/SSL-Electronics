@@ -24,11 +24,11 @@
 
 #define define_queue_headers(type, name, size) \
   typedef struct { \
-    uint32_t head; \
-    uint32_t tail; \
+    volatile uint32_t head; \
+    volatile uint32_t tail; \
     \
     _Static_assert(IS_POW_2(size), "queue size have to be a 2^N.") \
-    type queue[size]; \
+    volatile type queue[size]; \
   } name ## _queue_t; \
   \
   inline _Bool name ## _is_empty(name ## _queue_t * name){ \
@@ -61,6 +61,11 @@
   } \
   inline void name ## _process(name ## _queue_t * name, void (*fct)(type e, void* data), void* data){ \
     while( ! name ## _is_empty(name) ){ \
+      fct( name ## _pop(name), data ); \
+    } \
+  } \
+  inline void name ## _nprocess(name ## _queue_t * name, void (*fct)(type e, void* data), void* data, uint32_t n){ \
+    while( n-->0 && ! name ## _is_empty(name) ){ \
       fct( name ## _pop(name), data ); \
     } \
   } \
