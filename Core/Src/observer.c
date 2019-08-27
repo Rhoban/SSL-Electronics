@@ -30,7 +30,7 @@ typedef struct {
   int oversample_counter;
 
   float angle[HYSTORIC_SIZE];
-  float velocity[HYSTORIC_SIZE-1];
+  float velocity;
   uint32_t position;
 
   uint32_t level;
@@ -39,20 +39,18 @@ typedef struct {
 static observer_t observer;
 
 void observer_init(){
-  for( uint32_t i=0; i<HYSTORIC_SIZE-1; i++ ){
+  for( uint32_t i=0; i<HYSTORIC_SIZE; i++ ){
     observer.angle[i] = 0;
-    observer.velocity[i] = 0;
   }
-  observer.angle[HYSTORIC_SIZE-1] = 0;
   
+  observer.velocity = 0;
   observer.level = 0;
   observer.position = HYSTORIC_SIZE-1;
   observer.oversample_counter = OVERSAMPLING_NUMBER-1;
 }
 
 static inline void update_velocity(uint32_t level){
-  if( level >= HYSTORIC_SIZE-1 ) return;
-  observer.velocity[level] = (
+  observer.velocity = (
     (
       observer.angle[observer.position] -
       observer.angle[(observer.position-level-1) & (HYSTORIC_SIZE-1)]
@@ -73,7 +71,7 @@ void observer_update(float angle){
   observer.angle[observer.position] = angle;
 
   //
-  //We update the level according to the velocity :
+  // We update the level according to the velocity :
   // we want the noise is negligible in front of the angle increase.
   //
   // So we want that velocity / update_frequence >> angle_noise 
@@ -98,7 +96,7 @@ void observer_update(float angle){
   #define ANGLE_NOISE (2*M_PI*MAXIMAL_AMPLITUDE_ERROR_AT_50_TR_S/(360*1000.0))
   #define LEVEL_FACTOR (ANGLE_NOISE*NEGLIGABLE*OVERSAMPLING_FREQ)
   
-  float level = fabs(LEVEL_FACTOR/observer.velocity[observer.level]);
+  float level = fabs(LEVEL_FACTOR/observer.velocity);
   // We change the level according to an hysteresis to avoid osciling 
   // phenomena.
   if( fabs( level - (observer.level+.5) ) >= .5+.2 ){
@@ -117,7 +115,7 @@ float observer_get_angle(){
 }
 
 float observer_get_velocity(){
-  return observer.velocity[observer.level];
+  return observer.velocity;
 }
 
 TERMINAL_COMMAND(angle, "angle in tr (0: tr, 1:rad, 2:deg)")
