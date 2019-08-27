@@ -36,11 +36,11 @@
 #include <observer.h>
 #include <frequence_definitions.h>
 
-#define TIM1_PERIOD PWM_PERIOD
-#define TIM2_PERIOD 2*PWM_PERIOD
-#define TIM3_PERIOD 2*PWM_PERIOD*ENCODER_PERIOD
-#define TIM4_PERIOD 4
-#define TIM5_PERIOD 4294967295
+#define TIM1_PERIOD PWM_PERIOD // The timer to generate all the pwm
+#define TIM2_PERIOD SYCLK_TO_PWM_DUTY_CYCLE_PERIOD // Timer for the center-aligned pwm
+#define TIM3_PERIOD SYCLK_TO_ENCODER_PERIOD // Timer for the encoder.
+#define TIM4_PERIOD 4 // Clock user to reset and synchronize all the other clock
+#define TIM5_PERIOD 4294967295 // Clock used to launch background computation
 #define TIM1_PRESCALAR 0
 #define TIM2_PRESCALAR 0
 #define TIM3_PRESCALAR 0
@@ -91,6 +91,72 @@ static void MX_TIM5_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+TERMINAL_COMMAND(frequences, "Print all the frequences"){
+
+  terminal_println( "Frequences :");
+  terminal_println("");
+  terminal_print("CLK_SYSCLK :");
+  terminal_println_int(CLK_SYSCLK);
+  terminal_print("PWM_FREQ :");
+  terminal_println_int(PWM_FREQ);
+  terminal_print("CENTER_ALIGNED_PWM_FREQ :");
+  terminal_println_int(CENTER_ALIGNED_PWM_FREQ);
+  terminal_print("ENCODER_FREQ :");
+  terminal_println_int(ENCODER_FREQ);
+  //terminal_print("ANGLE_OBSERVER_FREQ :");
+  //terminal_println_int(ANGLE_OBSERVER_FREQ);
+  terminal_print("PWM_DUTY_CYCLE_FREQ :");
+  terminal_println_int(PWM_DUTY_CYCLE_FREQ);
+  //terminal_print("ARG_COMMAND_FREQ :");
+  //terminal_println_int(ARG_COMMAND_FREQ);
+  //terminal_print("ANGLE_FREQ :");
+  //terminal_println_int(ANGLE_FREQ);
+  terminal_print("NORM_COMMAND_FREQ :");
+  terminal_println_int(NORM_COMMAND_FREQ);
+
+  terminal_println("");
+  terminal_println("Periods :");
+  terminal_println("");
+  terminal_print("PWM_PERIOD :");
+  terminal_println_int(PWM_PERIOD );
+  terminal_print("CENTER_ALIGNED_PERIOD :");
+  terminal_println_int(CENTER_ALIGNED_PERIOD);
+  terminal_print("ENCODER_PERIOD :");
+  terminal_println_int(ENCODER_PERIOD);
+  //terminal_print("OBS_PERIOD :");
+  //terminal_println_int(OBS_PERIOD);
+  terminal_print("PWM_DUTY_CYCLE_PERIOD :");
+  terminal_println_int(PWM_DUTY_CYCLE_PERIOD);
+  terminal_print("NORM_PERIOD :");
+  terminal_println_int(NORM_PERIOD);
+  terminal_print("TIM1_PERIOD :");
+  terminal_println_int(TIM1_PERIOD);
+  terminal_print("TIM2_PERIOD :");
+  terminal_println_int(TIM2_PERIOD);
+  terminal_print("TIM3_PERIOD :");
+  terminal_println_int(TIM3_PERIOD);
+  terminal_print("TIM4_PERIOD :");
+  terminal_println_int(TIM4_PERIOD);
+  terminal_print("TIM5_PERIOD :");
+  terminal_println_int(TIM5_PERIOD);
+
+  terminal_println("");
+  terminal_println("Max values :");
+  terminal_println("");
+  terminal_print("MAXIMAL_PHASE_MOTOR_FREQ :");
+  terminal_println_int(MAXIMAL_PHASE_MOTOR_FREQ);
+  terminal_print("MAXIMAL_MOTOR_VELOCITY :");
+  terminal_println_int(MAXIMAL_MOTOR_VELOCITY);
+
+  terminal_println("");
+  terminal_println("sampling factors :");
+  terminal_println("");
+  terminal_print("OVERSAMPLING_NUMBER :");
+  terminal_println_int(OVERSAMPLING_NUMBER);
+  terminal_print("NYQUIST_FACTOR :");
+  terminal_println_int(NYQUIST_FACTOR);
+}
+
 TERMINAL_COMMAND(version, "firmware version")
 {
   terminal_println(FIRMWARE_VERSION);

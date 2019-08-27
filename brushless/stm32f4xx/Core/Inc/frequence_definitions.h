@@ -30,7 +30,7 @@
 
 #if defined(CAT_FRIENDLY)
   #define PWM_FREQ 140000
-#elif defied(DOG_FRIENDLY)
+#elif defined(DOG_FRIENDLY)
   #define PWM_FREQ 96000
 #elif defined(HUMAN_FRIENDLY)
   #define PWM_FREQ 60000
@@ -58,8 +58,11 @@ _Static_assert( PWM_PERIOD <= RMASK(NB_OF_BITS_FOR_PWM_PRESCALER), "" );
 //             1/(CENTER_ALIGNED_PWM_FREQ)                 
 //
 
-#define CENTER_ALIGNED_PWM_FREQ PWM_FREQ/2
-_Static_assert( PWM_FREQ % 2 == 0, "" );
+#define CENTER_ALIGNED_PERIOD 2
+_Static_assert( CENTER_ALIGNED_PERIOD == 2, "Because it is the center aligned mode." );
+
+#define CENTER_ALIGNED_PWM_FREQ (PWM_FREQ/CENTER_ALIGNED_PERIOD)
+_Static_assert( PWM_FREQ % CENTER_ALIGNED_PERIOD == 0, "" );
 _Static_assert( CLK_SYSCLK % CENTER_ALIGNED_PWM_FREQ == 0, "" );
 
 #define DUTY_CYCLE_PRECISION 600
@@ -147,10 +150,10 @@ _Static_assert(
       // in milli-degree (1/1000 degree)
 
 #ifdef table_sin_8
-  #define SINUS_TABLE_SIZE 1024
+  #define SINUS_TABLE_SIZE 2048
   #define NB_FOLDING_SINUS 8 // by using sin(2*t) = 1 - 2 sin^2(pi/4 - t)
 #else
-  #define SINUS_TABLE_SIZE 2048
+  #define SINUS_TABLE_SIZE 4096
   #define NB_FOLDING_SINUS 4
 #endif
 #define SINUS_RESOLUTION (NB_FOLDING_SINUS*SINUS_TABLE_SIZE)
@@ -163,11 +166,23 @@ _Static_assert(
   "the given encoder position. You should increase size of sinus table."
 );
 
-#define PWM_DUTY_CYCLE_FREQ ENCODER_FREQ/2
-_Static_assert(ENCODER_FREQ % 2 == 0, "");
 
-#define PWM_DUTY_CYCLE_PERIOD (PWM_FREQ/PWM_DUTY_CYCLE_FREQ)
-_Static_assert(PWM_FREQ % PWM_DUTY_CYCLE_FREQ == 0, "");
+#if defined(CAT_FRIENDLY)
+  #define PWM_DUTY_CYCLE_PERIOD 5 
+#elif defined(DOG_FRIENDLY)
+  #define PWM_DUTY_CYCLE_PERIOD 5 
+#elif defined(HUMAN_FRIENDLY)
+  #define PWM_DUTY_CYCLE_PERIOD 3 
+#endif
+
+#define PWM_DUTY_CYCLE_FREQ (CENTER_ALIGNED_PWM_FREQ/PWM_DUTY_CYCLE_PERIOD)
+_Static_assert(CENTER_ALIGNED_PWM_FREQ % PWM_DUTY_CYCLE_PERIOD == 0, "");
+
+#define NORM_COMMAND_FREQ (ENCODER_FREQ/NYQUIST_FACTOR)
+_Static_assert(ENCODER_FREQ % NYQUIST_FACTOR == 0, "");
+
+#define NORM_PERIOD (PWM_DUTY_CYCLE_FREQ/NORM_COMMAND_FREQ)
+_Static_assert(PWM_DUTY_CYCLE_FREQ % NORM_COMMAND_FREQ == 0, "");
 
 // We want that the sinus table precision is smaller that the delta angle 
 // of the application at high speed.
@@ -183,10 +198,11 @@ _Static_assert(
 
 // We want that the sinus table precision is smaller that the delta angle 
 // of the application at low speed.
-#define EXPECTED_MINIMAL_MOTOR_VELOCITY 0.1
+#define EXPECTED_MINIMAL_MOTOR_VELOCITY 0.13
+#define IN_FLOAT 1.0
 _Static_assert(
   // 1/MINIMAL_PARK_RESOLUTION < EXPECTED_MINIMAL_MOTOR_VELOCITY / PWM_DUTY_CYCLE_FREQ 
-  PWM_DUTY_CYCLE_FREQ*1.0
+  PWM_DUTY_CYCLE_FREQ*IN_FLOAT
   <
   MINIMAL_PARK_RESOLUTION*EXPECTED_MINIMAL_MOTOR_VELOCITY
   ,
@@ -194,11 +210,14 @@ _Static_assert(
   "of the park transform."
 );
 
-// TODO : 1) Verifier que la table des sinus a une précision suffisament 
+// TODO :
+//
+//  1) Verifier que la table des sinus a une précision suffisament 
 //           grande vis à vis de la résolution de l'angle calculé par l'observeur
 //  2) Vérifier que l'erreur du calcul en sinus (par la table) est 
 //     plus grossier que la précision commandable via PWM_PERIOD
 //  3) 
+
 // Frequnce relation summary :
 // ---------------------------
 // 
@@ -208,7 +227,7 @@ _Static_assert(
 //          =
 //       PWM_FREQ
 //          |
-//          | / 2
+//          | / CENTER_ALIGNED_PERIOD (=2)
 //          =
 // CENTER_ALIGNED_PWM_FREQ
 //          |__________________________________________________
@@ -219,7 +238,7 @@ _Static_assert(
 //          |              =ARG_COMMAND_FREQ         (DUTY CYCLE use ARG_COMMAND + lin. inter. NORM_COMMAND)       .
 //          |_________________________                        . 
 //          |                         |                       . / NORM_PERIOD
-//          | / OVERSAMPLING          | / NYQUIST_FACTOR      .
+//          | / OVERSAMPLING_NUMBER   | / NYQUIST_FACTOR      .
 //          =                         =                       .
 //      ANGLE_FREQ              NORM_COMMAND_FREQ = . . . . . .
 //          |
@@ -231,6 +250,12 @@ _Static_assert(
 //          =
 // MAXIMAL_MOTOR_VELOCITY
 // 
+
+#define SYCLK_TO_ENCODER_PERIOD (CENTER_ALIGNED_PERIOD*PWM_PERIOD*ENCODER_PERIOD)
+#define SYCLK_TO_PWM_DUTY_CYCLE_PERIOD (CENTER_ALIGNED_PERIOD*PWM_PERIOD*PWM_DUTY_CYCLE_PERIOD)
+
+
+
 //
 // Time diagram :
 // --------------
@@ -240,3 +265,4 @@ _Static_assert(
 // Delay before afte an encoder interruption before asking for an angle request
 // usin the SPI
 #define ENC_SPI_DELAY 1680
+

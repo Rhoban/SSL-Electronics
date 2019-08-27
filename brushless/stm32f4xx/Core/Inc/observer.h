@@ -24,3 +24,5 @@ void observer_update(float angle);
 
 float observer_get_angle();
 float observer_get_velocity();
+
+void observer_tick( float * speed, float* angle);

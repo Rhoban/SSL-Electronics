@@ -33,10 +33,22 @@ typedef struct {
   float velocity;
   uint32_t position;
 
+  uint32_t updated_tick;
+  uint32_t current_tick;
+
   uint32_t level;
 } observer_t; 
 
 static observer_t observer;
+
+void observer_tick( float * speed, float* angle){
+  (observer.current_tick)++;
+  (*speed) = observer.velocity;
+  (*angle) = observer.angle[observer.position] + (
+      ((observer.current_tick - observer.updated_tick) & 0xFFFF) *
+      observer.velocity
+  ) / PWM_DUTY_CYCLE_PERIOD;
+}
 
 void observer_init(){
   for( uint32_t i=0; i<HYSTORIC_SIZE; i++ ){
@@ -104,6 +116,8 @@ void observer_update(float angle){
   }
   if( observer.level >= HYSTORIC_SIZE-1 ) observer.level = HYSTORIC_SIZE-2;
   update_velocity(observer.level);
+
+  observer.updated_tick = observer.current_tick;
 }
 
 TERMINAL_COMMAND( level, "veloctity level"){
