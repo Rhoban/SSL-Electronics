@@ -19,10 +19,12 @@
 ##################
 
 Install the following package :
+-------------------------------
 
 sudo apt-get install dfu-util cu build-essential
 
 Uninstall the modemmanager : 
+----------------------------
 
 sudo apt-get remove modemmanager
 
@@ -31,6 +33,7 @@ if you are using this service, you should prefer do desactivate them with the
 following command : systemctl stop ModemManager.service )
 
 Add Udev permition to have access to /dev/ttyACMO
+-------------------------------------------------
 
 sudo adduser USER plugdev
 sudo adduser USER dialout
@@ -49,10 +52,22 @@ Restart the udev service :
 sudo /etc/init.d/udev restart
 
 Download the last ARM compilator from the website :
+---------------------------------------------------
 
 https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads
 
 And install the compilator in a chosen ARM_DIRECTORY directory.
+
+DOWNLOAD the CMSIS source code :
+--------------------------------
+
+Go to the directroy Drivers 
+
+cd Drivers
+
+and then, clone the CMSIS repository
+
+git clone https://github.com/ARM-software/CMSIS_5.git CMSIS_5
 
 OPTIONAL INSTALLATION :
 
@@ -63,7 +78,7 @@ Go to the website :
 # Compile the application               #
 #########################################
 
-Jute type
+Just type
 
 make GCC_PATH=<ARM_DIRECTORY>/bin
 
