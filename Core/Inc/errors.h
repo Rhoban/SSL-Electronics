@@ -23,34 +23,37 @@
 
 typedef enum {
   ERROR_DEBUG=1,
-  ERROR_STRING=2,
-  ERROR_ASSERTION=3,
-  ERROR_SYSTEM_INITIALISATION=4,
-  ERROR_USB_INITIALISATION=5,
-  ERROR_ENCODER=6,
-  ERROR_ENCODER_NB_TRANSMITRECEIVE=7,
-  ERROR_ENCODER_SPI_TRANSMITRECEIVE=8,
-  ERROR_ENCODER_SPI_CRASH=9,
-  ERROR_TIMER_INIT_AT_LINE=10,
-  ERROR_STM32_HAL_LIBRARY=11
+  ERROR_STRING=2,  // Special error used to raise a string
+  ERROR_FLOAT=3,   // Special error used to raise a float
+  ERROR_INT=4,   // Special error used to raise an int32_t
+  ERROR_ASSERTION=5,
+  ERROR_SYSTEM_INITIALISATION=6,
+  ERROR_USB_INITIALISATION=7,
+  ERROR_ENCODER=8,
+  ERROR_ENCODER_SPI_TRANSMITRECEIVE=9,
+  ERROR_ENCODER_SPI_CRASH=10,
+  ERROR_TIMER_INIT_AT_LINE=11,
+  ERROR_STM32_HAL_LIBRARY=12
 } error_code_t;
 
 inline const char* error_to_string( error_code_t e ){
   switch( e ){
     case ERROR_DEBUG :
       return "ERROR_DEBUG";
-    case ERROR_ASSERTION :
-      return "ERROR_ASSERTION";
     case ERROR_STRING :
       return "ERROR_STRING";
+    case ERROR_FLOAT :
+      return "ERROR_FLOAT";
+    case ERROR_INT :
+      return "ERROR_INT";
+    case ERROR_ASSERTION :
+      return "ERROR_ASSERTION";
     case ERROR_SYSTEM_INITIALISATION:
       return "ERROR_SYSTEM_INITIALISATION";
     case ERROR_USB_INITIALISATION:
       return "ERROR_USB_INITIALISATION";
     case ERROR_ENCODER:
       return "ERROR_ENCODER";
-    case ERROR_ENCODER_NB_TRANSMITRECEIVE:
-      return "ERROR_ENCODER_NB_TRANSMITRECEIVE";
     case ERROR_ENCODER_SPI_TRANSMITRECEIVE:
       return "ERROR_ENCODER_SPI_TRANSMITRECEIVE";
     case ERROR_ENCODER_SPI_CRASH:
@@ -77,6 +80,9 @@ bool error_queue_is_full();
 bool filtered_error_queue_is_full();
 void append_error(error_t e);
 void raise_error(error_code_t code, uint32_t value);
+void raise_error_float(float value);
+void raise_error_int(int32_t value);
+void raise_error_string(const char* value);
 void process_all_errors(void (*fct)(error_t e, void* data), void* data);
 void process_n_errors(void (*fct)(error_t e, void* data), void* data, uint32_t n);
 void process_all_filtered_errors(void (*fct)(error_t e, void* data), void* data);
@@ -88,17 +94,25 @@ void print_error(const error_t * e, bool verbose);
 
 typedef enum {
   WARNING_DEBUG = 1,
-  WARNING_STRING = 2,
-  WARNING_LAG = 3,
-  WARNING_ENCODER_BUSY = 4,
-  WARNING_ENCODER_ERROR_ON_AS5047D = 5,
-  WARNING_ENCODER_LAG = 6
+  WARNING_STRING = 2, // Special warning used to raise a string
+  WARNING_FLOAT = 3, // Special warning used to raise a float
+  WARNING_INT = 4, // Special warning used to raise an int32_t
+  WARNING_LAG = 5,
+  WARNING_ENCODER_BUSY = 6,
+  WARNING_ENCODER_ERROR_ON_AS5047D = 7,
+  WARNING_ENCODER_LAG = 8
 } warning_code_t;
 
 inline const char* warning_to_string( warning_code_t w ){
   switch( w ){
     case WARNING_DEBUG :
       return "WARNING_DEBUG"; 
+    case WARNING_STRING :
+      return "WARNING_STRING"; 
+    case WARNING_FLOAT :
+      return "WARNING_FLOAT"; 
+    case WARNING_INT :
+      return "WARNING_INT"; 
     case WARNING_LAG :
       return "WARNING_LAG"; 
     case WARNING_ENCODER_BUSY :
@@ -125,6 +139,9 @@ bool warning_queue_is_full();
 bool filtered_warning_queue_is_full();
 void append_warning(warning_t e);
 void raise_warning(warning_code_t code, uint32_t value);
+void raise_warning_float(float value);
+void raise_warning_int(int32_t value);
+void raise_warning_string(const char* value);
 void process_all_warnings(void (*fct)(warning_t e, void* data), void* data);
 void process_n_warnings(void (*fct)(warning_t e, void* data), void* data, uint32_t n);
 void process_all_filtered_warnings(void (*fct)(warning_t e, void* data), void* data);

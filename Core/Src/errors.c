@@ -63,6 +63,20 @@ void raise_error(error_code_t code, uint32_t value){
   error_t e = {code, value};
   append_error(e);
 }
+void raise_error_float(float value){
+  union {
+    float from;
+    uint32_t to;
+  } converter = { .from = value };
+  raise_error(ERROR_FLOAT, converter.to);
+}
+void raise_error_int(int32_t value){
+  union {
+    int32_t from;
+    uint32_t to;
+  } converter = { .from = value };
+  raise_error(ERROR_INT, converter.to);
+}
 void process_all_errors(void (*fct)(error_t e, void* data), void* data){
   errors_process(&errors, fct, data);
 }
@@ -93,10 +107,28 @@ void print_error(const error_t * e, bool verbose){
     terminal_print_int( e->code );
     terminal_print(", ");
   }
-  if( e->code == ERROR_STRING ){
-    terminal_println( (char*)e->value );
-  }else{
-    terminal_println_int( e->value );
+  switch( e->code ){
+    case ERROR_STRING :
+      terminal_println( (char*)e->value );
+      break;
+    case ERROR_FLOAT : {
+        union {
+          uint32_t from;
+          float to;
+        } converter = { .from = e->value };
+        terminal_println_float(converter.to );
+      }
+      break;
+    case ERROR_INT : {
+        union {
+          uint32_t from;
+          int32_t to;
+        } converter = { .from = e->value };
+        terminal_println_int(converter.to);
+      }
+      break;
+    default :
+      terminal_println_int( e->value );
   }
 }
 
@@ -145,6 +177,20 @@ void raise_warning(warning_code_t code, uint32_t value){
   warning_t w = {code, value};
   append_warning(w);
 }
+void raise_warning_float(float value){
+  union {
+    float from;
+    uint32_t to;
+  } converter = { .from = value };
+  raise_warning(WARNING_FLOAT, converter.to);
+}
+void raise_warning_int(int32_t value){
+  union {
+    int32_t from;
+    uint32_t to;
+  } converter = { .from = value };
+  raise_warning(WARNING_INT, converter.to);
+}
 void process_all_warnings(void (*fct)(warning_t e, void* data), void* data){
   warnings_process(&warnings, fct, data);
 }
@@ -175,10 +221,28 @@ void print_warning(const warning_t * w, bool verbose){
     terminal_print_int( w->code );
     terminal_print(", ");
   }
-  if(w->code == WARNING_STRING){
-    terminal_println( (char*) w->value );
-  }else{
-    terminal_println_int( w->value );
+  switch( w->code ){
+    case WARNING_STRING: 
+      terminal_println( (char*) w->value );
+      break;
+    case WARNING_FLOAT : {
+        union {
+          uint32_t from;
+          float to;
+        } converter = { .from = w->value };
+        terminal_println_float( converter.to );
+      }
+      break;
+    case WARNING_INT : {
+        union {
+          uint32_t from;
+          int32_t to;
+        } converter = { .from = w->value };
+        terminal_println_int( converter.to );
+      }
+      break;
+    default:
+      terminal_println_int( w->value );
   }
 }
 

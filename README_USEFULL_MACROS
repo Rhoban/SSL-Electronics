@@ -4,8 +4,10 @@ LED_OFF;  // Turn off the led
 
 raise_error(ERROR_DEBUG, <int number>) // raise an error
 raise_warning(WARNING_DEBUG, <int number>)  
-raise_error(ERROR_STRING, <const char*>) // Raise en error with a given string
-raise_error(ERROR_STRING, <const char*>)
+raise_error_int(-32)   // raise an error whose value is a signed integer
+raise_warning_int(...)
+raise_error_float(-32.32) // raise an error whose value is a float
+raise_warning_float(...)
 
 PRINTT("%f", 3.2); // print on the terminal
 PRINTJ("%f", 3.2); // print on the jtag

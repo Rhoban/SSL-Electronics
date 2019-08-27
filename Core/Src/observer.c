@@ -21,8 +21,9 @@
 #include <assertion.h>
 #include <frequence_definitions.h>
 #include <terminal.h>
+#include <errors.h>
 
-#define HYSTORIC_SIZE 32
+#define HYSTORIC_SIZE 64
 _Static_assert(IS_POW_2(HYSTORIC_SIZE), "Should be a 2^n.");
 
 typedef struct {
@@ -93,16 +94,14 @@ void observer_update(float angle){
   // or
   // level > ( OVERSAMPLING_FREQ * angle_noise * negligible_factor / velocity )-1
   // 
-  #define NEGLIGABLE 20
-  #define LEVEL_FACTOR ( \
-    ( \
-      2*M_PI*NEGLIGABLE*OVERSAMPLING_FREQ*MAXIMAL_AS5047D_ERROR_AT_50_TR_S \
-    )/(360*1000.0) \
-  )
+  #define NEGLIGABLE 100
+  #define ANGLE_NOISE (2*M_PI*MAXIMAL_AMPLITUDE_ERROR_AT_50_TR_S/(360*1000.0))
+  #define LEVEL_FACTOR (ANGLE_NOISE*NEGLIGABLE*OVERSAMPLING_FREQ)
+  
   float level = fabs(LEVEL_FACTOR/observer.velocity[observer.level]);
   // We change the level according to an hysteresis to avoid osciling 
   // phenomena.
-  if( fabs( level - observer.level ) >= 0.2 ){
+  if( fabs( level - (observer.level+.5) ) >= .5+.2 ){
     observer.level = level;
   }
   if( observer.level >= HYSTORIC_SIZE-1 ) observer.level = HYSTORIC_SIZE-2;
