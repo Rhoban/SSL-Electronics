@@ -18,21 +18,9 @@
 
 #pragma once
 
-#include <stdint.h>
+void observer_init();
 
-#ifdef  USE_FULL_ASSERT
-/**
-  * @brief  The ASSSERT macro is used general check.
-  * @param  expr: If expr is false, it calls assert_failed function
-  *         which reports the name of the source file and the source
-  *         line number of the call that failed. 
-  *         If expr is true, it returns no value.
-  * @retval None
-  */
-  #define ASSERT(expr) ((expr) ? (void)0U : assert_failed((uint8_t *)__FILE__, __LINE__))
-  void assert_failed(uint8_t* file, uint32_t line);
-#else
-  #define ASSERT(expr) ((void)0U)
-#endif
+void observer_update(float angle);
 
-#define IS_POW_2(x) (x && ((x & (x - 1)) == 0))
+float observer_get_angle();
+float observer_get_velocity();

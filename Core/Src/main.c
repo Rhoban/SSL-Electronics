@@ -33,6 +33,7 @@
 #include <encoder.h>
 #include <system.h>
 #include <errors.h>
+#include <observer.h>
 #include <frequence_definitions.h>
 
 #define TIM1_PERIOD PWM_PERIOD
@@ -252,6 +253,7 @@ int main(void)
   
   system_init();
   encoder_init(&hspi2, ENC_INT_CS_GPIO_Port,ENC_INT_CS_Pin);
+  observer_init();
  
   start_and_synchronize_timers();
   encoder_start();

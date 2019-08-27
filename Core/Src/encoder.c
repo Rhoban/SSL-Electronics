@@ -25,7 +25,7 @@
 #include "debug.h"
 #include <frequence_definitions.h>
 #include <filter.h>
-
+#include <observer.h>
 //
 // Clock computation
 //
@@ -250,6 +250,8 @@ void encoder_compute_angle(){
   encoder.angle = get_filtered_data(&(encoder.butterworth_filter));
   
   encoder.last_dynamic_angle = encoder.dynamic_angle;
+
+  observer_update( encoder.angle );
   computation_is_done = 0;
 }
 
@@ -273,23 +275,6 @@ TERMINAL_COMMAND(enc, "Read encoder")
   terminal_println_int( encoder.dynamic_angle );
 }
 
-TERMINAL_COMMAND(angle, "angle in tr (0: tr, 1:rad, 2:deg)")
-{
-  if(argc == 0){
-    terminal_println_float( encoder.angle/(2*M_PI) );
-  }else if(argc==1){
-    if( atoi( argv[0] ) == 0 ){
-      terminal_println_float( encoder.angle/(2*M_PI) );
-    }else if( atoi( argv[0] ) == 1 ){
-      terminal_println_float( encoder.angle );
-    }else{
-      terminal_println_float( encoder.angle*360.0/(2*M_PI) );
-    }
-  }else{
-    terminal_println( "usage: angle [0/1/2]" );
-    terminal_println( "   0/1/2 : tr/rad/deg");
-  }
-}
 
 TERMINAL_COMMAND(diagnostic, "encoder diagnostic")
 {
