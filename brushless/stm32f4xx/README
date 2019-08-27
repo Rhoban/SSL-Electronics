@@ -54,25 +54,54 @@ sudo /etc/init.d/udev restart
 Download the last ARM compilator from the website :
 ---------------------------------------------------
 
+We use the gcc-arm-none-eabi compiler. You can download it at the adress :
+
 https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads
 
-And install the compilator in a chosen ARM_DIRECTORY directory.
+Install the compilator in the root directory of the project.
 
-DOWNLOAD the CMSIS source code :
+You can install the compiler in another directory. In this case, 
+we will explain, in the next sections, how to adapt the compilation process.
+
+Normally, the project should looks like :
+<root_directory>
+├── Core
+├── gcc-arm-none-eabi-XXXXXXXXX
+│   ├── bin
+│   ...
+├── Makefile
+...
+
+
+Download the CMSIS source code :
 --------------------------------
 
-Go to the directroy Drivers 
-
-cd Drivers
-
-and then, clone the CMSIS repository
+In the root directory, type :
 
 git clone https://github.com/ARM-software/CMSIS_5.git CMSIS_5
 
-OPTIONAL INSTALLATION :
+You can install the compiler in another directory. In this case, 
+we will explain, in the next sections, how to adapt the compilation process.
+
+Normally, the project should looks like :
+<root_directory>
+├── Core
+├── CMSIS_5
+│   ├── CMSIS
+│   ...
+├── Makefile
+...
+
+
+OPTIONAL INSTALLATION (to use JTAG):
+-------------------------------------
 
 You can install JLink tools in order to use JTAG to flash or print.
 Go to the website :  
+
+https://www.segger.com/downloads/jlink/
+
+And install the J-Link Softwate and Documentation Pack
 
 #########################################
 # Compile the application               #
@@ -80,7 +109,18 @@ Go to the website :
 
 Just type
 
-make GCC_PATH=<ARM_DIRECTORY>/bin
+make
+
+
+If you have installed GCC and CMSIS in unusual place, then you have to type :
+
+make GCC_PATH=<ARM_DIRECTORY>/bin CMSIS_PATH=<CMSIS_5_PATH>/CMSIS
+
+otherwise, you just have to add two symbolic links :
+
+cd <root directory>
+ln -s ARM_DIRECTIRY gcc-arm-none-eabi
+ln -s CMSIS_5_DIRECTIRY CMSIS_5
 
 ###################
 # Flash the board #
@@ -146,5 +186,15 @@ cu -l /dev/ttyACM0
 
 Enjoy :) 
 (In the command line, help is the first helpfull command to know)
+
+OPTIONAL :
+----------
+Some information is sent using the jtag link. (just some small message 
+to prevent warnings and errors) Those messages appear in the terminal too.
+
+If you want to read the jtag output, you need to install JLink (see the
+optional section on JTag) and then, you just have to type : 
+
+./print_jtag
 
 
