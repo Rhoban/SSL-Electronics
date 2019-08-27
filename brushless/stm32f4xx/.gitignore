@@ -1,0 +1,8 @@
+build_test
+cscope.out
+cscope.out.xref
+build
+*.sav
+*.swp
+*.old
+tags

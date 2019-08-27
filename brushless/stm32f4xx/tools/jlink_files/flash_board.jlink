@@ -1,0 +1,2 @@
+loadbin build/brushless.bin, 0x08000000
+q

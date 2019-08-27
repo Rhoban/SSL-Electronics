@@ -1,0 +1,242 @@
+/*
+ * Copyright (C) 2019  Adrien Boussicault <adrien.boussicault@labri.fr>
+ *
+ * This program is free software: you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/>.
+ */
+
+#pragma once
+
+#include <time.h>
+
+#define MAXIMAL_AUDIO_HUMAN_FREQUENCY 22000
+#define MAXIMAL_AUDIO_DOG_FREQUENCY 45000
+#define MAXIMAL_AUDIO_CAT_FREQUENCY 64000
+
+#define CAT_FRIENDLY
+#define DOG_FRIENDLY
+#define HUMAN_FRIENDLY
+
+#if defined(CAT_FRIENDLY)
+  #define PWM_FREQ 140000
+#elif defied(DOG_FRIENDLY)
+  #define PWM_FREQ 96000
+#elif defined(HUMAN_FRIENDLY)
+  #define PWM_FREQ 60000
+#endif
+_Static_assert( CLK_SYSCLK % PWM_FREQ == 0, "" );
+
+#define PWM_PERIOD  (CLK_SYSCLK/PWM_FREQ)
+#define NB_OF_BITS_FOR_PWM_PRESCALER 16
+_Static_assert( PWM_PERIOD <= RMASK(NB_OF_BITS_FOR_PWM_PRESCALER), "" );
+
+//
+//                 1/PWM_FREQ
+//                   <----->
+//                   |     |     |     |     |     |
+//                   |_    |     |_    |     |_    |
+// compare -> ......_| |_..|...._| |_..|...._| |_..|....
+//                _| |   |_|  _| |   |_|  _| |   |_|
+//              _|   |     |_|   |     |_|   |     |_
+//                   |     |     |     |     |     |
+//                  _|_    |    _|_    |    _|_    |
+// center-      ___| | |___|___| | |___|___| | |___|_
+// aligned           |     |     |     |     |     |
+//                   |     |     |     |     |     |
+//                   <----------->                   
+//             1/(CENTER_ALIGNED_PWM_FREQ)                 
+//
+
+#define CENTER_ALIGNED_PWM_FREQ PWM_FREQ/2
+_Static_assert( PWM_FREQ % 2 == 0, "" );
+_Static_assert( CLK_SYSCLK % CENTER_ALIGNED_PWM_FREQ == 0, "" );
+
+#define DUTY_CYCLE_PRECISION 600
+_Static_assert( DUTY_CYCLE_PRECISION <= PWM_PERIOD, "" );
+
+_Static_assert(
+  MAXIMAL_AUDIO_HUMAN_FREQUENCY < CENTER_ALIGNED_PWM_FREQ,
+  "Robot should not be listen by humans."
+);  
+#ifdef DOG_FRIENDLY
+_Static_assert(
+  MAXIMAL_AUDIO_DOG_FREQUENCY < CENTER_ALIGNED_PWM_FREQ,
+  "Robot should not be listen by dogs."
+);
+#endif
+#ifdef CAT_FRIENDLY
+  _Static_assert(
+    MAXIMAL_AUDIO_CAT_FREQUENCY < CENTER_ALIGNED_PWM_FREQ,
+    "Robot should not be listen by cats."
+  );
+#endif  
+
+#define IR2104_RISE_TIME 170  // ns // See the datasheet of I42104
+#define IR2104_FALL_TIME 90  // ns // See the datasheet of I42104
+#define IR2104_SWITCHING_TIME (IR2104_RISE_TIME+IR2104_FALL_TIME)
+#define MOTOR_DRIVER_SWITCHING_TIME IR2104_SWITCHING_TIME // ns // See
+
+#if defined(CAT_FRIENDLY)
+  #define NEGLIGIBLE_FACTOR 54  // 100 would be better to say it is negligible :(
+#elif defined(DOG_FRIENDLY)
+  #define NEGLIGIBLE_FACTOR 80  // Idem :(
+#elif defined(HUMAN_FRIENDLY)
+  #define NEGLIGIBLE_FACTOR 128 // >100 :(
+#endif
+
+#define FREQ_ONE_NS 1000000000
+_Static_assert(
+  CENTER_ALIGNED_PWM_FREQ * MOTOR_DRIVER_SWITCHING_TIME * NEGLIGIBLE_FACTOR < FREQ_ONE_NS,
+  "The switching time of the motor dirver is not negligible."
+);
+
+#define AS5047D_FREQ_MAX 11000
+#define AS5047D_FREQ_MIN 9000
+#define ENCODER_FREQ_MAX AS5047D_FREQ_MAX
+#define ENCODER_FREQ_MIN AS5047D_FREQ_MIN
+#define MAXIMAL_AS5047D_ERROR_AT_50_TR_S 38  // in milli-degree (1/1000 degree)
+#define MAXIMAL_AS5047D_ERROR 20  // in milli-degree (1/1000 degree)
+
+
+#if defined(CAT_FRIENDLY)
+  #define ENCODER_FREQ 10000
+#elif defined(DOG_FRIENDLY)
+  #define ENCODER_FREQ 9600
+#elif defined(HUMAN_FRIENDLY)
+  #define ENCODER_FREQ 10000
+#endif
+_Static_assert( ENCODER_FREQ_MIN < ENCODER_FREQ, "" );
+_Static_assert( ENCODER_FREQ_MAX > ENCODER_FREQ, "" );
+
+#define ENCODER_PERIOD (CENTER_ALIGNED_PWM_FREQ/ENCODER_FREQ)
+_Static_assert(  CENTER_ALIGNED_PWM_FREQ % ENCODER_FREQ == 0, "" ); 
+
+#define NYQUIST_FACTOR 5
+_Static_assert( NYQUIST_FACTOR>=2, "Nyquist factor have to be greater than 2.");
+_Static_assert( ENCODER_FREQ % NYQUIST_FACTOR == 0, "");
+#define OVERSAMPLING_NUMBER 4
+#define MAXIMAL_NB_POSITIVE_MAGNETS 8
+#define MINIMAL_NB_POSITIVE_MAGNETS 7
+
+#define OVERSAMPLING_FREQ (ENCODER_FREQ/OVERSAMPLING_NUMBER)
+_Static_assert( ENCODER_FREQ % OVERSAMPLING_NUMBER == 0, "");
+
+#define MAXON_MAXIMLAL_VELOCITY 50 // 50 tr/s
+#define MAXIMAL_MOTOR_VELOCITY MAXON_MAXIMLAL_VELOCITY
+
+#define MAXIMAL_PHASE_MOTOR_FREQ (MAXIMAL_MOTOR_VELOCITY*MAXIMAL_NB_POSITIVE_MAGNETS)
+_Static_assert( 
+  MAXIMAL_PHASE_MOTOR_FREQ * NYQUIST_FACTOR * OVERSAMPLING_NUMBER <= ENCODER_FREQ,
+  ""
+);
+
+#define MAXIMAL_AMPLITUDE_ERROR (2*MAXIMAL_AS5047D_ERROR)
+      // in milli-degree (1/1000 degree)
+#define MAXIMAL_AMPLITUDE_ERROR_AT_50_TR_S (2*MAXIMAL_AS5047D_ERROR_AT_50_TR_S)
+      // in milli-degree (1/1000 degree)
+
+#ifdef table_sin_8
+  #define SINUS_TABLE_SIZE 1024
+  #define NB_FOLDING_SINUS 8 // by using sin(2*t) = 1 - 2 sin^2(pi/4 - t)
+#else
+  #define SINUS_TABLE_SIZE 2048
+  #define NB_FOLDING_SINUS 4
+#endif
+#define SINUS_RESOLUTION (NB_FOLDING_SINUS*SINUS_TABLE_SIZE)
+
+// We want to place a magnet at the encoder position precision
+#define MINIMAL_PARK_RESOLUTION (SINUS_RESOLUTION*MINIMAL_NB_POSITIVE_MAGNETS)
+_Static_assert(
+  (360*1000)/MINIMAL_PARK_RESOLUTION < MAXIMAL_AMPLITUDE_ERROR,
+  "With the sinus table resolution, it is not possible the place a magnet at"
+  "the given encoder position. You should increase size of sinus table."
+);
+
+#define PWM_DUTY_CYCLE_FREQ ENCODER_FREQ/2
+_Static_assert(ENCODER_FREQ % 2 == 0, "");
+
+#define PWM_DUTY_CYCLE_PERIOD (PWM_FREQ/PWM_DUTY_CYCLE_FREQ)
+_Static_assert(PWM_FREQ % PWM_DUTY_CYCLE_FREQ == 0, "");
+
+// We want that the sinus table precision is smaller that the delta angle 
+// of the application at high speed.
+_Static_assert(
+  // 1/MINIMAL_PARK_RESOLUTION < MAXIMAL_MOTOR_VELOCITY / PWM_DUTY_CYCLE_FREQ 
+  PWM_DUTY_CYCLE_FREQ
+  <
+  MINIMAL_PARK_RESOLUTION*MAXIMAL_MOTOR_VELOCITY
+  ,
+  "Your Sinus table is not big enought to update correctly the angle position"
+  "of the park transform"
+);
+
+// We want that the sinus table precision is smaller that the delta angle 
+// of the application at low speed.
+#define EXPECTED_MINIMAL_MOTOR_VELOCITY 0.1
+_Static_assert(
+  // 1/MINIMAL_PARK_RESOLUTION < EXPECTED_MINIMAL_MOTOR_VELOCITY / PWM_DUTY_CYCLE_FREQ 
+  PWM_DUTY_CYCLE_FREQ*1.0
+  <
+  MINIMAL_PARK_RESOLUTION*EXPECTED_MINIMAL_MOTOR_VELOCITY
+  ,
+  "Your Sinus table is not enought big to update correctly the angle position"
+  "of the park transform."
+);
+
+// TODO : 1) Verifier que la table des sinus a une précision suffisament 
+//           grande vis à vis de la résolution de l'angle calculé par l'observeur
+//  2) Vérifier que l'erreur du calcul en sinus (par la table) est 
+//     plus grossier que la précision commandable via PWM_PERIOD
+//  3) 
+// Frequnce relation summary :
+// ---------------------------
+// 
+//      CLK_SYSCLK
+//          |
+//          | / PWM_PERIOD 
+//          =
+//       PWM_FREQ
+//          |
+//          | / 2
+//          =
+// CENTER_ALIGNED_PWM_FREQ
+//          |__________________________________________________
+//          |                        |                         |
+//          | /ENCODER_PERIOD        | / OBS_PERIOD            | / PWM_DUTY_CYCLE_PERIOD
+//          =                        =                         =
+//      ENCODER_FREQ       ANGLE_OBSERVER_FREQ . . . = PWM_DUTY_CYCLE_FREQ
+//          |              =ARG_COMMAND_FREQ         (DUTY CYCLE use ARG_COMMAND + lin. inter. NORM_COMMAND)       .
+//          |_________________________                        . 
+//          |                         |                       . / NORM_PERIOD
+//          | / OVERSAMPLING          | / NYQUIST_FACTOR      .
+//          =                         =                       .
+//      ANGLE_FREQ              NORM_COMMAND_FREQ = . . . . . .
+//          |
+//          | / NYQUIST_FACTOR
+//          >
+// MAXIMAL_PHASE_MOTOR_FREQ
+//          |
+//          | / MAXIMAL_NB_POSITIVE_MAGNETS
+//          =
+// MAXIMAL_MOTOR_VELOCITY
+// 
+//
+// Time diagram :
+// --------------
+//
+//
+
+// Delay before afte an encoder interruption before asking for an angle request
+// usin the SPI
+#define ENC_SPI_DELAY 1680
