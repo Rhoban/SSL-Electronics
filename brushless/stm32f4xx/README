@@ -196,15 +196,16 @@ The output should looks like :
    [112520.979785] usb 1-5: SerialNumber: 346F398B3038
    [112520.981964] cdc_acm 1-5:1.0: ttyACM0: USB ACM device
 
-and the serial port, in that case is ttyACM0, so the device is connected on
-(/def/ttyACM0) in this case.
+and the serial port is ttyACM0, so the device is connected on (/def/ttyACM0).
 
 Open a command line into the board by typing:
 
 cu -l /dev/ttyACM0
 
-Enjoy :) 
+Your are connected to the boare. Enjoy :) 
 (In the command line, help is the first helpfull command to know)
+(type 'led' to turn on/off the led of the board) 
+
 
 OPTIONAL :
 ----------
