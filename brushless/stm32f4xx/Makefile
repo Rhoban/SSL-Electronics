@@ -40,8 +40,10 @@ endif
 endif
 
 # debug build?
+ifndef  DEBUG
 DEBUG = 1
 #DEBUG = 0
+endif
 # optimization
 ifeq ($(DEBUG), 1)
 OPT = -Werror -DDEBUG -DUSE_FULL_ASSERT -Og

@@ -20,9 +20,15 @@
 
 void observer_init();
 
-void observer_update(float angle);
-
 float observer_get_angle();
 float observer_get_velocity();
 
-void observer_tick( float * speed, float* angle);
+void observer_pwm_tick();
+void observer_norm_command_tick();
+void observer_pwm_duty_cycletick();
+void observer_encoder_tick();
+
+
+void observer_update(float angle);
+
+void observer_estimate( float * speed, float* angle);

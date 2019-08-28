@@ -19,7 +19,7 @@
 #include <errors.h>
 #include <queue.h>
 #include <terminal.h>
-#define NUMBER_OF_ERRORS 16
+#define NUMBER_OF_ERRORS 32
 
 define_and_declare_static_queue(error_t, errors, NUMBER_OF_ERRORS)
 define_and_declare_static_queue(error_t, filtered_errors, NUMBER_OF_ERRORS)
@@ -77,6 +77,20 @@ void raise_error_int(int32_t value){
   } converter = { .from = value };
   raise_error(ERROR_INT, converter.to);
 }
+void raise_error_string(const char* value){
+  union {
+    const char * from;
+    uint32_t to;
+  } converter = { .from = value };
+  raise_error(ERROR_STRING, converter.to);
+}
+void raise_error_file(const char* value){
+  union {
+    const char * from;
+    uint32_t to;
+  } converter = { .from = value };
+  raise_error(ERROR_FILE, converter.to);
+}
 void process_all_errors(void (*fct)(error_t e, void* data), void* data){
   errors_process(&errors, fct, data);
 }
@@ -109,6 +123,7 @@ void print_error(const error_t * e, bool verbose){
   }
   switch( e->code ){
     case ERROR_STRING :
+    case ERROR_FILE :
       terminal_println( (char*)e->value );
       break;
     case ERROR_FLOAT : {
@@ -191,6 +206,21 @@ void raise_warning_int(int32_t value){
   } converter = { .from = value };
   raise_warning(WARNING_INT, converter.to);
 }
+void raise_warning_string(const char* value){
+  union {
+    const char* from;
+    uint32_t to;
+  } converter = { .from = value };
+  raise_warning(WARNING_STRING, converter.to);
+}
+void raise_warning_file(const char* value){
+  union {
+    const char* from;
+    uint32_t to;
+  } converter = { .from = value };
+  raise_warning(WARNING_FILE, converter.to);
+}
+
 void process_all_warnings(void (*fct)(warning_t e, void* data), void* data){
   warnings_process(&warnings, fct, data);
 }
@@ -223,6 +253,7 @@ void print_warning(const warning_t * w, bool verbose){
   }
   switch( w->code ){
     case WARNING_STRING: 
+    case WARNING_FILE: 
       terminal_println( (char*) w->value );
       break;
     case WARNING_FLOAT : {
@@ -245,4 +276,9 @@ void print_warning(const warning_t * w, bool verbose){
       terminal_println_int( w->value );
   }
 }
-
+TERMINAL_COMMAND(flush_err, "flush errors"){
+  clear_errors();
+}
+TERMINAL_COMMAND(flush_warn, "flush warning"){
+  clear_warnings();
+}

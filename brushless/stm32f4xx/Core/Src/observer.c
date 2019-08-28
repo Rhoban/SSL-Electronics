@@ -22,6 +22,7 @@
 #include <frequence_definitions.h>
 #include <terminal.h>
 #include <errors.h>
+#include "debug.h"
 
 #define HYSTORIC_SIZE 64
 _Static_assert(IS_POW_2(HYSTORIC_SIZE), "Should be a 2^n.");
@@ -33,16 +34,31 @@ typedef struct {
   float velocity;
   uint32_t position;
 
-  uint32_t updated_tick;
-  uint32_t current_tick;
+  volatile uint32_t updated_tick;
+  volatile uint32_t current_tick;
+  volatile uint32_t norm_command_tick;
+  volatile uint32_t pwm_duty_cycle_tick;
+  volatile uint32_t encoder_tick;
 
   uint32_t level;
 } observer_t; 
 
 static observer_t observer;
 
-void observer_tick( float * speed, float* angle){
+void observer_pwm_tick(){
   (observer.current_tick)++;
+}
+void observer_norm_command_tick(){
+  observer.norm_command_tick = observer.current_tick;
+}
+void observer_pwm_duty_cycletick(){
+  observer.pwm_duty_cycle_tick = observer.current_tick;
+}
+void observer_encoder_tick(){
+  observer.encoder_tick = observer.current_tick;
+}
+
+void observer_estimate(float * speed, float* angle){
   (*speed) = observer.velocity;
   (*angle) = observer.angle[observer.position] + (
       ((observer.current_tick - observer.updated_tick) & 0xFFFF) *

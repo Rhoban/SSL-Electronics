@@ -264,5 +264,8 @@ _Static_assert(
 
 // Delay before afte an encoder interruption before asking for an angle request
 // usin the SPI
-#define ENC_SPI_DELAY 1680
+
+#define ENC_SPI_DELAY_US 20
+#define ENC_SPI_DELAY (CLK_SYSCLK*ENC_SPI_DELAY_US/1000000)
+//#define ENC_SPI_DELAY (PWM_PERIOD * CENTER_ALIGNED_PERIOD /4)
 

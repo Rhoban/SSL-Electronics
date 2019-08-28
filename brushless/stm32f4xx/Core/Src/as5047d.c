@@ -166,15 +166,6 @@ static inline void disactivate_cs(as5047d_t* as5047d){
   DELAY_AT_LEAST_NS(350); // See datasheet of as5047d .
 }
 
-static inline void reset_comunication(as5047d_t* as5047d){
-  // Perhaps the device it yet selected, so, we stop first disactivate the cs.
-  disactivate_cs(as5047d);
-  
-  // The last command could we a write comand. So, we drop the next packet. 
-  activate_cs(as5047d);
-  disactivate_cs(as5047d);
-}
-
 typedef enum {
   sleeping,
   sending_a_reading_command,
@@ -182,6 +173,29 @@ typedef enum {
   sending_the_error_register_command,
   waiting_for_error_register
 } Encoder_state; 
+
+static inline void reset_comunication(as5047d_t* as5047d, as5047d_error_t error){
+  as5047d->error |= (AS5047D_ERROR | error);
+
+  // We abort any pending SPI communication 
+  HAL_StatusTypeDef status = HAL_SPI_Abort_IT(as5047d->hspi);
+  if( status != HAL_OK ){
+    as5047d->error |= AS5047D_SPI_ABORT_FAIL;
+  }
+
+  // Perhaps the device it yet selected, so, we stop first disactivate the cs.
+  disactivate_cs(as5047d);
+
+  // The last command could be a write comand. So, we drop the next packet. 
+  activate_cs(as5047d);
+  disactivate_cs(as5047d);
+  
+  // We finish to reset the spi communication.
+  as5047d->state = sleeping;
+
+  // We start angle computation
+  as5047d_call_back_when_finished(as5047d);
+}
 
 /*
  * Returns true ig the parity of 'x' is even.
@@ -195,11 +209,89 @@ static inline bool even_parity_check( uint16_t x ){
 }
 
 
+static inline void raise_dma_error(DMA_HandleTypeDef *hdma, const char* text){
+  uint32_t error = HAL_DMA_GetError(hdma);
+  if( error != HAL_DMA_ERROR_NONE ){
+    raise_error_string( text );
+  }
+  switch(error){
+    case HAL_DMA_ERROR_NONE :
+      raise_error_string("HAL_DMA_ERROR_NONE");
+      break;
+    case HAL_DMA_ERROR_TE :
+      raise_error_string("HAL_DMA_ERROR_TE");
+      break;
+    case HAL_DMA_ERROR_FE :
+      raise_error_string("HAL_DMA_ERROR_FE");
+      break;
+    case HAL_DMA_ERROR_DME :
+      raise_error_string("HAL_DMA_ERROR_DME");
+      break;
+    case HAL_DMA_ERROR_TIMEOUT :
+      raise_error_string("HAL_DMA_ERROR_TIMEOUT");
+      break;
+    case HAL_DMA_ERROR_PARAM :
+      raise_error_string("HAL_DMA_ERROR_PARAM");
+      break;
+    case HAL_DMA_ERROR_NO_XFER :
+      raise_error_string("HAL_DMA_ERROR_NO_XFER");
+      break;
+    case HAL_DMA_ERROR_NOT_SUPPORTED :
+      raise_error_string("HAL_DMA_ERROR_NOT_SUPPORTED");
+      break;
+    default:
+      raise_error_string("?");
+  }
+}
+static inline void check_and_raise_dma_error(as5047d_t* as5047d){
+  raise_dma_error(as5047d->hspi->hdmarx, "ERROR DMA RX");
+  raise_dma_error(as5047d->hspi->hdmatx, "ERROR DMA TX");
+}
+static inline void check_and_raise_spi_error(as5047d_t* as5047d){
+  uint32_t error = HAL_SPI_GetError(as5047d->hspi);
+  if( error != HAL_SPI_ERROR_NONE ){
+    RAISE_ERROR;
+  }
+  switch(error){
+   case HAL_SPI_ERROR_NONE :
+     break;
+   case HAL_SPI_ERROR_MODF :
+     raise_error_string( "HAL_SPI_ERROR_MODF" );
+     break;
+   case HAL_SPI_ERROR_CRC :
+     raise_error_string( "HAL_SPI_ERROR_CRC" );
+     break;
+   case HAL_SPI_ERROR_OVR :
+     raise_error_string( "HAL_SPI_ERROR_OVR" );
+     break;
+   case HAL_SPI_ERROR_FRE :
+     raise_error_string( "HAL_SPI_ERROR_FRE" );
+     break;
+   case HAL_SPI_ERROR_DMA :
+     raise_error_string( "HAL_SPI_ERROR_DMA" );
+     check_and_raise_dma_error(as5047d);
+     break;
+   case HAL_SPI_ERROR_FLAG :
+     raise_error_string( "HAL_SPI_ERROR_FLAG" );
+     break;
+   case HAL_SPI_ERROR_ABORT :
+     raise_error_string( "HAL_SPI_ERROR_ABORT" );
+     break;
+#if (USE_HAL_SPI_REGISTER_CALLBACKS == 1U)
+   case HAL_SPI_ERROR_INVALID_CALLBACK :
+     raise_error_string( "HAL_SPI_ERROR_INVALID_CALLBACK" );
+     break;
+#endif /* USE_HAL_SPI_REGISTER_CALLBACKS */
+    default:
+     raise_error_string( "?" );
+  }
+}
+
 static inline bool transmit_and_receipt_packet(as5047d_t* as5047d){
   // We open a comunication
   activate_cs(as5047d);
 
-  HAL_StatusTypeDef status = HAL_SPI_TransmitReceive_IT(
+  HAL_StatusTypeDef status = HAL_SPI_TransmitReceive_DMA(
     as5047d->hspi, as5047d->pTxData, as5047d->pRxData, PACKET_SIZE
   );
 
@@ -211,18 +303,17 @@ static inline bool transmit_and_receipt_packet(as5047d_t* as5047d){
     if( status == HAL_BUSY ){
       as5047d->error |= AS5047D_SPI_BUSY;
     }
-    // We close the comunication
-    disactivate_cs(as5047d);
-    as5047d->state = sleeping;
-    as5047d->is_ready = true;
-    as5047d_call_back_when_finished(as5047d);
+    #if DEBUG
+    check_and_raise_spi_error(as5047d);
+    #endif
+    reset_comunication(as5047d, as5047d->error);
     return false;
   }
   return true;
 }
 
 bool as5047d_start_reading_dynamic_angle(as5047d_t* as5047d){
-  if( as5047d->state != sleeping ) return false;
+  if( as5047d->is_ready && as5047d->state != sleeping ) return false;
   as5047d->is_ready = false;
 
   as5047d->state = sending_a_reading_command;
@@ -235,7 +326,7 @@ bool as5047d_start_reading_dynamic_angle(as5047d_t* as5047d){
 }
 
 bool as5047d_start_reading_diagnostic(as5047d_t* as5047d){
-  if( as5047d->state != sleeping ) return false;
+  if( as5047d->is_ready && as5047d->state != sleeping ) return false;
   as5047d->is_ready = false;
 
   as5047d->state = sending_a_reading_command;
@@ -248,15 +339,11 @@ bool as5047d_start_reading_diagnostic(as5047d_t* as5047d){
 }
 
 void as5047d_error_spi_call_back(as5047d_t* as5047d){
-  reset_comunication(as5047d);
+  #ifdef DEBUG
+  check_and_raise_spi_error(as5047d);
+  #endif
  
-  // We raise an error.
-  as5047d->error |= (AS5047D_ERROR | AS5047D_SPI_CRASH);
-  
-  // We finish to reset the spi communication.
-  as5047d->state = sleeping;
-  as5047d->is_ready = true;
-  as5047d_call_back_when_finished(as5047d);
+  reset_comunication(as5047d, AS5047D_SPI_CRASH);
 }
 
 void as5047d_spi_call_back(as5047d_t* as5047d){
@@ -334,7 +421,6 @@ void as5047d_spi_call_back(as5047d_t* as5047d){
     }
   }
   if(as5047d->state == sleeping){
-    as5047d->is_ready = true;
     as5047d_call_back_when_finished(as5047d);
   }else{
     transmit_and_receipt_packet(as5047d);
@@ -346,10 +432,14 @@ void as5047d_init(
   SPI_HandleTypeDef* hspi, GPIO_TypeDef*  gpio_port_cs, uint16_t gpio_pin_cs
 ){
   as5047d->hspi = hspi;
-  as5047d->hspi = hspi;
   as5047d->gpio_port_cs=gpio_port_cs;
   as5047d->gpio_pin_cs=gpio_pin_cs;
-  reset_comunication(as5047d);
+
+  disactivate_cs(as5047d);
+  
+  as5047d->error = AS5047D_OK;
+  as5047d->state = sleeping;
+  as5047d->is_ready = true;
 }
 
 void as5047d_data_to_diagnostic(

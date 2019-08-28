@@ -32,7 +32,9 @@ typedef enum {
   AS5047D_TX_CMD_FRAME = 32, // This is a non compliant SPI frame.
   AS5047D_SPI_BUSY = 64, // This is a non compliant SPI frame.
   AS5047D_SPI_ERROR = 128, // This is a non compliant SPI frame.
-  AS5047D_SPI_CRASH = 256 // The spi has crached ans is restarting.
+  AS5047D_SPI_CRASH = 256, // The spi has crached ans is restarting.
+  AS5047D_SPI_ABORT = 512, // The Abort procedure was a failure :'(
+  AS5047D_SPI_ABORT_FAIL = 1024 // The Abort procedure was a failure :'(
 } as5047d_error_t;
 
 typedef struct {

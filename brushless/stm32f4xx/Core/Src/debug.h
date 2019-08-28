@@ -25,6 +25,8 @@
 #include <time.h>
 #include <tools.h>
 #include <assertion.h>
+#include <main.h>
+#include <errors.h>
 
 #define DPRINTF(fd, format, ...) dprintf(fd, "D " format "\n", ##__VA_ARGS__ )
 //#define DPRINTF(fd, format, ...) dprintf(fd, "D: " format " - %s : %d\n", ##__VA_ARGS__, __FILE__, __LINE__ )
@@ -127,6 +129,13 @@ void print_freq(uint32_t milis, int fd);
 #define LED_OFF HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
 
 #define COOLDOWN(period) COUNTDOWN(period)
+
+#ifdef DEBUG
+  #define RAISE_ERROR raise_error_file( __FILE__ ); raise_error( ERROR_LINE, __LINE__ )
+  #define RAISE_WARNING raise_warning_file( __FILE__ ); raise_warning( ERROR_LINE, __LINE__ )
+#else
+  #define RAISE_ERROR ((void)0U)
+#endif
 
 #define HELP1(v) h ## v = v;
 #define HELP2(v) TERMINAL_PARAMETER_INT( h ## v , "", 0 )

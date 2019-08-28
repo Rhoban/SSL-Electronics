@@ -151,7 +151,7 @@ void as5047d_call_back_when_finished(as5047d_t* as5047d){
         }else{
             raise_warning(WARNING_ENCODER_LAG, LAG_IN_ANGLE_COMPUTATION);
         }
-       
+        device.is_ready = true;
         if( diagnostic_request ){
           state = MAKE_DIAGNOSTIC;
           if( !as5047d_start_reading_diagnostic(&device) ){
@@ -166,6 +166,7 @@ void as5047d_call_back_when_finished(as5047d_t* as5047d){
         }
         state = READING_ANGLE; 
         diagnostic_request = false;
+        device.is_ready = true;
         break;
       case NOT_INIT:
         break;
@@ -237,17 +238,23 @@ void encoder_compute_angle(){
     }
     // We reconstruct a dynamic angle.
     encoder.dynamic_angle = predict_encoder_angle(
-      encoder.last_dynamic_angle, encoder.velocity
+      encoder.last_dynamic_angle, observer_get_velocity()
     );
   }
   encoder.absolute_angle += encoder_compute_delta(
     encoder.dynamic_angle, encoder.last_dynamic_angle
   );
-  update_butterworth_3_pulsation_1256_rad_s(
-    encoder.absolute_angle/(RESOLUTION_ONE_TURN/(2*M_PI)),
-    &(encoder.butterworth_filter)
-  );
-  encoder.angle = get_filtered_data(&(encoder.butterworth_filter));
+ 
+  //#define DESACTIVE_FILTER 1 
+  #ifndef DESACTIVE_FILTER
+    update_butterworth_3_pulsation_1256_rad_s(
+      encoder.absolute_angle/(RESOLUTION_ONE_TURN/(2*M_PI)),
+      &(encoder.butterworth_filter)
+    );
+    encoder.angle = get_filtered_data(&(encoder.butterworth_filter));
+  #else
+    encoder.angle = encoder.absolute_angle/(RESOLUTION_ONE_TURN/(2*M_PI));
+  #endif
   
   encoder.last_dynamic_angle = encoder.dynamic_angle;
 

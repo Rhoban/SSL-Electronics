@@ -34,6 +34,7 @@
 #include <system.h>
 #include <errors.h>
 #include <observer.h>
+#include <priority.h>
 #include <frequence_definitions.h>
 
 #define TIM1_PERIOD PWM_PERIOD // The timer to generate all the pwm
@@ -66,6 +67,8 @@
 
 /* Private variables ---------------------------------------------------------*/
 SPI_HandleTypeDef hspi2;
+DMA_HandleTypeDef hdma_spi2_rx;
+DMA_HandleTypeDef hdma_spi2_tx;
 
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
@@ -79,6 +82,7 @@ TIM_HandleTypeDef htim5;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
@@ -155,6 +159,11 @@ TERMINAL_COMMAND(frequences, "Print all the frequences"){
   terminal_println_int(OVERSAMPLING_NUMBER);
   terminal_print("NYQUIST_FACTOR :");
   terminal_println_int(NYQUIST_FACTOR);
+
+  terminal_println("");
+  terminal_println("Pulse :");
+  terminal_print("ENC_SPI_DELAY :");
+  terminal_println_int(ENC_SPI_DELAY);
 }
 
 TERMINAL_COMMAND(version, "firmware version")
@@ -254,9 +263,9 @@ void start_and_synchronize_timers(){
     raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
   };
 
-  if( HAL_TIM_Base_Start_IT(&htim3) != HAL_OK ){
+  if( HAL_TIM_Base_Start_IT(&htim1) != HAL_OK ){
     raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
-  }
+  };
   if( HAL_TIM_Base_Start_IT(&htim2) != HAL_OK ){
     raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
   };
@@ -264,15 +273,15 @@ void start_and_synchronize_timers(){
     raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
   }
 
-    if( HAL_TIM_Base_Start(&htim5) != HAL_OK ){
-      raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
-    }
-    if( HAL_TIM_OC_Start(&htim5, TIM_CHANNEL_1) != HAL_OK){
-      raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
-    };
-    if( HAL_TIM_OC_Start_IT(&htim5, TIM_CHANNEL_1) != HAL_OK){
-      raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
-    };
+  if( HAL_TIM_Base_Start(&htim5) != HAL_OK ){
+    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
+  }
+  if( HAL_TIM_OC_Start(&htim5, TIM_CHANNEL_1) != HAL_OK){
+    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
+  };
+  if( HAL_TIM_OC_Start_IT(&htim5, TIM_CHANNEL_1) != HAL_OK){
+    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
+  };
 }
 /* USER CODE END 0 */
 
@@ -305,6 +314,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_SPI2_Init();
   MX_TIM1_Init();
   MX_TIM2_Init();
@@ -418,7 +428,7 @@ static void MX_SPI2_Init(void)
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_2EDGE;
   hspi2.Init.NSS = SPI_NSS_SOFT;
-  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32; // TODO : explique que plus rapide rned la comunication SPI instable avec les autres interruptions.
   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -740,6 +750,25 @@ static void MX_TIM5_Init(void)
   /* USER CODE BEGIN TIM5_Init 2 */
 
   /* USER CODE END TIM5_Init 2 */
+
+}
+
+/** 
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void) 
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Stream3_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream3_IRQn, ENCODER_DMA_RX, ENCODER_DMA_RX_SUBPRIORITY);
+  HAL_NVIC_EnableIRQ(DMA1_Stream3_IRQn);
+  /* DMA1_Stream4_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, ENCODER_DMA_TX, ENCODER_DMA_TX_SUBPRIORITY);
+  HAL_NVIC_EnableIRQ(DMA1_Stream4_IRQn);
 
 }
 
