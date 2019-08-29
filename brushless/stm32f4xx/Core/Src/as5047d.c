@@ -157,13 +157,13 @@ static inline void activate_cs(as5047d_t* as5047d){
   HAL_GPIO_WritePin(
     as5047d->gpio_port_cs, as5047d->gpio_pin_cs, GPIO_PIN_RESET
   );
-  DELAY_AT_LEAST_NS(350); // See datasheet of as5047d .
+  DELAY_AT_LEAST_NS(AS5047D_TL); // See datasheet of as5047d .
 }
 static inline void disactivate_cs(as5047d_t* as5047d){
   HAL_GPIO_WritePin(
     as5047d->gpio_port_cs, as5047d->gpio_pin_cs, GPIO_PIN_SET
   );
-  DELAY_AT_LEAST_NS(350); // See datasheet of as5047d .
+  DELAY_AT_LEAST_NS(AS5047D_TLCSN); // See datasheet of as5047d .
 }
 
 typedef enum {

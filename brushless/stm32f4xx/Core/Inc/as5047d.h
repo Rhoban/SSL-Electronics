@@ -103,15 +103,12 @@ void as5047d_call_back_when_finished(as5047d_t* as5047d);
 #define AS5047D_PACKET_NUMBER 2
 #define AS5047D_PACKET_NUMBER_WITH_FAILURE 3
 #define AS5047D_DATA_SIZE 16
-
-#define AS5047D_MINIMA_TIME_COMUNICATION_ns(clk_period_ns) ( \
-  AS5047D_PACKET_NUMBER * ( \
+#define AS5047D_TIME_ONE_FRAME_ns(clk_period_ns) ( \
     AS5047D_TLCSN + AS5047D_DATA_SIZE*clk_period_ns + AS5047D_TL \
-  ) \
 )
-
+#define AS5047D_MINIMAL_TIME_COMUNICATION_ns(clk_period_ns) ( \
+  AS5047D_PACKET_NUMBER * AS5047D_TIME_ONE_FRAME_ns(clk_period_ns) \
+)
 #define AS5047D_MINIMAL_TIME_COMUNICATION_WITH_FAILURE_ns(clk_period_ns) ( \
-  AS5047D_PACKET_NUMBER_WITH_FAILURE * ( \
-    AS5047D_TLCSN + AS5047D_DATA_SIZE*clk_period_ns + AS5047D_TL \
-  ) \
+  AS5047D_PACKET_NUMBER_WITH_FAILURE * AS5047D_TIME_ONE_FRAME_ns(clk_period_ns) \
 )
