@@ -265,9 +265,25 @@ _Static_assert(
 // Delay before afte an encoder interruption before asking for an angle request
 // usin the SPI
 
-#define ENC_SPI_DELAY_US 20
-#define ENC_SPI_DELAY (CLK_SYSCLK*ENC_SPI_DELAY_US/1000000)
-//#define ENC_SPI_DELAY (PWM_PERIOD * CENTER_ALIGNED_PERIOD /4)
+#define PERIOD_TO_NS(period) ( (period*100000)/(CLK_SYSCLK/10000) )
+#define PERIOD_TO_US(period) ( (period*1000)/(CLK_SYSCLK/1000) )
+
+#if 0
+  #define ENC_SPI_DELAY_US 10
+  #define ENC_SPI_DELAY (CLK_SYSCLK*ENC_SPI_DELAY_US/1000000)
+  //#define ENC_SPI_DELAY (PWM_PERIOD * CENTER_ALIGNED_PERIOD /4)
+#elif 0
+  #define MIN_ENC_SPI_DELAY_US 15
+  #define ENC_SPI_DELAY ( \
+      (PWM_PERIOD/2) + (PWM_PERIOD*CENTER_ALIGNED_PERIOD) * ( \
+      1 + ( (MIN_ENC_SPI_DELAY_US*CENTER_ALIGNED_PWM_FREQ)/1000000) \
+    ) \
+  )
+  #define  ENC_SPI_DELAY_US PERIOD_TO_US(ENC_SPI_DELAY)
+#else
+  #define ENC_SPI_DELAY (3*PWM_PERIOD/2)
+  #define ENC_SPI_DELAY_US PERIOD_TO_US(ENC_SPI_DELAY)
+#endif
 
 #include <as5047d.h>
 

@@ -170,6 +170,7 @@ typedef enum {
   sleeping,
   sending_a_reading_command,
   waiting_data,
+  waiting_data_fast_mode,
   sending_the_error_register_command,
   waiting_for_error_register
 } Encoder_state; 
@@ -312,6 +313,21 @@ static inline bool transmit_and_receipt_packet(as5047d_t* as5047d){
   return true;
 }
 
+
+bool as5047d_fast_reading_dynamic_angle(as5047d_t* as5047d){
+  if( as5047d->is_ready && as5047d->state != sleeping ) return false;
+  as5047d->is_ready = false;
+
+  as5047d->state = waiting_data_fast_mode;
+  as5047d->error = AS5047D_OK;
+ 
+  // We send a reading command to obtain an angle
+  as5047d->pTxData[0] = FIRST(RCMD(ANGLECOM_ADD));
+  as5047d->pTxData[1] = LAST(RCMD(ANGLECOM_ADD));
+  return transmit_and_receipt_packet(as5047d);
+}
+
+
 bool as5047d_start_reading_dynamic_angle(as5047d_t* as5047d){
   if( as5047d->is_ready && as5047d->state != sleeping ) return false;
   as5047d->is_ready = false;
@@ -370,10 +386,21 @@ void as5047d_spi_call_back(as5047d_t* as5047d){
         // We change or state before transmiting some new data.
         as5047d->state = sending_the_error_register_command;
         break;
+      case waiting_data_fast_mode :
+        // The reading command is sent
+        // We need to wait the answer.
+        // We build a command to optain the error registor to check 
+        // all is ok.
+        as5047d->pTxData[0] = FIRST(RCMD(ERRFL_ADD)); // This command is not usefull.
+        as5047d->pTxData[1] = LAST(RCMD(ERRFL_ADD));
+
+        // We change or state before transmiting some new data.
+        as5047d->state = sending_the_error_register_command;
+        break;
       case sending_the_error_register_command :
       case waiting_data :
-        as5047d->pTxData[0] = FIRST(RCMD(NOP_ADD)); // Nothing to ask
-        as5047d->pTxData[1] = LAST(RCMD(NOP_ADD)); // we just have to wait the 
+        as5047d->pTxData[0] = FIRST(RCMD(ANGLECOM_ADD)); // Nothing to ask
+        as5047d->pTxData[1] = LAST(RCMD(ANGLECOM_ADD)); // we just have to wait the 
                                                   // answer at the last error 
                                                   // register Command  
 
@@ -403,15 +430,16 @@ void as5047d_spi_call_back(as5047d_t* as5047d){
       case sending_a_reading_command:   
         // The reading command is sent
         // We need to wait the answer.
-        // We build a command to optain the error registor to check 
+        // We build a command to obtain the error registor to check 
         // all is ok.
-        as5047d->pTxData[0] = FIRST(RCMD(ERRFL_ADD)); // This command is not usefull.
+        as5047d->pTxData[0] = FIRST(RCMD(ERRFL_ADD));
         as5047d->pTxData[1] = LAST(RCMD(ERRFL_ADD));
    
         // We change or state before transmiting some new data.
         as5047d->state = waiting_data;
         break;
       case waiting_data :
+      case waiting_data_fast_mode :
         as5047d->data = packet & RMASK(DATA_SIZE);
         as5047d->state = sleeping;
         break;

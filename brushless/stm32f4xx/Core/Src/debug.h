@@ -125,8 +125,8 @@ void print_freq(uint32_t milis, int fd);
 
 #define LED HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin)
 
-#define LED_ON HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
-#define LED_OFF HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+#define LED_ON HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET)
+#define LED_OFF HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET)
 
 #define COOLDOWN(period) COUNTDOWN(period)
 

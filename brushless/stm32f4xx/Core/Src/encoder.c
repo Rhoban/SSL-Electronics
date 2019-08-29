@@ -124,7 +124,12 @@ void encoder_stop(){
 extern TIM_HandleTypeDef htim5;
 
 void start_read_encoder_position(){
+#if 0
   if( !as5047d_start_reading_dynamic_angle(&device) ){
+    raise_warning(WARNING_ENCODER_BUSY, ENCODER_DO_NOT_START);
+  }
+#endif
+  if( !as5047d_fast_reading_dynamic_angle(&device) ){
     raise_warning(WARNING_ENCODER_BUSY, ENCODER_DO_NOT_START);
   }
 }
@@ -141,15 +146,15 @@ void as5047d_call_back_when_finished(as5047d_t* as5047d){
     switch( state ){
       case READING_ANGLE:
         if( computation_is_done == 0 ){
+          computation_is_done++;
           encoder.dynamic_angle = as5047d_data_to_angle(&device);
           encoder.dynamic_angle_error = device.error;
-          computation_is_done++;
 
           // We reset timer 5 to raise an interuption and to execute in a lower priority
           // the rest of the calculus.  
-          htim5.Instance->CNT = 0;
+          __HAL_TIM_SetCounter(&htim5, 0u);
         }else{
-            raise_warning(WARNING_ENCODER_LAG, LAG_IN_ANGLE_COMPUTATION);
+          raise_warning(WARNING_ENCODER_LAG, LAG_IN_ANGLE_COMPUTATION);
         }
         device.is_ready = true;
         if( diagnostic_request ){
@@ -216,9 +221,14 @@ inline int32_t encoder_compute_delta(uint16_t a, uint16_t b)
 // So, DON'T CALL THIS FUNCTION BY YOURSELF.
 // 
 void encoder_compute_angle(){
-  if( (computation_is_done > 1) || (state == NOT_INIT) ) return;
+  if( (computation_is_done > 1) ){
+      return;
+  }
   computation_is_done++;
-
+  if( state == NOT_INIT ){
+    computation_is_done = 0;
+    return;
+  }
   if(encoder.dynamic_angle_error){
     if(
         encoder.dynamic_angle_error & 
@@ -248,17 +258,18 @@ void encoder_compute_angle(){
   //#define DESACTIVE_FILTER 1 
   #ifndef DESACTIVE_FILTER
     update_butterworth_3_pulsation_1256_rad_s(
-      encoder.absolute_angle/(RESOLUTION_ONE_TURN/(2*M_PI)),
+      encoder.absolute_angle * (2*M_PI/RESOLUTION_ONE_TURN),
       &(encoder.butterworth_filter)
     );
     encoder.angle = get_filtered_data(&(encoder.butterworth_filter));
   #else
-    encoder.angle = encoder.absolute_angle/(RESOLUTION_ONE_TURN/(2*M_PI));
+    encoder.angle = encoder.absolute_angle * (2*M_PI/RESOLUTION_ONE_TURN);
   #endif
-  
+
   encoder.last_dynamic_angle = encoder.dynamic_angle;
 
   observer_update( encoder.angle );
+  
   computation_is_done = 0;
 }
 

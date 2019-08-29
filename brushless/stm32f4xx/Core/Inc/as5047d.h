@@ -94,6 +94,7 @@ void as5047d_error_spi_call_back(as5047d_t* as5047d);
  */
 bool as5047d_start_reading_dynamic_angle(as5047d_t* as5047d);
 bool as5047d_start_reading_diagnostic(as5047d_t* as5047d);
+bool as5047d_fast_reading_dynamic_angle(as5047d_t* as5047d);
 
 void as5047d_call_back_when_finished(as5047d_t* as5047d);
 

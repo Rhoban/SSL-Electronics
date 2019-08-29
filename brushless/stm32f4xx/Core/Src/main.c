@@ -46,7 +46,7 @@
 #define TIM2_PRESCALAR 0
 #define TIM3_PRESCALAR 0
 #define TIM4_PRESCALAR 0
-#define TIM5_PRESCALAR 150 //5000
+#define TIM5_PRESCALAR 1 //5000
 #define COMP_DELAY 1
 /* USER CODE END Includes */
 
@@ -182,12 +182,12 @@ TERMINAL_COMMAND(version, "firmware version")
 TERMINAL_COMMAND(led, "Set led")
 {
   if(argc == 0){
-    HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+    LED;
   }else if(argc == 1){
     if( atoi(argv[0])==1 ){
-      HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+      LED_ON;
     }else{
-      HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+      LED_OFF;
     }
   }else{
     terminal_println("Usage: led [1|0]");
@@ -198,7 +198,7 @@ TERMINAL_COMMAND(test_us, "test micro oscillation on LED.")
 {
   while(1){
     delay_us(1);
-    HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+    LED;
   }
 }
 
@@ -207,7 +207,7 @@ TERMINAL_COMMAND(test_ms, "test milli oscillation on LED.")
 {
   while(1){
     DELAY_MS(1);
-    HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+    LED;
   }
 }
 #endif
@@ -216,7 +216,7 @@ TERMINAL_COMMAND(test_ns, "test milli oscillation on LED.")
 {
   while(1){
     DELAY_AT_LEAST_NS(350);
-    HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+    LED;
   }
 }
 
@@ -352,8 +352,8 @@ int main(void)
     COUNTDOWN(100){
       FREQ(frequence, 8);
       if( st ){
-        HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-        // HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+        LED;
+        // LED_ON;
         start_read_encoder_position();
       }
       WATCHJ(true, 2000, "%.3f Khz", frequence/1000);

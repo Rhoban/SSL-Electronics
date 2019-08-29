@@ -22,6 +22,7 @@
 #include <frequence_definitions.h>
 #include <terminal.h>
 #include <errors.h>
+#include <errors.h>
 #include "debug.h"
 
 #define HYSTORIC_SIZE 64
@@ -39,6 +40,8 @@ typedef struct {
   volatile uint32_t norm_command_tick;
   volatile uint32_t pwm_duty_cycle_tick;
   volatile uint32_t encoder_tick;
+  volatile uint32_t encoder_time;
+  volatile uint32_t encoder_reading_time;
 
   uint32_t level;
 } observer_t; 
@@ -56,6 +59,11 @@ void observer_pwm_duty_cycletick(){
 }
 void observer_encoder_tick(){
   observer.encoder_tick = observer.current_tick;
+  observer.encoder_time = time_get_us();
+}
+
+void observer_start_encoder_reading_tick(){
+  observer.encoder_reading_time = time_get_us();
 }
 
 void observer_estimate(float * speed, float* angle){
@@ -79,11 +87,9 @@ void observer_init(){
 
 static inline void update_velocity(uint32_t level){
   observer.velocity = (
-    (
-      observer.angle[observer.position] -
-      observer.angle[(observer.position-level-1) & (HYSTORIC_SIZE-1)]
-    )*OVERSAMPLING_FREQ
-  )/(level+1);
+    observer.angle[observer.position] -
+    observer.angle[(observer.position-level-1) & (HYSTORIC_SIZE-1)]
+  )*OVERSAMPLING_FREQ*(1.0/(level+1));
 }
 
 void observer_update(float angle){
@@ -123,7 +129,7 @@ void observer_update(float angle){
   #define NEGLIGABLE 100
   #define ANGLE_NOISE (2*M_PI*MAXIMAL_AMPLITUDE_ERROR_AT_50_TR_S/(360*1000.0))
   #define LEVEL_FACTOR (ANGLE_NOISE*NEGLIGABLE*OVERSAMPLING_FREQ)
-  
+  #if 0
   float level = fabs(LEVEL_FACTOR/observer.velocity);
   // We change the level according to an hysteresis to avoid osciling 
   // phenomena.
@@ -132,6 +138,9 @@ void observer_update(float angle){
   }
   if( observer.level >= HYSTORIC_SIZE-1 ) observer.level = HYSTORIC_SIZE-2;
   update_velocity(observer.level);
+  #else
+  update_velocity(0);
+  #endif
 
   observer.updated_tick = observer.current_tick;
 }
@@ -184,4 +193,9 @@ TERMINAL_COMMAND(speed, "speed in tr/s (0: tr/s, 1:rad/s, 2:deg/s)")
     terminal_println( "usage: velocity [0-1-2]" );
     terminal_println( "   0/1/2 : tr/s-rad/s-deg/s");
   }
+}
+
+TERMINAL_COMMAND(delay, "DELAY"){
+  PRINTT("EXPECTED DELAY : %d", ENC_SPI_DELAY_US);
+  PRINTT("MEASURED DELAY : %ld", observer.encoder_reading_time - observer.encoder_time);
 }

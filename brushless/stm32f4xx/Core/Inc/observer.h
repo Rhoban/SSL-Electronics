@@ -26,7 +26,9 @@ float observer_get_velocity();
 void observer_pwm_tick();
 void observer_norm_command_tick();
 void observer_pwm_duty_cycletick();
+
 void observer_encoder_tick();
+void observer_start_encoder_reading_tick();
 
 
 void observer_update(float angle);
