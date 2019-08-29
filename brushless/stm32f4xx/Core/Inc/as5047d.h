@@ -96,3 +96,22 @@ bool as5047d_start_reading_dynamic_angle(as5047d_t* as5047d);
 bool as5047d_start_reading_diagnostic(as5047d_t* as5047d);
 
 void as5047d_call_back_when_finished(as5047d_t* as5047d);
+
+//Macro to compute the minimal time needed to compute data with as5047d module.
+#define AS5047D_TL  350
+#define AS5047D_TLCSN  350
+#define AS5047D_PACKET_NUMBER 2
+#define AS5047D_PACKET_NUMBER_WITH_FAILURE 3
+#define AS5047D_DATA_SIZE 16
+
+#define AS5047D_MINIMA_TIME_COMUNICATION_ns(clk_period_ns) ( \
+  AS5047D_PACKET_NUMBER * ( \
+    AS5047D_TLCSN + AS5047D_DATA_SIZE*clk_period_ns + AS5047D_TL \
+  ) \
+)
+
+#define AS5047D_MINIMAL_TIME_COMUNICATION_WITH_FAILURE_ns(clk_period_ns) ( \
+  AS5047D_PACKET_NUMBER_WITH_FAILURE * ( \
+    AS5047D_TLCSN + AS5047D_DATA_SIZE*clk_period_ns + AS5047D_TL \
+  ) \
+)

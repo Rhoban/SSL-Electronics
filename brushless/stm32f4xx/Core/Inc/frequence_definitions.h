@@ -269,3 +269,39 @@ _Static_assert(
 #define ENC_SPI_DELAY (CLK_SYSCLK*ENC_SPI_DELAY_US/1000000)
 //#define ENC_SPI_DELAY (PWM_PERIOD * CENTER_ALIGNED_PERIOD /4)
 
+#include <as5047d.h>
+
+//
+// Time process for as5047d
+//
+#define ENCODER_SPI_BAUDRATE SPI_BAUDRATEPRESCALER_32
+
+// We manualy tested that a SPI baudrate strictly lesser than 32 will produce
+// instabilities on the SPI comunication.
+// This is due to the presence of some interruptions with an higher priority 
+// preemption (more urgency).
+// If you need to increase this baudrate, you have to change the priority of
+// these interruptions. In our brushless driver, this is not possible because
+// higher priority interruptions are used to update accuratly the PWM of the
+// phases.
+_Static_assert(
+  ENCODER_SPI_BAUDRATE >= 32, "Baud rate HAVE to be greater or equals to 32."
+);
+#define AS5047D_PRESCALAR (2*ENCODER_SPI_BAUDRATE) // TODO : Check with stm32 doc
+#define AS5047D_CLK (CLK_SYSCLK/AS5047D_PRESCALAR)
+#define AS5047D_PERIOD_CLK_ns  (1000000000/AS5047D_CLK + 1)
+
+#define AS5047D_TIME_ns AS5047D_MINIMA_TIME_COMUNICATION_ns(AS5047D_PERIOD_CLK_ns)
+#define AS5047D_TIME_FAILURE_ns AS5047D_MINIMAL_TIME_COMUNICATION_WITH_FAILURE_ns(AS5047D_PERIOD_CLK_ns)
+#define AS5047D_UPDATE_FREQ (1000000000/AS5047D_TIME_ns)
+#define AS5047D_UPDATE_FAILURE_FREQ (1000000000/AS5047D_TIME_FAILURE_ns)
+
+#define AS5047D_UPDATE_SECURITY_FACTOR 2 // To save time for computing the result
+_Static_assert(
+  AS5047D_UPDATE_FREQ > AS5047D_UPDATE_SECURITY_FACTOR*ENCODER_FREQ,
+  "Encoder frequence is to big for AS5047D."
+);
+_Static_assert(
+  AS5047D_UPDATE_FAILURE_FREQ > AS5047D_UPDATE_SECURITY_FACTOR*ENCODER_FREQ,
+  "Encoder frequence is to big for AS5047D."
+);
