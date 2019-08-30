@@ -30,7 +30,7 @@ void observer_pwm_duty_cycletick();
 void observer_encoder_tick();
 void observer_start_encoder_reading_tick();
 
-
+void observer_update_level( float velocity );
 void observer_update(float angle);
 
 void observer_estimate( float * speed, float* angle);

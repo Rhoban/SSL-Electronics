@@ -25,13 +25,15 @@
 #include <errors.h>
 #include "debug.h"
 
-#define HYSTORIC_SIZE 64
-_Static_assert(IS_POW_2(HYSTORIC_SIZE), "Should be a 2^n.");
+// #define HISTORIC_SIZE 64
+#define HISTORIC_SIZE 128
+// #define HISTORIC_SIZE 256
+_Static_assert(IS_POW_2(HISTORIC_SIZE), "Should be a 2^n.");
 
 typedef struct {
   int oversample_counter;
 
-  float angle[HYSTORIC_SIZE];
+  float angle[HISTORIC_SIZE];
   float velocity;
   uint32_t position;
 
@@ -75,38 +77,40 @@ void observer_estimate(float * speed, float* angle){
 }
 
 void observer_init(){
-  for( uint32_t i=0; i<HYSTORIC_SIZE; i++ ){
+  for( uint32_t i=0; i<HISTORIC_SIZE; i++ ){
     observer.angle[i] = 0;
   }
   
   observer.velocity = 0;
   observer.level = 0;
-  observer.position = HYSTORIC_SIZE-1;
+  observer.position = HISTORIC_SIZE-1;
   observer.oversample_counter = OVERSAMPLING_NUMBER-1;
 }
 
+#include <recursive_macro.h>
+
 static inline void update_velocity(uint32_t level){
+  float adaptative_frequence_factor;
+  //
+  // This is a optimized implementation of the code
+  // adaptative_frequence_factor=1.0/(level+1);
+  //
+  #define CASE(i, _) case i: adaptative_frequence_factor = 1.0/(i+1); break;
+  switch(level){
+    EVAL(REPEAT(DEC(HISTORIC_SIZE), CASE, ~))
+    default:
+       adaptative_frequence_factor = 1; 
+  }
   observer.velocity = (
     observer.angle[observer.position] -
-    observer.angle[(observer.position-level-1) & (HYSTORIC_SIZE-1)]
-  )*OVERSAMPLING_FREQ*(1.0/(level+1));
+    observer.angle[(observer.position-level-1) & (HISTORIC_SIZE-1)]
+  )*OVERSAMPLING_FREQ*adaptative_frequence_factor;
 }
 
-void observer_update(float angle){
-  if( ++observer.oversample_counter == OVERSAMPLING_NUMBER ){
-    observer.oversample_counter = 0;
-  }
-
-  // We make some oversampling
-  if(observer.oversample_counter) return;
-
-  observer.position = NEXT(observer.position, HYSTORIC_SIZE);
-  
-  observer.angle[observer.position] = angle;
-
+static inline void _observer_update_level( float velocity ){
   //
-  // We update the level according to the velocity :
-  // we want the noise is negligible in front of the angle increase.
+  // When we want to choose a level where the noise is negligible in front of 
+  // the angle increase.
   //
   // So we want that velocity / update_frequence >> angle_noise 
   // so, 
@@ -129,18 +133,41 @@ void observer_update(float angle){
   #define NEGLIGABLE 100
   #define ANGLE_NOISE (2*M_PI*MAXIMAL_AMPLITUDE_ERROR_AT_50_TR_S/(360*1000.0))
   #define LEVEL_FACTOR (ANGLE_NOISE*NEGLIGABLE*OVERSAMPLING_FREQ)
-  #if 0
-  float level = fabs(LEVEL_FACTOR/observer.velocity);
+  #define ADAPTATIVE_FREQUENCE_FACTOR (1.0/LEVEL_FACTOR)
+  float inverse_level = fabs(observer.velocity*ADAPTATIVE_FREQUENCE_FACTOR);
   // We change the level according to an hysteresis to avoid osciling 
   // phenomena.
-  if( fabs( level - (observer.level+.5) ) >= .5+.2 ){
-    observer.level = level;
+  //
+  // The hysteresis condition is :
+  // fabs( level - (observer.level+.5) ) >= .5+.2
+  // This is the optimized form of that condition : 
+  if( fabs( 1.0 - inverse_level*(observer.level+.5) ) >= (.5+.2)*inverse_level ){
+    observer.level = 1/inverse_level;
   }
-  if( observer.level >= HYSTORIC_SIZE-1 ) observer.level = HYSTORIC_SIZE-2;
-  update_velocity(observer.level);
-  #else
-  update_velocity(0);
-  #endif
+  if( observer.level >= HISTORIC_SIZE-1 ) observer.level = HISTORIC_SIZE-2;
+}
+
+void observer_update_level( float velocity ){
+  _observer_update_level( observer.velocity );
+}
+void observer_update(float angle){
+  if( ++observer.oversample_counter == OVERSAMPLING_NUMBER ){
+    observer.oversample_counter = 0;
+  }
+
+  // We make some oversampling
+  if(observer.oversample_counter) return;
+
+  observer.position = NEXT(observer.position, HISTORIC_SIZE);
+  observer.angle[observer.position] = angle;
+
+  //
+  // TODO 
+  // The correct level have to be computed with the velocity control command.
+  // So we need to move the following line in the function that set the control 
+  // command.
+  _observer_update_level( observer.velocity );
+  update_velocity( observer.level );
 
   observer.updated_tick = observer.current_tick;
 }
