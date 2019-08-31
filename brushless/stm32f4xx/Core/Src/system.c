@@ -19,6 +19,7 @@
 #include <system.h>
 #include <errors.h>
 #include <terminal.h>
+#include <motor.h>
 #include <jump_to_bootloader.h>
 #include "debug.h"
 #include <frequence_definitions.h>
@@ -27,7 +28,10 @@
 void system_init(){
 }
 
+
 void system_emergency(){
+  raise_error(ERROR_EMERGENCY, SYSTEM_EMREGENCY);
+  motor_emergency();
 }
 
 void system_restart(){
@@ -39,7 +43,6 @@ void system_restart(){
 
 void system_tick(){
   if( has_errors() ){
-    system_emergency();
     WATCHJ(true, 2000, "E");
     WATCHT(true, 2000, "E");
   }

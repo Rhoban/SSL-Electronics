@@ -26,6 +26,7 @@
 #include <frequence_definitions.h>
 #include <filter.h>
 #include <observer.h>
+#include <motor.h>
 //
 // Clock computation
 //
@@ -62,6 +63,8 @@ typedef struct {
   as5047d_diagnostic_t diagnostic;
   as5047d_error_t diagnostic_error;
 
+  bool is_ready;
+
   float angle;
   float velocity;
 } encoder_t;
@@ -79,6 +82,8 @@ volatile static uint32_t computation_is_done = 0;
 void encoder_init(  
   SPI_HandleTypeDef* hspi, GPIO_TypeDef*  gpio_port_cs, uint16_t gpio_pin_cs
 ){
+  encoder.is_ready = false;
+
   encoder.absolute_angle = 0;  
   encoder.last_dynamic_angle = 0;  
   encoder.dynamic_angle = 0;
@@ -111,11 +116,18 @@ void encoder_init(
   );
   
   as5047d_init( &device, hspi, gpio_port_cs, gpio_pin_cs );
+
 }
 
 void encoder_start(){
   computation_is_done = 0;
   state = READING_ANGLE;
+ 
+  delay_us( 2.7 * FREQ_TO_US( ENCODER_FREQ ) );
+  encoder.absolute_angle = encoder.dynamic_angle;
+  encoder.last_dynamic_angle = encoder.dynamic_angle;
+
+  encoder.is_ready = true;
 }
 void encoder_stop(){
   state = NOT_INIT;
@@ -251,9 +263,24 @@ void encoder_compute_angle(){
       encoder.last_dynamic_angle, observer_get_velocity()
     );
   }
-  encoder.absolute_angle += encoder_compute_delta(
+  int32_t delta = encoder_compute_delta(
     encoder.dynamic_angle, encoder.last_dynamic_angle
   );
+  #define TOLERANCE_FACTOR 1.5
+  #define MAXIMAL_DELTA_tr ((1.0*MAXIMAL_MOTOR_VELOCITY)/ENCODER_FREQ)
+  #define MAXIMAL_DELTA ((int32_t) (TOLERANCE_FACTOR * MAXIMAL_DELTA_tr * RESOLUTION_ONE_TURN))
+  if( abs(delta) >  MAXIMAL_DELTA ){
+    if( encoder.is_ready ){
+      raise_warning(WARNING_ENCODER_UNEXPECTED_VALUE, ANGLE_INCREASE_IS_TOO_BIG);
+      encoder.dynamic_angle = predict_encoder_angle(
+        encoder.last_dynamic_angle, observer_get_velocity()
+      );
+      delta = encoder_compute_delta(
+        encoder.dynamic_angle, encoder.last_dynamic_angle
+      );
+    }
+  }
+  encoder.absolute_angle += delta;
  
   //#define DESACTIVE_FILTER 1 
   #ifndef DESACTIVE_FILTER
@@ -273,8 +300,14 @@ void encoder_compute_angle(){
   computation_is_done = 0;
 }
 
-TERMINAL_COMMAND(set_origin, "Define the origine"){
+void encoder_set_origin(){
   encoder.absolute_angle = 0;
+  encoder.velocity = 0;
+  reset_filter(&(encoder.butterworth_filter));
+}
+
+TERMINAL_COMMAND(set_origin, "Define the origine"){
+  encoder_set_origin();
 }
 
 void encoder_error_spi_call_back(){

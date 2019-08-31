@@ -76,23 +76,41 @@ void observer_estimate(float * speed, float* angle){
   ) / PWM_DUTY_CYCLE_PERIOD;
 }
 
-void observer_init(){
+void observer_reset(){
   for( uint32_t i=0; i<HISTORIC_SIZE; i++ ){
     observer.angle[i] = 0;
   }
   
   observer.velocity = 0;
   observer.level = 0;
+  
   observer.position = HISTORIC_SIZE-1;
   observer.oversample_counter = OVERSAMPLING_NUMBER-1;
+}
+void observer_init(){
+  observer_reset();
 }
 
 #include <recursive_macro.h>
 
+#if 1
+#define ADAPTATIVE_FACTOR(i, _) 1.0/(i+1),
+static const float adaptative_frequence_factors[ HISTORIC_SIZE-1 ] = {
+  EVAL(REPEAT(DEC(DEC(HISTORIC_SIZE)), ADAPTATIVE_FACTOR, ~))
+  1.0/(HISTORIC_SIZE-2+1)
+};
+static inline void update_velocity(uint32_t level){
+  ASSERT( level < HISTORIC_SIZE-1 );
+  observer.velocity = (
+    observer.angle[observer.position] -
+    observer.angle[(observer.position-level-1) & (HISTORIC_SIZE-1)]
+  )*OVERSAMPLING_FREQ*adaptative_frequence_factors[level];
+}
+#else
 static inline void update_velocity(uint32_t level){
   float adaptative_frequence_factor;
   //
-  // This is a optimized implementation of the code
+  // This is an optimized implementation of the code :
   // adaptative_frequence_factor=1.0/(level+1);
   //
   #define CASE(i, _) case i: adaptative_frequence_factor = 1.0/(i+1); break;
@@ -106,6 +124,7 @@ static inline void update_velocity(uint32_t level){
     observer.angle[(observer.position-level-1) & (HISTORIC_SIZE-1)]
   )*OVERSAMPLING_FREQ*adaptative_frequence_factor;
 }
+#endif
 
 static inline void _observer_update_level( float velocity ){
   //

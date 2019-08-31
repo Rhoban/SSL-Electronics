@@ -149,10 +149,13 @@ _Static_assert(
 #define MAXIMAL_AMPLITUDE_ERROR_AT_50_TR_S (2*MAXIMAL_AS5047D_ERROR_AT_50_TR_S)
       // in milli-degree (1/1000 degree)
 
+#define table_sin_8
 #ifdef table_sin_8
-  #define SINUS_TABLE_SIZE 2048
+  #include <sin_table.h>
+  #define SINUS_TABLE_SIZE SIN_RESOLUTION
   #define NB_FOLDING_SINUS 8 // by using sin(2*t) = 1 - 2 sin^2(pi/4 - t)
 #else
+  _Static_assert(false, "TODO: Downgrad sin_table.h to us 4 folding.")
   #define SINUS_TABLE_SIZE 4096
   #define NB_FOLDING_SINUS 4
 #endif
@@ -254,19 +257,15 @@ _Static_assert(
 #define SYCLK_TO_ENCODER_PERIOD (CENTER_ALIGNED_PERIOD*PWM_PERIOD*ENCODER_PERIOD)
 #define SYCLK_TO_PWM_DUTY_CYCLE_PERIOD (CENTER_ALIGNED_PERIOD*PWM_PERIOD*PWM_DUTY_CYCLE_PERIOD)
 
-
-
 //
-// Time diagram :
-// --------------
-//
-//
-
-// Delay before afte an encoder interruption before asking for an angle request
-// usin the SPI
-
+// Convert a period to a time.
+// The period T should represent be the ration betweeen CLK_SYSCLK and 
+// a the CLK_SYSCLK/T .
+// 
 #define PERIOD_TO_NS(period) ( (period*100000)/(CLK_SYSCLK/10000) )
 #define PERIOD_TO_US(period) ( (period*1000)/(CLK_SYSCLK/1000) )
+
+#define FREQ_TO_US(freq) (1000000/freq)
 
 #if 0
   #define ENC_SPI_DELAY_US 10

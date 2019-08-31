@@ -28,7 +28,7 @@ FIRMWARE_VERSION:="`git rev-parse HEAD`_`date '+%Y/%m/%d_%HH%M'`_`whoami`"
 ifndef CMSIS_PATH
 ifeq ($(wildcard CMSIS_5),) 
 else
-	CMSIS_PATH="CMSIS_5/CMSIS"
+	CMSIS_PATH:=CMSIS_5/CMSIS
 endif
 endif
 
@@ -64,7 +64,7 @@ BUILD_DIR = build
 # source
 ######################################
 # C sources
-C_SOURCES =  \
+C_SOURCES :=  \
 Core/Src/main.c \
 Core/Src/errors.c \
 Core/Src/terminal.c \
@@ -75,8 +75,11 @@ Core/Src/jump_to_bootloader.c \
 Core/Src/print_float.c \
 Core/Src/print_double.c \
 Core/Src/filter.c \
+Core/Src/sin_table.c \
 Core/Src/observer.c \
 Core/Src/encoder.c \
+Core/Src/motor.c \
+Core/Src/foc.c \
 Core/Src/as5047d.c \
 Core/Src/serial_usb.c \
 Core/Src/stm32f4xx_it.c \
@@ -104,11 +107,15 @@ Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_pwr_ex.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_exti.c \
+$(CMSIS_PATH)/DSP/Source/FastMathFunctions/arm_cos_f32.c \
+$(CMSIS_PATH)/DSP/Source/FastMathFunctions/arm_sin_f32.c \
+$(CMSIS_PATH)/DSP/Source/CommonTables/arm_common_tables.c \
 Core/Src/system_stm32f4xx.c \
 Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c \
 Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c \
 Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c \
 Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c  
+
 
 # ASM sources
 ASM_SOURCES =  \
@@ -176,6 +183,7 @@ C_INCLUDES =  \
 -IMiddlewares/ST/STM32_USB_Device_Library/Core/Inc \
 -IMiddlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc \
 -IDrivers/CMSIS/Device/ST/STM32F4xx/Include \
+-I$(CMSIS_PATH)/DSP/Include \
 -I$(CMSIS_PATH)/Core/Include
 
 

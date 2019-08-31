@@ -36,7 +36,9 @@ typedef enum {
   ERROR_ENCODER_SPI_TRANSMITRECEIVE=12,
   ERROR_ENCODER_SPI_CRASH=13,
   ERROR_TIMER_INIT_AT_LINE=14,
-  ERROR_STM32_HAL_LIBRARY=15
+  ERROR_STM32_HAL_LIBRARY=15,
+  ERROR_MOTOR=16,
+  ERROR_EMERGENCY=17
 } error_code_t;
 
 inline const char* error_to_string( error_code_t e ){
@@ -71,6 +73,10 @@ inline const char* error_to_string( error_code_t e ){
       return "ERROR_TIMER_INIT_AT_LINE";
     case ERROR_STM32_HAL_LIBRARY:
       return "ERROR_STM32_HAL_LIBRARY";
+    case ERROR_MOTOR:
+      return "ERROR_MOTOR";
+    case ERROR_EMERGENCY:
+      return "ERROR_EMERGENCY";
     default : 
       return "?";
   }
@@ -112,7 +118,8 @@ typedef enum {
   WARNING_LAG = 7,
   WARNING_ENCODER_BUSY = 8,
   WARNING_ENCODER_ERROR_ON_AS5047D = 9,
-  WARNING_ENCODER_LAG = 10
+  WARNING_ENCODER_LAG = 10,
+  WARNING_ENCODER_UNEXPECTED_VALUE=11
 } warning_code_t;
 
 inline const char* warning_to_string( warning_code_t w ){
@@ -137,6 +144,8 @@ inline const char* warning_to_string( warning_code_t w ){
       return "WARNING_ENCODER_ERROR_ON_AS5047D";
     case WARNING_ENCODER_LAG :
       return "WARNING_ENCODER_LAG";
+    case WARNING_ENCODER_UNEXPECTED_VALUE :
+      return "WARNING_ENCODER_UNEXPECTED_VALUE";
     default : 
       return "?";
   }

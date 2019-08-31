@@ -32,5 +32,6 @@ void observer_start_encoder_reading_tick();
 
 void observer_update_level( float velocity );
 void observer_update(float angle);
+void observer_reset();
 
 void observer_estimate( float * speed, float* angle);

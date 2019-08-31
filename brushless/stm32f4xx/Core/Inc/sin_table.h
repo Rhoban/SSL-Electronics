@@ -16,25 +16,9 @@
     You should have received a copy of the GNU Lesser General Public License
     along with SSL-Electronics.  If not, see <http://www.gnu.org/licenses/>.
 */
-
 #pragma once
+#define SIN_RESOLUTION 2048
+#define SIN_PRRECISION 2.0/SIN_RESOLUTION 
 
-typedef struct {
-  float theta_shift;
-  float theta_out[4];
-  float theta_in[4];
-  float frame_limit;
-} butterworth_3_data_t;
-
-void init_butterworth_3_pulsation_1256_rad_s(
-  butterworth_3_data_t * data, float limit
-);
-
-float get_filtered_data(const butterworth_3_data_t * data);
-float get_shift(const butterworth_3_data_t * data);
-
-void update_butterworth_3_pulsation_1256_rad_s(
-  float sample, butterworth_3_data_t * data
-);
-
-void reset_filter(butterworth_3_data_t * data);
+float cos_table(float theta);
+float sin_table(float theta);

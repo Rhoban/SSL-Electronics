@@ -18,9 +18,7 @@
 
 #include <filter.h>
 
-void init_butterworth_3_pulsation_1256_rad_s(
-  butterworth_3_data_t * data, float limit
-){
+void reset_filter(butterworth_3_data_t * data){
   data->theta_shift = 0.0;
   data->theta_out[0] = 0.0;
   data->theta_out[1] = 0.0;
@@ -30,6 +28,12 @@ void init_butterworth_3_pulsation_1256_rad_s(
   data->theta_in[1] = 0.0;
   data->theta_in[2] = 0.0;
   data->theta_in[3] = 0.0;
+}
+
+void init_butterworth_3_pulsation_1256_rad_s(
+  butterworth_3_data_t * data, float limit
+){
+  reset_filter(data);
   data->frame_limit = limit;
 }
 

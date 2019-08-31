@@ -32,18 +32,17 @@
 #include <time.h>
 #include <encoder.h>
 #include <system.h>
+#include <motor.h>
 #include <errors.h>
 #include <observer.h>
 #include <priority.h>
 #include <frequence_definitions.h>
 
 #define TIM1_PERIOD PWM_PERIOD // The timer to generate all the pwm
-#define TIM2_PERIOD SYCLK_TO_PWM_DUTY_CYCLE_PERIOD // Timer for the center-aligned pwm
 #define TIM3_PERIOD SYCLK_TO_ENCODER_PERIOD // Timer for the encoder.
 #define TIM4_PERIOD 4 // Clock user to reset and synchronize all the other clock
 #define TIM5_PERIOD 4294967295 // Clock used to launch background computation
 #define TIM1_PRESCALAR 0
-#define TIM2_PRESCALAR 0
 #define TIM3_PRESCALAR 0
 #define TIM4_PRESCALAR 0
 #define TIM5_PRESCALAR 1 //5000
@@ -71,7 +70,6 @@ DMA_HandleTypeDef hdma_spi2_rx;
 DMA_HandleTypeDef hdma_spi2_tx;
 
 TIM_HandleTypeDef htim1;
-TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
 TIM_HandleTypeDef htim5;
@@ -85,7 +83,6 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_TIM1_Init(void);
-static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM4_Init(void);
 static void MX_TIM5_Init(void);
@@ -139,8 +136,6 @@ TERMINAL_COMMAND(frequences, "Print all the frequences"){
   terminal_println_int(NORM_PERIOD);
   terminal_print("TIM1_PERIOD :");
   terminal_println_int(TIM1_PERIOD);
-  terminal_print("TIM2_PERIOD :");
-  terminal_println_int(TIM2_PERIOD);
   terminal_print("TIM3_PERIOD :");
   terminal_println_int(TIM3_PERIOD);
   terminal_print("TIM4_PERIOD :");
@@ -239,9 +234,6 @@ void start_and_synchronize_timers(){
   if( HAL_TIM_Base_Start(&htim1) != HAL_OK ){
     raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
   }
-  if( HAL_TIM_Base_Start(&htim2) != HAL_OK ){
-    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
-  }
   if( HAL_TIM_Base_Start(&htim3) != HAL_OK ){
     raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
   }
@@ -271,12 +263,6 @@ void start_and_synchronize_timers(){
     raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
   };
 
-  if( HAL_TIM_Base_Start_IT(&htim1) != HAL_OK ){
-    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
-  };
-  if( HAL_TIM_Base_Start_IT(&htim2) != HAL_OK ){
-    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
-  };
   if( HAL_TIM_Base_Start_IT(&htim3) != HAL_OK ){
     raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
   }
@@ -325,7 +311,6 @@ int main(void)
   MX_DMA_Init();
   MX_SPI2_Init();
   MX_TIM1_Init();
-  MX_TIM2_Init();
   MX_TIM3_Init();
   MX_TIM4_Init();
   MX_TIM5_Init();
@@ -338,9 +323,11 @@ int main(void)
   system_init();
   encoder_init(&hspi2, ENC_INT_CS_GPIO_Port,ENC_INT_CS_Pin);
   observer_init();
+  motor_init();
  
   start_and_synchronize_timers();
   encoder_start();
+  motor_start();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -348,17 +335,6 @@ int main(void)
   while (1)
   {
     system_tick();
-#if 0
-    COUNTDOWN(100){
-      FREQ(frequence, 8);
-      if( st ){
-        LED;
-        // LED_ON;
-        start_read_encoder_position();
-      }
-      WATCHJ(true, 2000, "%.3f Khz", frequence/1000);
-    }
-#endif
     encoder_tick();
     get_serial()->tick();
     terminal_tick();
@@ -538,58 +514,6 @@ static void MX_TIM1_Init(void)
 
   /* USER CODE END TIM1_Init 2 */
   HAL_TIM_MspPostInit(&htim1);
-
-}
-
-/**
-  * @brief TIM2 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_TIM2_Init(void)
-{
-
-  /* USER CODE BEGIN TIM2_Init 0 */
-
-  /* USER CODE END TIM2_Init 0 */
-
-  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
-  TIM_SlaveConfigTypeDef sSlaveConfig = {0};
-  TIM_MasterConfigTypeDef sMasterConfig = {0};
-
-  /* USER CODE BEGIN TIM2_Init 1 */
-
-  /* USER CODE END TIM2_Init 1 */
-  htim2.Instance = TIM2;
-  htim2.Init.Prescaler = TIM2_PRESCALAR;
-  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = TIM2_PERIOD;
-  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
-  {
-    main_error_handler(__LINE__);
-  }
-  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
-  {
-    main_error_handler(__LINE__);
-  }
-  sSlaveConfig.SlaveMode = TIM_SLAVEMODE_RESET;
-  sSlaveConfig.InputTrigger = TIM_TS_ITR3;
-  if (HAL_TIM_SlaveConfigSynchro(&htim2, &sSlaveConfig) != HAL_OK)
-  {
-    main_error_handler(__LINE__);
-  }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
-  {
-    main_error_handler(__LINE__);
-  }
-  /* USER CODE BEGIN TIM2_Init 2 */
-
-  /* USER CODE END TIM2_Init 2 */
 
 }
 

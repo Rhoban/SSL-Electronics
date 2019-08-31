@@ -19,7 +19,8 @@
 #pragma once
 
 typedef enum {
-  HAL_INITIALISATION = 1
+  HAL_INITIALISATION = 1,
+  SYSTEM_EMREGENCY = 2
 } error_system_t;
 
 void system_init();

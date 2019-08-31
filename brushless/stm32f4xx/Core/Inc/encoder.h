@@ -5,7 +5,8 @@
 typedef enum {
   ENCODER_VALUE_NOT_READY = 1,
   ENCODER_DO_NOT_START = 2,
-  LAG_IN_ANGLE_COMPUTATION = 3
+  LAG_IN_ANGLE_COMPUTATION = 3,
+  ANGLE_INCREASE_IS_TOO_BIG=4
 } encoder_error_t;
 
 void encoder_init(  
@@ -15,6 +16,7 @@ void encoder_tick();
 void encoder_stop();
 void encoder_start();
 void start_read_encoder_position();
+void encoder_set_origin();
 
 float encoder_angle();
 void encoder_spi_call_back();

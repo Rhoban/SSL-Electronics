@@ -38,3 +38,20 @@ inline float mod_2_pi(float theta){
   return mod_float(theta, (2*M_PI));
 }
 
+#define BORN_MAX(x, max) x = ((x)<=(max))? (x) : (max)
+#define BORN_MIN(x, min) x = ((x)>=(min))? (x) : (min)
+
+#define BORN(x, min, max) \
+  do { \
+    BORN_MIN(x,min); \
+    BORN_MAX(x,max); \
+  } while(0u)
+
+// Compute he root square of a float.
+__attribute__((always_inline))
+inline float _VSQRTF(float f){
+  float res;
+  asm volatile("vsqrt.f32 %0, %1" : "=&t" (res) : "t" (f));
+  return res;
+}
+
