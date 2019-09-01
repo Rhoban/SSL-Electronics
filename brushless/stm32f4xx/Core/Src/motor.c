@@ -302,9 +302,20 @@ void motor_prepare_pwm(){
 void motor_apply_pwm(){
   // ASSERT(motor.is_ready);
   if(motor.is_ready){
+    // We first disactive the Update event
+    // we set the UDIS bit in TIM1_EGR
+    // Uncomment if needed
+    // htim1.Instance->CR1  |= TIM_CR1_UDIS;
+
     htim1.Instance->CCR1 = motor.phase_pwm_u;
     htim1.Instance->CCR2 = motor.phase_pwm_v;
     htim1.Instance->CCR3 = motor.phase_pwm_w;
+
+    // we activate the update event
+    // we reset the UDIS bit in TIM1_EGR
+    // Uncomment if needed
+    // htim1.Instance->CR1  &= ~TIM_CR1_UDIS;
+
     motor.is_ready = false;
   }
   if( motor.mode == TARE && motor.reset_origin){
