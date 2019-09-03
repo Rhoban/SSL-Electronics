@@ -19,6 +19,7 @@
 #pragma once
 
 #include <time.h>
+#include <tools.h>
 
 #define MAXIMAL_AUDIO_HUMAN_FREQUENCY 22000
 #define MAXIMAL_AUDIO_DOG_FREQUENCY 45000
