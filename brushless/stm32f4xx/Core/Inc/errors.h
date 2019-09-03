@@ -119,7 +119,8 @@ typedef enum {
   WARNING_ENCODER_BUSY = 8,
   WARNING_ENCODER_ERROR_ON_AS5047D = 9,
   WARNING_ENCODER_LAG = 10,
-  WARNING_ENCODER_UNEXPECTED_VALUE=11
+  WARNING_ENCODER_UNEXPECTED_VALUE=11,
+  WARNING_MOTOR_LAG = 12
 } warning_code_t;
 
 inline const char* warning_to_string( warning_code_t w ){
@@ -144,6 +145,8 @@ inline const char* warning_to_string( warning_code_t w ){
       return "WARNING_ENCODER_ERROR_ON_AS5047D";
     case WARNING_ENCODER_LAG :
       return "WARNING_ENCODER_LAG";
+    case WARNING_MOTOR_LAG :
+      return "WARNING_MOTOR_LAG";
     case WARNING_ENCODER_UNEXPECTED_VALUE :
       return "WARNING_ENCODER_UNEXPECTED_VALUE";
     default : 

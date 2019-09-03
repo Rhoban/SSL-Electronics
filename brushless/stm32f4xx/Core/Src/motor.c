@@ -51,7 +51,8 @@
 typedef enum {
   TARE,
   FIXED_DQ_VOLTAGE,
-  CLOSED_LOOP
+  DQ_VOLTAGE_CONSIGN,
+  Q_CURRENT_CONSIGN
 } motor_mode_t;
 
 inline const char* motor_mode_string( motor_mode_t m ){
@@ -60,15 +61,24 @@ inline const char* motor_mode_string( motor_mode_t m ){
       return "TARE";
     case FIXED_DQ_VOLTAGE:
       return "FIXED_DQ_VOLTAGE";
-    case CLOSED_LOOP:
-      return "CLOSED_LOOP";
+    case DQ_VOLTAGE_CONSIGN:
+      return "DQ_VOLTAGE_CONSIGN";
+    case Q_CURRENT_CONSIGN:
+      return "Q_CURRENT_CONSIGN";
     default:
       return "?";
   }
 }
 
 typedef struct {
+  volatile bool computation_is_done;
   bool is_ready;
+
+  float current_consign; 
+  float current_derivate;
+
+  volatile float quadrature_voltage_consign;
+  volatile float direct_voltage_consign;
 
   volatile float direct_voltage;
   volatile float quadrature_voltage;
@@ -86,6 +96,12 @@ typedef struct {
   bool free_spining;
 
   bool reset_origin;
+
+
+  // Motor constants
+  float Lq;
+  float R;
+  float Kem;
 } motor_t;
 
 static motor_t motor;
@@ -93,24 +109,50 @@ static motor_t motor;
 extern TIM_HandleTypeDef htim1;
 
 void motor_stop_device(){
-  HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
-  HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
-  HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_3);
+  if( HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1) != HAL_OK ){
+    raise_error(ERROR_MOTOR, MOTOR_PWM_STOP_1);
+  }
+  if( HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2) != HAL_OK ){
+    raise_error(ERROR_MOTOR, MOTOR_PWM_STOP_2);
+  }
+  if( HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_3) != HAL_OK ){
+    raise_error(ERROR_MOTOR, MOTOR_PWM_STOP_3);
+  }
 }
 
 void motor_start_device(){
   if( HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1) != HAL_OK ){
-    raise_error(ERROR_MOTOR, MOTOR_PWM_INITIALISATION_1);
+    raise_error(ERROR_MOTOR, MOTOR_PWM_START_1);
   }
   if( HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2) != HAL_OK ){
-    raise_error(ERROR_MOTOR, MOTOR_PWM_INITIALISATION_2);
+    raise_error(ERROR_MOTOR, MOTOR_PWM_START_2);
   }
   if( HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3) != HAL_OK ){
-    raise_error(ERROR_MOTOR, MOTOR_PWM_INITIALISATION_3);
+    raise_error(ERROR_MOTOR, MOTOR_PWM_START_3);
   }
 }
 
-void motor_init_device(){
+
+
+//
+// TODO : R2FLECHIR SUR observer_get_velocity()
+// Doit-on compenser la vitesse ?
+//
+static inline void filter_current_consign_and_compute_derivate(float current_consign){
+  //TODO : Add a quadramp to the current consign !
+  motor.current_derivate = (current_consign - motor.current_consign)*ENCODER_FREQ;
+  motor.current_consign = current_consign;
+}
+
+static inline void compute_voltage_consign(){
+  motor.quadrature_voltage_consign = (
+    motor.Kem * observer_get_velocity() +
+    motor.R * motor.current_consign + 
+    motor.Lq * motor.current_derivate
+  );
+  motor.direct_voltage_consign = (
+    - motor.Lq * observer_get_velocity() * motor.current_consign
+  );
 }
 
 static inline void dq_voltage_to_phase_voltage(float angle){
@@ -146,9 +188,9 @@ static inline void dq_voltage_to_phase_voltage(float angle){
 }
 
 
-void motor_set_direct_quadrature_voltage(
-  float direct_voltage, float quadrature_voltage
-){
+void compute_direct_quadrature_voltage(){
+  float direct_voltage = motor.direct_voltage_consign;
+  float quadrature_voltage = motor.quadrature_voltage_consign;
   // max( pwm_u ) = alpha * max( u-v )
   //
   // We need now to evaluate the maximum value
@@ -188,6 +230,13 @@ void motor_set_direct_quadrature_voltage(
   }
 }
 
+void motor_set_direct_quadrature_voltage_consign(
+  float direct_voltage, float quadrature_voltage
+){
+  motor.direct_voltage_consign = direct_voltage;
+  motor.quadrature_voltage_consign = quadrature_voltage;
+  compute_direct_quadrature_voltage();
+}
 
 void phase_voltage_to_pwm_voltage(){
   float min = motor.phase_voltage_u;
@@ -210,10 +259,25 @@ static inline void set_pwm_to_zero(){
   motor.phase_pwm_w = 0;
 }
 
+static inline void set_hardware_pwm(){
+  // We first disactive the Update event
+  // we set the UDIS bit in TIM1_EGR
+  // Uncomment if needed
+  // htim1.Instance->CR1  |= TIM_CR1_UDIS;
+
+  htim1.Instance->CCR1 = motor.phase_pwm_u;
+  htim1.Instance->CCR2 = motor.phase_pwm_v;
+  htim1.Instance->CCR3 = motor.phase_pwm_w;
+
+  // we activate the update event
+  // we reset the UDIS bit in TIM1_EGR
+  // Uncomment if needed
+  // htim1.Instance->CR1  &= ~TIM_CR1_UDIS;
+}
 
 static inline void set_pwm_to_free_spinig(){
   set_pwm_to_zero();
-  motor_apply_pwm();
+  set_hardware_pwm();
 }
 
 static inline void activate_driver(){
@@ -234,19 +298,22 @@ static inline void deactivate_driver(){
 
 void motor_init(){
   motor.is_ready = false;
+  motor.computation_is_done = false;
+
+  motor.Lq = MOTOR_LQ;
+  motor.R = MOTOR_R;
+  motor.Kem = MOTOR_KEM;
 
   motor.free_spining = true;
-
-  set_pwm_to_zero();
 
   motor.direct_voltage = 0;
   motor.quadrature_voltage = 0;
 
   motor.mode = FIXED_DQ_VOLTAGE;
 
-  motor_init_device();
 
-  motor.is_ready = true;
+  set_pwm_to_zero();
+
   motor.reset_origin = false;
 
   foc_init();
@@ -255,7 +322,8 @@ void motor_init(){
 void motor_start(){
   motor_start_device();
   deactivate_driver();
-  motor_apply_pwm();
+  set_hardware_pwm();
+  motor.is_ready = true;
 }
 
 void motor_enable(bool enable){
@@ -276,10 +344,21 @@ bool motor_is_enable(){
 }
 
 void motor_prepare_pwm(){
+  if( motor.mode == TARE && motor.reset_origin){
+    encoder_set_origin();
+    observer_reset();
+    motor.reset_origin = false;
+  }
   float angle = 0;
+  float current_consign = 0; 
   switch( motor.mode ){
-    case CLOSED_LOOP:
+    case Q_CURRENT_CONSIGN:
       //foc_get_control(&motor.direct_voltage, &motor.quadrature_voltage);
+      //foc_get_control(&motor.direct_voltage, &motor.quadrature_voltage);
+      filter_current_consign_and_compute_derivate(current_consign);
+      compute_voltage_consign();
+    case DQ_VOLTAGE_CONSIGN:
+      compute_direct_quadrature_voltage();
     case FIXED_DQ_VOLTAGE:
       angle = observer_get_angle();
       break;
@@ -296,31 +375,18 @@ void motor_prepare_pwm(){
   }else{
     phase_voltage_to_pwm_voltage();
   }
-  motor.is_ready = true;
+  motor.computation_is_done = true;
 }
 
 void motor_apply_pwm(){
-  // ASSERT(motor.is_ready);
-  if(motor.is_ready){
-    // We first disactive the Update event
-    // we set the UDIS bit in TIM1_EGR
-    // Uncomment if needed
-    // htim1.Instance->CR1  |= TIM_CR1_UDIS;
-
-    htim1.Instance->CCR1 = motor.phase_pwm_u;
-    htim1.Instance->CCR2 = motor.phase_pwm_v;
-    htim1.Instance->CCR3 = motor.phase_pwm_w;
-
-    // we activate the update event
-    // we reset the UDIS bit in TIM1_EGR
-    // Uncomment if needed
-    // htim1.Instance->CR1  &= ~TIM_CR1_UDIS;
-
-    motor.is_ready = false;
-  }
-  if( motor.mode == TARE && motor.reset_origin){
-    encoder_set_origin();
-    observer_reset();
+  // This function have to be as short as possible
+  if(motor.computation_is_done){
+    set_hardware_pwm();
+    motor.computation_is_done = false;
+  }else{
+    if( motor.is_ready ){
+      raise_warning(WARNING_MOTOR_LAG, MOTOR_LAG_IN_PWM_COMPUTATION);
+    }
   }
 }
 
@@ -338,13 +404,32 @@ void tare(){
   motor.reset_origin = true;
   DELAY_MS(1000);
   
-  motor.reset_origin = false;
-
-  
   motor.direct_voltage = 0;
   motor.quadrature_voltage = 0;
 
   motor.mode = save_mode;
+}
+
+TERMINAL_COMMAND(motor_consign, "motor consign"){
+  switch(motor.mode){
+    case Q_CURRENT_CONSIGN :
+      terminal_print("current_consign : ");
+      terminal_println_float(motor.current_consign); 
+    case DQ_VOLTAGE_CONSIGN :
+    case FIXED_DQ_VOLTAGE :
+      terminal_print("quadrature_voltage_consign : ");
+      terminal_println_float(motor.quadrature_voltage_consign);
+      terminal_print("direct_voltage_consign :");
+      terminal_println_float(motor.direct_voltage_consign);
+    case TARE :
+      terminal_print("direct_voltage : ");
+      terminal_println_float(motor.direct_voltage);
+      terminal_print("quadrature_voltage : ");
+      terminal_println_float(motor.quadrature_voltage);
+      break;
+    default:
+      ASSERT(false);
+  }
 }
 
 TERMINAL_COMMAND(dqv, "Set direct and quadratic voltage" ){
@@ -354,7 +439,7 @@ TERMINAL_COMMAND(dqv, "Set direct and quadratic voltage" ){
     float q = atof( argv[1] );
     BORN(d, 0, MAX_VOLTAGE);
     BORN(q, 0, MAX_VOLTAGE);
-    motor_set_direct_quadrature_voltage(d, q);
+    motor_set_direct_quadrature_voltage_consign(d, q);
   }else{
     terminal_print("dqv <direct voltage> <quadratic voltage> (max voltage:");
     terminal_print_int(MAX_VOLTAGE);
@@ -367,20 +452,20 @@ TERMINAL_COMMAND(motor_mode, "the mode of the motor" ){
   terminal_println("");
 }
 
-TERMINAL_COMMAND(motor_consign, "motor consign"){
-  terminal_print("direct v. : ");
-  terminal_println_float(motor.direct_voltage);
-  terminal_print("quadrature v. : ");
-  terminal_println_float(motor.quadrature_voltage);
-}
 
 TERMINAL_COMMAND(pwm, "phase pwm"){
   terminal_print("u : ");
-  terminal_println_int(motor.phase_pwm_u);
+  terminal_print_int(motor.phase_pwm_u);
+  terminal_print(" /");
+  terminal_println_int(PWM_PERIOD);
   terminal_print("v : ");
-  terminal_println_float(motor.phase_pwm_v);
-  terminal_print("w. :");
-  terminal_println_float(motor.phase_pwm_w);
+  terminal_print_int(motor.phase_pwm_v);
+  terminal_print(" /");
+  terminal_println_int(PWM_PERIOD);
+  terminal_print("w : ");
+  terminal_print_int(motor.phase_pwm_w);
+  terminal_print(" /");
+  terminal_println_int(PWM_PERIOD);
 }
 
 TERMINAL_COMMAND(tare, "define the position 0" ){

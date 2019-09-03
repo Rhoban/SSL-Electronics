@@ -19,11 +19,18 @@
 #pragma once
 
 typedef enum {
-  MOTOR_PWM_INITIALISATION_1=1,
-  MOTOR_PWM_INITIALISATION_2=2,
-  MOTOR_PWM_INITIALISATION_3=3,
-  MOTOR_EMERGENCY=4
+  MOTOR_PWM_START_1=1,
+  MOTOR_PWM_START_2=2,
+  MOTOR_PWM_START_3=3,
+  MOTOR_PWM_STOP_1=4,
+  MOTOR_PWM_STOP_2=5,
+  MOTOR_PWM_STOP_3=6,
+  MOTOR_EMERGENCY=7
 } motor_error_t;
+
+typedef enum {
+  MOTOR_LAG_IN_PWM_COMPUTATION
+} motor_warning_t;
 
 void motor_init();
 void motor_start();

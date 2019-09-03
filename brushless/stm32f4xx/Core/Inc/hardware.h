@@ -21,6 +21,11 @@
 #define NB_POSITIVE_MAGNETS 8
 #define MOTOR_VOLTAGE 24
 #define REVERSE_PHASE
+#define MOTOR_LQ 0  // Quadrature Inductance : inductance of the virtual coil that is 
+              // perpendicular to the virtual magnet of the stator.
+#define MOTOR_R 0   // resistance of the coil
+#define MOTOR_KEM 0   // Electromagnetic constant of the motor
+
 
 //
 // Pwm will be bounded in 
