@@ -1,5 +1,10 @@
 /*
+g
  * Copyright (C) 2019  Adrien Boussicault <adrien.boussicault@labri.fr>
+ *
+ * This code is inspired by the tutorial :
+ * stm32f4-discovery.net/2017/04/tutorial-jump-system-memory-software-stm32
+ * written on April 3, 2017 by TILZOR.
  *
  * This program is free software: you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
