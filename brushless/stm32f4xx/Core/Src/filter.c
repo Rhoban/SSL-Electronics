@@ -17,6 +17,47 @@
  */
 
 #include <filter.h>
+#include <frequence_definitions.h>
+
+//
+// butterworth_3_pulsation_1256
+// Those coeficients were  computed with the script :
+// butterworth_coeeficients.py
+//
+// If you want to compute new coefficients, modify the frequence `fe` of that 
+// script, and then run the script.
+//
+// To run this script install sagmath, matplotlib and scipt. 
+// Then, start sage in console : sage
+// On the sage console, just type : attach("butterworth_coeeficients.py")
+//
+#if ENCODER_FREQ == 8000
+  #define D0 2414.790782274951f
+  #define D1 -6488.057607935079f
+  #define D2 +5845.602032624118f
+  #define D3 -1764.3352069639898f
+#elif ENCODER_FREQ == 9000
+  #define D0 +3378.9197587333133
+  #define D1 -9195.466129670838
+  #define D2 +8380.764542167903
+  #define D3 -2556.218171230377
+#elif ENCODER_FREQ == 9600
+  #define D0 +4065.2074593339344
+  #define D1 -11133.615353259444
+  #define D2 +10205.839324811657
+  #define D3 -3129.4314308861494
+#elif ENCODER_FREQ == 10000
+  #define D0 +4570.878710980003
+  #define D1 -12566.100342043117 
+  #define D2 +11558.88850561974
+  #define D3 -3555.666874556626
+#else
+  _Static_assert(
+    false,
+    "You need to compute new coefficients for the butterworth filter."
+  );
+#endif
+
 
 void reset_filter(butterworth_3_data_t * data){
   data->theta_shift = 0.0;
@@ -48,12 +89,8 @@ float get_shift(const butterworth_3_data_t * data){
 void update_butterworth_3_pulsation_1256_rad_s(
   float sample, butterworth_3_data_t * data
 ){
-    const float d_0 = 2414.790782274951f;
-    const float d[4] = {
-        d_0, +6488.057607935079f/d_0, -5845.602032624118f/d_0,
-        +1764.3352069639898f/d_0
-    };
-    const float n[4] = {1.0f/d_0, 3.0f/d_0, 3.0f/d_0, 1.0f/d_0};
+    const float d[4] = {D0, -D1/D0, -D2/D0, -D3/D0};
+    const float n[4] = {1.0f/D0, 3.0f/D0, 3.0f/D0, 1.0f/D0};
 
     data->theta_in[3] = data->theta_in[2];
     data->theta_in[2] = data->theta_in[1];
