@@ -296,6 +296,21 @@ static inline void deactivate_driver(){
   motor.free_spining = true;
 }
 
+void reset_consign_and_command(){
+  motor.current_consign = 0; 
+  motor.current_derivate = 0;
+
+  motor.quadrature_voltage_consign = 0;
+  motor.direct_voltage_consign = 0;
+
+  motor.direct_voltage = 0;
+  motor.quadrature_voltage = 0;
+
+  motor.phase_voltage_u = 0;
+  motor.phase_voltage_v = 0;
+  motor.phase_voltage_w = 0;
+}
+
 void motor_init(){
   motor.is_ready = false;
   motor.computation_is_done = false;
@@ -306,11 +321,9 @@ void motor_init(){
 
   motor.free_spining = true;
 
-  motor.direct_voltage = 0;
-  motor.quadrature_voltage = 0;
+  reset_consign_and_command();
 
   motor.mode = FIXED_DQ_VOLTAGE;
-
 
   set_pwm_to_zero();
 
@@ -337,6 +350,7 @@ void motor_enable(bool enable){
 void motor_emergency(){
   raise_error(ERROR_EMERGENCY, MOTOR_EMERGENCY);
   deactivate_driver();
+  reset_consign_and_command();
 }
 
 bool motor_is_enable(){
