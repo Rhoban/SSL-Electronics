@@ -30,50 +30,27 @@
 // #define HISTORIC_SIZE 256
 _Static_assert(IS_POW_2(HISTORIC_SIZE), "Should be a 2^n.");
 
+#include <filter.h>
+
 typedef struct {
   int oversample_counter;
 
   float angle[HISTORIC_SIZE];
+  float mesure_time_systick[HISTORIC_SIZE];
   float velocity;
   uint32_t position;
 
   volatile uint32_t updated_tick;
-  volatile uint32_t current_tick;
-  volatile uint32_t norm_command_tick;
-  volatile uint32_t pwm_duty_cycle_tick;
   volatile uint32_t encoder_tick;
-  volatile uint32_t encoder_time;
-  volatile uint32_t encoder_reading_time;
+  volatile uint32_t angle_measure_tick;
 
   uint32_t level;
 } observer_t; 
 
 static observer_t observer;
 
-void observer_pwm_tick(){
-  (observer.current_tick)++;
-}
-void observer_norm_command_tick(){
-  observer.norm_command_tick = observer.current_tick;
-}
-void observer_pwm_duty_cycletick(){
-  observer.pwm_duty_cycle_tick = observer.current_tick;
-}
 void observer_encoder_tick(){
-  observer.encoder_tick = observer.current_tick;
-  observer.encoder_time = time_get_us();
-}
-
-void observer_start_encoder_reading_tick(){
-  observer.encoder_reading_time = time_get_us();
-}
-
-void observer_estimate(float * speed, float* angle){
-  (*speed) = observer.velocity;
-  (*angle) = observer.angle[observer.position] + (
-      ((observer.current_tick - observer.updated_tick) & 0xFFFF) *
-      observer.velocity
-  ) / PWM_DUTY_CYCLE_PERIOD;
+  observer.encoder_tick = SysTick->VAL;
 }
 
 void observer_reset(){
@@ -166,11 +143,73 @@ static inline void _observer_update_level( float velocity ){
   if( observer.level >= HISTORIC_SIZE-1 ) observer.level = HISTORIC_SIZE-2;
 }
 
+TERMINAL_PARAMETER_FLOAT(dt, "time us", 0.0);
+
+void get_estimated_angle_for_next_PWM_update(float* angle, float *speed){
+  (*speed) = observer.velocity;
+// Sysclk
+// counter
+//   ^                                       /
+//   |     LOAD   |\    |\    |\   /|\--->|\-   |\    |
+//   | msk, et1 --|>\   | \---|>\-- | \   |.\   | \   | 
+//   |      et3 - | .\  | /\  | .\  |  \  |. \  |  \  | 
+//   |  et0 et0 --|-->\-|-  \ | . \ |   \ |.  \ |   \ |
+//   |      et2 - | . .\|    \| .  \|    \|.  -\|--->\|
+//   |              . .         .          .         .
+// <--------------------------------------------------- time in
+//                 et0 msk     et0-ENC  et0-2*ENC  et0-3ENC   sysclk
+//                 <-->         .          .         .
+//                  diff        .       PWM_PERIOD   .
+//                  . .         .          <>        .
+//                  ^^^         ^^         ^^        ^^        ^^
+//                  |||         ||         ||        ||        ||
+//              ------------------------------------------------------
+//                  et msk      et         et        et        et
+//                   fcat        fact       fcat      fcat      fcat
+//                  or                                           or
+//                      <----------------------------->
+//                          delay(oversample_counter)
+//
+// mts : mesure_time_systick
+// et : encoder tick
+// fcat : first center aligned tick were the new command is applied
+// or : Overampling reset : 
+//
+// eti = mod( et0-oversample_counter*ENV , LOAD )
+// et0 - oversample_counter*ENV = k*LOAD + eti
+// et0 = k*LOAD + eti + ovserample_counter*ENC
+// mod( msk - et0, LOAD) = mod(
+//    msk - eti - ovserample_counter*ENC, LOAD
+// )
+// diff = mod( msk - eti - OVERSAMPLE*ENC, LOAD ) 
+//
+// delay = (oversample_counter+1)*ENC + PWM_PERIOD - diff 
+  int32_t diff = (
+    ( 
+      (int32_t) (
+        observer.encoder_tick + 
+        observer.oversample_counter * SYCLK_TO_ENCODER_PERIOD
+      )
+    ) - (
+      (int32_t) observer.mesure_time_systick[observer.position]
+    )
+  );
+  diff = diff % CLK_SYSCLK_PERIOD;
+  diff = diff < 0 ? diff + CLK_SYSCLK_PERIOD: diff;
+  float delay = (
+    PWM_PERIOD + observer.oversample_counter * SYCLK_TO_ENCODER_PERIOD 
+  ) * (1.0/CLK_SYSCLK) + (FILTER_DELAY_US/1000000.0);
+  (*angle) = observer.angle[observer.position]
+   //+ observer.velocity*dt*(1.0/1000000);
+   + observer.velocity * delay;
+}
+
 void observer_update_level( float velocity ){
   _observer_update_level( observer.velocity );
 }
-void observer_update(float angle){
-  if( ++observer.oversample_counter == OVERSAMPLING_NUMBER ){
+void observer_update(float angle, uint32_t mesure_time_systick){
+  observer.oversample_counter += 1;
+  if( observer.oversample_counter == OVERSAMPLING_NUMBER ){
     observer.oversample_counter = 0;
   }
 
@@ -179,6 +218,7 @@ void observer_update(float angle){
 
   observer.position = NEXT(observer.position, HISTORIC_SIZE);
   observer.angle[observer.position] = angle;
+  observer.mesure_time_systick[observer.position] = mesure_time_systick;
 
   //
   // TODO 
@@ -187,8 +227,6 @@ void observer_update(float angle){
   // command.
   _observer_update_level( observer.velocity );
   update_velocity( observer.level );
-
-  observer.updated_tick = observer.current_tick;
 }
 
 TERMINAL_COMMAND( level, "veloctity level"){
@@ -241,7 +279,3 @@ TERMINAL_COMMAND(speed, "speed in tr/s (0: tr/s, 1:rad/s, 2:deg/s)")
   }
 }
 
-TERMINAL_COMMAND(delay, "DELAY"){
-  PRINTT("EXPECTED DELAY : %d", ENC_SPI_DELAY_US);
-  PRINTT("MEASURED DELAY : %ld", observer.encoder_reading_time - observer.encoder_time);
-}

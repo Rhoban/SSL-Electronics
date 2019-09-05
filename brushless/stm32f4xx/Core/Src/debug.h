@@ -139,3 +139,8 @@ void print_freq(uint32_t milis, int fd);
 
 #define HELP1(v) h ## v = v;
 #define HELP2(v) TERMINAL_PARAMETER_INT( h ## v , "", 0 )
+
+#ifdef DEBUG
+  #define LED_ON_WHEN_ENCODER_TICK
+  #define LED_ON_WHEN_COMPUTING_COMMANDS
+#endif

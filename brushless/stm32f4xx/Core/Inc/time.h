@@ -9,6 +9,7 @@
 #define CLK_PLLN 168
 #define CLK_PLLP 4
 #define CLK_SYSCLK 84000000
+#define CLK_SYSCLK_PERIOD (CLK_SYSCLK/1000)
 
 
 #if defined(STM32F401xC)
@@ -96,7 +97,12 @@ typedef struct {
   uint32_t time;
 } countdown_t;
 
-
+inline int32_t diff_sysclk(uint32_t new_, uint32_t old_){
+  int32_t res = ((int32_t)old_ - (int32_t)new_);
+  if( res > CLK_SYSCLK_PERIOD/2 ) return res - CLK_SYSCLK_PERIOD;
+  if( res <= -CLK_SYSCLK_PERIOD/2 ) return res + CLK_SYSCLK_PERIOD;
+  return res;
+}
 void init_countdown(countdown_t * countdown, uint32_t period_us);
 void reset_countdown(countdown_t * countdown);
 void tick_countdown(countdown_t * countdown);

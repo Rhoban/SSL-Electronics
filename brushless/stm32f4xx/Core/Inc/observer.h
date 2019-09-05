@@ -18,20 +18,18 @@
 
 #pragma once
 
+#include <stdint.h>
+
 void observer_init();
 
 float observer_get_angle();
 float observer_get_velocity();
 
-void observer_pwm_tick();
-void observer_norm_command_tick();
-void observer_pwm_duty_cycletick();
-
 void observer_encoder_tick();
-void observer_start_encoder_reading_tick();
 
+void get_estimated_angle_for_next_PWM_update(float* angle, float *speed);
 void observer_update_level( float velocity );
-void observer_update(float angle);
+void observer_update(float angle, uint32_t mesure_time_systick);
 void observer_reset();
 
 void observer_estimate( float * speed, float* angle);

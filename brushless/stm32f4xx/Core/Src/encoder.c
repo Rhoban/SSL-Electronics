@@ -56,6 +56,7 @@ typedef struct {
   
   uint16_t last_dynamic_angle;  
   volatile uint16_t dynamic_angle;
+  uint32_t data_sysclk_count;
   int32_t absolute_angle;
 
   volatile as5047d_error_t dynamic_angle_error;  
@@ -159,6 +160,10 @@ void as5047d_call_back_when_finished(as5047d_t* as5047d){
       case READING_ANGLE:
         if( computation_is_done == 0 ){
           computation_is_done++;
+          encoder.data_sysclk_count = (
+            device.data_sysclk_count  - 
+            AS5047D_TIME_PROPAGATION_sysclk(AS5047D_PERIOD_CLK_ns, CLK_SYSCLK)
+          );
           encoder.dynamic_angle = as5047d_data_to_angle(&device);
           encoder.dynamic_angle_error = device.error;
 
@@ -295,7 +300,7 @@ void encoder_compute_angle(){
 
   encoder.last_dynamic_angle = encoder.dynamic_angle;
 
-  observer_update( encoder.angle );
+  observer_update( encoder.angle, encoder.data_sysclk_count );
   
   computation_is_done = 0;
 }

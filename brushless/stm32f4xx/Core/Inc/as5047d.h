@@ -62,6 +62,16 @@ typedef struct {
 
   volatile int32_t state;
   volatile uint16_t data;
+  //volatile uint32_t sysclk_count_before_transmit;
+  //volatile uint32_t data_sysclk_count_before_transmit;
+  volatile uint32_t data_sysclk_count; // This is the reception time of the 
+    // data given in sysclk counter.
+    // To obtain the time of the mesure (in counter),
+    // you need to compute :
+    // data_sysclk_counter - AS5047D_TIME_PROPAGATION_sysclk(clk_period_ns, sysclk)
+    // where clk_period_ns is the clock 
+    // period of the spi and sysclk is the clock frequence of the 
+    // microcontroller.
   
   SPI_HandleTypeDef* hspi;
   GPIO_TypeDef* gpio_port_cs;
@@ -104,9 +114,18 @@ void as5047d_call_back_when_finished(as5047d_t* as5047d);
 #define AS5047D_PACKET_NUMBER 2
 #define AS5047D_PACKET_NUMBER_WITH_FAILURE 3
 #define AS5047D_DATA_SIZE 16
+
 #define AS5047D_TIME_ONE_FRAME_ns(clk_period_ns) ( \
-    AS5047D_TLCSN + AS5047D_DATA_SIZE*clk_period_ns + AS5047D_TL \
+    AS5047D_TLCSN + AS5047D_DATA_SIZE*(clk_period_ns) + AS5047D_TL \
 )
+
+#define AS5047D_TIME_PROPAGATION_ns(clk_period_ns) ( \
+  AS5047D_DATA_SIZE*(clk_period_ns) + AS5047D_TL \
+)
+#define AS5047D_TIME_PROPAGATION_sysclk(clk_period_ns, sysclk) ( \
+  (AS5047D_TIME_PROPAGATION_ns(clk_period_ns) * ((sysclk)/1000000)) /1000 \
+)
+
 #define AS5047D_MINIMAL_TIME_COMUNICATION_ns(clk_period_ns) ( \
   AS5047D_PACKET_NUMBER * AS5047D_TIME_ONE_FRAME_ns(clk_period_ns) \
 )

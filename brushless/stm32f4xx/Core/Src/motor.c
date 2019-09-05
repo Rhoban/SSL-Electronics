@@ -364,6 +364,7 @@ void motor_prepare_pwm(){
     motor.reset_origin = false;
   }
   float angle = 0;
+  float velocity = 0;
   float current_consign = 0; 
   switch( motor.mode ){
     case Q_CURRENT_CONSIGN:
@@ -374,7 +375,7 @@ void motor_prepare_pwm(){
     case DQ_VOLTAGE_CONSIGN:
       compute_direct_quadrature_voltage();
     case FIXED_DQ_VOLTAGE:
-      angle = observer_get_angle();
+      get_estimated_angle_for_next_PWM_update(&angle, &velocity);
       break;
     case TARE:
       angle = 0;

@@ -220,9 +220,9 @@ class Bruit:
 
     def __call__(self, t):
         res = self.sans_bruit(t)
-        for [coef, pulsation, phase] in self.bruits:
-            res += coef*sin(pulsation*t+phase)
-        res += (random()-.5)*.1
+        #for [coef, pulsation, phase] in self.bruits:
+        #    res += coef*sin(pulsation*t+phase)
+        #res += (random()-.5)*.1
         return res
 
 class sin_bruit( Bruit ):
@@ -266,7 +266,7 @@ class exp_bruit( Bruit ):
 N = 3
 G = 1.0
 coefs = z_coef_butterworth(G, wa, Te, n=N)
-sin_b = sin_bruit( 2*PI*25.0 )
+sin_b = sin_bruit( 2*PI*6.0 )
 # sin_b = sin_bruit( 2*PI*2000.0 )
 rampe_b = rampe_bruit( 2*PI*25.0 )
 droite_b = droite_bruit( 2*PI*25.0 )
@@ -286,7 +286,7 @@ def show_sin_filtre():
     points_signal = [ (time[i], signal[i]) for i in range(len(time)) ]
     points_signal_filtre = [ (time[i], signal_filtre[i]) for i in range(len(time)) ]
     N_E = 50
-    points_signal_filtre_sous_ech = [ (time[N_E*i], signal_filtre[N_E*i]) for i in range(len(time)/N_E) ]
+    points_signal_filtre_sous_ech = [ (time[N_E*i] - phase_delay(wfm,G,wa,N), signal_filtre[N_E*i]) for i in range(len(time)/N_E) ]
     p = plot(droite_b.sans_bruit(x), (x, 0.06, xmax), xmin=xmin, xmax=xmax, plot_points=nb, color='red', adaptive_recursion=7 )
     for pt in points_signal:
         p+= point(pt)
@@ -297,6 +297,10 @@ def show_sin_filtre():
     #p += plot(exp_b.sans_bruit(x), (x, 0.06, xmax), xmin=xmin, xmax=xmax, plot_points=nb, color='black', adaptive_recursion=7 )
     p.show()
 
+def phase_delay(w, g, wc, n):
+    return -float(phase(w, G, wa, i) )/w
+
+
 for i in range( 1, 5 ):
     print("---------------------")
     print("Butter worth N = " + str(i))
@@ -304,5 +308,7 @@ for i in range( 1, 5 ):
     print( z_coef_butterworth(G, wa, Te, n=i))
     print( rat_butterworth(G, wa, Te, n=i) )
     print(code_rat_butterworth(G, wa, Te, n=i))
-    print( "decalage temporeltemporel  : " + str( float(phase_360(we, G, wa, i) )*Te/360 ))
+    print( "decalage temporeltemporel  : " + str( phase_delay(wfm,G,wa,i)))
+
+
 

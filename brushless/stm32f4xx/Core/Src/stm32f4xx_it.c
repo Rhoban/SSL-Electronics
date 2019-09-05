@@ -242,10 +242,21 @@ void TIM3_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM3_IRQn 0 */
   if( __HAL_TIM_GET_FLAG(&htim3,TIM_FLAG_CC1) == SET ){
+    #ifdef LED_ON_WHEN_COMPUTING_COMMANDS
+    LED;
+    #endif
     start_read_encoder_position();
   }else{
+    #ifdef LED_ON_WHEN_ENCODER_TICK
+    LED;
+    LED;
+    #endif
     observer_encoder_tick();
     motor_apply_pwm();
+    #ifdef LED_ON_WHEN_ENCODER_TICK
+    LED;
+    LED;
+    #endif
   }
   /* USER CODE END TIM3_IRQn 0 */
   HAL_TIM_IRQHandler(&htim3);
@@ -281,6 +292,9 @@ void TIM5_IRQHandler(void)
   if( flag ){
     encoder_compute_angle();
     motor_prepare_pwm();
+    #ifdef LED_ON_WHEN_COMPUTING_COMMANDS
+    LED;
+    #endif
   }
   /* USER CODE END TIM5_IRQn 1 */
 }
