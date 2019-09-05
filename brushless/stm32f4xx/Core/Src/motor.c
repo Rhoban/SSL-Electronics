@@ -452,8 +452,8 @@ TERMINAL_COMMAND(dqv, "Set direct and quadratic voltage" ){
   if(argc == 2){
     float d = atof( argv[0] );
     float q = atof( argv[1] );
-    BORN(d, 0, MAX_VOLTAGE);
-    BORN(q, 0, MAX_VOLTAGE);
+    BORN(d, -MAX_VOLTAGE, MAX_VOLTAGE);
+    BORN(q, -MAX_VOLTAGE, MAX_VOLTAGE);
     motor_set_direct_quadrature_voltage_consign(d, q);
   }else{
     terminal_print("dqv <direct voltage> <quadratic voltage> (max voltage:");
