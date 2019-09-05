@@ -462,6 +462,26 @@ TERMINAL_COMMAND(dqv, "Set direct and quadratic voltage" ){
   }
 }
 
+TERMINAL_COMMAND(pdqv, "Polar dqv" ){
+  motor.mode = FIXED_DQ_VOLTAGE;
+  if(argc == 2){
+    float a = atof( argv[0] );
+    float v = atof( argv[1] );
+    a = mod_2_pi( 2*M_PI*a/360.0 );
+    BORN(v, 0, MAX_VOLTAGE);
+    float c = arm_cos_f32(a);
+    float s = arm_sin_f32(a);
+    float d = v * c;
+    float q = v * s;
+    motor_set_direct_quadrature_voltage_consign(d, q);
+  }else{
+    terminal_print("pdqv <angle degree> <norm voltage> (max voltage:");
+    terminal_print_int(MAX_VOLTAGE);
+    terminal_println(")");
+  }
+}
+
+
 TERMINAL_COMMAND(motor_mode, "the mode of the motor" ){
   terminal_print( motor_mode_string( motor.mode ) );
   terminal_println("");
