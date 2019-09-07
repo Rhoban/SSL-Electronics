@@ -100,6 +100,7 @@ TERMINAL_COMMAND(warn, "print and flush warnings" ){
   }else{
     terminal_println("no filtered warnings.");
   }
+  clear_warnings();
 }
 
 TERMINAL_COMMAND(fwarn, "print and flush warnings" ){
@@ -160,6 +161,7 @@ TERMINAL_COMMAND(err, "print and flush errors" ){
   }else{
     terminal_println("no filtered errors.");
   }
+  clear_errors();
 }
 
 TERMINAL_COMMAND(ferr, "print and flush filtered errors" ){

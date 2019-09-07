@@ -104,6 +104,7 @@ void process_n_errors(void (*fct)(error_t e, void* data), void* data, uint32_t n
 void process_all_filtered_errors(void (*fct)(error_t e, void* data), void* data);
 void process_n_filtered_errors(void (*fct)(error_t e, void* data), void* data, uint32_t n);
 void clear_errors();
+void drop_errors( uint32_t nb );
 void clear_filtered_errors();
 void print_error(const error_t * e, bool verbose);
 

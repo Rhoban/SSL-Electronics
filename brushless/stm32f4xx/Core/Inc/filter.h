@@ -20,6 +20,7 @@
 #pragma once
 
 #include <frequence_definitions.h>
+#include <stdbool.h>
 
 typedef struct {
   float theta_shift;

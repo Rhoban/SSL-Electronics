@@ -64,6 +64,8 @@ typedef struct {
   volatile uint16_t data;
   //volatile uint32_t sysclk_count_before_transmit;
   //volatile uint32_t data_sysclk_count_before_transmit;
+  volatile uint32_t old_sysclk_count;
+  volatile uint32_t new_sysclk_count;
   volatile uint32_t data_sysclk_count; // This is the reception time of the 
     // data given in sysclk counter.
     // To obtain the time of the mesure (in counter),

@@ -27,24 +27,36 @@
 #define MOTOR_KEM 0   // Electromagnetic constant of the motor
 
 
+// 
+// To allow current measure and good rising edges, we need to have a minimal 
+// duty cycle in the pwm of the motor driver.
 //
-// Pwm will be bounded in 
-// [DRIVER_MIN_PWM_PERCENTAGE, 100-MAX_PWM_PERCENTAGE] 
-// percent.
-//
-#define MAX_PWM_PERCENTAGE 5
-// To not burn the driver of the motor, a pwm have to be ALWAYS < 100% !
-_Static_assert( MAX_PWM_PERCENTAGE >= 1, "have to be equal to 0 !!" );
-_Static_assert( MAX_PWM_PERCENTAGE >= 0, "" );
-_Static_assert( 100 - MAX_PWM_PERCENTAGE >= 0, "" );
-
-// This minimal pwm is user to have switching good rising edge when
-// the phase have a small voltage.
-// This option is used to to let some time to current measur.
 #define DRIVER_MIN_PWM_PERCENTAGE 6
 _Static_assert( DRIVER_MIN_PWM_PERCENTAGE >= 0, "" );
 _Static_assert( 100 - DRIVER_MIN_PWM_PERCENTAGE >= 0, "" );
 
-_Static_assert( 100 > DRIVER_MIN_PWM_PERCENTAGE + MAX_PWM_PERCENTAGE, "" );
+//
+// Pwm will be bounded in 
+// [SECURITY_MIN_PWM_PERCENTAGE, 100-SECURITY_MAX_PWM_PERCENTAGE] 
+// percent.
+//
+#define SECURITY_MIN_PWM_PERCENTAGE 6
+#define SECURITY_MAX_PWM_PERCENTAGE 6
+_Static_assert( SECURITY_MAX_PWM_PERCENTAGE >= 0, "" );
+_Static_assert( SECURITY_MAX_PWM_PERCENTAGE <= 100, "" );
+_Static_assert( SECURITY_MIN_PWM_PERCENTAGE >= 0, "" );
+_Static_assert( SECURITY_MIN_PWM_PERCENTAGE <= 100, "" );
+// To not burn the drivers, a pwm have to be stricly lesser than 100% !
+_Static_assert( SECURITY_MAX_PWM_PERCENTAGE >= 1, "have to be equal to 0 !!" );
+_Static_assert( 100 > SECURITY_MIN_PWM_PERCENTAGE + SECURITY_MAX_PWM_PERCENTAGE, "" );
+_Static_assert(
+  SECURITY_MIN_PWM_PERCENTAGE >= DRIVER_MIN_PWM_PERCENTAGE,
+  "The pwm security is not sufficient to allow some current measures." 
+);
+_Static_assert(
+  SECURITY_MAX_PWM_PERCENTAGE >= DRIVER_MIN_PWM_PERCENTAGE,
+  "The pwm security is not sufficient to allow som current measures." 
+);
+
 
 #define MAX_VOLTAGE_FOR_TARING_PROCESS (MAX_VOLTAGE/12.0) 

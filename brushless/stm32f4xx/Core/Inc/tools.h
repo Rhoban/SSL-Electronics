@@ -22,7 +22,8 @@
 
 // give the next id ( (id+1)%size ) when
 // size is a power of 2. 
-#define NEXT(id, size) ((id+1)&(size-1))
+#define MOD(value, size) ((value)&(size-1))
+#define NEXT(id, size) MOD(id+1,size)
 // give the prev id ( (id-1)%size ) when
 // size is a power of 2. 
 #define PREV(id, size) ( (id+(size-1))&(size-1))

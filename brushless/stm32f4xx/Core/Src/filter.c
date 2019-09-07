@@ -17,7 +17,6 @@
  */
 
 #include <filter.h>
-#include <frequence_definitions.h>
 
 //
 // butterworth_3_pulsation_1256

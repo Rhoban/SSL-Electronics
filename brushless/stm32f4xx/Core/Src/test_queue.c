@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2019  Adrien Boussicault <adrien.boussicault@labri.fr>
+ *
+ * This program is free software: you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation, either
+ * version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/>.
+ */
+
 #include <assert.h>
 #include <assertion.h>
 #include <queue.h>
@@ -76,6 +94,26 @@ int main(){
     }
     test_2_process(&test_2, test_fct, &test_int);
     assert(cpt == SIZE-1);
+  }
+  {
+    test_2_clear(&test_2);
+    test_2_append(&test_2, 201);
+    test_2_append(&test_2, 202);
+    test_2_append(&test_2, 203);
+    test_2_append(&test_2, 204);
+    test_2_append(&test_2, 205);
+    test_2_append(&test_2, 206);
+    test_2_append(&test_2, 207);
+    test_2_drop(&test_2, 0); 
+    assert( test_2_size(&test_2) == 7 );
+    test_2_drop(&test_2, 3); 
+    assert( test_2_size(&test_2) == 4 );
+    assert( test_2_pop(&test_2) == 204 );
+    assert( test_2_pop(&test_2) == 205 );
+    assert( test_2_pop(&test_2) == 206 );
+    assert( test_2_pop(&test_2) == 207 );
+    assert( test_2_size(&test_2) == 0 );
+    assert( test_is_empty(&test) );
   }
 
   return 0;

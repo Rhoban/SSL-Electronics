@@ -52,6 +52,9 @@
     name->tail = NEXT(name->tail, size); \
     return tail; \
   } \
+  inline void name ## _drop(name ## _queue_t * name, uint32_t n){ \
+    name->tail = MOD(name->tail+n, size); \
+  } \
   inline void name ## _collect(name ## _queue_t * name, type* buffer, uint32_t* len){ \
     *len = 0; \
     while(!name ## _is_empty(name)){ \

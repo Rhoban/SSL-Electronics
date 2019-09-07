@@ -59,6 +59,24 @@
     variable_name = (1000000.0*nb_sample)/variable_name ## _freq_sum_delta; \
   }
 
+#define AVERAGE(variable_name, variable_to_read, nb_sample) \
+  static float variable_name; \
+  { \
+    _Static_assert( IS_POW_2(nb_sample), "Have to be a 2^N" ); \
+    static float variable_name ## _average_sample[nb_sample] = {0}; \
+    static uint32_t variable_name ## _average_pos = 0; \
+    static float variable_name ## _average_sum = 0; \
+    variable_name ## _average_sum -= variable_name ## _average_sample[variable_name ## _average_pos]; \
+    variable_name ## _average_sum += ( \
+      variable_name ## _average_sample[variable_name ## _average_pos] = ( \
+        variable_to_read \
+      ) \
+    ); \
+    variable_name ## _average_pos = NEXT(variable_name ## _average_pos, nb_sample); \
+    variable_name = variable_name ## _average_sum/nb_sample; \
+  }
+
+
 static inline void DELAY_MS(uint32_t milli) {
   uint32_t deadline = time_get_us()+milli*1000;
   while (time_get_us() < deadline ) {

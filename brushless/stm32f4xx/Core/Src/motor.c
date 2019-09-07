@@ -39,12 +39,12 @@
 #define MAX_STM32_PWM (100-MAX_PWM_PERCENTAGE+*PWM_PERIOD)/100
 #define MAX_PWM_AMPLITUDE ( \
   ( \
-    (100 - (DRIVER_MIN_PWM_PERCENTAGE + MAX_PWM_PERCENTAGE)) * PWM_PERIOD \
+    (100 - (SECURITY_MIN_PWM_PERCENTAGE + SECURITY_MAX_PWM_PERCENTAGE)) * PWM_PERIOD \
   )/100 \
 )
 #define MIN_PWM ( \
   ( \
-    DRIVER_MIN_PWM_PERCENTAGE * PWM_PERIOD \
+    SECURITY_MIN_PWM_PERCENTAGE * PWM_PERIOD \
   )/100 \
 )
 
@@ -515,8 +515,6 @@ TERMINAL_COMMAND(motor_info, ""){
   terminal_print("Max Voltage : ");
   terminal_println_int( MAX_VOLTAGE );
 }
-
-
 
 TERMINAL_COMMAND(motor_enable, "set motor" ){
   bool enable = false;

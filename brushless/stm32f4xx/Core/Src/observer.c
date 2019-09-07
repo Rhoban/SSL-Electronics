@@ -149,46 +149,65 @@ void get_estimated_angle_for_next_PWM_update(float* angle, float *speed){
   (*speed) = observer.velocity;
 // Sysclk
 // counter
-//   ^                                       /
-//   |     LOAD   |\    |\    |\   /|\--->|\-   |\    |
-//   | msk, et1 --|>\   | \---|>\-- | \   |.\   | \   | 
-//   |      et3 - | .\  | /\  | .\  |  \  |. \  |  \  | 
-//   |  et0 et0 --|-->\-|-  \ | . \ |   \ |.  \ |   \ |
-//   |      et2 - | . .\|    \| .  \|    \|.  -\|--->\|
-//   |              . .         .          .         .
-// <--------------------------------------------------- time in
-//                 et0 msk     et0-ENC  et0-2*ENC  et0-3ENC   sysclk
-//                 <-->         .          .         .
-//                  diff        .       PWM_PERIOD   .
-//                  . .         .          <>        .
-//                  ^^^         ^^         ^^        ^^        ^^
-//                  |||         ||         ||        ||        ||
-//              ------------------------------------------------------
-//                  et msk      et         et        et        et
-//                   fcat        fact       fcat      fcat      fcat
-//                  or                                           or
-//                      <----------------------------->
-//                          delay(oversample_counter)
+//   ^                                        
+//   |  LOAD, et1   |\    |\    |\    |\    |\    |\    |
+//   |     etm1/2 --|>\   | \   | \   | \   | \   | \   | 
+//   |              | .\  |  \  |  \  |  \  | .\  |  \  | 
+//   | mts, et0/3 --|-->\ |   \ |   \ |   \ | . \ |   \ |
+//   |        et2 - | . .\|   .\|    \|    \| .  \|   .\|
+//   |                . .     .       .       .       .
+// ---------------------------------------------------------------> time in s
+// <-------------------------------------------------------------- time in absolute sysclk
+//                 et0+ mts+  et0   et0-ENC et0-2ENC et0-OvENC      
+//                  ENC ENC
+//                    <->     .       .       .       .
+//                    diff    .       .       .       .
+//                    . .     .       .       .       .
+//                    . .<------------------->.       .
+//                            delay(i=1)
 //
+//                                        ^
+//                                        |
+//                                     current time
+//                                    (current versampling number:1)
 // mts : mesure_time_systick
 // et : encoder tick
-// fcat : first center aligned tick were the new command is applied
 // or : Overampling reset : 
+// Ov : Oversampling number
+// i  : Oversampling counter
+// delay : delay between command to apply and measure.
+// 
+// eti  = mod( et0-oversample_counter*ENC , LOAD )
+// etm1 = mod( et0+ENC , LOAD )
+// mts = mod( etm1-diff, LOAD) 
+// et0 - oversample_counter*ENC = k1*LOAD + eti
+// et0 + ENC                    = k2*LOAD + etm1
+// ----------------------------------------------
+// (1+oversample_counter)*ENC  = (k2-k1)*LOAD + (etm1-eti)
+
+// etm1 = (k1-k2)*LOAD + eti + (1+oversample_counter)*ENC
 //
-// eti = mod( et0-oversample_counter*ENV , LOAD )
-// et0 - oversample_counter*ENV = k*LOAD + eti
-// et0 = k*LOAD + eti + ovserample_counter*ENC
-// mod( msk - et0, LOAD) = mod(
-//    msk - eti - ovserample_counter*ENC, LOAD
+// etm1-diff = k3*LOAD + mts
+// diff = -k3*LOAD + etm1 - mts
+
+_Static_assert( SYCLK_TO_ENCODER_PERIOD < CLK_SYSCLK_PERIOD, "");  
+// As 0 < diff < ENC < LOAD, we have diff = mod( diff, LOAD)
+// diff = mod(etm1 - mts, LOAD)
+
+// mod( etm1 - mts, LOAD) = mod(
+//    eti + (1+ovserample_counter)*ENC - mts, LOAD
 // )
-// diff = mod( msk - eti - OVERSAMPLE*ENC, LOAD ) 
+// diff = mod( eti + (1+ovserample_counter)*ENC - mts, LOAD ) 
 //
-// delay = (oversample_counter+1)*ENC + PWM_PERIOD - diff 
+// delay = (oversample_counter+1)*ENC + ENV - diff 
+//       = (oversample_counter+2)*ENC - diff 
+//
+// complete_delay = delay + filter_delay
   int32_t diff = (
     ( 
       (int32_t) (
         observer.encoder_tick + 
-        observer.oversample_counter * SYCLK_TO_ENCODER_PERIOD
+        (1+observer.oversample_counter) * SYCLK_TO_ENCODER_PERIOD
       )
     ) - (
       (int32_t) observer.mesure_time_systick[observer.position]
@@ -196,18 +215,22 @@ void get_estimated_angle_for_next_PWM_update(float* angle, float *speed){
   );
   diff = diff % CLK_SYSCLK_PERIOD;
   diff = diff < 0 ? diff + CLK_SYSCLK_PERIOD: diff;
-  float delay = (
-    PWM_PERIOD + observer.oversample_counter * SYCLK_TO_ENCODER_PERIOD 
+  float complete_delay = (
+    (observer.oversample_counter+2) * SYCLK_TO_ENCODER_PERIOD - diff 
   ) * (1.0/CLK_SYSCLK) + (FILTER_DELAY_US/1000000.0);
+
   (*angle) = observer.angle[observer.position]
    //+ observer.velocity*dt*(1.0/1000000);
-   + observer.velocity * delay;
+   + observer.velocity * complete_delay;
 }
+
 
 void observer_update_level( float velocity ){
   _observer_update_level( observer.velocity );
 }
 void observer_update(float angle, uint32_t mesure_time_systick){
+  ASSERT(mesure_time_systick < CLK_SYSCLK_PERIOD);
+
   observer.oversample_counter += 1;
   if( observer.oversample_counter == OVERSAMPLING_NUMBER ){
     observer.oversample_counter = 0;

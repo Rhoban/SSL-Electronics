@@ -50,10 +50,14 @@ DELAY_AT_LEAST_NS(time_ns) // try to wait time_ns seconds.
 FREQ(variable, nb_sample) // define a variable variable and 
                     // write on it the computed frequence in Hz of 
                     // the calls of that MACRO.
-
+                    // nb_sample should be a 2**N
 // example of usage : 
 FREQ(frequence, 8);
 PRINTT_PERIODIC(1000, "%f Hz", frequence)
 
-time_get_us() // Get the number of microseconds, since the last syclock              // reset.
+time_get_us() // Get the number of microseconds, since the last syclock reset.
 
+AVERAGE(variable_name, value, nb_sample);   // define a variable `variable_name`
+      // Each time this code is exectuter, value is stored in an array of 
+      // nb_sample and variable_name contain the average of all the value
+      // stored in the array.

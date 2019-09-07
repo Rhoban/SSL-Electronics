@@ -160,10 +160,7 @@ void as5047d_call_back_when_finished(as5047d_t* as5047d){
       case READING_ANGLE:
         if( computation_is_done == 0 ){
           computation_is_done++;
-          encoder.data_sysclk_count = (
-            device.data_sysclk_count  - 
-            AS5047D_TIME_PROPAGATION_sysclk(AS5047D_PERIOD_CLK_ns, CLK_SYSCLK)
-          );
+          encoder.data_sysclk_count = device.data_sysclk_count;
           encoder.dynamic_angle = as5047d_data_to_angle(&device);
           encoder.dynamic_angle_error = device.error;
 

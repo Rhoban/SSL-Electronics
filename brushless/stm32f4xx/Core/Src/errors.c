@@ -106,6 +106,9 @@ void process_n_filtered_errors(void (*fct)(error_t e, void* data), void* data, u
 void clear_errors(){
   errors_clear(&errors);
 }
+void drop_errors( uint32_t nb ){
+  errors_drop(&errors, nb); 
+}
 void clear_filtered_errors(){
   filtered_errors_clear(&filtered_errors);
 }

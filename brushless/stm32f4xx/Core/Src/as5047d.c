@@ -365,7 +365,7 @@ void as5047d_error_spi_call_back(as5047d_t* as5047d){
 }
 
 void as5047d_spi_call_back(as5047d_t* as5047d){
-  uint32_t sysclk_count = SysTick->VAL;
+  as5047d->new_sysclk_count = SysTick->VAL;
   // First, we release the chip select to allow the device to start the
   // calculus it have to perform
   disactivate_cs(as5047d);
@@ -447,7 +447,7 @@ void as5047d_spi_call_back(as5047d_t* as5047d){
         as5047d->state = sleeping;
         // Is it better to get the sysclock  here or just before making
         // a transmit_and_receipt_packet() ?
-        as5047d->data_sysclk_count = sysclk_count;
+        as5047d->data_sysclk_count = as5047d->old_sysclk_count;
         // as5047d->data_sysclk_count_before_transmit = as5047d->sysclk_count_before_transmit;
         break;
       default:
@@ -455,6 +455,7 @@ void as5047d_spi_call_back(as5047d_t* as5047d){
         break;
     }
   }
+  as5047d->old_sysclk_count = as5047d->new_sysclk_count;
   if(as5047d->state == sleeping){
     as5047d_call_back_when_finished(as5047d);
   }else{
