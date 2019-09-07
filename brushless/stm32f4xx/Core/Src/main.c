@@ -317,7 +317,7 @@ int main(void)
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
-  get_serial()->init();
+  serial_init();
   terminal_init(get_serial());
   
   system_init();
@@ -336,7 +336,7 @@ int main(void)
   {
     system_tick();
     encoder_tick();
-    get_serial()->tick();
+    serial_tick();
     terminal_tick();
 
     /* USER CODE END WHILE */

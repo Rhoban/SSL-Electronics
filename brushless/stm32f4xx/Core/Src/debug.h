@@ -27,15 +27,16 @@
 #include <assertion.h>
 #include <main.h>
 #include <errors.h>
+#include <printf.h>
 
 #define DPRINTF(fd, format, ...) dprintf(fd, "D " format "\n", ##__VA_ARGS__ )
 //#define DPRINTF(fd, format, ...) dprintf(fd, "D: " format " - %s : %d\n", ##__VA_ARGS__, __FILE__, __LINE__ )
 
 // Printing debug on JTAG
-#define PRINTJ(format, ...) DPRINTF( JTAG_FD, format, ##__VA_ARGS__ )
+#define PRINTJ(format, ...) DPRINTF( JTAG_FILE_DESCRIPTOR, format, ##__VA_ARGS__ )
 
 // Printing debug on terminal
-#define PRINTT(format, ...) DPRINTF( TERMINAL_FD, format, ##__VA_ARGS__ )
+#define PRINTT(format, ...) DPRINTF( TERMINAL_FILE_DESCRIPTOR, format, ##__VA_ARGS__ )
 
 // Define a static variable `variable_name` and update it by computing the 
 // frequence in Hz of all "calls of that MACRO".
@@ -95,17 +96,17 @@ static inline void DELAY_MS(uint32_t milli) {
   }
 
 #define PRINTJ_PERIODIC(period, format, ... ) \
-  DPRINT_PERIODIC(JTAG_FD, period, format, ##__VA_ARGS__ )
+  DPRINT_PERIODIC(JTAG_FILE_DESCRIPTOR, period, format, ##__VA_ARGS__ )
 
 #define PRINTT_PERIODIC(period, format, ... ) \
-  DPRINT_PERIODIC(TERMINAL_FD, period, format, ##__VA_ARGS__ )
+  DPRINT_PERIODIC(TERMINAL_FILE_DESCRIPTOR, period, format, ##__VA_ARGS__ )
 
 // Print the frequence of the calls of 
 // print_freq.
 // The parameter milis is the printing period 
 // of the result in a file descriptor.
 // fd is the "file descriptor".
-// Usual file descriptors are TERMINAL_FD and HTAG_FD .
+// Usual file descriptors are TERMINAL_FILE_DESCRIPTOR and JTAG_FILE_DESCRIPTOR .
 void print_freq(uint32_t milis, int fd);
 
 
@@ -125,8 +126,8 @@ void print_freq(uint32_t milis, int fd);
     } \
   }
 
-#define ASSERTIONJ(condition, format, ...) DASSERTION(JTAG_FD, condition, format, ##__VA_ARGS__)
-#define ASSERTIONT(condition, format, ...) DASSERTION(TERMINAL_FD, condition, format, ##__VA_ARGS__)
+#define ASSERTIONJ(condition, format, ...) DASSERTION(JTAG_FILE_DESCRIPTOR, condition, format, ##__VA_ARGS__)
+#define ASSERTIONT(condition, format, ...) DASSERTION(TERMINAL_FILE_DESCRIPTOR, condition, format, ##__VA_ARGS__)
 
 #define DWATCH(fd, condition, cooldown_ms, format, ...) \
   { \
@@ -138,8 +139,8 @@ void print_freq(uint32_t milis, int fd);
     } \
   }
 
-#define WATCHJ(condition, cooldown_ms, format, ...) DWATCH(JTAG_FD, condition, cooldown_ms, format, ##__VA_ARGS__)
-#define WATCHT(condition, cooldown_ms, format, ...) DWATCH(TERMINAL_FD, condition, cooldown_ms, format, ##__VA_ARGS__)
+#define WATCHJ(condition, cooldown_ms, format, ...) DWATCH(JTAG_FILE_DESCRIPTOR, condition, cooldown_ms, format, ##__VA_ARGS__)
+#define WATCHT(condition, cooldown_ms, format, ...) DWATCH(TERMINAL_FILE_DESCRIPTOR, condition, cooldown_ms, format, ##__VA_ARGS__)
 
 #define LED HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin)
 

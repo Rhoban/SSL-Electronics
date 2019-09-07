@@ -116,12 +116,13 @@ typedef enum {
   WARNING_INT = 4, // Special warning used to raise an int32_t
   WARNING_FILE = 5, // Special warning used to raise an int32_t
   WARNING_LINE = 6, // Special warning used to raise an int32_t
-  WARNING_LAG = 7,
-  WARNING_ENCODER_BUSY = 8,
-  WARNING_ENCODER_ERROR_ON_AS5047D = 9,
-  WARNING_ENCODER_LAG = 10,
-  WARNING_ENCODER_UNEXPECTED_VALUE=11,
-  WARNING_MOTOR_LAG = 12
+  WARNING_PRINTF = 7,
+  WARNING_LAG = 8,
+  WARNING_ENCODER_BUSY = 9,
+  WARNING_ENCODER_ERROR_ON_AS5047D = 10,
+  WARNING_ENCODER_LAG = 11,
+  WARNING_ENCODER_UNEXPECTED_VALUE=12,
+  WARNING_MOTOR_LAG = 13
 } warning_code_t;
 
 inline const char* warning_to_string( warning_code_t w ){
@@ -138,6 +139,8 @@ inline const char* warning_to_string( warning_code_t w ){
       return "WARNING_FILE"; 
     case WARNING_LINE :
       return "WARNING_LINE"; 
+    case WARNING_PRINTF :
+      return "WARNING_PRINTF"; 
     case WARNING_LAG :
       return "WARNING_LAG"; 
     case WARNING_ENCODER_BUSY :

@@ -21,9 +21,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define TERMINAL_FD 42
-#define JTAG_FD 41
-
 typedef struct {
   void (*init)();
   bool (*is_init)() ;
@@ -34,7 +31,13 @@ typedef struct {
   char (*read)();
 } serial_t;
 
+
+serial_t* get_serial_usb();
+serial_t* get_serial_jtag();
+
 serial_t* get_serial();
+void serial_init();
+void serial_tick();
 
 void serial_print(serial_t* serial, const char* s);
 void serial_println(serial_t* serial, const char * c);

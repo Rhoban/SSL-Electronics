@@ -25,7 +25,7 @@
 #include <errors.h>
 
 #include <queue.h>
-define_and_declare_static_queue(uint8_t, usb_queue, USB_TX_DATA_SIZE)
+define_and_declare_static_queue(uint8_t, usb_queue, USB_RX_DATA_SIZE)
 
 void Usb_Error_Handler(uint32_t val){
   raise_error( ERROR_USB_INITIALISATION, val );

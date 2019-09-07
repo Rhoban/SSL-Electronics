@@ -69,6 +69,7 @@ Core/Src/main.c \
 Core/Src/errors.c \
 Core/Src/terminal.c \
 core/src/serial.c \
+core/src/printf.c \
 core/src/system.c \
 Core/Src/time.c \
 Core/Src/jump_to_bootloader.c \
@@ -82,6 +83,7 @@ Core/Src/motor.c \
 Core/Src/foc.c \
 Core/Src/as5047d.c \
 Core/Src/serial_usb.c \
+Core/Src/serial_jtag.c \
 Core/Src/stm32f4xx_it.c \
 Core/Src/stm32f4xx_hal_msp.c \
 USB_DEVICE/App/usb_device.c \
