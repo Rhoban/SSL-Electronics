@@ -77,6 +77,9 @@ typedef enum {
 } encoder_state_t;
 volatile static encoder_state_t state = NOT_INIT;
 
+#define RESOLUTION_ONE_TURN 16384
+_Static_assert( IS_POW_2(RESOLUTION_ONE_TURN), "" );
+
 static encoder_t encoder;
 volatile static uint32_t computation_is_done = 0;
 
@@ -195,8 +198,6 @@ void as5047d_call_back_when_finished(as5047d_t* as5047d){
   }
 }
 
-#define RESOLUTION_ONE_TURN 16384
-_Static_assert( IS_POW_2(RESOLUTION_ONE_TURN), "" );
 static inline uint16_t predict_encoder_angle(
   uint16_t last_encoder_angle, float velocity
 ){ 

@@ -77,6 +77,13 @@
   } \
   inline uint32_t name ## _size(name ## _queue_t * name){ \
     return (name->head - name->tail) & (size-1); \
+  } \
+  inline volatile type * name ## _get_next_to_insert(name ## _queue_t * name){ \
+    return name->queue + name->head; \
+  } \
+  inline void name ## _insert(name ## _queue_t * name){ \
+    if( name ## _is_full(name) ) return; \
+    name->head = NEXT(name->head, size); \
   }
 
 #define declare_static_queue(name) static name ## _queue_t name = {0, 0};

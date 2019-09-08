@@ -117,6 +117,13 @@ void print_freq(uint32_t milis, int fd);
       (_assertion_ ## __COUNTER__ ++ == 0) \
     )
 
+#define EXECUTE_ONETIME_VAR(variable, condition) \
+    static volatile uint32_t variable = 0; \
+    if( \
+      (variable == 0) && (condition) && \
+      (variable ++ == 0) \
+    )
+#define RESET_VAR(variable, condition) variable = 0;
 
 #define DASSERTION(fd, condition, format, ...) \
   { \
