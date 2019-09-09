@@ -104,9 +104,9 @@ void as5047d_error_spi_call_back(as5047d_t* as5047d);
  * returns true if the process is started, and false if the device is busy
  * (a reading process is yet in progress).
  */
-bool as5047d_start_reading_dynamic_angle(as5047d_t* as5047d);
+bool as5047d_start_reading_angle(as5047d_t* as5047d);
 bool as5047d_start_reading_diagnostic(as5047d_t* as5047d);
-bool as5047d_fast_reading_dynamic_angle(as5047d_t* as5047d);
+bool as5047d_fast_reading_angle(as5047d_t* as5047d);
 
 void as5047d_call_back_when_finished(as5047d_t* as5047d);
 
@@ -134,3 +134,12 @@ void as5047d_call_back_when_finished(as5047d_t* as5047d);
 #define AS5047D_MINIMAL_TIME_COMUNICATION_WITH_FAILURE_ns(clk_period_ns) ( \
   AS5047D_PACKET_NUMBER_WITH_FAILURE * AS5047D_TIME_ONE_FRAME_ns(clk_period_ns) \
 )
+
+#define AS5047D_NON_DYNAMIC_ANGLE_DELAY_US 100 // See datasheet of AS5047D
+  // it is the delay beetween the angle measure (in non dynamic mode) 
+  // and the moment where the value is avalaible.
+  // So, to compute the time associated with a angle measure, you need to 
+  // to calculate :
+  // t_s - AS5047D_NON_DYNAMIC_ANGLE_DELAY_US
+  // where t_s is the time (in us) of the sysclk count of
+  // `data_sysclk_count`.  

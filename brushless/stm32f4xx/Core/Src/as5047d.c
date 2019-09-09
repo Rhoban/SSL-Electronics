@@ -316,7 +316,7 @@ static inline bool transmit_and_receipt_packet(as5047d_t* as5047d){
 }
 
 
-bool as5047d_fast_reading_dynamic_angle(as5047d_t* as5047d){
+bool as5047d_fast_reading_angle(as5047d_t* as5047d){
   if( as5047d->is_ready && as5047d->state != sleeping ) return false;
   as5047d->is_ready = false;
 
@@ -324,13 +324,13 @@ bool as5047d_fast_reading_dynamic_angle(as5047d_t* as5047d){
   as5047d->error = AS5047D_OK;
  
   // We send a reading command to obtain an angle
-  as5047d->pTxData[0] = FIRST(RCMD(ANGLECOM_ADD));
-  as5047d->pTxData[1] = LAST(RCMD(ANGLECOM_ADD));
+  as5047d->pTxData[0] = FIRST(RCMD(ANGLEUNC_ADD));
+  as5047d->pTxData[1] = LAST(RCMD(ANGLEUNC_ADD));
   return transmit_and_receipt_packet(as5047d);
 }
 
 
-bool as5047d_start_reading_dynamic_angle(as5047d_t* as5047d){
+bool as5047d_start_reading_angle(as5047d_t* as5047d){
   if( as5047d->is_ready && as5047d->state != sleeping ) return false;
   as5047d->is_ready = false;
 
@@ -338,8 +338,8 @@ bool as5047d_start_reading_dynamic_angle(as5047d_t* as5047d){
   as5047d->error = AS5047D_OK;
  
   // We send a reading command to obtain an angle
-  as5047d->pTxData[0] = FIRST(RCMD(ANGLECOM_ADD));
-  as5047d->pTxData[1] = LAST(RCMD(ANGLECOM_ADD));
+  as5047d->pTxData[0] = FIRST(RCMD(ANGLEUNC_ADD));
+  as5047d->pTxData[1] = LAST(RCMD(ANGLEUNC_ADD));
   return transmit_and_receipt_packet(as5047d);
 }
 
@@ -402,8 +402,8 @@ void as5047d_spi_call_back(as5047d_t* as5047d){
         break;
       case sending_the_error_register_command :
       case waiting_data :
-        as5047d->pTxData[0] = FIRST(RCMD(ANGLECOM_ADD)); // Nothing to ask
-        as5047d->pTxData[1] = LAST(RCMD(ANGLECOM_ADD)); // we just have to wait the 
+        as5047d->pTxData[0] = FIRST(RCMD(ANGLEUNC_ADD)); // Nothing to ask
+        as5047d->pTxData[1] = LAST(RCMD(ANGLEUNC_ADD)); // we just have to wait the 
                                                   // answer at the last error 
                                                   // register Command  
 

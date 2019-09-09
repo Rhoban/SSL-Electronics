@@ -54,12 +54,12 @@ static as5047d_t device;
 typedef struct {
   butterworth_3_data_t butterworth_filter;
   
-  uint16_t last_dynamic_angle;  
-  volatile uint16_t dynamic_angle;
+  uint16_t last_raw_angle;  
+  volatile uint16_t raw_angle;
   uint32_t data_sysclk_count;
   int32_t absolute_angle;
 
-  volatile as5047d_error_t dynamic_angle_error;  
+  volatile as5047d_error_t raw_angle_error;  
 
   as5047d_diagnostic_t diagnostic;
   as5047d_error_t diagnostic_error;
@@ -89,9 +89,9 @@ void encoder_init(
   encoder.is_ready = false;
 
   encoder.absolute_angle = 0;  
-  encoder.last_dynamic_angle = 0;  
-  encoder.dynamic_angle = 0;
-  encoder.dynamic_angle_error = AS5047D_OK;  
+  encoder.last_raw_angle = 0;  
+  encoder.raw_angle = 0;
+  encoder.raw_angle_error = AS5047D_OK;  
   clear_diagnostic( &encoder.diagnostic );
   encoder.diagnostic_error = AS5047D_OK;
   encoder.angle = 0.0;
@@ -128,8 +128,8 @@ void encoder_start(){
   state = READING_ANGLE;
  
   delay_us( 2.7 * FREQ_TO_US( ENCODER_FREQ ) );
-  encoder.absolute_angle = encoder.dynamic_angle;
-  encoder.last_dynamic_angle = encoder.dynamic_angle;
+  encoder.absolute_angle = encoder.raw_angle;
+  encoder.last_raw_angle = encoder.raw_angle;
 
   encoder.is_ready = true;
 }
@@ -141,11 +141,11 @@ extern TIM_HandleTypeDef htim5;
 
 void start_read_encoder_position(){
 #if 0
-  if( !as5047d_start_reading_dynamic_angle(&device) ){
+  if( !as5047d_start_reading_angle(&device) ){
     raise_warning(WARNING_ENCODER_BUSY, ENCODER_DO_NOT_START);
   }
 #endif
-  if( !as5047d_fast_reading_dynamic_angle(&device) ){
+  if( !as5047d_fast_reading_angle(&device) ){
     raise_warning(WARNING_ENCODER_BUSY, ENCODER_DO_NOT_START);
   }
 }
@@ -164,8 +164,8 @@ void as5047d_call_back_when_finished(as5047d_t* as5047d){
         if( computation_is_done == 0 ){
           computation_is_done++;
           encoder.data_sysclk_count = device.data_sysclk_count;
-          encoder.dynamic_angle = as5047d_data_to_angle(&device);
-          encoder.dynamic_angle_error = device.error;
+          encoder.raw_angle = as5047d_data_to_angle(&device);
+          encoder.raw_angle_error = device.error;
 
           // We reset timer 5 to raise an interuption and to execute in a lower priority
           // the rest of the calculus.  
@@ -244,30 +244,30 @@ void encoder_compute_angle(){
     computation_is_done = 0;
     return;
   }
-  if(encoder.dynamic_angle_error){
+  if(encoder.raw_angle_error){
     if(
-        encoder.dynamic_angle_error & 
+        encoder.raw_angle_error & 
         (AS5047D_ERROR | AS5047D_SPI_ERROR | AS5047D_SPI_CRASH)
     ){
-      if(encoder.dynamic_angle_error & AS5047D_SPI_ERROR){
-        raise_error(ERROR_ENCODER_SPI_TRANSMITRECEIVE, encoder.dynamic_angle_error);
+      if(encoder.raw_angle_error & AS5047D_SPI_ERROR){
+        raise_error(ERROR_ENCODER_SPI_TRANSMITRECEIVE, encoder.raw_angle_error);
       }
       if(device.error & AS5047D_SPI_CRASH){
-        raise_error(ERROR_ENCODER_SPI_CRASH, encoder.dynamic_angle_error);
+        raise_error(ERROR_ENCODER_SPI_CRASH, encoder.raw_angle_error);
       }
       if( device.error & ~( AS5047D_SPI_ERROR | AS5047D_SPI_CRASH ) ){
-        raise_error(ERROR_ENCODER, encoder.dynamic_angle_error);
+        raise_error(ERROR_ENCODER, encoder.raw_angle_error);
       }
     }else{
-      raise_warning(WARNING_ENCODER_ERROR_ON_AS5047D, encoder.dynamic_angle_error);
+      raise_warning(WARNING_ENCODER_ERROR_ON_AS5047D, encoder.raw_angle_error);
     }
     // We reconstruct a dynamic angle.
-    encoder.dynamic_angle = predict_encoder_angle(
-      encoder.last_dynamic_angle, observer_get_velocity()
+    encoder.raw_angle = predict_encoder_angle(
+      encoder.last_raw_angle, observer_get_velocity()
     );
   }
   int32_t delta = encoder_compute_delta(
-    encoder.dynamic_angle, encoder.last_dynamic_angle
+    encoder.raw_angle, encoder.last_raw_angle
   );
   #define TOLERANCE_FACTOR 1.5
   #define MAXIMAL_DELTA_tr ((1.0*MAXIMAL_MOTOR_VELOCITY)/ENCODER_FREQ)
@@ -275,11 +275,11 @@ void encoder_compute_angle(){
   if( abs(delta) >  MAXIMAL_DELTA ){
     if( encoder.is_ready ){
       raise_warning(WARNING_ENCODER_UNEXPECTED_VALUE, ANGLE_INCREASE_IS_TOO_BIG);
-      encoder.dynamic_angle = predict_encoder_angle(
-        encoder.last_dynamic_angle, observer_get_velocity()
+      encoder.raw_angle = predict_encoder_angle(
+        encoder.last_raw_angle, observer_get_velocity()
       );
       delta = encoder_compute_delta(
-        encoder.dynamic_angle, encoder.last_dynamic_angle
+        encoder.raw_angle, encoder.last_raw_angle
       );
     }
   }
@@ -296,7 +296,7 @@ void encoder_compute_angle(){
     encoder.angle = encoder.absolute_angle * (2*M_PI/RESOLUTION_ONE_TURN);
   #endif
 
-  encoder.last_dynamic_angle = encoder.dynamic_angle;
+  encoder.last_raw_angle = encoder.raw_angle;
 
   observer_update( encoder.angle, encoder.data_sysclk_count );
   
@@ -326,7 +326,7 @@ void encoder_tick(){
 
 TERMINAL_COMMAND(enc, "Read encoder")
 {
-  terminal_println_int( encoder.dynamic_angle );
+  terminal_println_int( encoder.raw_angle );
 }
 
 

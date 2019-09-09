@@ -217,7 +217,7 @@ _Static_assert( SYCLK_TO_ENCODER_PERIOD < CLK_SYSCLK_PERIOD, "");
   diff = diff < 0 ? diff + CLK_SYSCLK_PERIOD: diff;
   float complete_delay = (
     (observer.oversample_counter+2) * SYCLK_TO_ENCODER_PERIOD - diff 
-  ) * (1.0/CLK_SYSCLK) + (FILTER_DELAY_US/1000000.0);
+  ) * (1.0/CLK_SYSCLK) + ((FILTER_DELAY_US+AS5047D_NON_DYNAMIC_ANGLE_DELAY_US)/1000000.0);
 
   (*angle) = observer.angle[observer.position]
    //+ observer.velocity*dt*(1.0/1000000);
