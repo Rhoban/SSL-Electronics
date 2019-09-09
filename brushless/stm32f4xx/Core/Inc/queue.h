@@ -47,6 +47,9 @@
       name ## _append(name, buf[i]); \
     } \
   } \
+  inline volatile type * name ## _first(name ## _queue_t * name){ \
+    return name->queue + name->tail; \
+  } \
   inline type name ## _pop(name ## _queue_t * name){ \
     type tail = name->queue[name->tail]; \
     name->tail = NEXT(name->tail, size); \
@@ -81,9 +84,10 @@
   inline volatile type * name ## _get_next_to_insert(name ## _queue_t * name){ \
     return name->queue + name->head; \
   } \
-  inline void name ## _insert(name ## _queue_t * name){ \
-    if( name ## _is_full(name) ) return; \
+  inline bool name ## _insert(name ## _queue_t * name){ \
+    if( name ## _is_full(name) ) return false; \
     name->head = NEXT(name->head, size); \
+    return true; \
   }
 
 #define declare_static_queue(name) static name ## _queue_t name = {0, 0};

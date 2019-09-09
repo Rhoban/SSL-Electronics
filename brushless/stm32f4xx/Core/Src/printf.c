@@ -20,6 +20,7 @@
 #include <terminal.h>
 #include <printf.h>
 #include <errors.h>
+#include "stm32f4xx_hal.h"
 
 // 
 // The function printf and fprintf from stdio.h, call the function
@@ -29,6 +30,11 @@
 int _write(int file, char *ptr, int len){
   int idx;
   switch( file ){
+    case DIRECT_JTAG_FILE_DESCRIPTOR:
+      for(idx = 0; idx < len; idx++){
+        ITM_SendChar(*ptr++);
+      }
+      break;
     case USB_FILE_DESCRIPTOR :
       if(
         get_serial_usb()->write((uint8_t*)ptr, len) != len
