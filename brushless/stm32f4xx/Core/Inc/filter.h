@@ -44,16 +44,20 @@ void reset_filter(butterworth_3_data_t * data);
 
 
 #if ENCODER_FREQ == 8000
-  #define FILTER_DELAY_US 1609
+  //#define FILTER_DELAY_US 1609
+  #define FILTER_DELAY_US 1592
   //#define FILTER_DELAY_US 1209
 #elif ENCODER_FREQ == 9000
-  #define FILTER_DELAY_US 1609
+  //#define FILTER_DELAY_US 1609
+  #define FILTER_DELAY_US 1592
   //#define FILTER_DELAY_US 1209
 #elif ENCODER_FREQ == 9600
-  #define FILTER_DELAY_US 1609
+  //#define FILTER_DELAY_US 1609
+  #define FILTER_DELAY_US 1592
   //#define FILTER_DELAY_US 1209
 #elif ENCODER_FREQ == 10000
-  #define FILTER_DELAY_US 1609
+  //#define FILTER_DELAY_US 1609
+  #define FILTER_DELAY_US 1592
   //#define FILTER_DELAY_US 1209
 #else
   _Static_assert(
