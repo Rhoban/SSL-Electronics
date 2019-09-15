@@ -19,6 +19,7 @@
 #pragma once
 
 #include <math.h>
+#include <stdint.h>
 
 // give the next id ( (id+1)%size ) when
 // size is a power of 2. 
@@ -37,6 +38,18 @@ inline float mod_float(float theta, float quotient){
 
 inline float mod_2_pi(float theta){
   return mod_float(theta, (2*M_PI));
+}
+
+inline float mod_pi(float theta){
+  float res = theta * (1.0/(2*M_PI));
+  res -= ( (int32_t) res );
+  if( res >= .5 ){
+    res -= 1.0;
+  }
+  if( res < - 0.5 ){
+    res += 1.0;
+  }
+  return res*(2*M_PI);
 }
 
 #define BORN_MAX(x, max) x = ((x)<=(max))? (x) : (max)

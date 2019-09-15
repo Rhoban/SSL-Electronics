@@ -24,6 +24,7 @@
 #include <errors.h>
 #include <errors.h>
 #include "debug.h"
+#include "hardware.h"
 
 // #define HISTORIC_SIZE 64
 #define HISTORIC_SIZE 128
@@ -144,6 +145,13 @@ static inline void _observer_update_level( float velocity ){
 }
 
 TERMINAL_PARAMETER_FLOAT(dt, "time us", 0.0);
+static float dl;
+
+TERMINAL_COMMAND(dl, "delay <us>"){
+  if(argc == 1){
+     dl = atof(argv[0])/1000000.0;
+  }
+}
 
 void get_estimated_angle_for_next_PWM_update(float* angle, float *speed){
   (*speed) = observer.velocity;
@@ -217,7 +225,12 @@ _Static_assert( SYCLK_TO_ENCODER_PERIOD < CLK_SYSCLK_PERIOD, "");
   diff = diff < 0 ? diff + CLK_SYSCLK_PERIOD: diff;
   float complete_delay = (
     (observer.oversample_counter+2) * SYCLK_TO_ENCODER_PERIOD - diff 
-  ) * (1.0/CLK_SYSCLK) + ((FILTER_DELAY_US+AS5047D_NON_DYNAMIC_ANGLE_DELAY_US)/1000000.0);
+  ) * (1.0/CLK_SYSCLK) + dl + (
+    (
+      FILTER_DELAY_US + AS5047D_NON_DYNAMIC_ANGLE_DELAY_US + 
+      ADDITIONAL_DELAY_FROM_ENCODER_TO_COMMAND
+    )/1000000.0
+  );
 
   (*angle) = observer.angle[observer.position]
    //+ observer.velocity*dt*(1.0/1000000);
@@ -302,3 +315,8 @@ TERMINAL_COMMAND(speed, "speed in tr/s (0: tr/s, 1:rad/s, 2:deg/s)")
   }
 }
 
+TERMINAL_COMMAND(av_speed, "average speed")
+{
+  AVERAGE( av_speed, observer_get_velocity(), 16 );
+  PRINTT("%f", av_speed);
+}

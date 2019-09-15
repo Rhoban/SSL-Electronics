@@ -25,7 +25,7 @@
               // perpendicular to the virtual magnet of the stator.
 #define MOTOR_R 0   // resistance of the coil
 #define MOTOR_KEM 0   // Electromagnetic constant of the motor
-
+#define ADDITIONAL_DELAY_FROM_ENCODER_TO_COMMAND -110
 
 // 
 // To allow current measure and good rising edges, we need to have a minimal 
