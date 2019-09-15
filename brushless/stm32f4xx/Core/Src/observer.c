@@ -104,6 +104,12 @@ static inline void update_velocity(uint32_t level){
 }
 #endif
 
+TERMINAL_COMMAND( set_level, "set level" ){
+  if(argc != 1 ) return;
+  int32_t u =  atoi(argv[1]);
+  observer.level = abs(u);
+}
+
 static inline void _observer_update_level( float velocity ){
   //
   // When we want to choose a level where the noise is negligible in front of 
@@ -132,6 +138,10 @@ static inline void _observer_update_level( float velocity ){
   #define LEVEL_FACTOR (ANGLE_NOISE*NEGLIGABLE*OVERSAMPLING_FREQ)
   #define ADAPTATIVE_FREQUENCE_FACTOR (1.0/LEVEL_FACTOR)
   float inverse_level = fabs(observer.velocity*ADAPTATIVE_FREQUENCE_FACTOR);
+  if( inverse_level == 0 ){
+    observer.level = HISTORIC_SIZE-2;
+    return;
+  }
   // We change the level according to an hysteresis to avoid osciling 
   // phenomena.
   //
@@ -155,62 +165,65 @@ TERMINAL_COMMAND(dl, "delay <us>"){
 
 void get_estimated_angle_for_next_PWM_update(float* angle, float *speed){
   (*speed) = observer.velocity;
-// Sysclk
-// counter
-//   ^                                        
-//   |  LOAD, et1   |\    |\    |\    |\    |\    |\    |
-//   |     etm1/2 --|>\   | \   | \   | \   | \   | \   | 
-//   |              | .\  |  \  |  \  |  \  | .\  |  \  | 
-//   | mts, et0/3 --|-->\ |   \ |   \ |   \ | . \ |   \ |
-//   |        et2 - | . .\|   .\|    \|    \| .  \|   .\|
-//   |                . .     .       .       .       .
-// ---------------------------------------------------------------> time in s
-// <-------------------------------------------------------------- time in absolute sysclk
-//                 et0+ mts+  et0   et0-ENC et0-2ENC et0-OvENC      
-//                  ENC ENC
-//                    <->     .       .       .       .
-//                    diff    .       .       .       .
-//                    . .     .       .       .       .
-//                    . .<------------------->.       .
-//                            delay(i=1)
-//
-//                                        ^
-//                                        |
-//                                     current time
-//                                    (current versampling number:1)
-// mts : mesure_time_systick
-// et : encoder tick
-// or : Overampling reset : 
-// Ov : Oversampling number
-// i  : Oversampling counter
-// delay : delay between command to apply and measure.
-// 
-// eti  = mod( et0-oversample_counter*ENC , LOAD )
-// etm1 = mod( et0+ENC , LOAD )
-// mts = mod( etm1-diff, LOAD) 
-// et0 - oversample_counter*ENC = k1*LOAD + eti
-// et0 + ENC                    = k2*LOAD + etm1
-// ----------------------------------------------
-// (1+oversample_counter)*ENC  = (k2-k1)*LOAD + (etm1-eti)
 
-// etm1 = (k1-k2)*LOAD + eti + (1+oversample_counter)*ENC
-//
-// etm1-diff = k3*LOAD + mts
-// diff = -k3*LOAD + etm1 - mts
+#define COMPUTE_DIFF_DELAY
+#ifdef COMPUTE_DIFF_DELAY
+  // Sysclk
+  // counter
+  //   ^                                        
+  //   |  LOAD, et1   |\    |\    |\    |\    |\    |\    |
+  //   |     etm1/2 --|>\   | \   | \   | \   | \   | \   | 
+  //   |              | .\  |  \  |  \  |  \  | .\  |  \  | 
+  //   | mts, et0/3 --|-->\ |   \ |   \ |   \ | . \ |   \ |
+  //   |        et2 - | . .\|   .\|    \|    \| .  \|   .\|
+  //   |                . .     .       .       .       .
+  // ---------------------------------------------------------------> time in s
+  // <-------------------------------------------------------------- time in absolute sysclk
+  //                 et0+ mts+  et0   et0-ENC et0-2ENC et0-OvENC      
+  //                  ENC ENC
+  //                    <->     .       .       .       .
+  //                    diff    .       .       .       .
+  //                    . .     .       .       .       .
+  //                    . .<------------------->.       .
+  //                            delay(i=1)
+  //
+  //                                        ^
+  //                                        |
+  //                                     current time
+  //                                    (current versampling number:1)
+  // mts : mesure_time_systick
+  // et : encoder tick
+  // or : Overampling reset : 
+  // Ov : Oversampling number
+  // i  : Oversampling counter
+  // delay : delay between command to apply and measure.
+  // 
+  // eti  = mod( et0-oversample_counter*ENC , LOAD )
+  // etm1 = mod( et0+ENC , LOAD )
+  // mts = mod( etm1-diff, LOAD) 
+  // et0 - oversample_counter*ENC = k1*LOAD + eti
+  // et0 + ENC                    = k2*LOAD + etm1
+  // ----------------------------------------------
+  // (1+oversample_counter)*ENC  = (k2-k1)*LOAD + (etm1-eti)
 
-_Static_assert( SYCLK_TO_ENCODER_PERIOD < CLK_SYSCLK_PERIOD, "");  
-// As 0 < diff < ENC < LOAD, we have diff = mod( diff, LOAD)
-// diff = mod(etm1 - mts, LOAD)
+  // etm1 = (k1-k2)*LOAD + eti + (1+oversample_counter)*ENC
+  //
+  // etm1-diff = k3*LOAD + mts
+  // diff = -k3*LOAD + etm1 - mts
 
-// mod( etm1 - mts, LOAD) = mod(
-//    eti + (1+ovserample_counter)*ENC - mts, LOAD
-// )
-// diff = mod( eti + (1+ovserample_counter)*ENC - mts, LOAD ) 
-//
-// delay = (oversample_counter+1)*ENC + ENV - diff 
-//       = (oversample_counter+2)*ENC - diff 
-//
-// complete_delay = delay + filter_delay
+  _Static_assert( SYCLK_TO_ENCODER_PERIOD < CLK_SYSCLK_PERIOD, "");  
+  // As 0 < diff < ENC < LOAD, we have diff = mod( diff, LOAD)
+  // diff = mod(etm1 - mts, LOAD)
+
+  // mod( etm1 - mts, LOAD) = mod(
+  //    eti + (1+ovserample_counter)*ENC - mts, LOAD
+  // )
+  // diff = mod( eti + (1+ovserample_counter)*ENC - mts, LOAD ) 
+  //
+  // delay = (oversample_counter+1)*ENC + ENV - diff 
+  //       = (oversample_counter+2)*ENC - diff 
+  //
+  // complete_delay = delay + filter_delay
   int32_t diff = (
     ( 
       (int32_t) (
@@ -223,6 +236,10 @@ _Static_assert( SYCLK_TO_ENCODER_PERIOD < CLK_SYSCLK_PERIOD, "");
   );
   diff = diff % CLK_SYSCLK_PERIOD;
   diff = diff < 0 ? diff + CLK_SYSCLK_PERIOD: diff;
+#else
+  #define APPROXIMATE_DIFF 33
+  const int32_t diff = APPROXIMATE_DIFF;
+#endif
   float complete_delay = (
     (observer.oversample_counter+2) * SYCLK_TO_ENCODER_PERIOD - diff 
   ) * (1.0/CLK_SYSCLK) + dl + (

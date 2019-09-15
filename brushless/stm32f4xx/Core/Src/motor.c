@@ -144,14 +144,55 @@ static inline void filter_current_consign_and_compute_derivate(float current_con
   motor.current_consign = current_consign;
 }
 
+bool direct=0;
+
+#define COMPENSATE_FRICTION
 static inline void compute_voltage_consign(){
+  float velocity = observer_get_velocity();
+  #ifdef COMPENSATE_FRICTION
+    float friction;
+    if( abs(velocity) < 0.01 ){
+      // TODO : We need to use the velocity consign to know 
+      // which sense we need to use to remove the frictions.
+      // Do we need to make the work here ?
+      // The good code should looks like : 
+      //  velocity = 0;
+      //  if( velocity_consign > 0 ){
+      //    friction = FRICTION_CONSTANT_rad_s; 
+      //  }else{
+      //    friction = -FRICTION_CONSTANT_rad_s; 
+      //  }
+      // This is used to have good reactivity when motor 
+      // start from velocity 0.
+      //
+      // Perhaps, this steps should be done on PID process with
+      // an extra term to compensate the frictions.
+      velocity = 0;
+      friction = 0;
+    }else{
+      #define GAIN_FRICTION 0.9
+      friction = ( velocity > 0 ) ? 
+        GAIN_FRICTION * FRICTION_CONSTANT_rad_s
+        :
+        - GAIN_FRICTION * FRICTION_CONSTANT_rad_s
+      ;
+    }
+  #endif
+  // TODO : Kem should be with a positive sign.
+  // We need to check there is no problem with the sign of the
+  // velocity
   motor.quadrature_voltage_consign = (
-    motor.Kem * observer_get_velocity() +
+    - motor.Kem * (
+      velocity
+      #ifdef COMPENSATE_FRICTION
+      + friction
+      #endif
+    ) + 
     motor.R * motor.current_consign + 
     motor.Lq * motor.current_derivate
   );
   motor.direct_voltage_consign = (
-    - motor.Lq * observer_get_velocity() * motor.current_consign
+    - motor.Lq * velocity * motor.current_consign
   );
 }
 
@@ -162,11 +203,12 @@ static inline void dq_voltage_to_phase_voltage(float angle){
     float theta_park = - NB_POSITIVE_MAGNETS * angle;
   #endif
 
+
+#if 0
   float t1 = mod_2_pi(theta_park);
   float t2 = mod_2_pi(theta_park - (2*M_PI/3));
   float t3 = mod_2_pi(theta_park + (2*M_PI/3));
-
-#if 0
+  
   float c1 = cos_table(t1);
   float s1 = sin_table(t1);
   float c2 = cos_table(t2);
@@ -174,6 +216,10 @@ static inline void dq_voltage_to_phase_voltage(float angle){
   float c3 = cos_table(t3);
   float s3 = sin_table(t3);
 #else
+  float t1 = theta_park;
+  float t2 = theta_park - (2*M_PI/3);
+  float t3 = theta_park + (2*M_PI/3);
+
   float c1 = arm_cos_f32(t1);
   float s1 = arm_sin_f32(t1);
   float c2 = arm_cos_f32(t2);
@@ -425,6 +471,26 @@ void tare(){
   motor.mode = save_mode;
 }
 
+    
+void motor_set_quadrature_current( float iq ){
+  motor.current_consign = iq;
+  motor.current_derivate = 0;
+}
+
+TERMINAL_COMMAND(iq, "set quadratic current"){
+  if(argc == 1){
+    float iq = atof( argv[0] );
+    BORN(iq, -MAX_CURRENT, MAX_CURRENT);
+    motor_set_quadrature_current( iq );
+    motor.mode = Q_CURRENT_CONSIGN;
+  }else{
+    terminal_print("dqv <direct voltage> <quadratic voltage> (max voltage:");
+    terminal_print_int(MAX_VOLTAGE);
+    terminal_println(")");
+  }
+  
+}
+
 TERMINAL_COMMAND(motor_consign, "motor consign"){
   switch(motor.mode){
     case Q_CURRENT_CONSIGN :
@@ -447,6 +513,17 @@ TERMINAL_COMMAND(motor_consign, "motor consign"){
   }
 }
 
+void _define_dq_voltage(float d, float q){
+    motor_set_direct_quadrature_voltage_consign(d, q);
+    float velocity = KEV_rad_per_V_S*fabs(motor.quadrature_voltage_consign) - FRICTION_CONSTANT_rad_s;
+    velocity = velocity > 0? velocity: 0;
+    // We adapt the algorithm that compute the velocity according to the target velocity.
+    // (we adapt the delta time of the velocity with a level ratio, that level ration have an optiized value to remove all noises)
+    observer_update_level( velocity );
+    terminal_print("expected velocity : ");
+    terminal_println_float(velocity);
+}
+
 TERMINAL_COMMAND(dqv, "Set direct and quadratic voltage" ){
   motor.mode = FIXED_DQ_VOLTAGE;
   if(argc == 2){
@@ -454,7 +531,7 @@ TERMINAL_COMMAND(dqv, "Set direct and quadratic voltage" ){
     float q = atof( argv[1] );
     BORN(d, -MAX_VOLTAGE, MAX_VOLTAGE);
     BORN(q, -MAX_VOLTAGE, MAX_VOLTAGE);
-    motor_set_direct_quadrature_voltage_consign(d, q);
+    _define_dq_voltage(d, q);
   }else{
     terminal_print("dqv <direct voltage> <quadratic voltage> (max voltage:");
     terminal_print_int(MAX_VOLTAGE);
@@ -473,7 +550,7 @@ TERMINAL_COMMAND(pdqv, "Polar dqv" ){
     float s = arm_sin_f32(a);
     float d = v * c;
     float q = v * s;
-    motor_set_direct_quadrature_voltage_consign(d, q);
+    _define_dq_voltage(d, q);
   }else{
     terminal_print("pdqv <angle degree> <norm voltage> (max voltage:");
     terminal_print_int(MAX_VOLTAGE);

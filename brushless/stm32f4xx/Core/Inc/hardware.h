@@ -21,11 +21,13 @@
 #define NB_POSITIVE_MAGNETS 8
 #define MOTOR_VOLTAGE 24
 #define REVERSE_PHASE
-#define MOTOR_LQ 0  // Quadrature Inductance : inductance of the virtual coil that is 
-              // perpendicular to the virtual magnet of the stator.
-#define MOTOR_R 0   // resistance of the coil
-#define MOTOR_KEM 0   // Electromagnetic constant of the motor
 #define ADDITIONAL_DELAY_FROM_ENCODER_TO_COMMAND -110
+#define KEV_rad_per_V_S 19.8 // Electromagnetic constant
+#define FRICTION_CONSTANT_rad_s 25.0 // Electromagnetic constant
+#define MOTOR_LQ 0.0 // 0.000463  // Quadrature Inductance : inductance of the virtual coil that is 
+              // perpendicular to the virtual magnet of the stator.
+#define MOTOR_R 0.0 //0.608  // resistance of the coil
+#define MOTOR_KEM (1.0/KEV_rad_per_V_S)   // Electromagnetic constant of the motor
 
 // 
 // To allow current measure and good rising edges, we need to have a minimal 
@@ -60,3 +62,4 @@ _Static_assert(
 
 
 #define MAX_VOLTAGE_FOR_TARING_PROCESS (MAX_VOLTAGE/8.0) 
+#define MAX_CURRENT 1.7
