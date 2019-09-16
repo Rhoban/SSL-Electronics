@@ -52,8 +52,10 @@ typedef enum {
   TARE,
   FIXED_DQ_VOLTAGE,
   DQ_VOLTAGE_CONSIGN,
-  Q_CURRENT_CONSIGN
+  Q_CURRENT_CONSIGN,
+  FOC_CONSIGN,
 } motor_mode_t;
+
 
 inline const char* motor_mode_string( motor_mode_t m ){
   switch(m){
@@ -65,6 +67,8 @@ inline const char* motor_mode_string( motor_mode_t m ){
       return "DQ_VOLTAGE_CONSIGN";
     case Q_CURRENT_CONSIGN:
       return "Q_CURRENT_CONSIGN";
+    case FOC_CONSIGN:
+      return "FOC_CONSIGN";
     default:
       return "?";
   }
@@ -74,8 +78,10 @@ typedef struct {
   volatile bool computation_is_done;
   bool is_ready;
 
-  float current_consign; 
-  float current_derivate;
+  volatile float current_consign; 
+
+  volatile float current; 
+  volatile float current_derivate;
 
   volatile float quadrature_voltage_consign;
   volatile float direct_voltage_consign;
@@ -105,6 +111,11 @@ typedef struct {
 } motor_t;
 
 static motor_t motor;
+
+void motor_change_to_foc_mode(){
+  motor.mode = FOC_CONSIGN;  
+}
+
 
 extern TIM_HandleTypeDef htim1;
 
@@ -140,8 +151,8 @@ void motor_start_device(){
 //
 static inline void filter_current_consign_and_compute_derivate(float current_consign){
   //TODO : Add a quadramp to the current consign !
-  motor.current_derivate = (current_consign - motor.current_consign)*ENCODER_FREQ;
-  motor.current_consign = current_consign;
+  motor.current_derivate = (current_consign - motor.current)*ENCODER_FREQ;
+  motor.current = current_consign;
 }
 
 bool direct=0;
@@ -187,12 +198,10 @@ static inline void compute_voltage_consign(){
       #ifdef COMPENSATE_FRICTION
       + friction
       #endif
-    ) + 
-    motor.R * motor.current_consign + 
-    motor.Lq * motor.current_derivate
+    ) - motor.R * motor.current - motor.Lq * motor.current_derivate
   );
   motor.direct_voltage_consign = (
-    - motor.Lq * velocity * motor.current_consign
+    + motor.Lq * velocity * motor.current
   );
 }
 
@@ -344,6 +353,7 @@ static inline void deactivate_driver(){
 
 void reset_consign_and_command(){
   motor.current_consign = 0; 
+  motor.current = 0; 
   motor.current_derivate = 0;
 
   motor.quadrature_voltage_consign = 0;
@@ -355,6 +365,24 @@ void reset_consign_and_command(){
   motor.phase_voltage_u = 0;
   motor.phase_voltage_v = 0;
   motor.phase_voltage_w = 0;
+}
+
+TERMINAL_COMMAND( motor_r, "" ){
+  if( argc == 0 ){
+    terminal_println_float(motor.R);
+  }else if( argc == 1 ){
+    float f = atof( argv[0] );
+    motor.R = f;
+  }
+}
+
+TERMINAL_COMMAND( motor_kem, "" ){
+  if( argc == 0 ){
+    terminal_println_float(motor.Kem);
+  }else if( argc == 1 ){
+    float f = atof( argv[0] );
+    motor.Kem = f;
+  }
 }
 
 void motor_init(){
@@ -411,12 +439,11 @@ void motor_prepare_pwm(){
   }
   float angle = 0;
   float velocity = 0;
-  float current_consign = 0; 
   switch( motor.mode ){
+    case FOC_CONSIGN:
+      motor.current_consign = foc_update_and_get_control();
     case Q_CURRENT_CONSIGN:
-      //foc_get_control(&motor.direct_voltage, &motor.quadrature_voltage);
-      //foc_get_control(&motor.direct_voltage, &motor.quadrature_voltage);
-      filter_current_consign_and_compute_derivate(current_consign);
+      filter_current_consign_and_compute_derivate(motor.current_consign);
       compute_voltage_consign();
     case DQ_VOLTAGE_CONSIGN:
       compute_direct_quadrature_voltage();
@@ -493,9 +520,12 @@ TERMINAL_COMMAND(iq, "set quadratic current"){
 
 TERMINAL_COMMAND(motor_consign, "motor consign"){
   switch(motor.mode){
+    case FOC_CONSIGN:
     case Q_CURRENT_CONSIGN :
       terminal_print("current_consign : ");
       terminal_println_float(motor.current_consign); 
+      terminal_print("current : ");
+      terminal_println_float(motor.current); 
     case DQ_VOLTAGE_CONSIGN :
     case FIXED_DQ_VOLTAGE :
       terminal_print("quadrature_voltage_consign : ");

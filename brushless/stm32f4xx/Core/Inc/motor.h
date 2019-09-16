@@ -37,3 +37,5 @@ void motor_start();
 void motor_emergency();
 void motor_prepare_pwm();
 void motor_apply_pwm();
+
+void motor_change_to_foc_mode();

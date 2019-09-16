@@ -18,5 +18,5 @@
 
 #pragma once
 void foc_init();
-void foc_get_control( float* direct_voltage, float* quadratic_voltage);
+float foc_update_and_get_control();
 

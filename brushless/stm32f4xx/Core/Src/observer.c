@@ -137,7 +137,7 @@ static inline void _observer_update_level( float velocity ){
   #define ANGLE_NOISE (2*M_PI*MAXIMAL_AMPLITUDE_ERROR_AT_50_TR_S/(360*1000.0))
   #define LEVEL_FACTOR (ANGLE_NOISE*NEGLIGABLE*OVERSAMPLING_FREQ)
   #define ADAPTATIVE_FREQUENCE_FACTOR (1.0/LEVEL_FACTOR)
-  float inverse_level = fabs(observer.velocity*ADAPTATIVE_FREQUENCE_FACTOR);
+  float inverse_level = fabs(velocity*ADAPTATIVE_FREQUENCE_FACTOR);
   if( inverse_level == 0 ){
     observer.level = HISTORIC_SIZE-2;
     return;
@@ -278,7 +278,7 @@ void observer_update(float angle, uint32_t mesure_time_systick){
   // The correct level have to be computed with the velocity control command.
   // So we need to move the following line in the function that set the control 
   // command.
-  _observer_update_level( observer.velocity );
+  // _observer_update_level( observer.velocity );
   update_velocity( observer.level );
 }
 
