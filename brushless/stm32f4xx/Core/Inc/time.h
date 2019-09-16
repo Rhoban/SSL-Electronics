@@ -95,7 +95,7 @@ typedef struct {
   uint32_t period_us;
   uint32_t counter;
   uint32_t time;
-} countdown_t;
+} cooldown_t;
 
 inline int32_t diff_sysclk(uint32_t new_, uint32_t old_){
   int32_t res = ((int32_t)old_ - (int32_t)new_);
@@ -103,14 +103,14 @@ inline int32_t diff_sysclk(uint32_t new_, uint32_t old_){
   if( res <= -CLK_SYSCLK_PERIOD/2 ) return res + CLK_SYSCLK_PERIOD;
   return res;
 }
-void init_countdown(countdown_t * countdown, uint32_t period_us);
-void reset_countdown(countdown_t * countdown);
-void tick_countdown(countdown_t * countdown);
-bool update_countdown(countdown_t * countdown);
+void init_cooldown(cooldown_t * cooldown, uint32_t period_us);
+void reset_cooldown(cooldown_t * cooldown);
+void tick_cooldown(cooldown_t * cooldown);
+bool update_cooldown(cooldown_t * cooldown);
 
-#define COUNTDOWN(period) \
-  static countdown_t _countdown_ ## __COUNTER__ = {.period_us=period, .counter=0, .time=0}; \
-  if( update_countdown( & _countdown_ ## __COUNTER__ ) )
+#define COOLDOWN(period) \
+  static cooldown_t _cooldown_ ## __COUNTER__ = {.period_us=period, .counter=0, .time=0}; \
+  if( update_cooldown( & _cooldown_ ## __COUNTER__ ) )
 
 
 #if 0 // Somm other implemenation :)

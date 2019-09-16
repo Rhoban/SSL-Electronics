@@ -33,11 +33,13 @@ EXECUTE_ONETIME(condition){ // When condition, execute just one time
   SOME_CODE                 // SOME_CODE.
 }
 
-COUNTDOWN(time_us){  // Execute SOME_CODE. 
-  SOME_CODE         // Before executing SOME_CODE, we need to wait 
-}                   // at least a cooldown of `times_us`
+COUNTDOWN(number){  // Count. All mutiple of `number` execute `SOME_CODE`.
+  SOME_CODE
+}
 
-COOLDOWN     // same as COUNTDOWN
+COOLDOWN(time_us){  // Execute SOME_CODE all (at least) `time_us` microseconds. 
+  SOME_CODE
+}
 
 delay_us(time_us) // wait at least time_us second.
                   // The time could be greater, depending of 

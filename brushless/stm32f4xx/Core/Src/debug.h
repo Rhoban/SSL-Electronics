@@ -154,7 +154,24 @@ void print_freq(uint32_t milis, int fd);
 #define LED_ON HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET)
 #define LED_OFF HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET)
 
-#define COOLDOWN(period) COUNTDOWN(period)
+typedef struct {
+  uint32_t period;
+  uint32_t counter;
+} countdown_t;
+
+inline bool update_countdown(countdown_t* countdown){
+  bool res = false;
+  countdown->counter++;
+  if( countdown->counter >= countdown->period ){
+    countdown->counter = 0;
+    res = true;
+  }
+  return res;
+}
+
+#define COUNTDOWN(number) \
+  static countdown_t _countdown_ ## __COUNTER__ = {.period=number, .counter=0}; \
+  if( update_countdown( & _countdown_ ## __COUNTER__ ) )
 
 #ifdef DEBUG
   #define RAISE_ERROR raise_error_file( __FILE__ ); raise_error( ERROR_LINE, __LINE__ )

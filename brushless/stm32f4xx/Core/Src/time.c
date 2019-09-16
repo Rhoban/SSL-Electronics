@@ -18,37 +18,37 @@
 
 #include "time.h"
 
-void init_countdown(countdown_t * countdown, uint32_t period_us){
-  countdown->period_us = period_us;  
-  countdown->counter = 0;
+void init_cooldown(cooldown_t * cooldown, uint32_t period_us){
+  cooldown->period_us = period_us;  
+  cooldown->counter = 0;
 }
 
-void reset_countdown(countdown_t * countdown){
-  countdown->counter = countdown->period_us;
-  countdown->time = time_get_us();
+void reset_cooldown(cooldown_t * cooldown){
+  cooldown->counter = cooldown->period_us;
+  cooldown->time = time_get_us();
 }
 
-static inline void _tick_countdown(countdown_t * countdown){
+static inline void _tick_cooldown(cooldown_t * cooldown){
   uint32_t time = time_get_us();
-  uint32_t delta = time -  countdown->time;
-  countdown->time = time;
-  if( countdown->counter > delta ){
-    countdown->counter -= delta;
+  uint32_t delta = time -  cooldown->time;
+  cooldown->time = time;
+  if( cooldown->counter > delta ){
+    cooldown->counter -= delta;
   }else{
-    countdown->counter = 0;
+    cooldown->counter = 0;
   }
 }
 
-void tick_countdown(countdown_t * countdown){
-  _tick_countdown(countdown);
+void tick_cooldown(cooldown_t * cooldown){
+  _tick_cooldown(cooldown);
 }
 
-bool update_countdown(countdown_t * countdown){
-  _tick_countdown(countdown);
-  if(countdown->counter){
+bool update_cooldown(cooldown_t * cooldown){
+  _tick_cooldown(cooldown);
+  if(cooldown->counter){
     return false;
   }else{
-    countdown->counter = countdown->period_us;
+    cooldown->counter = cooldown->period_us;
     return true;
   }
 }

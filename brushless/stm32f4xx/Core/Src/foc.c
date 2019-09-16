@@ -24,6 +24,7 @@
 #include <frequence_definitions.h>
 #include <terminal.h>
 #include <assertion.h>
+#include "debug.h"
 
 typedef enum {
   OPEN_LOOP_CONTROL,
