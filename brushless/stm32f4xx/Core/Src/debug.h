@@ -170,3 +170,8 @@ void print_freq(uint32_t milis, int fd);
   #define LED_ON_WHEN_ENCODER_TICK
   #define LED_ON_WHEN_COMPUTING_COMMANDS
 #endif
+
+// #define ACTIVATE_LOG
+#ifdef ACTIVATE_LOG
+  #include <log.h>
+#endif

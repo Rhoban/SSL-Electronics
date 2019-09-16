@@ -330,10 +330,16 @@ int main(void)
   observer_init();
   motor_init();
   foc_init();
+  #ifdef ACTIVATE_LOG
+  log_init();
+  #endif
  
   start_and_synchronize_timers();
   encoder_start();
   motor_start();
+  #ifdef ACTIVATE_LOG
+  log_start();
+  #endif
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -344,7 +350,9 @@ int main(void)
     encoder_tick();
     serial_tick();
     terminal_tick();
-
+    #ifdef ACTIVATE_LOG
+    log_tick();
+    #endif
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
