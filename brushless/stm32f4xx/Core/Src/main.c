@@ -337,9 +337,6 @@ int main(void)
   start_and_synchronize_timers();
   encoder_start();
   motor_start();
-  #ifdef ACTIVATE_LOG
-  log_start();
-  #endif
   /* USER CODE END 2 */
 
   /* Infinite loop */

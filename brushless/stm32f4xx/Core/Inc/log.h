@@ -44,7 +44,19 @@
 //
 // log_next_sample();
 //
-// Normally, the value is printed in the jtag output.
+// To log, connect the board with jtag : 
+// ./print_jtag > log
+//
+// Then conect the board with USB tty :
+// cu -l /dev/ttyACM0
+//
+// then type the command : 
+//
+// start_log
+// 
+// stop the log at any time :
+// 
+// stop_log 
 
 typedef struct {
   volatile uint32_t cpt;

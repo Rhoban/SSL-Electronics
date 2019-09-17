@@ -32,7 +32,7 @@ void init_log_sample(volatile log_sample_t* sample){
 }
 
 static bool log_is_not_full = true;
-
+static bool log_is_enable = false;
 
 volatile uint32_t time_ref;
 
@@ -48,9 +48,11 @@ void log_start(){
   logs_clear(&logs);
   init_log_sample(current_log_sample);
   log_is_not_full = true;
+  log_is_enable = true;
 }
 
 void log_next_sample(){
+  if( ! log_is_enable ) return;
   cpt++;
   if( log_is_not_full ){
     log_is_not_full = logs_insert(&logs);
@@ -76,11 +78,18 @@ TERMINAL_COMMAND(start_log,"start log"){
   log_start();
 }
 
+void log_stop(){
+  log_is_enable = false;
+}
+
+TERMINAL_COMMAND(stop_log,"stop log"){
+  log_stop();
+}
 
 void process_sample(volatile log_sample_t* sample){
   dprintf(
     DIRECT_JTAG_FILE_DESCRIPTOR,
-    "%ld "
+    "%ld, "
     "%f\n" // TO ADAPT
     ,
     sample->cpt,
