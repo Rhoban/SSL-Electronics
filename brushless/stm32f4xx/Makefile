@@ -81,6 +81,7 @@ Core/Src/observer.c \
 Core/Src/encoder.c \
 Core/Src/motor.c \
 Core/Src/foc.c \
+Core/Src/current.c \
 Core/Src/log.c \
 Core/Src/as5047d.c \
 Core/Src/serial_usb.c \

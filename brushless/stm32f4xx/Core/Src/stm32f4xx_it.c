@@ -28,6 +28,7 @@
 #include <encoder.h>
 #include <errors.h>
 #include <motor.h>
+#include <current.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -62,12 +63,137 @@
 
 /* External variables --------------------------------------------------------*/
 extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
+extern DMA_HandleTypeDef hdma_adc1;
 extern DMA_HandleTypeDef hdma_spi2_rx;
 extern DMA_HandleTypeDef hdma_spi2_tx;
 extern SPI_HandleTypeDef hspi2;
 extern TIM_HandleTypeDef htim3;
 extern TIM_HandleTypeDef htim5;
 /* USER CODE BEGIN EV */
+
+volatile bool first_adc = true;
+volatile bool start_current_adc = false;
+volatile bool start_adc = false;
+extern volatile bool complete_current_adc;
+extern ADC_HandleTypeDef hadc1;
+extern __IO uint16_t adc_data[];
+
+extern ADC_HandleTypeDef hadc1;
+extern __IO uint16_t adc_data[];
+
+HAL_StatusTypeDef adc_stop_dma(ADC_HandleTypeDef* hadc)
+{
+  HAL_StatusTypeDef tmp_hal_status = HAL_OK;
+  
+  /* Check the parameters */
+  assert_param(IS_ADC_ALL_INSTANCE(hadc->Instance));
+  
+  /* Process locked */
+  __HAL_LOCK(hadc);
+  
+  /* Disable the selected ADC DMA mode */
+  hadc->Instance->CR2 &= ~ADC_CR2_DMA;
+  
+  /* Disable the DMA channel (in case of DMA in circular mode or stop while */
+  /* DMA transfer is on going)                                              */
+  //tmp_hal_status = HAL_DMA_Abort(hadc->DMA_Handle);
+  
+  /* Disable ADC overrun interrupt */
+  __HAL_ADC_DISABLE_IT(hadc, ADC_IT_OVR);
+  
+  /* Set ADC state */
+  ADC_STATE_CLR_SET(
+    hadc->State,
+    HAL_ADC_STATE_REG_BUSY | HAL_ADC_STATE_INJ_BUSY,
+    HAL_ADC_STATE_READY
+  );
+  
+  /* Process unlocked */
+  __HAL_UNLOCK(hadc);
+  
+  /* Return function status */
+  return tmp_hal_status;
+}
+
+HAL_StatusTypeDef adc_start_dma(ADC_HandleTypeDef* hadc, uint32_t* pData, uint32_t Length)
+{
+  //__IO uint32_t counter = 0U;
+     
+  /* Check the parameters */
+  assert_param(IS_FUNCTIONAL_STATE(hadc->Init.ContinuousConvMode));
+  assert_param(IS_ADC_EXT_TRIG_EDGE(hadc->Init.ExternalTrigConvEdge)); 
+  
+  /* Process locked */
+  __HAL_LOCK(hadc);
+
+#if 0  
+  /* Enable the ADC peripheral */
+  /* Check if ADC peripheral is disabled in order to enable it and wait during 
+  Tstab time the ADC's stabilization */
+  if((hadc->Instance->CR2 & ADC_CR2_ADON) != ADC_CR2_ADON)
+  {  
+    /* Enable the Peripheral */
+    __HAL_ADC_ENABLE(hadc);
+    
+    /* Delay for ADC stabilization time */
+    /* Compute number of CPU cycles to wait for */
+    counter = (ADC_STAB_DELAY_US * (SystemCoreClock / 1000000U));
+    while(counter != 0U)
+    {
+      counter--;
+    }
+  }
+#endif 
+  
+  /* Start conversion if ADC is effectively enabled */
+  if(HAL_IS_BIT_SET(hadc->Instance->CR2, ADC_CR2_ADON))
+  {
+    /* Set ADC state                                                          */
+    /* - Clear state bitfield related to regular group conversion results     */
+    /* - Set state bitfield related to regular group operation                */
+    ADC_STATE_CLR_SET(hadc->State,
+                      HAL_ADC_STATE_READY | HAL_ADC_STATE_REG_EOC | HAL_ADC_STATE_REG_OVR,
+                      HAL_ADC_STATE_REG_BUSY);
+      
+    ADC_CLEAR_ERRORCODE(hadc);
+
+    /* Process unlocked */
+    /* Unlock before starting ADC conversions: in case of potential           */
+    /* interruption, to let the process to ADC IRQ Handler.                   */
+    __HAL_UNLOCK(hadc);
+
+    /* Clear regular group conversion flag and overrun flag */
+    /* (To ensure of no unknown state from potential previous ADC operations) */
+    __HAL_ADC_CLEAR_FLAG(hadc, ADC_FLAG_EOC | ADC_FLAG_OVR);
+
+    /* Enable ADC overrun interrupt */
+    __HAL_ADC_ENABLE_IT(hadc, ADC_IT_OVR);
+    
+    /* Enable ADC DMA mode */
+    hadc->Instance->CR2 |= ADC_CR2_DMA;
+    
+    /* Start the DMA channel */
+    
+    if( 
+      HAL_DMA_Start_IT(
+        hadc->DMA_Handle, 
+        (uint32_t)&hadc->Instance->DR, 
+        (uint32_t)pData, Length
+      ) != HAL_OK
+    ){
+      raise_error(ERROR_CURRENT, ADC_FAIL_TO_START);
+    }
+    complete_current_adc = false;
+    hadc->Instance->CR2 |= (uint32_t)ADC_CR2_SWSTART;
+    start_current_adc = true;
+  }else{
+    raise_error(ERROR_CURRENT, ADC_IS_NOT_ENABLED);
+    __HAL_UNLOCK(hadc);
+  }
+  
+  /* Return function status */
+  return HAL_OK;
+}
 
 /* USER CODE END EV */
 
@@ -290,6 +416,37 @@ void TIM5_IRQHandler(void)
   HAL_TIM_IRQHandler(&htim5);
   /* USER CODE BEGIN TIM5_IRQn 1 */
   if( flag ){
+    #ifdef LED_ON_WHEN_MAKING_ADC
+    LED;
+    LED;
+    #endif
+    if(complete_current_adc || start_adc){
+      if( first_adc ){
+        start_adc = false;
+        first_adc = false;
+        complete_current_adc = false;
+        if(
+           HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_data, ADC_DATA_SIZE) != HAL_OK
+        ){
+          raise_error(ERROR_CURRENT, ADC_FAIL_TO_START);
+        }
+        start_current_adc = true;
+      }else{
+        if(
+          adc_start_dma(&hadc1, (uint32_t*)adc_data, ADC_DATA_SIZE) != HAL_OK
+        ){
+          raise_error(ERROR_CURRENT, ADC_FAIL_TO_START);
+        }
+      }
+    }else{
+      if(!first_adc){
+        raise_error(ERROR_CURRENT, ADC_LAG);
+      }
+    }
+    #ifdef LED_ON_WHEN_MAKING_ADC
+    LED;
+    LED;
+    #endif
     encoder_compute_angle();
     motor_prepare_pwm();
     #ifdef LED_ON_WHEN_COMPUTING_COMMANDS
@@ -297,6 +454,26 @@ void TIM5_IRQHandler(void)
     #endif
   }
   /* USER CODE END TIM5_IRQn 1 */
+}
+
+/**
+  * @brief This function handles DMA2 stream0 global interrupt.
+  */
+void DMA2_Stream0_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA2_Stream0_IRQn 0 */
+  /* USER CODE END DMA2_Stream0_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_adc1);
+  /* USER CODE BEGIN DMA2_Stream0_IRQn 1 */
+  if(complete_current_adc && start_current_adc){
+    //PRINTT("OVR : %ld", hadc1.Instance->SR & ADC_SR_OVR_Msk );
+    //PRINTT("OVR : %ld", hadc1.Instance->SR & ADC_SR_OVR_Msk );
+    if( adc_stop_dma(&hadc1) != HAL_OK ){
+      raise_error(ERROR_CURRENT, ADC_FAIL_TO_STOP);
+    };
+    start_current_adc = false;
+  }
+  /* USER CODE END DMA2_Stream0_IRQn 1 */
 }
 
 /**

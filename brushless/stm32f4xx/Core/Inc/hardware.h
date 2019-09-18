@@ -36,14 +36,15 @@
 #define DRIVER_MIN_PWM_PERCENTAGE 6
 _Static_assert( DRIVER_MIN_PWM_PERCENTAGE >= 0, "" );
 _Static_assert( 100 - DRIVER_MIN_PWM_PERCENTAGE >= 0, "" );
+_Static_assert( DRIVER_MIN_PWM_PERCENTAGE >= 6, "Minimal value to have stable current (measured with an oscilloscope" ); // TODO Make this value independent of the frequence !
 
 //
 // Pwm will be bounded in 
 // [SECURITY_MIN_PWM_PERCENTAGE, 100-SECURITY_MAX_PWM_PERCENTAGE] 
 // percent.
 //
-#define SECURITY_MIN_PWM_PERCENTAGE 6
-#define SECURITY_MAX_PWM_PERCENTAGE 6
+#define SECURITY_MIN_PWM_PERCENTAGE 20
+#define SECURITY_MAX_PWM_PERCENTAGE 20
 _Static_assert( SECURITY_MAX_PWM_PERCENTAGE >= 0, "" );
 _Static_assert( SECURITY_MAX_PWM_PERCENTAGE <= 100, "" );
 _Static_assert( SECURITY_MIN_PWM_PERCENTAGE >= 0, "" );
@@ -68,6 +69,33 @@ _Static_assert(
 #define INTEGRAL_SPEED_LIMIT SPEED_LIMIT
 #define KP_ANGLE 12.0
 #define KI_ANGLE 1.0
+
+//#define U_CURRENT_IS_POSITIVE
+#define U_CURRENT_IS_NEGATIVE
+#define V_CURRENT_IS_POSITIVE
+//#define V_CURRENT_IS_NEGATIVE
+//#define W_CURRENT_IS_POSITIVE
+#define W_CURRENT_IS_NEGATIVE
+
+#if defined(U_CURRENT_IS_NEGATIVE) && defined(U_CURRENT_IS_POSITIVE)
+  _Static_assert(false, "");
+#endif
+#if !( defined(U_CURRENT_IS_NEGATIVE) || defined(U_CURRENT_IS_POSITIVE) )
+  _Static_assert(false, "");
+#endif
+#if defined(V_CURRENT_IS_NEGATIVE) && defined(V_CURRENT_IS_POSITIVE)
+  _Static_assert(false, "");
+#endif
+#if !( defined(V_CURRENT_IS_NEGATIVE) || defined(V_CURRENT_IS_POSITIVE) )
+  _Static_assert(false, "");
+#endif
+#if defined(W_CURRENT_IS_NEGATIVE) && defined(W_CURRENT_IS_POSITIVE)
+  _Static_assert(false, "");
+#endif
+#if !( defined(U_CURRENT_IS_NEGATIVE) || defined(U_CURRENT_IS_POSITIVE) )
+  _Static_assert(false, "");
+#endif
+
 
 // PID 
 #define KP_SPEED 0.1

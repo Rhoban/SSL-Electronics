@@ -144,10 +144,11 @@ void start_read_encoder_position(){
   if( !as5047d_start_reading_angle(&device) ){
     raise_warning(WARNING_ENCODER_BUSY, ENCODER_DO_NOT_START);
   }
-#endif
+#else
   if( !as5047d_fast_reading_angle(&device) ){
     raise_warning(WARNING_ENCODER_BUSY, ENCODER_DO_NOT_START);
   }
+#endif
 }
 
 volatile static bool diagnostic_request = false;

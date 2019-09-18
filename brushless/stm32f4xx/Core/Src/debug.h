@@ -186,9 +186,30 @@ inline bool update_countdown(countdown_t* countdown){
 #ifdef DEBUG
   #define LED_ON_WHEN_ENCODER_TICK
   #define LED_ON_WHEN_COMPUTING_COMMANDS
+  #define LED_ON_WHEN_MAKING_ADC
 #endif
 
 // #define ACTIVATE_LOG
 #ifdef ACTIVATE_LOG
   #include <log.h>
 #endif
+
+#define BIND(fd, x) { \
+  int16_t j = ( 32%10 -1 ); \
+  for( int16_t i=31; i >= 0; i-- ){ \
+    dprintf( fd, "%d", j); \
+    if(--j == -1) j=9; \
+  } \
+  dprintf(fd, "\n"); \
+  for( int16_t i=31; i >= 0; i-- ){ \
+    const bool val = x & (1u << i); \
+    dprintf( fd, "%d", val ); \
+  } \
+  dprintf(fd, "\n"); \
+}
+#define BINT(x) BIND(TERMINAL_FILE_DESCRIPTOR, x)
+#define BINJ(x) BIND(JTAG_FILE_DESCRIPTOR, x)
+
+
+
+

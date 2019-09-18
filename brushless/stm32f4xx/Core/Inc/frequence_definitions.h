@@ -281,7 +281,8 @@ _Static_assert(
   )
   #define  ENC_SPI_DELAY_US PERIOD_TO_US(ENC_SPI_DELAY)
 #else
-  #define ENC_SPI_DELAY (3*PWM_PERIOD/2)
+  #define ENC_SPI_DELAY (PWM_PERIOD/2)
+//  #define ENC_SPI_DELAY (3*PWM_PERIOD/2)
   #define ENC_SPI_DELAY_US PERIOD_TO_US(ENC_SPI_DELAY)
 #endif
 

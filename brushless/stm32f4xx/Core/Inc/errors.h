@@ -38,7 +38,8 @@ typedef enum {
   ERROR_TIMER_INIT_AT_LINE=14,
   ERROR_STM32_HAL_LIBRARY=15,
   ERROR_MOTOR=16,
-  ERROR_EMERGENCY=17
+  ERROR_EMERGENCY=17,
+  ERROR_CURRENT=18
 } error_code_t;
 
 inline const char* error_to_string( error_code_t e ){
@@ -77,6 +78,8 @@ inline const char* error_to_string( error_code_t e ){
       return "ERROR_MOTOR";
     case ERROR_EMERGENCY:
       return "ERROR_EMERGENCY";
+    case ERROR_CURRENT:
+      return "ERROR_CURRENT";
     default : 
       return "?";
   }

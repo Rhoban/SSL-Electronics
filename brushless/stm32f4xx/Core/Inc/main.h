@@ -60,6 +60,14 @@ void main_error_handler(uint32_t);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define I_U_Pin GPIO_PIN_0
+#define I_U_GPIO_Port GPIOC
+#define I_W_Pin GPIO_PIN_1
+#define I_W_GPIO_Port GPIOC
+#define I_REF_Pin GPIO_PIN_2
+#define I_REF_GPIO_Port GPIOC
+#define I_V_Pin GPIO_PIN_3
+#define I_V_GPIO_Port GPIOC
 #define LED_Pin GPIO_PIN_1
 #define LED_GPIO_Port GPIOB
 #define ENC_INT_CS_Pin GPIO_PIN_12
@@ -89,7 +97,11 @@ void main_error_handler(uint32_t);
 #define USB_DP_Pin GPIO_PIN_12
 #define USB_DP_GPIO_Port GPIOA
 /* USER CODE BEGIN Private defines */
-
+#define ADC_DATA_SIZE 3 //3
+#define ADC_CHANNEL_I_U ADC_CHANNEL_10
+#define ADC_CHANNEL_I_W ADC_CHANNEL_11
+#define ADC_CHANNEL_I_REF ADC_CHANNEL_12
+#define ADC_CHANNEL_I_V ADC_CHANNEL_13
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

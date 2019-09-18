@@ -20,6 +20,18 @@ WATCHJ(...);
 PRINTT_PERIODIC(period_ms, "%f", 3.2);  Print on the terminal each `period_ms` ms
 PRINTJ_PERIODIC(...);
 
+BINT(v) // Print on the terminal all the bits of v (in 32 bits)
+    // The result looks like :
+    //
+    // 10987654321098765432109876543210
+    // 00000100000000000000010100000011
+    //
+    // The first line corresponds to the index modulo 10 of all the bits and the 
+    // second one corresponds to the values of the bits. 
+    // The bit of index 31 is on the left and the bit of index 0 is on the 
+    // right.
+BINJ(v) // Same as BINT, but print on the JTag.
+
 ASSERTION(condition) // Raise an two error, the first one with the line 
           // the second ond with the name of file.
           // On the terminal, you can print the error by typing err

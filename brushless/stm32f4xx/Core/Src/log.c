@@ -57,6 +57,7 @@ void log_next_sample(){
   if( log_is_not_full ){
     log_is_not_full = logs_insert(&logs);
     if( !log_is_not_full ){
+      PRINTT("LOG IS FULL");
       PRINTJ("Log queue is full. We stop the log service.");
     }
   }
@@ -69,6 +70,11 @@ void log_title(){
     DIRECT_JTAG_FILE_DESCRIPTOR,
     "cpt, "
     "to_adapt\n"
+  );
+  dprintf(
+    DIRECT_JTAG_FILE_DESCRIPTOR,
+    "uint32_t, "
+    "float\n"  // TO ADAPT
   );
   delay_us(1000);
 }
@@ -86,7 +92,53 @@ TERMINAL_COMMAND(stop_log,"stop log"){
   log_stop();
 }
 
+static inline void print_uint4( const uint32_t v ){
+  ITM_SendChar('0'+v);
+}
+
+static inline void print_uint32_t(uint32_t v){
+  #if 1
+  print_uint4( v >> 28 );
+  print_uint4( (v & 0x0F000000) >> 24 );
+  print_uint4( (v & 0x00F00000) >> 20 );
+  print_uint4( (v & 0x000F0000) >> 16 );
+  print_uint4( (v & 0x0000F000) >> 12 );
+  print_uint4( (v & 0x00000F00) >> 8 );
+  print_uint4( (v & 0x000000F0) >> 4 );
+  print_uint4( v & 0x0000000F );
+  #else
+  ITM_SendChar( v >> 24 );
+  ITM_SendChar( (v & 0x00FF0000) >> 16 );
+  ITM_SendChar( (v & 0x0000FF00) >> 16 );
+  ITM_SendChar( v & 0x000000FF );
+  #endif
+};
+
+typedef union {
+  float from;
+  uint32_t to;
+} float_to_uint32_t;
+
+static inline void print_float(const float f){
+  const float_to_uint32_t val = {.from=f};
+  print_uint32_t(val.to);
+}
+
+typedef union {
+  int32_t from;
+  uint32_t to;
+} int32_to_uint32_t;
+
+static inline void print_int32_t(const int32_t i){
+  const int32_to_uint32_t val = {.from=i};
+  print_uint32_t(val.to);
+}
+
 void process_sample(volatile log_sample_t* sample){
+  print_int32_t(sample->cpt);
+  print_float(sample->to_adapt);
+  ITM_SendChar('\n');
+  #if 0
   dprintf(
     DIRECT_JTAG_FILE_DESCRIPTOR,
     "%ld, "
@@ -95,6 +147,7 @@ void process_sample(volatile log_sample_t* sample){
     sample->cpt,
     sample->to_adapt
   );
+  #endif
 }
 
 void log_tick(){

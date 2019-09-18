@@ -38,9 +38,22 @@
 #include <observer.h>
 #include <priority.h>
 #include <frequence_definitions.h>
+#include <current.h>
+#include <pwm.h>
 
-#define TIM1_PERIOD PWM_PERIOD // The timer to generate all the pwm
-#define TIM3_PERIOD SYCLK_TO_ENCODER_PERIOD // Timer for the encoder.
+// TIM1 is a center-aligned timer
+#define TIM1_PERIOD CA_RELOAD(2*PWM_PERIOD) // The timer to generate all the pwm
+
+// TIM2 is a counter-up timer
+#define TIM2_PERIOD CU_RELOAD(PWM_PERIOD) // The timer to generate all the pwm
+//#define TIM2_CC2_PULSE (PWM_PERIOD-CURRENT_MEDURE_HALF_PERIOD)
+#define TIM2_CC2_PULSE delay_period
+_Static_assert(TIM2_CC2_PULSE>0, "");
+_Static_assert(TIM2_CC2_PULSE<PWM_PERIOD, "");
+#define TIM2_CC1_PULSE TIM2_CC2_PULSE
+
+// TIM3 is a counter-up timer
+#define TIM3_PERIOD CU_RELOAD(SYCLK_TO_ENCODER_PERIOD) // Timer for the encoder.
 #define TIM4_PERIOD 4 // Clock user to reset and synchronize all the other clock
 #define TIM5_PERIOD 4294967295 // Clock used to launch background computation
 #define TIM1_PRESCALAR 0
@@ -67,17 +80,21 @@
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
+DMA_HandleTypeDef hdma_adc1;
 
 SPI_HandleTypeDef hspi2;
 DMA_HandleTypeDef hdma_spi2_rx;
 DMA_HandleTypeDef hdma_spi2_tx;
 
 TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
 TIM_HandleTypeDef htim5;
 
 /* USER CODE BEGIN PV */
+__IO uint16_t adc_data[ADC_DATA_SIZE] = {0};
+extern volatile bool start_adc;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -86,6 +103,7 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_TIM1_Init(void);
+static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM4_Init(void);
 static void MX_TIM5_Init(void);
@@ -219,6 +237,12 @@ TERMINAL_COMMAND(test_ns, "test milli oscillation on LED.")
   }
 }
 
+void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc){
+  if(hadc == &hadc1){
+    RAISE_ERROR;
+  }
+}
+
 void HAL_SPI_ErrorCallback(SPI_HandleTypeDef* hspi){
   if(hspi == &hspi2){
     encoder_error_spi_call_back();
@@ -236,6 +260,9 @@ TERMINAL_PARAMETER_BOOL(st, "decl", false);
 void start_and_synchronize_timers(){
   // We start timer 1, 2 and 4
   if( HAL_TIM_Base_Start(&htim1) != HAL_OK ){
+    raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
+  }
+  if( HAL_TIM_Base_Start(&htim2) != HAL_OK ){
     raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
   }
   if( HAL_TIM_Base_Start(&htim3) != HAL_OK ){
@@ -259,6 +286,21 @@ void start_and_synchronize_timers(){
     raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
   }
 
+  // We can now start the PWM of timer 2
+  if( HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1) != HAL_OK ){
+    RAISE_ERROR;
+  }
+  if( HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2) != HAL_OK ){
+    raise_error(ERROR_CURRENT, ADC_PWM);
+  }
+  if( HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2) != HAL_OK ){
+    RAISE_ERROR;
+  }
+  // We can now start Output compare for 2 
+  //if( HAL_TIM_OC_Start(&htim2, TIM_CHANNEL_2) != HAL_OK){
+  //  raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
+  //};
+
   // We can now start Output compare and interuption for timer 1, 2 and 3.
   if( HAL_TIM_OC_Start(&htim3, TIM_CHANNEL_1) != HAL_OK){
     raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
@@ -281,8 +323,32 @@ void start_and_synchronize_timers(){
     raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
   };
 }
+
+volatile bool complete_current_adc = false;
+// Call back when ADC is finishedDC
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
+//void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc){
+  if( hadc == &hadc1 ){
+    //COOLDOWN(1000000){
+    //  uint32_t v = hadc1.Instance->SR;
+    //  BINT(v);
+    //}
+    COOLDOWN(2000000){
+      terminal_println("-");
+      for( uint32_t i=0; i< ADC_DATA_SIZE; i++ ){
+        terminal_print("ADC : ");
+        terminal_println_float(
+          ((adc_data[i]-2048.0)*STM32_ADC_VOLTAGE_MAX*CURRENT_AO_GAIN)/4096
+        );
+      }
+    }
+    complete_current_adc = true;
+  }
+}
 /* USER CODE END 0 */
 
+
+static volatile uint32_t sr, cr1, cr2; 
 /**
   * @brief  The application entry point.
   * @retval int
@@ -315,6 +381,7 @@ int main(void)
   MX_DMA_Init();
   MX_SPI2_Init();
   MX_TIM1_Init();
+  MX_TIM2_Init();
   MX_TIM3_Init();
   MX_TIM4_Init();
   MX_TIM5_Init();
@@ -322,19 +389,27 @@ int main(void)
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
 
+
   serial_init();
   terminal_init(get_serial());
   
   system_init();
   encoder_init(&hspi2, ENC_INT_CS_GPIO_Port,ENC_INT_CS_Pin);
+  //encoder_init(&hspi2, ENC_EXT_CS_GPIO_Port,ENC_EXT_CS_Pin);
   observer_init();
   motor_init();
   foc_init();
   #ifdef ACTIVATE_LOG
   log_init();
   #endif
- 
+
   start_and_synchronize_timers();
+
+  start_adc = true;
+ 
+  sr = hadc1.Instance->SR;
+  cr1 = hadc1.Instance->CR1;
+  cr2 = hadc1.Instance->CR2;
   encoder_start();
   motor_start();
   /* USER CODE END 2 */
@@ -343,6 +418,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+
     system_tick();
     encoder_tick();
     serial_tick();
@@ -400,6 +477,15 @@ void SystemClock_Config(void)
   }
 }
 
+TERMINAL_COMMAND(test, ""){
+  PRINTT("--- sr");
+  BINT(sr);
+  PRINTT("--- cr1");
+  BINT(cr1);
+  PRINTT("--- cr2");
+  BINT(cr2);
+}
+
 /**
   * @brief ADC1 Initialization Function
   * @param None
@@ -422,28 +508,95 @@ static void MX_ADC1_Init(void)
   hadc1.Instance = ADC1;
   hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
-  hadc1.Init.ScanConvMode = DISABLE;
+  
+  hadc1.Init.ScanConvMode = ENABLE;
+  //hadc1.Init.ScanConvMode = DISABLE;
+
   hadc1.Init.ContinuousConvMode = DISABLE;
-  hadc1.Init.DiscontinuousConvMode = DISABLE;
-  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc1.Init.DiscontinuousConvMode = ENABLE;
+  hadc1.Init.NbrOfDiscConversion = 1;
+  //hadc1.Init.ContinuousConvMode = ENABLE;
+  //hadc1.Init.DiscontinuousConvMode = DISABLE;
+  //hadc1.Init.NbrOfDiscConversion = 0;
+
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_FALLING;
+  //hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
+  //hadc1.Init.ExternalTrigConv = ADC_EXTERNALTRIGCONV_T2_TRGO;
+  hadc1.Init.ExternalTrigConv = ADC_EXTERNALTRIGCONV_T2_CC2;
+  //hadc1.Init.ExternalTrigConv = ADC_EXTERNALTRIGCONV_T1_CC1;
+
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc1.Init.NbrOfConversion = 1;
+  //hadc1.Init.NbrOfConversion = 6;
+  hadc1.Init.NbrOfConversion = ADC_DATA_SIZE;
+  //hadc1.Init.DMAContinuousRequests = ENABLE;
   hadc1.Init.DMAContinuousRequests = DISABLE;
-  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;
+  //hadc1.Init.EOCSelection = DISABLE;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
   {
     main_error_handler(__LINE__);
   }
+  
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time. 
   */
-  sConfig.Channel = ADC_CHANNEL_10;
+  sConfig.Channel = ADC_CHANNEL_I_U;
   sConfig.Rank = 1;
   sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     main_error_handler(__LINE__);
   }
+
+#if ADC_DATA_SIZE > 1
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time. 
+  */
+  sConfig.Channel = ADC_CHANNEL_I_V;
+  sConfig.Rank = 2;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+#if ADC_DATA_SIZE > 2
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time. 
+  */
+  sConfig.Channel = ADC_CHANNEL_I_W;
+  sConfig.Rank = 3;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+#if ADC_DATA_SIZE > 3
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time. 
+  */
+  sConfig.Channel = ADC_CHANNEL_I_U;
+  sConfig.Rank = 4;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+#if ADC_DATA_SIZE > 4
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time. 
+  */
+  sConfig.Channel = ADC_CHANNEL_I_V;
+  sConfig.Rank = 5;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+#if ADC_DATA_SIZE > 5
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time. 
+  */
+  sConfig.Channel = ADC_CHANNEL_I_W;
+  sConfig.Rank = 6;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+#endif
+#endif
+#endif
+#endif
+#endif
   /* USER CODE BEGIN ADC1_Init 2 */
 
   /* USER CODE END ADC1_Init 2 */
@@ -579,6 +732,83 @@ static void MX_TIM1_Init(void)
 }
 
 /**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_SlaveConfigTypeDef sSlaveConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = TIM1_PRESCALAR;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = TIM2_PERIOD;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+  if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
+  //if (HAL_TIM_OC_Init(&htim2) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+  sSlaveConfig.SlaveMode = TIM_SLAVEMODE_RESET;
+  sSlaveConfig.InputTrigger = TIM_TS_ITR3;
+  if (HAL_TIM_SlaveConfigSynchro(&htim2, &sSlaveConfig) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+  //sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_OC2REF;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+  //sConfigOC.OCMode = TIM_OCMODE_INACTIVE;
+  //sConfigOC.OCMode = TIM_OCMODE_TIMING;
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = TIM2_CC1_PULSE;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  //sConfigOC.OCPolarity = TIM_OCPOLARITY_LOW;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  //if (HAL_TIM_OC_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+  sConfigOC.Pulse = TIM2_CC2_PULSE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
+  HAL_TIM_MspPostInit(&htim2);
+
+}
+
+/**
   * @brief TIM3 Initialization Function
   * @param None
   * @retval None
@@ -617,6 +847,10 @@ static void MX_TIM3_Init(void)
   {
     main_error_handler(__LINE__);
   }
+  if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
   sSlaveConfig.SlaveMode = TIM_SLAVEMODE_RESET;
   sSlaveConfig.InputTrigger = TIM_TS_ITR3;
   if (HAL_TIM_SlaveConfigSynchro(&htim3, &sSlaveConfig) != HAL_OK)
@@ -637,9 +871,16 @@ static void MX_TIM3_Init(void)
   {
     main_error_handler(__LINE__);
   }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = ENC_SPI_DELAY;
+  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    main_error_handler(__LINE__);
+  }
   /* USER CODE BEGIN TIM3_Init 2 */
 
   /* USER CODE END TIM3_Init 2 */
+  HAL_TIM_MspPostInit(&htim3);
 
 }
 
@@ -754,6 +995,7 @@ static void MX_DMA_Init(void)
 
   /* DMA controller clock enable */
   __HAL_RCC_DMA1_CLK_ENABLE();
+  __HAL_RCC_DMA2_CLK_ENABLE();
 
   /* DMA interrupt init */
   /* DMA1_Stream3_IRQn interrupt configuration */
@@ -762,6 +1004,9 @@ static void MX_DMA_Init(void)
   /* DMA1_Stream4_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, ENCODER_DMA_TX, ENCODER_DMA_TX_SUBPRIORITY);
   HAL_NVIC_EnableIRQ(DMA1_Stream4_IRQn);
+  /* DMA2_Stream0_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, ADC_PRIORITY, ADC_SUBPRIORITY);
+  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
 
 }
 
@@ -777,8 +1022,8 @@ static void MX_GPIO_Init(void)
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
