@@ -1,0 +1,79 @@
+BUG A CORRIGER :
+================
+8)
+ Corriger le bug concernant la lecture du diagnostique.
+ Y-a-t-il une erreur de lecture en mode rapide.
+ Commande + affichage obtenu :
+  > $ diagnostic
+  > magnetic field strength : too low
+  > cordi : OVERFLOW (the measured angle is not reliable)
+  > offset comensation : NOT READY
+  > automatic gain control : 208
+9) Le calcul du 'level' dans le système de calcule de vitesse adaptatif pose
+   proble :
+   Si on asservit à une vitesse fixe :
+     err
+     warn
+     motor_enable
+     tare
+     sc 23
+
+   le calcul du level n'est pas correct
+     level
+   donne 1
+
+   IDEM pour 8
+10) Quand on change de mode pour l'asservissement, rien ne se passe si on 
+    n'écrit pas deux fois la même commande :
+  err
+  warn
+  motor_enable
+  tare
+  sc 23.0  // il va a la binne vitesse
+  ac 0.0   // il va bien en 0
+  sc 23.0  // il ne se passe rien
+  sc 23.0  // il va à la vitese de consign
+11) 
+  Quand on affiche certain reel au terminal, il apparait ":"
+  à la fin.
+
+
+FONCTIONNALITE A FAIRE :
+========================
+3) 
+  Calculer Vitesse et position avec les 3 capteur 
+  a efet HALL, puis comparer avec l'encodeur
+4) 
+  Verifier la vitesse avec un capteur exterieur
+5)  
+  Faire une boucle ouverte et comparer la position
+  de la roue en fonction de la position du moteur avec un système de 
+  mesure exterieur.
+6)
+   suprimer le calcul de vitesse adaptatif réalisé en permence et le 
+   mettre uniquement au moement où l'on donne une nouvelle consigne de vitesse.
+7)
+  Prévoir théoriquement le délai entre la mesure de position et l'obtention de 
+  sa valeur par l'encodeur magnétique.
+  Actuellement il y a 100us de delai qui correspond à 10kHz la fréquence de 
+  rafraîchissement. Est-ce un bug ?
+11) 
+  Afficher les unités mesures pour certaines commandes (speed, av_speed, angle
+  etc ...)
+
+
+FAIT :
+====
+1)
+   Regarder la compensation fait par l'encoeur et tester en la 
+   supprimant la compensation faite par l'encodeur
+   RAPPORT : 
+    Le capteur n'évalue pas correctement la vitesse. Il vaut mieux récupérer 
+    la position brut et coriger soit même le delai.
+2)
+  Vérifier que le délai est compensé à l'aide de l'approximation : 
+  I = 0
+  RPPORT : 
+    Il y a un delai à compenser à la main
+
+
