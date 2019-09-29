@@ -28,7 +28,7 @@ fi
 LOG=$1
 
 (
-  cd tools/convert_binaries
+  cd tools/logs/convert_binaries
   make > /dev/null
   ./convert_binary -test
 )
@@ -40,4 +40,4 @@ then
   exit 1
 fi
 
-./tools/convert_binaries/convert_binary $LOG
+./tools/logs/convert_binaries/convert_binary $LOG
