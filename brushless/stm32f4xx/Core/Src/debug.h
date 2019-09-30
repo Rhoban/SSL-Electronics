@@ -184,9 +184,11 @@ inline bool update_countdown(countdown_t* countdown){
 #define HELP2(v) TERMINAL_PARAMETER_INT( h ## v , "", 0 )
 
 #ifdef DEBUG
-  #define LED_ON_WHEN_ENCODER_TICK
-  #define LED_ON_WHEN_COMPUTING_COMMANDS
-  #define LED_ON_WHEN_MAKING_ADC
+  //#define PWM_ON_FOR_ADC_TICK
+  //#define PWM_ON_FOR_ENCODER_TICK
+  //#define LED_ON_WHEN_ENCODER_TICK
+  //#define LED_ON_WHEN_COMPUTING_COMMANDS
+  //#define LED_ON_WHEN_MAKING_ADC
 #endif
 
 // #define ACTIVATE_LOG

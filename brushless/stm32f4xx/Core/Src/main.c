@@ -287,15 +287,19 @@ void start_and_synchronize_timers(){
   }
 
   // We can now start the PWM of timer 2
-  if( HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1) != HAL_OK ){
-    RAISE_ERROR;
-  }
+  #ifdef PWM_ON_FOR_ADC_TICK
+    if( HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1) != HAL_OK ){
+      RAISE_ERROR;
+    }
+  #endif
   if( HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2) != HAL_OK ){
     raise_error(ERROR_CURRENT, ADC_PWM);
   }
-  if( HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2) != HAL_OK ){
-    RAISE_ERROR;
-  }
+  #ifdef PWM_ON_FOR_ENCODER_TICK
+    if( HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2) != HAL_OK ){
+      RAISE_ERROR;
+    }
+  #endif
   // We can now start Output compare for 2 
   //if( HAL_TIM_OC_Start(&htim2, TIM_CHANNEL_2) != HAL_OK){
   //  raise_error(ERROR_TIMER_INIT_AT_LINE, __LINE__);
