@@ -191,10 +191,18 @@ inline bool update_countdown(countdown_t* countdown){
   //#define LED_ON_WHEN_MAKING_ADC
 #endif
 
-// #define ACTIVATE_LOG
+#define ACTIVATE_LOG
 #ifdef ACTIVATE_LOG
   #include <log.h>
+  #define LOG(variable, value) current_log_sample->variable = value;
+  #define SAVE_LOG(counter) COUNTDOWN(counter){ \
+    log_next_sample(); \
+  } 
+#else
+  #define LOG(variable, value) 
+  #define SAVE_LOG(counter) 
 #endif
+
 
 #define BIND(fd, x) { \
   int16_t j = ( 32%10 -1 ); \

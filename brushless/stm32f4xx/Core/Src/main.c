@@ -400,8 +400,20 @@ int main(void)
   terminal_init(get_serial());
   
   system_init();
-  encoder_init(&hspi2, ENC_INT_CS_GPIO_Port,ENC_INT_CS_Pin);
-  //encoder_init(&hspi2, ENC_EXT_CS_GPIO_Port,ENC_EXT_CS_Pin);
+  #if defined(USE_INTERNAL_ENCODER)
+    // We disactivate the External encoder
+    HAL_GPIO_WritePin(ENC_EXT_CS_GPIO_Port, ENC_EXT_CS_Pin, GPIO_PIN_SET);
+    encoder_init(&hspi2, ENC_INT_CS_GPIO_Port,ENC_INT_CS_Pin);
+    #if defined(USE_EXTERNAL_ENCODER)
+    _Static_assert(false, "EXTERNAL AND INTERNAL ENCODER IS NOT SUPPORTED.");
+    #endif
+  #elif defined(USE_EXTERNAL_ENCODER)
+    // We disactivate the Internal encoder
+    HAL_GPIO_WritePin(ENC_INT_CS_GPIO_Port, ENC_INT_CS_Pin, GPIO_PIN_SET);
+    encoder_init(&hspi2, ENC_EXT_CS_GPIO_Port,ENC_EXT_CS_Pin);
+  #else
+    _Static_assert(false,"An encoder should be defined.");
+  #endif
   observer_init();
   motor_init();
   foc_init();
@@ -574,7 +586,7 @@ static void MX_ADC1_Init(void)
 #if ADC_DATA_SIZE > 3
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time. 
   */
-  sConfig.Channel = ADC_CHANNEL_I_U;
+  sConfig.Channel = ADC_CHANNEL_I_REF;
   sConfig.Rank = 4;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {

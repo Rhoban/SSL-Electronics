@@ -32,6 +32,7 @@
 #include <terminal.h>
 #include <arm_math.h>
 #include "debug.h"
+#include <system.h>
 
 #define MAX_VOLTAGE MOTOR_VOLTAGE
 #define MAX_VOLTAGE_SQUARE (MOTOR_VOLTAGE*MOTOR_VOLTAGE)
@@ -160,12 +161,12 @@ static inline void filter_current_consign_and_compute_derivate(float current_con
 
 bool direct=0;
 
-#define COMPENSATE_FRICTION
+//#define COMPENSATE_FRICTION
 static inline void compute_voltage_consign(){
   float velocity = observer_get_velocity();
   #ifdef COMPENSATE_FRICTION
     float friction;
-    if( abs(velocity) < 0.01 ){
+    if( abs(velocity) < 0.2 ){
       // TODO : We need to use the velocity consign to know 
       // which sense we need to use to remove the frictions.
       // Do we need to make the work here ?
@@ -196,15 +197,15 @@ static inline void compute_voltage_consign(){
   // We need to check there is no problem with the sign of the
   // velocity
   motor.quadrature_voltage_consign = (
-    - motor.Kem * (
+    motor.Kem * (
       velocity
       #ifdef COMPENSATE_FRICTION
       + friction
       #endif
-    ) - motor.R * motor.current - motor.Lq * motor.current_derivate
+    ) + motor.R * motor.current + motor.Lq * motor.current_derivate
   );
   motor.direct_voltage_consign = (
-    + motor.Lq * velocity * motor.current
+    - motor.Lq * velocity * motor.current
   );
 }
 
@@ -379,7 +380,7 @@ TERMINAL_COMMAND( motor_r, "" ){
   }
 }
 
-TERMINAL_COMMAND( motor_kem, "" ){
+TERMINAL_COMMAND( kem, "" ){
   if( argc == 0 ){
     terminal_println_float(motor.Kem);
   }else if( argc == 1 ){
@@ -440,6 +441,15 @@ bool motor_is_enable(){
   return !motor.free_spining;
 }
 
+static inline void _security_check(){
+  #ifdef LIMIT_ANGLE
+  float angle = observer_get_angle();
+  if( angle < ANGLE_MIN || angle > ANGLE_MAX){
+    system_emergency();
+  }
+  #endif
+}
+
 void motor_prepare_pwm(){
   if( motor.mode == TARE && motor.reset_origin){
     encoder_set_origin();
@@ -476,6 +486,15 @@ void motor_prepare_pwm(){
     phase_voltage_to_pwm_voltage();
   }
   motor.computation_is_done = true;
+
+  LOG(raw_angle, encoder_get_raw_angle());
+  LOG(angle, encoder_get_angle());
+  LOG(pred_angle, angle);
+  LOG(current_consign, motor.current_consign);
+  LOG(speed, velocity);
+
+  SAVE_LOG(3);
+  _security_check();
 }
 
 void motor_apply_pwm(){

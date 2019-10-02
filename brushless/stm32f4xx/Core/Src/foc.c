@@ -25,6 +25,7 @@
 #include <terminal.h>
 #include <assertion.h>
 #include "debug.h"
+#include <system.h>
 
 typedef enum {
   OPEN_LOOP_CONTROL,
@@ -57,14 +58,14 @@ void foc_set_angular_consign(float angular_consign){
 
 void foc_set_speed_consign(float speed_consign){
   foc.speed_consign = speed_consign;
+  foc.mode = SPEED_CONTROL;
   motor_change_to_foc_mode();
   observer_update_level( foc.speed_consign );
-  foc.mode = SPEED_CONTROL;
 }
 
 TERMINAL_COMMAND(sc,"speed consign tr/s"){
   if( argc != 1 ){
-    terminal_println_float(foc.speed_consign);
+    terminal_println_float(foc.speed_consign*(1.0/(2*M_PI)));
     return;
   }else{
     float speed_csg = 2*M_PI*atof(argv[0]);
@@ -72,15 +73,6 @@ TERMINAL_COMMAND(sc,"speed consign tr/s"){
   }
 }
 
-TERMINAL_COMMAND(ac,"angular consign tr"){
-  if( argc != 1 ){
-    terminal_println_float(foc.angular_consign);
-    return;
-  }else{
-    float speed_csg = 2*M_PI*atof(argv[0]);
-    foc_set_angular_consign(speed_csg);
-  }
-}
 
 TERMINAL_COMMAND( ksp, "" ){
   if( argc == 0 ){
@@ -88,6 +80,24 @@ TERMINAL_COMMAND( ksp, "" ){
   }else if( argc == 1 ){
     float kp = atof(argv[0]);
     foc.speed_pi_constants.p = kp;
+  }
+}
+
+TERMINAL_COMMAND(ac,"angular consign tr"){
+  if( argc != 1 ){
+    terminal_println_float(foc.angular_consign*(1/(2*M_PI)));
+    return;
+  }else{
+    float angle_csg = 2*M_PI*atof(argv[0]);
+    #ifdef ANGLE_MAX
+    if( angle_csg >= ANGLE_MAX ){
+      angle_csg = ANGLE_MAX;
+    }
+    if( angle_csg <= ANGLE_MIN ){
+      angle_csg = ANGLE_MIN;
+    }
+    #endif
+    foc_set_angular_consign(angle_csg);
   }
 }
 
@@ -261,5 +271,8 @@ float foc_update_and_get_control(){
       break;
   }
   _security_check();
+  
+  LOG( angle_consign, foc.angular_consign);
+  LOG( speed_consign, foc.speed_consign);
   return control;
 }

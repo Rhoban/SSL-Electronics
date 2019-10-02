@@ -256,7 +256,7 @@ void get_estimated_angle_for_next_PWM_update(float* angle, float *speed){
 
 
 void observer_update_level( float velocity ){
-  _observer_update_level( observer.velocity );
+  _observer_update_level( velocity );
 }
 void observer_update(float angle, uint32_t mesure_time_systick){
   ASSERT(mesure_time_systick < CLK_SYSCLK_PERIOD);
@@ -334,6 +334,6 @@ TERMINAL_COMMAND(speed, "speed in tr/s (0: tr/s, 1:rad/s, 2:deg/s)")
 
 TERMINAL_COMMAND(av_speed, "average speed")
 {
-  AVERAGE( av_speed, observer_get_velocity(), 16 );
+  AVERAGE( av_speed, observer_get_velocity(), 32 );
   PRINTT("%f", av_speed);
 }

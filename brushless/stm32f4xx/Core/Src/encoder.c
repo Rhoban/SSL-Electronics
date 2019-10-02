@@ -56,6 +56,7 @@ typedef struct {
   butterworth_3_data_t butterworth_filter;
   
   uint16_t last_raw_angle;  
+  volatile uint16_t raw_origin;
   volatile uint16_t raw_angle;
   uint32_t data_sysclk_count;
   int32_t absolute_angle;
@@ -136,6 +137,26 @@ void encoder_start(){
 }
 void encoder_stop(){
   state = NOT_INIT;
+}
+
+float encoder_get_raw_angle(){
+  return encoder.raw_angle* (2*M_PI/RESOLUTION_ONE_TURN);
+}
+
+TERMINAL_COMMAND( encoder_raw_angle, "raw angle"){
+  terminal_println_float( encoder_get_raw_angle() );
+}
+
+float encoder_get_absolute_angle(){
+  return encoder.absolute_angle* (2*M_PI/RESOLUTION_ONE_TURN);
+}
+
+TERMINAL_COMMAND( encoder_absolute_angle, "raw angle"){
+  terminal_println_float( encoder_get_absolute_angle() );
+}
+
+float encoder_get_angle(){
+  return encoder.angle;
 }
 
 extern TIM_HandleTypeDef htim5;
@@ -306,7 +327,16 @@ void encoder_compute_angle(){
   computation_is_done = 0;
 }
 
+float get_raw_origin(){
+  return encoder.raw_origin* (2*M_PI/RESOLUTION_ONE_TURN);
+}
+
+TERMINAL_COMMAND( raw_origin, "raw_origin "){
+  terminal_println_float( get_raw_origin() );
+}
+
 void encoder_set_origin(){
+  encoder.raw_origin = encoder.raw_angle;
   encoder.absolute_angle = 0;
   encoder.velocity = 0;
   reset_filter(&(encoder.butterworth_filter));

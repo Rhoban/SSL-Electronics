@@ -27,8 +27,14 @@ define_and_declare_static_queue(log_sample_t, logs, 256 );
 volatile log_sample_t* current_log_sample;
 
 void init_log_sample(volatile log_sample_t* sample){
-    sample->cpt = cpt;
-    sample->to_adapt = 0;
+  sample->cpt = cpt;
+  sample->raw_angle = 0;
+  sample->angle = 0;
+  sample->pred_angle = 0;
+  sample->angle_consign = 0;
+  sample->speed_consign = 0;
+  sample->current_consign = 0;
+  sample->speed = 0;
 }
 
 static bool log_is_not_full = true;
@@ -69,11 +75,23 @@ void log_title(){
   dprintf(
     DIRECT_JTAG_FILE_DESCRIPTOR,
     "cpt, "
-    "to_adapt\n"
+    "raw_angle, "
+    "angle, "
+    "pred_angle, "
+    "angle_consign, "
+    "speed_consign, "
+    "current_consign, "
+    "speed\n"
   );
   dprintf(
     DIRECT_JTAG_FILE_DESCRIPTOR,
     "uint32_t, "
+    "float, "
+    "float, "
+    "float, "
+    "float, "
+    "float, "
+    "float, "
     "float\n"  // TO ADAPT
   );
   delay_us(1000);
@@ -136,7 +154,14 @@ static inline void print_int32_t(const int32_t i){
 
 void process_sample(volatile log_sample_t* sample){
   print_int32_t(sample->cpt);
-  print_float(sample->to_adapt);
+
+  print_float(sample->angle);
+  print_float(sample->pred_angle);
+  print_float(sample->angle_consign);
+  print_float(sample->speed_consign);
+  print_float(sample->current_consign);
+  print_float(sample->speed);
+
   ITM_SendChar('\n');
   #if 0
   dprintf(

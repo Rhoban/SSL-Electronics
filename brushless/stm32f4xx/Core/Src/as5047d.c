@@ -91,7 +91,7 @@
   #define WRITE_LOW_BIT 14 // This bit should always be LOW.
 
 // 
-// Adress conatined in a SPI command Frame
+// Adress contained in a SPI command Frame
 //
 #define NOP_ADD 0x0000 // No Operation
 #define ERRFL_ADD 0x0001 // Error register

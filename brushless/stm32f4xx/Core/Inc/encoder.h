@@ -36,11 +36,14 @@ void encoder_start();
 void start_read_encoder_position();
 void encoder_set_origin();
 
-float encoder_angle();
 void encoder_spi_call_back();
 
 void encoder_error_spi_call_back();
 
 // This function is automatically called by an interruption with a given 
 // priority
+float encoder_get_angle();
 void encoder_compute_angle();
+float encoder_get_raw_angle();
+float encoder_get_absolute_angle();
+float get_raw_origin();

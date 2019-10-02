@@ -18,16 +18,71 @@
 
 #pragma once
 
-#define NB_POSITIVE_MAGNETS 8
-#define MOTOR_VOLTAGE 24
-#define REVERSE_PHASE
+#define FREE_MOTOR_GRATT
+//#define CYCLOIDE
+
+#ifdef FREE_MOTOR_GRATT
+  #define NB_POSITIVE_MAGNETS 7
+  #define MOTOR_VOLTAGE 24
+  //#define REVERSE_PHASE
+  //#define USE_INTERNAL_ENCODER
+  #define USE_EXTERNAL_ENCODER
+  //#define KEV_rad_per_V_S 22.46 // Electromagnetic constant
+  #define KEV_rad_per_V_S 22.46 // Electromagnetic constant
+  #define FRICTION_CONSTANT_rad_s 17.93 // Electromagnetic constant
+  #define MOTOR_LQ 0.0 //0.000463  // Quadrature Inductance : inductance of the virtual coil that is 
+                // perpendicular to the virtual magnet of the stator.
+  #define MOTOR_R 1.0 // 2.6  // resistance of the coil
+  #define MOTOR_KEM (1.0/KEV_rad_per_V_S)   // Electromagnetic constant of the motor
+
+  #define MAX_VOLTAGE_FOR_TARING_PROCESS (MAX_VOLTAGE/5.0) 
+  #define MAX_CURRENT 7.0
+
+  #define SPEED_LIMIT (40*2*M_PI)
+  #define INTEGRAL_SPEED_LIMIT SPEED_LIMIT
+  #define KP_ANGLE 100.0
+  #define KI_ANGLE 0.0
+  // PID 
+  #define KP_SPEED 0.15
+  #define KI_SPEED 0.5
+  #define CURRENT_LIMIT MAX_CURRENT 
+  #define INTEGRAL_CURRENT_LIMIT MAX_CURRENT 
+#endif
+
+
+#ifdef CYCLOIDE
+  #define NB_POSITIVE_MAGNETS 7
+  #define MOTOR_VOLTAGE 24
+  //#define REVERSE_PHASE
+  //#define USE_INTERNAL_ENCODER
+  #define USE_EXTERNAL_ENCODER
+  //#define KEV_rad_per_V_S 22.46 // Electromagnetic constant
+  #define KEV_rad_per_V_S 22.46 // Electromagnetic constant
+  #define FRICTION_CONSTANT_rad_s 17.93 // Electromagnetic constant
+  #define MOTOR_LQ 0.0 //0.000463  // Quadrature Inductance : inductance of the virtual coil that is 
+                // perpendicular to the virtual magnet of the stator.
+  #define MOTOR_R 1.0 // 2.6  // resistance of the coil
+  #define MOTOR_KEM (1.0/KEV_rad_per_V_S)   // Electromagnetic constant of the motor
+
+  #define MAX_VOLTAGE_FOR_TARING_PROCESS (MAX_VOLTAGE/5.0) 
+  #define MAX_CURRENT 7.0
+
+  #define SPEED_LIMIT (40*2*M_PI)
+  #define INTEGRAL_SPEED_LIMIT SPEED_LIMIT
+  #define KP_ANGLE 100.0
+  #define KI_ANGLE 0.0
+  // PID 
+  #define KP_SPEED 0.15
+  #define KI_SPEED 0.5
+  #define CURRENT_LIMIT MAX_CURRENT 
+  #define INTEGRAL_CURRENT_LIMIT MAX_CURRENT 
+
+  #define LIMIT_ANGLE
+  #define ANGLE_MAX 2.5*2*M_PI
+  #define ANGLE_MIN -1.0*2*M_PI
+#endif
+
 #define ADDITIONAL_DELAY_FROM_ENCODER_TO_COMMAND -110
-#define KEV_rad_per_V_S 19.8 // Electromagnetic constant
-#define FRICTION_CONSTANT_rad_s 25.0 // Electromagnetic constant
-#define MOTOR_LQ 0.0 //0.000463  // Quadrature Inductance : inductance of the virtual coil that is 
-              // perpendicular to the virtual magnet of the stator.
-#define MOTOR_R 4.6 // 2.6  // resistance of the coil
-#define MOTOR_KEM (1.0/KEV_rad_per_V_S)   // Electromagnetic constant of the motor
 
 // 
 // To allow current measure and good rising edges, we need to have a minimal 
@@ -62,13 +117,6 @@ _Static_assert(
 );
 
 
-#define MAX_VOLTAGE_FOR_TARING_PROCESS (MAX_VOLTAGE/8.0) 
-#define MAX_CURRENT 1.7
-
-#define SPEED_LIMIT (30*2*M_PI)
-#define INTEGRAL_SPEED_LIMIT SPEED_LIMIT
-#define KP_ANGLE 12.0
-#define KI_ANGLE 1.0
 
 //#define U_CURRENT_IS_POSITIVE
 #define U_CURRENT_IS_NEGATIVE
@@ -97,8 +145,3 @@ _Static_assert(
 #endif
 
 
-// PID 
-#define KP_SPEED 0.1
-#define KI_SPEED 0.1
-#define CURRENT_LIMIT MAX_CURRENT 
-#define INTEGRAL_CURRENT_LIMIT MAX_CURRENT 

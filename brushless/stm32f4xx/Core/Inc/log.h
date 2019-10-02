@@ -60,7 +60,13 @@
 
 typedef struct {
   volatile uint32_t cpt;
-  volatile float to_adapt;
+  volatile float raw_angle;
+  volatile float angle;
+  volatile float pred_angle;
+  volatile float angle_consign;
+  volatile float speed_consign;
+  volatile float current_consign;
+  volatile float speed;
 } log_sample_t;
 
 extern volatile log_sample_t* current_log_sample;

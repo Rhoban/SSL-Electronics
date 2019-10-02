@@ -149,11 +149,11 @@ make_cuted_image <- function(data, name, t1, t2, display) {
 
 data <- read.csv( paste0(dirname, "/", name, ".csv") )
 
-data$U <- data$pwm_u-(data$pwm_u+data$pwm_v+data$pwm_w)/3.0
-data$V <- data$pwm_v-(data$pwm_u+data$pwm_v+data$pwm_w)/3.0
-data$W <- data$pwm_w-(data$pwm_u+data$pwm_v+data$pwm_w)/3.0
+#data$U <- data$pwm_u-(data$pwm_u+data$pwm_v+data$pwm_w)/3.0
+#data$V <- data$pwm_v-(data$pwm_u+data$pwm_v+data$pwm_w)/3.0
+#data$W <- data$pwm_w-(data$pwm_u+data$pwm_v+data$pwm_w)/3.0
 
-data$theo_i_all <- ( abs(data$U) + abs(data$V) + abs(data$W) )/2.0
+#data$theo_i_all <- ( abs(data$U) + abs(data$V) + abs(data$W) )/2.0
 
 plotnames <- names(data)[2:ncol(data)]
 plotnames_order <- plotnames
@@ -221,5 +221,4 @@ if( opt$cut ){
     make_cuted_image( data, name, t1, t2, display )
   }
 }
-
 
