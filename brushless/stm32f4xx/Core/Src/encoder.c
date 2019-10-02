@@ -27,6 +27,7 @@
 #include <filter.h>
 #include <observer.h>
 #include <motor.h>
+//#include <hardware.h>
 //
 // Clock computation
 //
@@ -284,8 +285,9 @@ void encoder_compute_angle(){
       );
     }
   }
+  
   encoder.absolute_angle += delta;
- 
+
   //#define DESACTIVE_FILTER 1 
   #ifndef DESACTIVE_FILTER
     update_butterworth_3_pulsation_1256_rad_s(

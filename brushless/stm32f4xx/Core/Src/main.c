@@ -337,6 +337,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
     //  uint32_t v = hadc1.Instance->SR;
     //  BINT(v);
     //}
+    #if 0
     COOLDOWN(2000000){
       terminal_println("-");
       for( uint32_t i=0; i< ADC_DATA_SIZE; i++ ){
@@ -346,6 +347,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
         );
       }
     }
+    #endif
     complete_current_adc = true;
   }
 }

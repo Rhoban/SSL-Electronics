@@ -50,6 +50,7 @@
 
 typedef enum {
   TARE,
+  OPEN_LOOP,
   FIXED_DQ_VOLTAGE,
   DQ_VOLTAGE_CONSIGN,
   Q_CURRENT_CONSIGN,
@@ -75,6 +76,8 @@ inline const char* motor_mode_string( motor_mode_t m ){
 }
 
 typedef struct {
+  float (*openloop_angle)(void);
+
   volatile bool computation_is_done;
   bool is_ready;
 
@@ -385,9 +388,15 @@ TERMINAL_COMMAND( motor_kem, "" ){
   }
 }
 
+float zero_angle(){
+  return 0.0; 
+}
+
 void motor_init(){
   motor.is_ready = false;
   motor.computation_is_done = false;
+
+  motor.openloop_angle = zero_angle;
 
   motor.Lq = MOTOR_LQ;
   motor.R = MOTOR_R;
@@ -450,6 +459,9 @@ void motor_prepare_pwm(){
     case FIXED_DQ_VOLTAGE:
       get_estimated_angle_for_next_PWM_update(&angle, &velocity);
       break;
+    case OPEN_LOOP:
+      angle = motor.openloop_angle();
+      break;
     case TARE:
       angle = 0;
       break;
@@ -498,6 +510,41 @@ void tare(){
   motor.mode = save_mode;
 }
 
+static float openloop_velocity_m__us=0.0;
+static bool openloop_first=true;
+static float openloop_angle=0.0;
+
+float get_angle(){
+  static uint32_t start_time = 0;
+  static uint32_t time = 0;
+
+  time = time_get_us();
+  if(openloop_first){
+    openloop_first = false;
+    start_time = time;
+    float speed;
+    get_estimated_angle_for_next_PWM_update( &openloop_angle, &speed);
+  }
+  return openloop_angle + (time-start_time)*openloop_velocity_m__us;
+}
+
+
+void open_loop(float velocity){
+  openloop_first=true;
+  openloop_velocity_m__us = velocity/1000000.0;
+  motor.mode = OPEN_LOOP;
+  motor.openloop_angle = get_angle;
+  motor.quadrature_voltage = 0;
+  motor.direct_voltage = MAX_VOLTAGE_FOR_TARING_PROCESS;
+}
+
+TERMINAL_COMMAND(open_loop, "open_loop <vel tr/s>"){
+  if(argc != 1){
+    return;
+  }
+  float speed = atof(argv[0]);
+  open_loop(speed * (2*M_PI));
+}
     
 void motor_set_quadrature_current( float iq ){
   motor.current_consign = iq;
