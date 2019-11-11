@@ -19,6 +19,8 @@
 static int com_channels[3] = {110, 119, 125};
 static int com_channels_developers[3] = {111, 118, 124};
 
+extern int presentSince;
+
 // Only for master board
 static bool com_master = false;
 
@@ -62,7 +64,6 @@ static int com_txing[3] = {0};
 
 static bool com_module_present[3] = {true};
 static int com_module_last_missing[3] = {0};
-extern bool barbu_mode;
 
 #define VALUE_TO_STRING(x) #x
 #define VALUE(x) VALUE_TO_STRING(x)
@@ -597,7 +598,7 @@ void com_send_status_to_master()
     if (!drivers_is_all_ok()) {
         packet.status |= STATUS_DRIVER_ERR;
     }
-
+    
     if (ir_present()) {
         packet.status |= STATUS_IR;
     }
@@ -632,7 +633,7 @@ void com_process_master()
 
         // Driving wheels
         if ((master_packet->actions & ACTION_ON)) {
-            if(barbu_mode == false){
+            if(developer_mode == false){
                 kicker_boost_enable(true);
             }
             if(master_packet->actions & ACTION_TARE_ODOM) {

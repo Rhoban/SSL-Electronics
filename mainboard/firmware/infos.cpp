@@ -8,7 +8,6 @@
 
 // Flash address to write/read infos
 #define INFOS_FLASH_ADDR    0x0801FC00
-extern bool barbu_mode;
 bool developer_mode=false;
 
 int IDs[11]={7,0,1,8,2,4,9,10,3,5,6}; //The coding of IDs from hall values
