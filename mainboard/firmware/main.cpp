@@ -116,9 +116,6 @@ void setup()
 
     delay_us(200000);
 
-
-// delay_us(3600000);
-
 // Initalizng com
     com_init();
     delay_us(800000);

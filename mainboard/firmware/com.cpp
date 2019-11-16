@@ -652,7 +652,7 @@ void com_process_master()
             // the following line
             //if ((master_packet->actions & ACTION_DRIBBLE) && (ir_present()) ) {
             if ((master_packet->actions & ACTION_DRIBBLE)) {
-              drivers_set_safe(4, true, 40);
+              drivers_set_safe(4, true, 1000);
             } else {
                 drivers_set(4, false, 0);
             }
@@ -670,7 +670,6 @@ void com_process_master()
             // Kicking
             if ((my_actions & ACTION_KICK1) || (my_actions & ACTION_KICK2) || ir_present_now()) {
                 if(kicker_cap_voltage() > 80.0){
-                    // drivers_set_safe(4, true, 0);
                     bool inverted = infos_kicker_inverted();
                     if ((master_packet->actions & ACTION_KICK1) &&
                         !(my_actions & ACTION_KICK1)) {
