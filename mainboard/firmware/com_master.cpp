@@ -100,20 +100,24 @@ static void com_usb_tick()
 void com_master_init(){
    com_init();
     for(int card=0;card<3;++card){
-        com_ce_enable(card); // force standby II mode
+        com_ce_disable(card); // force standby I mode
         set_ack(card,true); // set ACK
         set_crc(card,2); // 2bytes for CRC
-        for(int pipe=0;pipe<6;pipe++){ // enable all pipe with a payload of 32bytes
-            set_pipe_payload(card,pipe,32);
-        }
-        clear_status(card);
+        //for(int pipe=0;pipe<6;pipe++){ // enable all pipe with a payload of 32bytes
+        //    set_pipe_payload(card,pipe,32);
+        //}
+        set_pipe_payload(card,0,32);
         set_retransmission(card,0,15);
+        set_channel(card,110);
+        clear_status(card);
     }
 
 }
 
 
 void com_master_tick(){
+    watchdog_feed();
+
     if (usbcom_mode == USBMODE_BIN)
         com_usb_tick();
     else {

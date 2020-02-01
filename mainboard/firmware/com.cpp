@@ -110,6 +110,11 @@ void com_send(int index, uint8_t *packet, size_t n)
 
 void com_set_reg(int index, uint8_t reg, uint8_t value)
 {
+    SerialUSB.print("set reg: ");
+    SerialUSB.print(reg,HEX);
+    SerialUSB.print(" ");
+    SerialUSB.println(value,HEX);
+
     reg |= OP_WRITE;
 
     uint8_t packet[2] = {
@@ -132,6 +137,18 @@ void com_set_reg5(int index, uint8_t reg, uint8_t value[5])
         value[3],
         value[4],
     };
+    SerialUSB.print("set reg5:");
+    SerialUSB.print(reg,HEX);
+    SerialUSB.print(" ");
+    SerialUSB.print(value[0],HEX);
+    SerialUSB.print("-");
+    SerialUSB.print(value[1],HEX);
+    SerialUSB.print("-");
+    SerialUSB.print(value[2],HEX);
+    SerialUSB.print("-");
+    SerialUSB.print(value[3],HEX);
+    SerialUSB.print("-");
+    SerialUSB.println(value[4],HEX);
 
     com_send(index, packet, 6);
 }
@@ -147,6 +164,10 @@ uint8_t com_read_reg(int index, uint8_t reg)
 
     com_send(index, packet, 2);
 
+    SerialUSB.print("read reg:");
+    SerialUSB.print(reg,HEX);
+    SerialUSB.print(" ");
+    SerialUSB.println(packet[1],HEX);
     return packet[1];
 }
 
@@ -327,12 +348,15 @@ static void com_rx(int index, uint8_t *payload, size_t n)
 void com_flush_rx(int index){
     uint8_t packet[1] = {OP_FLUSH_RX};
     com_send(index, packet, 1);
+
+    SerialUSB.print("flush rx");
 //    return packet[0];
 }
 
 void com_flush_tx(int index){
     uint8_t packet[1] = {OP_FLUSH_TX};
     com_send(index, packet, 1);
+    SerialUSB.print("flush tx");
 //    return packet[0];
 }
 
@@ -373,20 +397,34 @@ void receive(int card, uint8_t *payload, int size){
     for (uint8_t k=1; k<size+1; k++) {
       payload[k-1] = packet[k];
     }
-    com_ce_enable(card);
+    //com_ce_enable(card);
 }
 
 void send(int card,  uint8_t *payload, int size){
-    //com_ce_disable(card);
+//    com_ce_disable(card);
 
     // set config PRIM_RX to low:
-    uint8_t conf=com_read_reg(card,REG_CONFIG);
-    com_set_reg(card, REG_CONFIG,conf | CONFIG_PWR_UP & ~CONFIG_PRIM_RX ); // dont touch other config flags...
 
-    clear_status(card);
     //com_set_reg(k, REG_STATUS, 0x70);
     com_tx(card,payload,size);
     com_ce_enable(card);
+    delay_us(20);
+    com_ce_disable(card);
+    clear_status(card);
+
+    uint8_t conf=com_read_reg(card,REG_CONFIG);
+    com_set_reg(card, REG_CONFIG,(conf | CONFIG_PWR_UP) & ~CONFIG_PRIM_RX ); // dont touch other config flags...
+
+        com_flush_tx(card);
+
+//    com_ce_enable(card);
+//    uint8_t s;
+//    do {
+//        s=com_read_reg(card,REG_STATUS);
+//        terminal_io()->print("status is: ");
+//        terminal_io()->println(s);
+//    } while (((s&REG_STATUS_TX_DS)==0) || ((s&REG_STATUS_MAX_RT)==0));
+//    com_ce_disable(card);
 }
 
 //NOT USED??
@@ -570,6 +608,8 @@ else if (pipe>=1){
 }
 void com_ce_enable(int index)
 {
+    SerialUSB.println("enable ce");
+//    terminal_io()->println("set ce");
     if (index == 0) digitalWrite(COM_CE1, HIGH);
     else if (index == 1) digitalWrite(COM_CE2, HIGH);
     else if (index == 2) digitalWrite(COM_CE3, HIGH);
@@ -577,11 +617,12 @@ void com_ce_enable(int index)
 
 void com_ce_disable(int index)
 {
-    /*
+SerialUSB.println("disable ce");
+//    terminal_io()->println("unset ce");
     if (index == 0) digitalWrite(COM_CE1, LOW);
     else if (index == 1) digitalWrite(COM_CE2, LOW);
     else if (index == 2) digitalWrite(COM_CE3, LOW);
-    */
+
     // We are not suppose to disable CE, this is only for power reduction
     // keep com cards in standby II mode
 }
@@ -605,9 +646,10 @@ bool com_is_ok(int index)
 void com_init()
 {
     // Not initializing if we don't have an id and are not master
-    if (infos_get_id() == 0xff && !com_master) {
+   /* if (infos_get_id() == 0xff && !com_master) {
         return;
     }
+    */
 
     // Initializing SPI
     // com.begin(SPI_4_5MHZ, MSBFIRST, 0);
@@ -633,53 +675,53 @@ void com_init()
     pinMode(COM_CE3, OUTPUT);
     digitalWrite(COM_CE3, LOW);
 
-    for (int k=0; k<3; k++) {
+    //for (int k=0; k<3; k++) {
         // Disabling auto acknowledgement
-        com_set_reg(k, REG_EN_AA, 0x00);
+      //  com_set_reg(k, REG_EN_AA, 0x00);
         //set_ack(k,true);
 
         // Setting the appropriate channel for this module
-        if(developer_mode)
-          com_set_reg(k, REG_RF_CH, com_channels_developers[k]);
-        else
-          com_set_reg(k, REG_RF_CH, com_channels[k]);
+//        if(developer_mode)
+//          com_set_reg(k, REG_RF_CH, com_channels_developers[k]);
+//        else
+//          com_set_reg(k, REG_RF_CH, com_channels[k]);
 
         // Setting the address
-        uint8_t addr[5] = COM_ADDR;
-        if (com_master) {
-          addr[4] = COM_MASTER;
-        } else {
-          addr[4] = infos_get_id();
-        }
-        com_set_reg5(k, REG_RX_ADDR_P0, addr);
+//        uint8_t addr[5] = COM_ADDR;
+//        if (com_master) {
+//          addr[4] = COM_MASTER;
+//        } else {
+//          addr[4] = infos_get_id();
+//        }
+//        com_set_reg5(k, REG_RX_ADDR_P0, addr);
 
         // Enabling only the pipe 1
-        com_set_reg(k, REG_EN_RXADDR, 1);
+//        com_set_reg(k, REG_EN_RXADDR, 1);
 
         // Setting payload in rx p0 to 1
-        if (com_master) {
-            com_set_reg(k, REG_RX_PW_P0, sizeof(struct packet_robot));
-        } else {
-            com_set_reg(k, REG_RX_PW_P0, PACKET_SIZE);
-        }
+//        if (com_master) {
+//            com_set_reg(k, REG_RX_PW_P0, sizeof(struct packet_robot));
+//        } else {
+//            com_set_reg(k, REG_RX_PW_P0, PACKET_SIZE);
+//        }
 
         // Power up
-        com_mode(k, true, true);
+//        com_mode(k, true, true);
 
         // If I am not the master, I will talk only to the master
-        if (!com_master) {
-            for (int k=0; k<3; k++) {
-                com_set_tx_addr(k, COM_MASTER);
-            }
-        }
-    }
+//        if (!com_master) {
+//            for (int k=0; k<3; k++) {
+//                com_set_tx_addr(k, COM_MASTER);
+//            }
+//        }
+//    }
 
     // Listening
-    for (int k=0; k<3; k++) {
-        com_txing[k] = 0;
-        com_set_reg(k, REG_STATUS, 0x70);
-        com_ce_enable(k);
-    }
+   // for (int k=0; k<3; k++) {
+   //     com_txing[k] = 0;
+   //     com_set_reg(k, REG_STATUS, 0x70);
+   //     com_ce_enable(k);
+   // }
 
     // Initializing IRQ pins
     // XXX: We don't listen to IRQs anymore because there was a routing issue
