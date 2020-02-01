@@ -78,7 +78,52 @@ void com_init();
 
 void com_tick();
 
+
+int has_data(int card);
+void receive(int card, uint8_t *payload, int size);
+void send(int card, uint8_t *payload, int size);
+
+
+
 bool com_is_all_ok();
 void com_diagnostic();
+
+int get_channel(int card);
+void set_channel(int index, int chan);
+
+int get_lost_count(int card);
+int get_retransmitted_count(int card);
+
+void clear_status(int card);
+
+int get_pipe_payload(int card,int pipe);
+void set_pipe_payload(int card,int pipe,uint8_t pl);
+
+int get_ack(int card);
+void set_ack(int card, bool v);
+
+void set_crc(int card,int crc);
+
+int get_retransmission_delay(int card);
+int get_retransmission_count(int card);
+void set_retransmission(int card, int delay, int count);
+
+uint8_t get_config(int card);
+void set_config(int card,uint8_t);
+uint8_t get_status(int card);
+void reset_status(int card);
+uint8_t get_rf_setup(int card);
+uint8_t get_fifo_status(int card);
+struct addr5{
+uint8_t addr[5];
+};
+struct addr5 com_get_tx_addr(int index);
+void com_set_tx_addr(int index, struct addr5 add);
+void com_set_rx_addr(int index,int pipe, struct addr5 add);
+struct addr5 com_get_rx_addr(int index,int pipe);
+
+
+void com_ce_enable(int index);
+void com_ce_disable(int index);
 
 #endif

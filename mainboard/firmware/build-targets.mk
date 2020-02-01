@@ -1,8 +1,14 @@
 # Project targets
 # Defines here your cpp source files
 # Ex : main.cpp test.cpp ...
-SRC_FILES = main.cpp drivers.cpp com.cpp buzzer.cpp \
-	kicker.cpp voltage.cpp ir.cpp kinematic.cpp mux.cpp infos.cpp odometry.cpp
+
+ifeq ($(COMPILE_MASTER),yes)
+SRC_FILES = main_master.cpp com_master.cpp com.cpp buzzer.cpp \
+            mux.cpp infos.cpp
+else
+SRC_FILES = main_robot.cpp com_master.cpp drivers.cpp com.cpp buzzer.cpp \
+        kicker.cpp voltage.cpp ir.cpp kinematic.cpp mux.cpp infos.cpp odometry.cpp
+endif
 
 ifeq ($(ENABLE_RHOCK),yes)
 SRC_FILES += rhock-functions.cpp rhock-stream.cpp

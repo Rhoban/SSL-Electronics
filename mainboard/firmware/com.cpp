@@ -14,6 +14,7 @@
 #include "kicker.h"
 #include "infos.h"
 #include "ir.h"
+#include "nrf24l01.h"
 
 // Channels
 static int com_channels[3] = {110, 119, 125};
@@ -79,48 +80,6 @@ static char firmware_version[]="TEST";
 
 HardwareSPI com(COM_SPI);
 
-// Operations
-#define OP_READ         0x00
-#define OP_WRITE        0x20
-#define OP_RX           0x61
-#define OP_TX           0xa0
-#define OP_NOP          0xff
-
-// Registers
-#define REG_CONFIG      0x00
-#define REG_EN_AA       0x01
-#define REG_EN_RXADDR   0x02
-#define REG_SETUP_AW    0x03
-#define REG_SETUP_RETR  0x04
-#define REG_RF_CH       0x05
-#define REG_RF_SETUP    0x06
-#define REG_STATUS      0x07
-#define REG_STATUS_ZERO     0x80
-#define REG_STATUS_RX_DR    0x40
-#define REG_STATUS_TX_DS    0x20
-#define REG_OBSERVE_TX  0x08
-#define REG_RPD         0x09
-#define REG_RX_ADDR_P0  0x0a  // 5 bytes
-#define REG_RX_ADDR_P1  0x0b  // 5 bytes
-#define REG_RX_ADDR_P2  0x0c
-#define REG_RX_ADDR_P3  0x0d
-#define REG_RX_ADDR_P4  0x0e
-#define REG_RX_ADDR_P5  0x0f
-#define REG_TX_ADDR     0x10 // 5 bytes
-#define REG_RX_PW_P0    0x11
-#define REG_RX_PW_P1    0x12
-#define REG_RX_PW_P2    0x13
-#define REG_RX_PW_P3    0x14
-#define REG_RX_PW_P4    0x15
-#define REG_RX_PW_P5    0x16
-#define REG_FIFO_STATUS 0x17
-#define REG_DYNPD       0x1c
-#define REG_FEATURE     0x1d
-
-#define TX_FULL         (1<<5)
-#define TX_EMPTY        (1<<4)
-#define RX_FULL         (1<<1)
-#define RX_EMPTY        (1<<0)
 
 #define PAYLOAD_SIZE    5
 
@@ -139,14 +98,14 @@ TERMINAL_PARAMETER_INT(irqed, "", 0);
 
 void com_send(int index, uint8_t *packet, size_t n)
 {
-    pause_boost();
+    //pause_boost();
     digitalWrite(com_pins[index], LOW);
     for (size_t k=0; k<n; k++) {
         uint8_t reply = com.send(packet[k]);
         packet[k] = reply;
     }
     digitalWrite(com_pins[index], HIGH);
-    resume_boost();
+    //resume_boost();
 }
 
 void com_set_reg(int index, uint8_t reg, uint8_t value)
@@ -189,6 +148,116 @@ uint8_t com_read_reg(int index, uint8_t reg)
     com_send(index, packet, 2);
 
     return packet[1];
+}
+
+int get_channel(int index){
+    return com_read_reg(index,REG_RF_CH);
+}
+
+void set_channel(int index, int chan){
+    com_set_reg(index,REG_RF_CH, chan);
+}
+
+int get_ack(int index){
+    return com_read_reg(index,REG_EN_AA);
+}
+void set_ack(int index,bool v){
+    if (v)
+        com_set_reg(index,REG_EN_AA,REG_EN_AA_ALL);
+    else
+        com_set_reg(index,REG_EN_AA,0x00);
+}
+
+
+int get_retransmission_delay(int card){
+    return (com_read_reg(card,REG_SETUP_RETR)>>4);
+}
+int get_retransmission_count(int card){
+    return (com_read_reg(card,REG_SETUP_RETR)&0x0F);
+}
+void set_retransmission(int card, int delay, int count){
+    uint8_t v=(delay<<0x04) | (count);
+    com_set_reg(card,REG_SETUP_RETR,v);
+}
+
+
+uint8_t get_config(int index){
+    return com_read_reg(index,REG_CONFIG);
+}
+
+uint8_t get_fifo_status(int index){
+    return com_read_reg(index,REG_FIFO_STATUS);
+}
+
+uint8_t get_status(int card){
+    return com_read_reg(card,REG_STATUS);
+}
+uint8_t get_rf_setup(int card){
+    return com_read_reg(card,REG_RF_SETUP);
+}
+
+void reset_status(int card){
+    com_set_reg(card,REG_STATUS,REG_STATUS_RX_DR | REG_STATUS_TX_DS | REG_STATUS_MAX_RT);
+}
+int get_pipe_payload(int card,int pipe){
+    switch(pipe){
+    case 0:
+        return com_read_reg(card,REG_RX_PW_P0);
+        break;
+    case 1:
+        return com_read_reg(card,REG_RX_PW_P1);
+        break;
+    case 2:
+        return com_read_reg(card,REG_RX_PW_P2);
+        break;
+    case 3:
+        return com_read_reg(card,REG_RX_PW_P3);
+        break;
+    case 4:
+        return com_read_reg(card,REG_RX_PW_P4);
+        break;
+    case 5:
+        return com_read_reg(card,REG_RX_PW_P5);
+        break;
+    }
+    return 0;
+}
+void set_pipe_payload(int card,int pipe,uint8_t pl){
+    if (pl>32) return;
+    uint8_t en= com_read_reg(card,REG_EN_RXADDR);
+    switch(pipe){
+    case 0:
+        if (pl==0) en&=~REG_EN_RXADDR_P0;
+        else en|=REG_EN_RXADDR_P0;
+        com_set_reg(card,REG_RX_PW_P0,pl);
+        break;
+    case 1:
+        if (pl==0) en&=~REG_EN_RXADDR_P1;
+        else en|=REG_EN_RXADDR_P1;
+        com_set_reg(card,REG_RX_PW_P1,pl);
+        break;
+    case 2:
+        if (pl==0) en&=~REG_EN_RXADDR_P2;
+        else en|=REG_EN_RXADDR_P2;
+        com_set_reg(card,REG_RX_PW_P2,pl);
+        break;
+    case 3:
+        if (pl==0) en&=~REG_EN_RXADDR_P3;
+        else en|=REG_EN_RXADDR_P3;
+        com_set_reg(card,REG_RX_PW_P3,pl);
+        break;
+    case 4:
+        if (pl==0) en&=~REG_EN_RXADDR_P4;
+        else en|=REG_EN_RXADDR_P4;
+        com_set_reg(card,REG_RX_PW_P4,pl);
+        break;
+    case 5:
+        if (pl==0) en&=~REG_EN_RXADDR_P5;
+        else en|=REG_EN_RXADDR_P5;
+        com_set_reg(card,REG_RX_PW_P5,pl);
+        break;
+    }
+    com_set_reg(card,REG_EN_RXADDR,en);
 }
 
 uint8_t com_read_status(int index)
@@ -253,6 +322,71 @@ static void com_rx(int index, uint8_t *payload, size_t n)
     for (uint8_t k=1; k<n+1; k++) {
       payload[k-1] = packet[k];
     }
+}
+
+void com_flush_rx(int index){
+    uint8_t packet[1] = {OP_FLUSH_RX};
+    com_send(index, packet, 1);
+//    return packet[0];
+}
+
+void com_flush_tx(int index){
+    uint8_t packet[1] = {OP_FLUSH_TX};
+    com_send(index, packet, 1);
+//    return packet[0];
+}
+
+void clear_status(int card){
+    com_set_reg(card,REG_STATUS,REG_STATUS_MAX_RT|REG_STATUS_RX_DR|REG_STATUS_TX_DS);
+}
+int get_lost_count(int card){
+    return com_read_reg(card,REG_OBSERVE_TX) >> 4;
+}
+int get_retransmitted_count(int card){
+    return com_read_reg(card,REG_OBSERVE_TX) & 0x0F;
+}
+
+
+int has_data(int card)
+{
+    uint8_t s=com_read_reg(card,REG_STATUS);
+    //if (s&REG_STATUS_RX_DR)
+    uint8_t v=(s&REG_STATUS_RX_P_NO)>>1;
+    if (v==7)return -1;
+    return v;
+//    return -1;
+}
+
+void receive(int card, uint8_t *payload, int size){
+
+    com_ce_disable(card);
+    com_mode(card, true, false);
+    uint8_t conf=com_read_reg(card,REG_CONFIG);
+    com_set_reg(card, REG_CONFIG,conf | CONFIG_PWR_UP | CONFIG_PRIM_RX ); // dont touch other config flags...
+
+    uint8_t packet[size+1] = {0};
+
+    packet[0] = OP_RX;
+
+    com_send(card, packet, size+1);
+
+    for (uint8_t k=1; k<size+1; k++) {
+      payload[k-1] = packet[k];
+    }
+    com_ce_enable(card);
+}
+
+void send(int card,  uint8_t *payload, int size){
+    //com_ce_disable(card);
+
+    // set config PRIM_RX to low:
+    uint8_t conf=com_read_reg(card,REG_CONFIG);
+    com_set_reg(card, REG_CONFIG,conf | CONFIG_PWR_UP & ~CONFIG_PRIM_RX ); // dont touch other config flags...
+
+    clear_status(card);
+    //com_set_reg(k, REG_STATUS, 0x70);
+    com_tx(card,payload,size);
+    com_ce_enable(card);
 }
 
 //NOT USED??
@@ -366,7 +500,16 @@ static void com_poll()
     }
 }
 
-static void com_set_tx_addr(int index, uint8_t target)
+struct addr5 com_get_tx_addr(int index){
+    uint8_t addr[5];
+    com_read_reg5(index,REG_TX_ADDR,addr);
+    struct addr5 a;
+    for(int i=0;i<5;++i)
+        a.addr[i] = addr[i];
+    return a;
+}
+
+void com_set_tx_addr(int index, uint8_t target)
 {
     uint8_t addr[5] = COM_ADDR;
     addr[4] = target;
@@ -374,18 +517,73 @@ static void com_set_tx_addr(int index, uint8_t target)
     com_set_reg5(index, REG_TX_ADDR, addr);
 }
 
-static void com_ce_enable(int index)
+void com_set_tx_addr(int index, struct addr5 add){
+    com_set_reg5(index, REG_TX_ADDR, add.addr);
+}
+
+
+void com_set_rx_addr(int index,int pipe, struct addr5 add){
+    switch(pipe){
+    case 0:
+        com_set_reg5(index,REG_RX_ADDR_P0,add.addr);
+        break;
+    case 1:
+        com_set_reg5(index,REG_RX_ADDR_P1,add.addr);
+        break;
+    case 2:
+        com_set_reg(index,REG_RX_ADDR_P2,add.addr[4]);
+        break;
+    case 3:
+        com_set_reg(index,REG_RX_ADDR_P3,add.addr[4]);
+        break;
+    case 4:
+        com_set_reg(index,REG_RX_ADDR_P4,add.addr[4]);
+        break;
+    case 5:
+        com_set_reg(index,REG_RX_ADDR_P5,add.addr[4]);
+        break;
+    }
+}
+
+struct addr5 com_get_rx_addr(int index,int pipe){
+
+    uint8_t addr[5];
+    if (pipe==0)
+        com_read_reg5(index,REG_RX_ADDR_P0,addr);
+else if (pipe>=1){
+        com_read_reg5(index,REG_RX_ADDR_P1,addr);
+        uint8_t last=addr[4];
+        if (pipe==2)
+            last=com_read_reg(index,REG_RX_ADDR_P2);
+        if (pipe==3)
+            last=com_read_reg(index,REG_RX_ADDR_P3);
+        if (pipe==4)
+            last=com_read_reg(index,REG_RX_ADDR_P4);
+        if (pipe==5)
+            last=com_read_reg(index,REG_RX_ADDR_P5);
+        addr[4]=last;
+    }
+    struct addr5 a;
+    for(int i=0;i<5;++i)
+        a.addr[i] = addr[i];
+    return a;
+}
+void com_ce_enable(int index)
 {
     if (index == 0) digitalWrite(COM_CE1, HIGH);
     else if (index == 1) digitalWrite(COM_CE2, HIGH);
     else if (index == 2) digitalWrite(COM_CE3, HIGH);
 }
 
-static void com_ce_disable(int index)
+void com_ce_disable(int index)
 {
+    /*
     if (index == 0) digitalWrite(COM_CE1, LOW);
     else if (index == 1) digitalWrite(COM_CE2, LOW);
     else if (index == 2) digitalWrite(COM_CE3, LOW);
+    */
+    // We are not suppose to disable CE, this is only for power reduction
+    // keep com cards in standby II mode
 }
 
 bool com_is_ok(int index)
@@ -438,6 +636,7 @@ void com_init()
     for (int k=0; k<3; k++) {
         // Disabling auto acknowledgement
         com_set_reg(k, REG_EN_AA, 0x00);
+        //set_ack(k,true);
 
         // Setting the appropriate channel for this module
         if(developer_mode)
@@ -523,6 +722,18 @@ void com_init()
     mux_init();
 }
 
+void set_config(int card,uint8_t v){
+    com_set_reg(card,REG_CONFIG,v);
+}
+void set_crc(int card,int crc){
+    if (crc==0)
+        set_config(card,get_config(card) &~CONFIG_EN_CRC );
+    else if (crc==1)
+        set_config(card,get_config(card)|CONFIG_EN_CRC & ~CONFIG_CRCO);
+    else
+        set_config(card,get_config(card)|CONFIG_EN_CRC | CONFIG_CRCO);
+}
+
 TERMINAL_COMMAND(ci, "CI")
 {
     com_init();
@@ -533,61 +744,6 @@ TERMINAL_COMMAND(comi, "Com stats")
     terminal_io()->println(millis()-com_last_init);
 }
 
-static void com_usb_tick()
-{
-    static int state = 0;
-    static uint8_t temp[1024];
-    static size_t pos = 0;
-
-    while (SerialUSB.available()) {
-        watchdog_feed();
-        uint8_t c = SerialUSB.read();
-
-        if (state == 0) {
-            if (c == 0xaa) {
-                state++;
-            }
-        } else if (state == 1) {
-            if (c == 0x55) {
-                state++;
-            } else {
-                state = 0;
-            }
-        } else if (state == 2) {
-            com_usb_nb_robots = c;
-            pos = 0;
-            if (com_usb_nb_robots <= MAX_ROBOTS) {
-                state++;
-            } else {
-                state = 0;
-            }
-        } else if (pos < com_usb_nb_robots*(1 + PACKET_SIZE) && pos < sizeof(temp)) {
-            temp[pos++] = c;
-        } else {
-            if (c == 0xff) {
-                // Fetch all the data that should be transmitted to the robots
-                for (size_t k=0; k<com_usb_nb_robots; k++) {
-                    uint8_t robot_id = temp[k*(PACKET_SIZE + 1)];
-                    if (robot_id < MAX_ROBOTS) {
-                        for (size_t n=0; n<PACKET_SIZE; n++) {
-                            com_robots[robot_id][n] = temp[k*(1 + PACKET_SIZE)+1+n];
-                        }
-                        com_should_transmit[robot_id] = true;
-                    }
-                }
-
-                com_poll();
-                for (size_t k=0; k<MAX_ROBOTS; k++) {
-                    com_has_status[k] = false;
-                }
-                com_master_pos = -1;
-                com_usb_reception = millis();
-            }
-
-            state = 0;
-        }
-    }
-}
 
 void com_send_status_to_master()
 {
@@ -745,7 +901,7 @@ void com_tick()
 
         // Tick the communication with USB master
 #ifdef BINARY
-        com_usb_tick();
+        //com_usb_tick();
 #else
         terminal_tick();
 #endif
@@ -774,7 +930,7 @@ void com_tick()
                 com_ce_disable(k);
                 // Preparing to transmit
                 com_mode(k, true, false);
-                com_set_reg(k, REG_STATUS, 0x70);
+                com_set_reg(k, REG_STATUS, 0x70); // 0111 0000
                 com_set_tx_addr(k, com_master_pos);
 
                 // Transmitting the payload
@@ -948,17 +1104,17 @@ TERMINAL_COMMAND(master, "Enable master mode")
     com_init();
 }
 
-TERMINAL_COMMAND(em, "Emergency")
-{
-    if (!com_master) {
-        kinematic_stop();
-        for (int k=0; k<5; k++) {
-            drivers_set(k, false, 0.0);
-        }
-    }
+//TERMINAL_COMMAND(em, "Emergency")
+//{
+//    if (!com_master) {
+//        kinematic_stop();
+//        for (int k=0; k<5; k++) {
+//            drivers_set(k, false, 0.0);
+//        }
+//    }
 
-    kicker_boost_enable(false);
-}
+//    kicker_boost_enable(false);
+//}
 
 TERMINAL_COMMAND(version, "")
 {
