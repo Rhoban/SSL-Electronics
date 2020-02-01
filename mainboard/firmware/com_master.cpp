@@ -11,8 +11,6 @@
 #define USBMODE_TERM 2
 int usbcom_mode = USBMODE_TERM;
 
-
-
 static void com_usb_tick()
 {
     static int state = 0;
@@ -96,20 +94,58 @@ static void com_usb_tick()
     }
 }
 
+#define RECV_TEST 0
 
 void com_master_init(){
    com_init();
     for(int card=0;card<3;++card){
-        com_ce_disable(card); // force standby I mode
-        set_ack(card,true); // set ACK
-        set_crc(card,2); // 2bytes for CRC
-        //for(int pipe=0;pipe<6;pipe++){ // enable all pipe with a payload of 32bytes
-        //    set_pipe_payload(card,pipe,32);
-        //}
-        set_pipe_payload(card,0,32);
-        set_retransmission(card,0,15);
-        set_channel(card,110);
-        clear_status(card);
+        com_set_reg(card, REG_CONFIG, 0x0C);
+        com_set_reg(card, REG_SETUP_RETR, 0x5F);
+        com_set_reg(card, REG_RF_SETUP, 0x21);
+        com_set_reg(card, REG_RF_SETUP, 0x01);
+        com_set_reg(card, REG_FEATURE, 0x00);
+        com_set_reg(card, REG_DYNPD, 0x00);
+        com_set_reg(card, REG_STATUS, 0x70);
+        com_set_reg(card, REG_RF_CH, 0x4C);
+        com_set_reg(card, REG_CONFIG, 0x0E);
+        com_set_reg(card, REG_CONFIG, 0x0E);
+        com_set_reg(card, REG_RF_CH, 0x6E);
+        com_set_reg(card, REG_RF_SETUP, 0x09);
+        com_set_reg(card, REG_RF_SETUP, 0x09);
+        com_set_reg(card, REG_CONFIG, 0x0E);
+        com_set_reg(card, REG_EN_AA, 0x3F);
+        // com_set_reg(card, REG_RX_ADDR_P0, 0xE7);
+        // com_set_reg(card, REG_RX_ADDR_P1, 0xE7);
+        // com_set_reg(card, REG_RX_ADDR_P2, 0xE7);
+        // com_set_reg(card, REG_RX_ADDR_P3, 0xE7);
+        // com_set_reg(card, REG_RX_ADDR_P4, 0xE7);
+        // com_set_reg(card, REG_TX_ADDR_P0, 0xE7);
+        // com_set_reg(card, REG_TX_ADDR_P1, 0xE7);
+        // com_set_reg(card, REG_TX_ADDR_P2, 0xE7);
+        // com_set_reg(card, REG_TX_ADDR_P3, 0xE7);
+        // com_set_reg(card, REG_TX_ADDR_P4, 0xE7);
+        uint8_t addr[5] = {0xE7, 0xE7, 0xE7, 0xE7, 0xE7};
+        com_set_reg5(card, REG_TX_ADDR, addr);
+        com_set_reg(card, REG_RX_PW_P0, 0x20);
+        if(RECV_TEST)
+            com_set_reg(card, REG_CONFIG, 0x0F);
+        else
+            com_set_reg(card, REG_CONFIG, 0x0E);
+
+        com_set_reg(card, REG_EN_RXADDR, 0x03);
+        com_ce_enable(card);
+
+        // set_ack(card,false);
+        // com_ce_disable(card); // force standby I mode
+        // set_ack(card,false); // set ACK
+        // set_crc(card,2); // 2bytes for CRC
+        // //for(int pipe=0;pipe<6;pipe++){ // enable all pipe with a payload of 32bytes
+        // //    set_pipe_payload(card,pipe,32);
+        // //}
+        // set_pipe_payload(card,0,32);
+        // set_retransmission(card,0,15);
+        // set_channel(card,110);
+        // clear_status(card);
     }
 
 }
@@ -175,6 +211,8 @@ TERMINAL_COMMAND(recv, "check if data received")
             terminal_io()->print(" data[");
             terminal_io()->print(pl);
             terminal_io()->print("]");
+            com_flush_rx(k);
+            clear_status(k);
         }
         terminal_io()->println();
     }
@@ -477,19 +515,19 @@ TERMINAL_COMMAND(rxp, "display or set pipe payload, 0 means not active")
     }
 }
 
-TERMINAL_COMMAND(dbg, "dump all informations")
-{
-terminal_io()->println("setup:");
-terminal_command_setup(0,nullptr);
-terminal_io()->println("config:");
-terminal_command_config(0,nullptr);
-terminal_io()->println("status:");
-terminal_command_status(0,nullptr);
-terminal_io()->println("pipe pyload:");
-terminal_command_rxp(0,nullptr);
-terminal_io()->println("observ:");
-terminal_command_obs(0,nullptr);
-terminal_io()->println("addr:");
-terminal_command_addr(0,nullptr);
-}
+// TERMINAL_COMMAND(dbg, "dump all informations")
+// {
+// terminal_io()->println("setup:");
+// terminal_command_setup(0,nullptr);
+// terminal_io()->println("config:");
+// terminal_command_config(0,nullptr);
+// terminal_io()->println("status:");
+// terminal_command_status(0,nullptr);
+// terminal_io()->println("pipe pyload:");
+// terminal_command_rxp(0,nullptr);
+// terminal_io()->println("observ:");
+// terminal_command_obs(0,nullptr);
+// terminal_io()->println("addr:");
+// terminal_command_addr(0,nullptr);
+// }
 

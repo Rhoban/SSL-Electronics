@@ -164,10 +164,10 @@ uint8_t com_read_reg(int index, uint8_t reg)
 
     com_send(index, packet, 2);
 
-    SerialUSB.print("read reg:");
-    SerialUSB.print(reg,HEX);
-    SerialUSB.print(" ");
-    SerialUSB.println(packet[1],HEX);
+    // SerialUSB.print("read reg:");
+    // SerialUSB.print(reg,HEX);
+    // SerialUSB.print(" ");
+    // SerialUSB.println(packet[1],HEX);
     return packet[1];
 }
 
@@ -348,8 +348,7 @@ static void com_rx(int index, uint8_t *payload, size_t n)
 void com_flush_rx(int index){
     uint8_t packet[1] = {OP_FLUSH_RX};
     com_send(index, packet, 1);
-
-    SerialUSB.print("flush rx");
+    // SerialUSB.print("flush rx");
 //    return packet[0];
 }
 
@@ -383,8 +382,9 @@ int has_data(int card)
 
 void receive(int card, uint8_t *payload, int size){
 
-    com_ce_disable(card);
-    com_mode(card, true, false);
+    // com_ce_disable(card);
+    // com_ce_enable(card);
+    // com_mode(card, true, false);
     uint8_t conf=com_read_reg(card,REG_CONFIG);
     com_set_reg(card, REG_CONFIG,conf | CONFIG_PWR_UP | CONFIG_PRIM_RX ); // dont touch other config flags...
 
@@ -397,7 +397,6 @@ void receive(int card, uint8_t *payload, int size){
     for (uint8_t k=1; k<size+1; k++) {
       payload[k-1] = packet[k];
     }
-    //com_ce_enable(card);
 }
 
 void send(int card,  uint8_t *payload, int size){
@@ -406,16 +405,15 @@ void send(int card,  uint8_t *payload, int size){
     // set config PRIM_RX to low:
 
     //com_set_reg(k, REG_STATUS, 0x70);
-    com_tx(card,payload,size);
-    com_ce_enable(card);
-    delay_us(20);
-    com_ce_disable(card);
+    // com_ce_enable(card);
     clear_status(card);
-
     uint8_t conf=com_read_reg(card,REG_CONFIG);
     com_set_reg(card, REG_CONFIG,(conf | CONFIG_PWR_UP) & ~CONFIG_PRIM_RX ); // dont touch other config flags...
+    com_tx(card,payload,size);
+    // delay_us(20);
+    // com_ce_disable(card);
 
-        com_flush_tx(card);
+        // com_flush_tx(card);
 
 //    com_ce_enable(card);
 //    uint8_t s;
@@ -670,10 +668,10 @@ void com_init()
     // Initializing COM_CE
     pinMode(COM_CE1, OUTPUT);
     digitalWrite(COM_CE1, LOW);
-    pinMode(COM_CE2, OUTPUT);
-    digitalWrite(COM_CE2, LOW);
-    pinMode(COM_CE3, OUTPUT);
-    digitalWrite(COM_CE3, LOW);
+    // pinMode(COM_CE2, OUTPUT);
+    // digitalWrite(COM_CE2, LOW);
+    // pinMode(COM_CE3, OUTPUT);
+    // digitalWrite(COM_CE3, LOW);
 
     //for (int k=0; k<3; k++) {
         // Disabling auto acknowledgement
