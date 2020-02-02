@@ -11,8 +11,6 @@
 #define USBMODE_TERM 2
 int usbcom_mode = USBMODE_TERM;
 
-
-
 static void com_usb_tick()
 {
     static int state = 0;
@@ -96,6 +94,7 @@ static void com_usb_tick()
     }
 }
 
+#define RECV_TEST 0
 
 void com_master_init(){
    com_init();
@@ -186,6 +185,8 @@ TERMINAL_COMMAND(recv, "check if data received")
             terminal_io()->print(" data[");
             terminal_io()->print(pl);
             terminal_io()->print("]");
+            com_flush_rx(k);
+            clear_status(k);
         }
         terminal_io()->println();
     }
@@ -488,19 +489,19 @@ TERMINAL_COMMAND(rxp, "display or set pipe payload, 0 means not active")
     }
 }
 
-TERMINAL_COMMAND(dbg, "dump all informations")
-{
-terminal_io()->println("setup:");
-terminal_command_setup(0,nullptr);
-terminal_io()->println("config:");
-terminal_command_config(0,nullptr);
-terminal_io()->println("status:");
-terminal_command_status(0,nullptr);
-terminal_io()->println("pipe pyload:");
-terminal_command_rxp(0,nullptr);
-terminal_io()->println("observ:");
-terminal_command_obs(0,nullptr);
-terminal_io()->println("addr:");
-terminal_command_addr(0,nullptr);
-}
+// TERMINAL_COMMAND(dbg, "dump all informations")
+// {
+// terminal_io()->println("setup:");
+// terminal_command_setup(0,nullptr);
+// terminal_io()->println("config:");
+// terminal_command_config(0,nullptr);
+// terminal_io()->println("status:");
+// terminal_command_status(0,nullptr);
+// terminal_io()->println("pipe pyload:");
+// terminal_command_rxp(0,nullptr);
+// terminal_io()->println("observ:");
+// terminal_command_obs(0,nullptr);
+// terminal_io()->println("addr:");
+// terminal_command_addr(0,nullptr);
+// }
 

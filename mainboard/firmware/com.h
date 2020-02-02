@@ -104,6 +104,9 @@ void set_ack(int card, bool v);
 
 void set_crc(int card,int crc);
 
+void com_set_reg(int index, uint8_t reg, uint8_t value);
+void com_set_reg5(int index, uint8_t reg, uint8_t value[5]);
+void com_flush_rx(int index);
 int get_retransmission_delay(int card);
 int get_retransmission_count(int card);
 void set_retransmission(int card, int delay, int count);
