@@ -363,6 +363,7 @@ int get_retransmitted_count(int card){
 
 int has_data(int card)
 {
+    com_set_reg(card, REG_CONFIG, com_read_reg(card,REG_CONFIG)| CONFIG_PWR_UP | CONFIG_PRIM_RX );
     uint8_t s=com_read_reg(card,REG_STATUS);
     //if (s&REG_STATUS_RX_DR)
     uint8_t v=(s&REG_STATUS_RX_P_NO)>>1;
