@@ -100,18 +100,24 @@ static void com_usb_tick()
 void com_master_init(){
    com_init();
     for(int card=0;card<3;++card){
-        com_ce_disable(card); // force standby I mode
         set_ack(card,true); // set ACK
         set_crc(card,2); // 2bytes for CRC
+        set_rf(card,SPEED_2M,POW_0db);
         //for(int pipe=0;pipe<6;pipe++){ // enable all pipe with a payload of 32bytes
         //    set_pipe_payload(card,pipe,32);
         //}
-        set_pipe_payload(card,0,32);
-        set_retransmission(card,0,15);
-        set_channel(card,110);
+        //set_pipe_payload(card,0,32);
+        //set_retransmission(card,0,15);
         clear_status(card);
     }
-
+    com_ce_enable(0);
+    set_channel(0,110);
+    set_pipe_payload(0,0,32);
+    set_pipe_payload(0,1,32);
+    struct addr5 a={{0xE7,0xE7,0xE7,0xE7,0xE7}};
+    com_set_rx_addr(0,0,a);
+    com_set_tx_addr(0,a);
+    power(0,true);
 }
 
 
@@ -130,6 +136,11 @@ TERMINAL_COMMAND(umb, "Set USB com in binary mode")
 {
     terminal_io()->println("switch to binary usb com mode");
     usbcom_mode =  USBMODE_BIN;
+}
+
+TERMINAL_COMMAND(reinit, "reset master init")
+{
+    com_master_init();
 }
 
 TERMINAL_COMMAND(chan, "Display or set used channel: chan [id] [chan]")

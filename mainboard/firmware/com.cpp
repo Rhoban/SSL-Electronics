@@ -87,11 +87,7 @@ uint8_t com_data[3][PAYLOAD_SIZE];
 bool com_available[3] = {false};
 
 int com_pins[3] = {
-  // COM_CS1, COM_CS2, COM_CS3
-  COM_CS2, COM_CS3, COM_CS1
-//    COM_CS1, COM_CS1, COM_CS1
-//    COM_CS2, COM_CS2, COM_CS2
-//    COM_CS3, COM_CS3, COM_CS3
+   COM_CS1, COM_CS2, COM_CS3 // dont't touch this !
 };
 
 TERMINAL_PARAMETER_INT(irqed, "", 0);
@@ -349,14 +345,14 @@ void com_flush_rx(int index){
     uint8_t packet[1] = {OP_FLUSH_RX};
     com_send(index, packet, 1);
 
-    SerialUSB.print("flush rx");
+    SerialUSB.print("flush rx\n");
 //    return packet[0];
 }
 
 void com_flush_tx(int index){
     uint8_t packet[1] = {OP_FLUSH_TX};
     com_send(index, packet, 1);
-    SerialUSB.print("flush tx");
+    SerialUSB.print("flush tx\n");
 //    return packet[0];
 }
 
@@ -412,10 +408,10 @@ void send(int card,  uint8_t *payload, int size){
     com_ce_disable(card);
     clear_status(card);
 
-    uint8_t conf=com_read_reg(card,REG_CONFIG);
-    com_set_reg(card, REG_CONFIG,(conf | CONFIG_PWR_UP) & ~CONFIG_PRIM_RX ); // dont touch other config flags...
+    //uint8_t conf=com_read_reg(card,REG_CONFIG);
+    //com_set_reg(card, REG_CONFIG,(conf | CONFIG_PWR_UP) & ~CONFIG_PRIM_RX ); // dont touch other config flags...
 
-        com_flush_tx(card);
+      //  com_flush_tx(card);
 
 //    com_ce_enable(card);
 //    uint8_t s;
@@ -645,29 +641,11 @@ bool com_is_ok(int index)
 
 void com_init()
 {
-    // Not initializing if we don't have an id and are not master
-   /* if (infos_get_id() == 0xff && !com_master) {
-        return;
-    }
-    */
-
-    // Initializing SPI
-    // com.begin(SPI_4_5MHZ, MSBFIRST, 0);
     com.begin(SPI_2_25MHZ, MSBFIRST, 0);
-    //com.begin(SPI_1_125MHZ, MSBFIRST, 0);
-    //com.begin(SPI_562_500KHZ, MSBFIRST, 0);
-    //com.begin(SPI_281_250KHZ, MSBFIRST, 0);
-    //com.begin(SPI_140_625KHZ, MSBFIRST, 0);
-
-    // Initializing CS pins
-
-    for (uint8_t k=0; k<3; k++) {
+    for (uint8_t k=0; k<3; k++) { // Set CSN to 1 as it is default state
       pinMode(com_pins[k], OUTPUT);
       digitalWrite(com_pins[k], HIGH);
     }
-
-
-    // Initializing COM_CE
     pinMode(COM_CE1, OUTPUT);
     digitalWrite(COM_CE1, LOW);
     pinMode(COM_CE2, OUTPUT);
@@ -675,53 +653,23 @@ void com_init()
     pinMode(COM_CE3, OUTPUT);
     digitalWrite(COM_CE3, LOW);
 
-    //for (int k=0; k<3; k++) {
-        // Disabling auto acknowledgement
-      //  com_set_reg(k, REG_EN_AA, 0x00);
-        //set_ack(k,true);
+    delay_us(1000); // wait few
 
-        // Setting the appropriate channel for this module
-//        if(developer_mode)
-//          com_set_reg(k, REG_RF_CH, com_channels_developers[k]);
-//        else
-//          com_set_reg(k, REG_RF_CH, com_channels[k]);
-
-        // Setting the address
-//        uint8_t addr[5] = COM_ADDR;
-//        if (com_master) {
-//          addr[4] = COM_MASTER;
-//        } else {
-//          addr[4] = infos_get_id();
-//        }
-//        com_set_reg5(k, REG_RX_ADDR_P0, addr);
-
-        // Enabling only the pipe 1
-//        com_set_reg(k, REG_EN_RXADDR, 1);
-
-        // Setting payload in rx p0 to 1
-//        if (com_master) {
-//            com_set_reg(k, REG_RX_PW_P0, sizeof(struct packet_robot));
-//        } else {
-//            com_set_reg(k, REG_RX_PW_P0, PACKET_SIZE);
-//        }
-
-        // Power up
-//        com_mode(k, true, true);
-
-        // If I am not the master, I will talk only to the master
-//        if (!com_master) {
-//            for (int k=0; k<3; k++) {
-//                com_set_tx_addr(k, COM_MASTER);
-//            }
-//        }
-//    }
-
-    // Listening
-   // for (int k=0; k<3; k++) {
-   //     com_txing[k] = 0;
-   //     com_set_reg(k, REG_STATUS, 0x70);
-   //     com_ce_enable(k);
-   // }
+    // set default state for all cards:
+    // this setup is a copy from arduino rf24l01+ library
+    for (uint8_t k=0; k<3; k++) {
+        com_ce_disable(k);
+        set_config(k,CONFIG_EN_CRC|CONFIG_CRCO);
+        set_retransmission(k,5,15);
+        com_set_reg(k,REG_RF_SETUP,0x21);
+        com_set_reg(k,REG_RF_SETUP,0x01);
+        com_set_reg(k,REG_FEATURE,0x00);
+        com_set_reg(k,REG_DYNPD,0x00);
+        clear_status(k);
+        set_channel(k,76);
+        com_flush_rx(k);
+        com_flush_tx(k);
+    }
 
     // Initializing IRQ pins
     // XXX: We don't listen to IRQs anymore because there was a routing issue
@@ -763,6 +711,19 @@ void com_init()
 
     mux_init();
 }
+
+
+void power(int card,bool up){
+    if (up)
+        set_config(card,get_config(card) | CONFIG_PWR_UP);
+    else
+        set_config(card,get_config(card) & ~CONFIG_PWR_UP);
+}
+
+void set_rf(int card, uint8_t speed, uint8_t pow){
+    com_set_reg(card,REG_RF_SETUP,speed|pow);
+}
+
 
 void set_config(int card,uint8_t v){
     com_set_reg(card,REG_CONFIG,v);

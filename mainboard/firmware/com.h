@@ -108,6 +108,15 @@ int get_retransmission_delay(int card);
 int get_retransmission_count(int card);
 void set_retransmission(int card, int delay, int count);
 
+void power(int card,bool up);
+#define SPEED_250k 0x20
+#define SPEED_1M   0x00
+#define SPEED_2M   0x08
+#define POW_18db 0x00
+#define POW_12db 0x01
+#define POW_6db  0x02
+#define POW_0db  0x03
+void set_rf(int card, uint8_t speed, uint8_t pow);
 uint8_t get_config(int card);
 void set_config(int card,uint8_t);
 uint8_t get_status(int card);

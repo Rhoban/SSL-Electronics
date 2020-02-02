@@ -10,6 +10,7 @@
 #define OP_WRITE        0x20
 #define OP_RX           0x61
 #define OP_TX           0xa0
+#define OP_TX_NOACK     0xb0
 #define OP_FLUSH_RX     0xE2
 #define OP_FLUSH_TX     0xE1
 #define OP_NOP          0xff
