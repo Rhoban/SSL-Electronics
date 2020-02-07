@@ -1,5 +1,12 @@
 #include "com_master.h"
 #include "nrf24l01.h"
+#include "com_proto.h"
+
+#include <watchdog.h>
+#include <stdlib.h>
+#include <wirish/wirish.h>
+#include <terminal.h>
+
 
 
 #define STATE_INIT     0
@@ -10,6 +17,13 @@
 #define USBMODE_BIN 1
 #define USBMODE_TERM 2
 int usbcom_mode = USBMODE_TERM;
+
+#define CARD_STATUS 0
+#define CARD_ORDER  1
+#define CARD_ICMP   2
+bool card_status_ok=false;
+bool card_order_ok=false;
+bool card_icmp_ok=false;
 
 static void com_usb_tick()
 {
@@ -23,16 +37,6 @@ static void com_usb_tick()
     while (SerialUSB.available()) {
         watchdog_feed();
         uint8_t c = SerialUSB.read();
-/*
-        terminal_io()->print("com usb tick read ");
-        terminal_io()->println(c);
-        terminal_io()->print("state is ");
-        terminal_io()->println(state);
-        terminal_io()->print("magic pos ");
-        terminal_io()->println(magic_pos);
-        terminal_io()->print("usb mode is  ");
-        terminal_io()->println(usbcom_mode);
-*/
         if (state == STATE_INIT) {
             if (c == 0xaa) {
                 state=STATE_MAGIC1;
@@ -94,34 +98,111 @@ static void com_usb_tick()
     }
 }
 
-#define RECV_TEST 0
+//#define RECV_TEST 0
 
 void com_master_init(){
-   com_init();
+    com_init(); // default card setup
+
     for(int card=0;card<3;++card){
-        set_ack(card,true); // set ACK
-        set_crc(card,2); // 2bytes for CRC
-        set_rf(card,SPEED_2M,POW_0db);
-        //for(int pipe=0;pipe<6;pipe++){ // enable all pipe with a payload of 32bytes
-        //    set_pipe_payload(card,pipe,32);
-        //}
-        //set_pipe_payload(card,0,32);
-        //set_retransmission(card,0,15);
-        clear_status(card);
+        com_set_ack(card,true); // set ACK
+        com_set_crc(card,2); // 2bytes for CRC
+        com_set_rf(card,SPEED_2M,POW_0db);
+        com_clear_status(card);
     }
-    com_ce_enable(0);
-    set_channel(0,110);
-    set_pipe_payload(0,0,32);
-    set_pipe_payload(0,1,32);
-    struct addr5 a={{0xE7,0xE7,0xE7,0xE7,0xE7}};
-    com_set_rx_addr(0,0,a);
-    com_set_tx_addr(0,a);
-    power(0,true);
+
+    card_icmp_ok = com_is_ok(CARD_ICMP);
+    card_status_ok = com_is_ok(CARD_STATUS);
+    card_order_ok = com_is_ok(CARD_ORDER);
+
+    // Set card 0 on receive mode with multiple pipe adresses
+    if (card_status_ok){
+        com_set_channel(CARD_STATUS,status_chan);
+        uint8_t a[5]=addr_for_status;
+        com_set_tx_addr(CARD_STATUS,a);
+        com_set_rx_addr(CARD_STATUS,0,a);
+        com_set_pipe_payload(CARD_STATUS,0,status_payload_size);
+        uint8_t b[5]=addr_for_status;
+        for(uint8_t pipe=1;pipe<6;pipe++){
+            b[0]=(b[0]&0xF0) | pipe;
+            com_set_rx_addr(CARD_STATUS,pipe,b);
+            com_set_pipe_payload(CARD_STATUS,pipe,status_payload_size);//status_payload_size);//sizeof(struct packet_robot));
+        }
+        com_set_state(CARD_STATUS,ComState::RX);
+    }
+    if (card_order_ok){
+        com_set_channel(CARD_ORDER,orders_chan);
+        uint8_t x[5]=addr_for_orders; // address will change according to robot
+        com_set_tx_addr(CARD_ORDER,x);
+        com_set_rx_addr(CARD_ORDER,0,x);
+        com_set_pipe_payload(CARD_ORDER,0,order_payload_size);
+        com_set_state(CARD_ORDER,ComState::TX);
+    }
+    if (card_icmp_ok){
+        // Set card 2 on rx mode, waiting for robot dhcp request
+        com_set_channel(CARD_ICMP,icmp_chan);
+        uint8_t y[5]=addr_for_icmp;
+        com_set_tx_addr(CARD_ICMP,y);
+        com_set_rx_addr(CARD_ICMP,0,y);
+        com_set_pipe_payload(CARD_ICMP,0,icmp_payload_size);
+        com_set_state(CARD_ICMP,ComState::TX);
+    }
 }
 
 
+void com_master_icmp_tick(){
+    if (com_has_data(CARD_ICMP)>=0){
+        struct icmp_order o;
+        com_receive(CARD_ICMP,(uint8_t *)&o,sizeof(icmp_order));
+
+        SerialUSB.print("Receive an ICMP request: ");
+        SerialUSB.println(o.icmp_type);
+        com_clear_status(CARD_ICMP);
+    }
+}
+
+void com_master_status_tick(){
+    int data = com_has_data(CARD_STATUS);
+    if (data>=0){
+        packet_robot status;
+//        char pl[32];
+        com_receive(CARD_STATUS,(uint8_t *)&status,status_payload_size);
+        SerialUSB.print("receive data STATUS CARD,  pipe ");
+        SerialUSB.print(data);
+        SerialUSB.print(" from ");
+////        SerialUSB.print("data ");
+        SerialUSB.print(status.id);
+        SerialUSB.println(" ");
+//        com_flush_rx(k);
+        com_clear_status(0);
+    }
+}
+void com_master_order_tick(){
+    int data = com_has_data(CARD_ORDER);
+    if (data>=0){
+        char pl[32];
+        com_receive(CARD_ORDER,(uint8_t *)pl,32);
+        SerialUSB.print("receive data ORDER CARD,  pipe ");
+        SerialUSB.print(data);
+        SerialUSB.print(" content ");
+////        SerialUSB.print("data ");
+        SerialUSB.print(((int *)pl)[0]);
+        SerialUSB.println(" ");
+//        com_flush_rx(k);
+        com_clear_status(0);
+    }
+}
+
 void com_master_tick(){
     watchdog_feed();
+
+    if (card_icmp_ok)
+        com_master_icmp_tick();
+    watchdog_feed();
+    if (card_status_ok)
+        com_master_status_tick();
+    watchdog_feed();
+    if (card_order_ok)
+        com_master_order_tick();
 
     if (usbcom_mode == USBMODE_BIN)
         com_usb_tick();
@@ -142,366 +223,24 @@ TERMINAL_COMMAND(reinit, "reset master init")
     com_master_init();
 }
 
-TERMINAL_COMMAND(chan, "Display or set used channel: chan [id] [chan]")
+TERMINAL_COMMAND(icmp, "send an icmp request")
 {
-    if (argc!=2){
-    for(int k=0;k<3;++k){
-        terminal_io()->print(k);
-        terminal_io()->print(":");
-        terminal_io()->println(get_channel(k));
-    }}
-    else {
-        int id=atoi(argv[0]);
-        uint8_t chan=atoi(argv[1]);
-        set_channel(id,chan);
+    if (card_icmp_ok == false){
+        terminal_io()->println("icmp card no available!");
+        return;
     }
-}
-TERMINAL_COMMAND(ack, "Display or set ack support: ack card [O|1]")
-{
-    if (argc==0){
-    for(int k=0;k<3;++k){
-        terminal_io()->print(k);
-        terminal_io()->print(":");
-        terminal_io()->println(get_ack(k));
-    }} else if (argc!=2){
-        terminal_io()->println("wrong arg");
-    } else {
-        int c=atoi(argv[0]);
-        bool b=atoi(argv[1]);
-        set_ack(c,b);
-    }
-}
-
-TERMINAL_COMMAND(recv, "check if data received")
-{
-    for(int k=0;k<3;++k){
-        terminal_io()->print(k);
-        terminal_io()->print(": ");
-        int data = has_data(k);
-        terminal_io()->print(data);
-        if (data>=0){
-            char pl[32];
-            receive(k,(uint8_t *)pl,32);
-            terminal_io()->print(" data[");
-            terminal_io()->print(pl);
-            terminal_io()->print("]");
-            com_flush_rx(k);
-            clear_status(k);
-        }
-        terminal_io()->println();
-    }
-}
-
-TERMINAL_COMMAND(retr, "Display or set retransmission: retr card delay count")
-{
-    if (argc==0){
-    for(int k=0;k<3;++k){
-        terminal_io()->print(k);
-        terminal_io()->print(": ");
-        int d=get_retransmission_delay(k);
-        terminal_io()->print(d);
-        terminal_io()->print(" (");
-        terminal_io()->print(250+250*d);
-        terminal_io()->print(") ");
-        terminal_io()->println(get_retransmission_count(k));
-    }} else if (argc!=3){
-        terminal_io()->println("wrong arg");
-    } else {
-        int c=atoi(argv[0]);
-        int b=atoi(argv[1]);
-        int f=atoi(argv[2]);
-        set_retransmission(c,b,f);
-    }
-}
-
-TERMINAL_COMMAND(send, "send card msg")
-{
-    if (argc!=2)
-        terminal_io()->println("wrong number of args");
-    else{
-        int card=atoi(argv[0]);
-        char payload[32]={'\0'};
-        for(int i=0;i<32 && argv[1][i]!='\0';++i) payload[i]=argv[1][i];
-        send(card,(uint8_t *)payload,32);
-    }
-}
-
-TERMINAL_COMMAND(status, "status")
-{
-    for(int k=0;k<3;++k){
-        terminal_io()->print(k);
-        terminal_io()->print(":");
-        uint8_t c=get_status(k);
-        if (c&REG_STATUS_RX_DR)
-            terminal_io()->print(" RXDR ");
-        else
-            terminal_io()->print(" rxdr ");
-        if (c&REG_STATUS_TX_DS)
-            terminal_io()->print(" TXDS ");
-        else
-            terminal_io()->print(" txds ");
-        if (c&REG_STATUS_MAX_RT)
-            terminal_io()->print(" MRT ");
-        else
-            terminal_io()->print(" mrt ");
-        terminal_io()->print((c&REG_STATUS_RX_P_NO)>>1);
-        if (c&REG_STATUS_TX_FULL)
-            terminal_io()->print(" FULL ");
-        else
-            terminal_io()->print(" full ");
-        terminal_io()->println();
-        terminal_io()->print(" :");
-        c=get_fifo_status(k);
-        if (c&REG_FSTAT_TX_REUSE)
-            terminal_io()->print(" TXR ");
-        else
-            terminal_io()->print(" txr ");
-        if (c&REG_FSTAT_TX_FULL)
-            terminal_io()->print(" TXFULL ");
-        else
-            terminal_io()->print(" txfull ");
-        if (c&REG_FSTAT_TX_EMPTY)
-            terminal_io()->print(" TXEMPTY ");
-        else
-            terminal_io()->print(" txempty ");
-        if (c&REG_FSTAT_RX_FULL)
-            terminal_io()->print(" RXFULL ");
-        else
-            terminal_io()->print(" rxfull ");
-        if (c&REG_FSTAT_RX_EMPTY)
-            terminal_io()->print(" RXEMPTY ");
-        else
-            terminal_io()->print(" rxempty ");
-        terminal_io()->println();
-    }
-}
-
-TERMINAL_COMMAND(rst, "reset status rst [card]"){
-    if (argc==0){
-        for(int k=0;k<3;++k)
-            reset_status(k);
-    } else {
-        int c=atoi(argv[1]);
-        reset_status(c);
-    }
-
-}
-TERMINAL_COMMAND(setup, "display rf setup"){
-    for(int k=0;k<3;++k){
-        terminal_io()->print(k);
-        terminal_io()->print(":");
-        uint8_t s=get_rf_setup(k);
-
-        if (s&REG_RF_CONT_WAVE)
-            terminal_io()->print(" CONT ");
-        else
-            terminal_io()->print(" cont ");
-        if (s&REG_RF_DR_LOW)
-            terminal_io()->print(" DRLOW ");
-        else
-            terminal_io()->print(" drlow ");
-        if (s&REG_RF_DR_LOW)
-            terminal_io()->print(" PLL ");
-        else
-            terminal_io()->print(" pll ");
-        if (s&REG_RF_DR_HIGH)
-            terminal_io()->print(" DRHIG ");
-        else
-            terminal_io()->print(" drhig ");
-        terminal_io()->print(s&REG_RF_PWR>>1);
-        if (s&REG_RF_DR_LOW){
-            if (s&REG_RF_DR_HIGH)
-                terminal_io()->print(" error in data rate ");
-        else
-                terminal_io()->print(" 250kbps ");
-        }
-        else{
-            if (s&REG_RF_DR_HIGH)
-                terminal_io()->print(" 2Mbps ");
-            else
-               terminal_io()->print(" 1Mbps ");
-        }
-        if ((s&REG_RF_PWR>>1)==0)
-            terminal_io()->print(" -18dBm ");
-        else if ((s&REG_RF_PWR>>1)==1)
-                terminal_io()->print(" -12dBm ");
-        else if ((s&REG_RF_PWR>>1)==2)
-                terminal_io()->print(" -6dBm ");
-        else if ((s&REG_RF_PWR>>1)==3)
-                terminal_io()->print(" 0dBm ");
-        terminal_io()->println();
-    }
-}
-
-TERMINAL_COMMAND(config, "Display ack support")
-{
-    for(int k=0;k<3;++k){
-        terminal_io()->print(k);
-        terminal_io()->print(":");
-        uint8_t conf=get_config(k);
-        if (conf&CONFIG_PWR_UP)
-            terminal_io()->print(" UP   ");
-        else
-            terminal_io()->print(" down ");
-
-        if (conf&CONFIG_EN_CRC)
-            terminal_io()->print(" CRC ");
-        else
-            terminal_io()->print(" crc ");
-        if (conf&CONFIG_CRCO)
-            terminal_io()->print(" CRCO ");
-        else
-            terminal_io()->print(" crco ");
-        if (conf&CONFIG_MASK_MAX_RT)
-            terminal_io()->print(" MAXRT ");
-        else
-            terminal_io()->print(" maxrt ");
-        if (conf&CONFIG_MASK_RX_DR)
-            terminal_io()->print(" RXDR ");
-        else
-            terminal_io()->print(" rxdr ");
-        if (conf&CONFIG_MASK_TX_DS)
-            terminal_io()->print(" TXDS ");
-        else
-            terminal_io()->print(" txds ");
-        if (conf&CONFIG_PRIM_RX)
-            terminal_io()->print(" PRIMRX ");
-        else
-            terminal_io()->print(" primrx ");
-        terminal_io()->println("");
-    }
-}
-
-void print_byte_as_hex(uint8 v){
-    uint8 a=(v>>4);
-    if (a<10)
-        terminal_io()->print(a);
-    else
-        terminal_io()->print((char )('A'+a-10));
-    a=v&0x0F;
-    if (a<10)
-        terminal_io()->print(a);
-    else
-        terminal_io()->print((char )('A'+a-10));
-}
-
-void print_addr(struct addr5 a){
-    for(int i=0;i<5;++i){
-        print_byte_as_hex(a.addr[i]);
-        if (i<4)
-            terminal_io()->print("-");
-    }
-    terminal_io()->print("  ");
-    for(int i=0;i<5;++i){
-        terminal_io()->print(a.addr[i]);
-        if (i<4)
-            terminal_io()->print(".");
-    }
-}
-
-TERMINAL_COMMAND(addr, "display or set com address: addr [id] nb.nb.nb.nb.nb")
-{
-    if (argc==0){
-        for(int k=0;k<3;++k)
-        {
-            terminal_io()->print(k);
-            terminal_io()->println(":");
-            terminal_io()->print("  tx:   ");
-            struct addr5 a=com_get_tx_addr(k);
-            print_addr(a);
-            terminal_io()->println();
-            for(int pipe=0;pipe<6;pipe++){
-                terminal_io()->print("  rx(");
-                terminal_io()->print(pipe);
-                terminal_io()->print("):");
-                print_addr(com_get_rx_addr(k,pipe));
-                terminal_io()->println();
-            }
-        }
-    } else if (argc!=2){
-        terminal_io()->println("invalid number of args");
-    } else {
-        int id=atoi(argv[0]);
-        struct addr5 a;
-        int l=0;
-        int s=0;
-        int k=0;
-        while((k<5) && (argv[1][l]!='\0')){
-            if (argv[1][l]=='.') {
-                argv[1][l]='\0';
-                a.addr[k]=atoi(argv[1]+s);
-                s=l+1;
-                k+=1;
-            }
-            l+=1;
-        }
-        if (k!=4){
-            terminal_io()->println("invalid address");
-        } else {
-            a.addr[k] = atoi(argv[1]+s);
-            com_set_tx_addr(id, a);
-            com_set_rx_addr(id,0, a);
-        }
-    }
+    struct icmp_order o;
+    o.icmp_type = ICMP_ECHO;
+    o.icmp_type = 1;
+    if (com_send(CARD_ICMP,(uint8_t *)&o,icmp_payload_size)){
+        terminal_io()->println("icmp packet acked");
+    } else
+        terminal_io()->println("icmp packet not acked");
 
 }
 
-TERMINAL_COMMAND(obs, "display transmission stats")
-{
-    for(int k=0;k<3;++k)
-    {
-        terminal_io()->print(k);
-        terminal_io()->print(": ");
-        terminal_io()->print(get_lost_count(k));
-        terminal_io()->print(" lost ");
-        terminal_io()->print(get_retransmitted_count(k));
-        terminal_io()->println(" retransmitted ");
-}
-}
 
-TERMINAL_COMMAND(rxp, "display or set pipe payload, 0 means not active")
-{
-    if (argc==0){
-        for(int k=0;k<3;++k)
-        {
-            terminal_io()->print(k);
-            terminal_io()->print(": ");
-            for(int pipe=0;pipe<6;pipe++){
-                terminal_io()->print(pipe);
-                int pl=get_pipe_payload(k,pipe);
-                if (pl==0) terminal_io()->print("[disabled] ");
-                else {
-                    terminal_io()->print("[");
-                    terminal_io()->print(pl);
-                    terminal_io()->print("] ");
-                }
-            }
-            terminal_io()->println();
-        }
-    } else if (argc!=3){
-        terminal_io()->println("wrong number of arguments: card pipe payloadsize");
-    }
-    else{
-        int c=atoi(argv[0]);
-        int p=atoi(argv[1]);
-        int pl=atoi(argv[2]);
-        set_pipe_payload(c,p,pl);
-    }
-}
 
-// TERMINAL_COMMAND(dbg, "dump all informations")
-// {
-// terminal_io()->println("setup:");
-// terminal_command_setup(0,nullptr);
-// terminal_io()->println("config:");
-// terminal_command_config(0,nullptr);
-// terminal_io()->println("status:");
-// terminal_command_status(0,nullptr);
-// terminal_io()->println("pipe pyload:");
-// terminal_command_rxp(0,nullptr);
-// terminal_io()->println("observ:");
-// terminal_command_obs(0,nullptr);
-// terminal_io()->println("addr:");
-// terminal_command_addr(0,nullptr);
-// }
+
+
 

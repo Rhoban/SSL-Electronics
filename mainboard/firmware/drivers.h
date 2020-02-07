@@ -36,7 +36,7 @@ extern struct driver_packet_ans driver_answers[5];
 /**
  * Initializes the drivers
  */
-void drivers_init();
+void drivers_init(bool fake);
 
 /**
  * Set the speed of the nth wheel [turn/s]

@@ -1,11 +1,11 @@
-#include <stdlib.h>
+﻿#include <stdlib.h>
 #include <wirish/wirish.h>
 #include <libmaple/iwdg.h>
 #include <terminal.h>
 #include <main.h>
 #include <series/gpio.h>
 #include <watchdog.h>
-//#include "drivers.h"
+#include "drivers.h"
 #include "com.h"
 #include "com_master.h"
 #include "buzzer.h"
@@ -49,39 +49,27 @@ void setup()
     // Buzzer
     buzzer_init();
     delay_us(1000);
+    buzzer_beep(C6,100);
+    buzzer_wait_play();
 
 
     com_master_init();
     delay_us(800000);
 
-    if(developer_mode)
-      buzzer_beep(C6,50);
-    else
-      buzzer_beep(C5,50);
+    buzzer_beep(C6,100);
     buzzer_wait_play();
-
-
-    if (com_is_all_ok() ) { // && drivers_is_all_ok()) {
-      // buzzer_play(MELODY_BEETHOVEN);
-            if(developer_mode)
-      buzzer_play(MELODY_BOOT_DEV);
-            else
-                buzzer_play(MELODY_BOOT);
-      buzzer_wait_play();
-
-    } else {
-      buzzer_play(MELODY_WARNING);
-    }
 
     terminal_init(&SerialUSB);
 
-    // Reiniting com
-    com_master_init();
+    delay_us(800000);
+
+    buzzer_beep(C6,100);
+    buzzer_wait_play();
 
     // Starting the watchdog
     watchdog_start(WATCHDOG_58MS);
 
-    // systick_init();
+  //   systick_init();
 }
 
 // Benchmaking main loop
@@ -122,12 +110,12 @@ void loop()
 
     // Buzzer
     buzzer_tick();
-//    terminal_tick();
+    terminal_tick();
 }
 
 TERMINAL_COMMAND(diag, "Diagnostic")
 {
-    com_diagnostic();
+  //  com_diagnostic();
     if (developer_mode)
       terminal_io()->println("in dev mode");
     else
