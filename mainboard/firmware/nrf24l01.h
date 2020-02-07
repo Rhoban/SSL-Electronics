@@ -18,24 +18,24 @@
 
 
 // CONFIG FLAGS
-#define CONFIG_MASK_RX_DR  0x01<<6
-#define CONFIG_MASK_TX_DS  0x01<<5
-#define CONFIG_MASK_MAX_RT 0x01<<4
-#define CONFIG_EN_CRC      0x01<<3
-#define CONFIG_CRCO        0x01<<2
-#define CONFIG_PWR_UP      0x01<<1
-#define CONFIG_PRIM_RX     0x01<<0
+#define CONFIG_MASK_RX_DR  (0x01<<6)
+#define CONFIG_MASK_TX_DS  (0x01<<5)
+#define CONFIG_MASK_MAX_RT (0x01<<4)
+#define CONFIG_EN_CRC      (0x01<<3)
+#define CONFIG_CRCO        (0x01<<2)
+#define CONFIG_PWR_UP      (0x01<<1)
+#define CONFIG_PRIM_RX     (0x01<<0)
 
 // Auto ACK for all pipes:
 #define REG_EN_AA_ALL 0x3F
 
 // Enable PIPEs:
 #define REG_EN_RXADDR_P0 0x1
-#define REG_EN_RXADDR_P1 0x1<<1
-#define REG_EN_RXADDR_P2 0x1<<2
-#define REG_EN_RXADDR_P3 0x1<<3
-#define REG_EN_RXADDR_P4 0x1<<4
-#define REG_EN_RXADDR_P5 0x1<<5
+#define REG_EN_RXADDR_P1 (0x1<<1)
+#define REG_EN_RXADDR_P2 (0x1<<2)
+#define REG_EN_RXADDR_P3 (0x1<<3)
+#define REG_EN_RXADDR_P4 (0x1<<4)
+#define REG_EN_RXADDR_P5 (0x1<<5)
 
 // STATUS
 #define REG_STATUS_ZERO     0x80 // ???

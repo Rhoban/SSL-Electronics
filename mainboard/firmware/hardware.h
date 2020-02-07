@@ -1,6 +1,8 @@
 #ifndef _HARDWARE_H
 #define _HARDWARE_H
 
+#include <stdint.h>
+
 #define GREG 1
 #define CATIE 2
 
@@ -84,5 +86,7 @@
 #define IR_EMIT         12
 #define IR_RECEIVE      10
 #define IR_THRESHOLD    600
+
+void get_uid(uint8_t id[12]);
 
 #endif

@@ -35,10 +35,14 @@ uint8_t com_read_reg(int index, uint8_t reg);
 //void com_tick();
 
 
+void print_addr(uint8_t a[5]);
+void print_byte_as_hex(uint8_t v);
+
 int com_has_data(int card);
 void com_receive(int card, uint8_t *payload, int size);
 bool com_send(int card, uint8_t *payload, int size);
 
+void com_copy_addr(uint8_t dst[5],uint8_t src[5]);
 
 void com_start_listening(int card);
 
@@ -72,6 +76,7 @@ void com_set_crc(int card,int crc);
 //void com_set_reg(int index, uint8_t reg, uint8_t value);
 //void com_set_reg5(int index, uint8_t reg, uint8_t value[5]);
 void com_flush_rx(int index);
+void com_flush_tx(int index);
 int com_get_retransmission_delay(int card);
 int com_get_retransmission_count(int card);
 

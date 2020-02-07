@@ -119,6 +119,13 @@ void com_set_state(int card, ComState state){
         com_current_state[card]=OFF;
         return;
     }
+    SerialUSB.print("state for card ");
+    SerialUSB.print(card);
+    SerialUSB.print(" change from ");
+    SerialUSB.print(com_current_state[card]);
+
+    SerialUSB.print(" to ");
+    SerialUSB.println(state);
     com_ce_disable(card);
     if (com_current_state[card]==OFF){
         com_power(card,true);
@@ -128,7 +135,7 @@ void com_set_state(int card, ComState state){
     if (state==TX){
         com_stop_listening(card);
         com_ce_enable(card);
-        delay_us(10); // we should be in standby II mode now
+        delay_us(10+130); // we should be in standby II mode now
         com_current_state[card] = TX;
     } else { // RX
         com_start_listening(card);
@@ -141,6 +148,33 @@ void com_set_state(int card, ComState state){
 TERMINAL_PARAMETER_INT(irqed, "", 0);
 
 
+
+void print_byte_as_hex(uint8_t v){
+    uint8 a=(v>>4);
+    if (a<10)
+        SerialUSB.print(a);
+    else
+        SerialUSB.print((char )('A'+a-10));
+    a=v&0x0F;
+    if (a<10)
+        SerialUSB.print(a);
+    else
+        SerialUSB.print((char )('A'+a-10));
+}
+
+void print_addr(uint8_t a[5]){
+    for(int i=0;i<5;++i){
+        print_byte_as_hex(a[i]);
+        if (i<4)
+            SerialUSB.print("-");
+    }
+    terminal_io()->print("  ");
+    for(int i=0;i<5;++i){
+        terminal_io()->print(a[i]);
+        if (i<4)
+            SerialUSB.print(".");
+    }
+}
 
 
 const char *reg_to_str(uint8_t reg){
@@ -375,7 +409,6 @@ void com_reset_status(int card){
 }
 int com_get_pipe_payload(int card,int pipe){
     uint8_t en= com_read_reg(card,REG_EN_RXADDR);
-
     switch(pipe){
     case 0:
         return en & REG_EN_RXADDR_P0?com_read_reg(card,REG_RX_PW_P0):-1;
@@ -401,34 +434,36 @@ int com_get_pipe_payload(int card,int pipe){
 void com_set_pipe_payload(int card,int pipe,uint8_t pl){
     if (pl>32) return;
     uint8_t en= com_read_reg(card,REG_EN_RXADDR);
+
+
     switch(pipe){
     case 0:
-        if (pl==0) en&=~REG_EN_RXADDR_P0;
+        if (pl==0) en=en & ~REG_EN_RXADDR_P0;
         else en|=REG_EN_RXADDR_P0;
         com_set_reg(card,REG_RX_PW_P0,pl);
         break;
     case 1:
-        if (pl==0) en&=~REG_EN_RXADDR_P1;
+        if (pl==0) en=en & ~REG_EN_RXADDR_P1;
         else en|=REG_EN_RXADDR_P1;
         com_set_reg(card,REG_RX_PW_P1,pl);
         break;
     case 2:
-        if (pl==0) en&=~REG_EN_RXADDR_P2;
+        if (pl==0) en=en & ~REG_EN_RXADDR_P2;
         else en|=REG_EN_RXADDR_P2;
         com_set_reg(card,REG_RX_PW_P2,pl);
         break;
     case 3:
-        if (pl==0) en&=~REG_EN_RXADDR_P3;
+        if (pl==0) en=en & ~REG_EN_RXADDR_P3;
         else en|=REG_EN_RXADDR_P3;
         com_set_reg(card,REG_RX_PW_P3,pl);
         break;
     case 4:
-        if (pl==0) en&=~REG_EN_RXADDR_P4;
+        if (pl==0) en=en & ~REG_EN_RXADDR_P4;
         else en|=REG_EN_RXADDR_P4;
         com_set_reg(card,REG_RX_PW_P4,pl);
         break;
     case 5:
-        if (pl==0) en&=~REG_EN_RXADDR_P5;
+        if (pl==0) en=en & ~REG_EN_RXADDR_P5;
         else en|=REG_EN_RXADDR_P5;
         com_set_reg(card,REG_RX_PW_P5,pl);
         break;
@@ -529,7 +564,6 @@ void com_stop_listening(int card){
 
 int com_has_data(int card)
 {
-
     com_set_state(card,ComState::RX);
     uint8_t s=com_read_reg(card,REG_STATUS);
     uint8_t v=(s&REG_STATUS_RX_P_NO)>>1;
@@ -560,21 +594,23 @@ bool com_send(int card,  uint8_t *payload, int size){
     com_clear_status(card);
     com_tx(card,payload,size);
 
-    //if (wait==false) return true; // Warning: TX_DS or MAX_RT must be clear
-
-    uint8_t s;
-    int nloop=0;
+    uint8_t s,f;
+    uint32 d=micros();
     do {
         s=com_read_reg(card,REG_STATUS);
         watchdog_feed();
-        nloop+=1;
+        f=com_read_reg(card,REG_FIFO_STATUS);
 //        terminal_io()->print("status is: ");
 //        terminal_io()->println(s);
-    } while (((s&REG_STATUS_TX_DS)==0) && ((s&REG_STATUS_MAX_RT)==0) && (nloop<1000));
+    } while (((micros()-d)<150000) && (
+                 (f&REG_FSTAT_TX_EMPTY!=0) || (((s&REG_STATUS_TX_DS)==0) && ((s&REG_STATUS_MAX_RT)==0) )));
+    if (f&REG_FSTAT_TX_EMPTY!=0) com_flush_tx(card);
+    terminal_io()->print("status is: ");
+    print_byte_as_hex(s);
+    terminal_io()->println();
     com_clear_status(card);
-    if ((s&REG_STATUS_MAX_RT)||(nloop>=1000)) return false;
-
-    return true;
+    if ((s&REG_STATUS_TX_DS)!=0) return true;
+    return false;
 }
 
 //NOT USED??
@@ -821,7 +857,8 @@ void com_init()
     // this setup is a copy from arduino rf24l01+ library
     for (uint8_t k=0; k<3; k++) {
         com_ce_enable(k);
-        com_set_config(k,CONFIG_EN_CRC|CONFIG_CRCO); // 2 bytes CRC
+         // 2 bytes CRC and disable all IRQ
+        com_set_config(k,CONFIG_MASK_MAX_RT|CONFIG_MASK_RX_DR|CONFIG_MASK_TX_DS|CONFIG_EN_CRC|CONFIG_CRCO);
         com_set_retransmission(k,5,15);
         com_set_reg(k,REG_RF_SETUP,0x21);
         com_set_reg(k,REG_RF_SETUP,0x01);
@@ -1272,33 +1309,6 @@ TERMINAL_COMMAND(config, "Display ack support")
         print_config(atoi(argv[0]));
     else for(int k=0;k<3;++k)
         print_config(k);
-}
-
-void print_byte_as_hex(uint8 v){
-    uint8 a=(v>>4);
-    if (a<10)
-        terminal_io()->print(a);
-    else
-        terminal_io()->print((char )('A'+a-10));
-    a=v&0x0F;
-    if (a<10)
-        terminal_io()->print(a);
-    else
-        terminal_io()->print((char )('A'+a-10));
-}
-
-void print_addr(uint8_t a[5]){
-    for(int i=0;i<5;++i){
-        print_byte_as_hex(a[i]);
-        if (i<4)
-            terminal_io()->print("-");
-    }
-    terminal_io()->print("  ");
-    for(int i=0;i<5;++i){
-        terminal_io()->print(a[i]);
-        if (i<4)
-            terminal_io()->print(".");
-    }
 }
 
 void print_addr_term(int k){
@@ -1787,4 +1797,10 @@ TERMINAL_COMMAND(dbg, "dump all informations")
     terminal_command_dynp(n,arg);
     terminal_io()->println("rpd:");
     terminal_command_rpd(n,arg);
+}
+
+void com_copy_addr(uint8_t dst[], uint8_t src[])
+{
+    for(int i=0;i<5;++i)
+        dst[i]=src[i];
 }

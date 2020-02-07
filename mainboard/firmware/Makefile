@@ -11,7 +11,7 @@ LIB_RHOBAN_HOME = ./Maple/LibRhoban
 LIB_RHOCK_HOME = ./Maple/LibRhock
 ENABLE_RHOCK := no
 ENABLE_COMMANDS := yes
-COMPILE_MASTER := yes
+COMPILE_MASTER ?= yes
 # PATH := $(CURDIR)/Maple/BinutilsArm/bin:$(PATH)
 PATH := $~/Programmation/MapleMini/libmaple/arm/arm-none-eabi/$(PATH)
 ##

@@ -74,11 +74,22 @@ struct buzzer_note {
 #define ICMP_ECHO         0x01
 #define ICMP_DHCP_REQUEST 0x02
 #define ICMP_DHCP_REPLY   0x03
+#define ICMP_NOREPLY      0x04
+
+#define ICMP_FULL 0x01
+#define ICMP_OK   0x02
 
 struct icmp_order{
     uint8_t icmp_type;
-    uint8_t icmp_addr;
-    uint8_t padding[10];
+    uint8_t arg;
+    uint8_t icmp_addr[5];
+    struct icmp_order &operator=(const struct icmp_order &o){
+        icmp_type = o.icmp_type;
+        arg=o.arg;
+        for(int i=0;i<5;++i)
+            icmp_addr[i]=o.icmp_addr[i];
+        return *this;
+    }
 };
 
 
@@ -97,6 +108,7 @@ struct icmp_order{
 #define icmp_chan 90
 #define addr_for_icmp {0xA1,0xA3,0xB6,0xE4,0xB6};
 #define icmp_payload_size sizeof(icmp_order)
+#define ICMP_TIMEOUT 100000
 //#define icmp_payload_size 32
 
 
