@@ -89,7 +89,7 @@ TERMINAL_COMMAND(bl, "")
 void loop()
 {
 
-#if 0
+#if 1
     // Benchmarking main loop
     static int last = micros();
     if (n < 100) {

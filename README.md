@@ -14,8 +14,18 @@ Then, go in the firmware directory (for instance in brushless or in mainboard) a
 
 You can then compile and install:
 
-    make
+for master board:
+    export COMPILE_MASTER=yes
+    export BOOTLOADER_PORT=/dev/ttyACM0
+    make clean
     make install
+
+for robot board:
+    export COMPILE_MASTER=no
+    export BOOTLOADER_PORT=/dev/ttyACM0
+    make clean
+    make install
+
 
 -------------------------------------------------
 

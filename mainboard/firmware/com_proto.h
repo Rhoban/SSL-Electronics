@@ -79,6 +79,14 @@ struct buzzer_note {
 #define ICMP_FULL 0x01
 #define ICMP_OK   0x02
 
+#define CARD_STATUS 0
+#define CARD_ORDER  1
+#define CARD_ICMP   2
+bool card_status_ok=false;
+bool card_order_ok=false;
+bool card_icmp_ok=false;
+
+
 struct icmp_order{
     uint8_t icmp_type;
     uint8_t arg;
@@ -97,18 +105,18 @@ struct icmp_order{
 #define addr_for_status {0xC0, 0xB4, 0xC5, 0xD6, 0XA3};
 #define status_chan 110
 #define status_payload_size sizeof(packet_robot)
-
+#define STATUS_TIMEOUT_MS 500
 
 // last byte will be from A0 to A5 for master to robot com
 #define addr_for_orders {0x8A,0x7B,0x6C,0x5D,0xA0};
 #define orders_chan 116
 #define order_payload_size sizeof(packet_master)
+#define ORDER_TIMEOUT_MS 500
 
-
-#define icmp_chan 90
+#define icmp_chan 120
 #define addr_for_icmp {0xA1,0xA3,0xB6,0xE4,0xB6};
 #define icmp_payload_size sizeof(icmp_order)
-#define ICMP_TIMEOUT 100000
+#define ICMP_TIMEOUT_MS 1000
 //#define icmp_payload_size 32
 
 

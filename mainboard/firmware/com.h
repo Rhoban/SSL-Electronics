@@ -65,6 +65,7 @@ void com_set_pipe_payload(int card,int pipe,uint8_t pl);
 
 int com_get_ack(int card);
 void com_set_ack(int card, bool v);
+void com_set_ack(int card,int pipe, bool v);
 
 /*!
  * \brief com_set_crc

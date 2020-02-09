@@ -15,6 +15,7 @@
 #include "kinematic.h"
 #include "mux.h"
 #include "odometry.h"
+#include "com_robot.h"
 
 /**
  * Setup function
@@ -71,7 +72,6 @@ void setup()
       developer_mode=true; //THIS IS A GLOBAL
     }
 
-    developer_mode=false; 
 
     if(!developer_mode)
     {
@@ -118,7 +118,7 @@ void setup()
     delay_us(200000);
 
 // Initalizng com
-    com_init();
+    com_robot_init();
     delay_us(800000);
     if(developer_mode)
       buzzer_beep(C6,50);
@@ -136,7 +136,7 @@ void setup()
 
     buzzer_wait_play();
     // Kicker
-    kicker_init();
+    //kicker_init();
     delay_us(800000);
 
 
@@ -147,12 +147,12 @@ void setup()
     buzzer_wait_play();
 
     // IR
-    ir_init();
+    //ir_init();
     delay_us(800000);
     // Voltage measure
 
 
-    drivers_init();
+    //drivers_init();
 
     if (com_is_all_ok() ) { // && drivers_is_all_ok()) {
       // buzzer_play(MELODY_BEETHOVEN);
@@ -168,8 +168,6 @@ void setup()
 
     terminal_init(&SerialUSB);
 
-    // Reiniting com
-    com_init();
 
     // Starting the watchdog
     watchdog_start(WATCHDOG_58MS);
@@ -177,6 +175,9 @@ void setup()
     // systick_init();
 }
 
+#define TIME_STATS
+
+#ifdef TIME_STATS
 // Benchmaking main loop
 int avg = 0;
 int n = 0;
@@ -186,6 +187,7 @@ TERMINAL_COMMAND(bl, "")
     avg = 0;
     n = 0;
 }
+#endif
 
 /**
  * Loop function
@@ -194,9 +196,12 @@ TERMINAL_COMMAND(bl, "")
 void loop()
 {
 
-#if 0
+#ifdef TIME_STATS
     // Benchmarking main loop
     static int last = micros();
+#endif
+
+
     if (n < 100) {
         int loop = micros() - last;
         last = micros();
@@ -205,31 +210,43 @@ void loop()
         }
         n += 1;
     }
-#endif
 
     // Feeding watchdog
     watchdog_feed();
-
+#ifdef TIME_STATS
+    if (n<100)
+        last=micros();
+#endif
     // Com
-    com_tick();
+    com_robot_tick();
+#ifdef TIME_STATS
+    if (n<100){
+        int loop = micros() - last;
+        if (n != 0) {
+            avg += loop;
+        }
+        n += 1;
+    }
+#endif
+
 
     // Buzzer
     buzzer_tick();
 
     // Drivers
-    drivers_tick();
+    //drivers_tick();
 
     // Kick
-    kicker_tick();
+    //kicker_tick();
 
     // Voltage
     voltage_tick();
 
     // Kinematic
-    kinematic_tick();
+    //kinematic_tick();
 
     // IR
-    ir_tick();
+    //ir_tick();
 
     // Ticking the terminal
     terminal_tick();
@@ -238,7 +255,6 @@ void loop()
 TERMINAL_COMMAND(diag, "Diagnostic")
 {
     drivers_diagnostic();
-    com_diagnostic();
     ir_diagnostic();
 }
 

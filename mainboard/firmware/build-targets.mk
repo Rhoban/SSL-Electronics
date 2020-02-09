@@ -6,7 +6,7 @@ ifeq ($(COMPILE_MASTER),yes)
 SRC_FILES = main_master.cpp com_master.cpp com.cpp buzzer.cpp \
             mux.cpp infos.cpp hardware.cpp
 else
-SRC_FILES = main_robot.cpp com_master.cpp drivers.cpp com.cpp buzzer.cpp hardware.cpp \
+SRC_FILES = main_robot.cpp com_robot.cpp drivers.cpp com.cpp buzzer.cpp hardware.cpp \
         kicker.cpp voltage.cpp ir.cpp kinematic.cpp mux.cpp infos.cpp odometry.cpp
 endif
 

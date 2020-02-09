@@ -111,14 +111,18 @@ bool com_check_state(int card){
 
 }
 
+int state_change[3]={0,0,0};
+
 void com_set_state(int card, ComState state){
     if (state==com_current_state[card]) return;
+    state_change[card]+=1;
     if (state==OFF){ // turn off the card
         com_ce_disable(card);
         com_power(card,false);
         com_current_state[card]=OFF;
         return;
     }
+#ifdef DEBUG_COM
     SerialUSB.print("state for card ");
     SerialUSB.print(card);
     SerialUSB.print(" change from ");
@@ -126,11 +130,19 @@ void com_set_state(int card, ComState state){
 
     SerialUSB.print(" to ");
     SerialUSB.println(state);
-    com_ce_disable(card);
+#endif
     if (com_current_state[card]==OFF){
         com_power(card,true);
-        delay_us(1500); // wait 1.5ms
+        // need to wait 5ms, should be 1.5ms but according
+        // to RF24 library can be up to 5ms
+        for(int w=0;w<5;w++) {
+            delay_us(1000);
+            watchdog_feed();
+        }
     }
+    // We are going from tx to rx or from rx to tx
+    com_ce_disable(card);
+    delay_us(130);
     // we are in standby I mode
     if (state==TX){
         com_stop_listening(card);
@@ -140,7 +152,7 @@ void com_set_state(int card, ComState state){
     } else { // RX
         com_start_listening(card);
         com_ce_enable(card);
-        delay_us(130); // in rx until ce move down
+        delay_us(130); // in rx mode until ce pin goes down
         com_current_state[card] = RX;
     }
 }
@@ -274,12 +286,12 @@ static void com_spi_send(int index, uint8_t *packet, size_t n)
 {
     //pause_boost();
   digitalWrite(com_csn_pins[index], LOW);
-  delay_us(10);
+//  delay_us(100);
     for (int k=0; k<n; k++) {
       uint8_t reply = com.send(packet[k]);
         packet[k] = reply;
     }
-    delay_us(10);
+//    delay_us(100);
     digitalWrite(com_csn_pins[index], HIGH);
     //resume_boost();
 }
@@ -374,6 +386,12 @@ void com_set_ack(int index,bool v){
         com_set_reg(index,REG_EN_AA,REG_EN_AA_ALL);
     else
         com_set_reg(index,REG_EN_AA,0x00);
+}
+void com_set_ack(int index,int pipe,bool v){
+    if (v)
+        com_set_reg(index,REG_EN_AA,com_read_reg(index, REG_EN_AA) | (0x01<<pipe));
+    else
+        com_set_reg(index,REG_EN_AA,com_read_reg(index, REG_EN_AA) & (~(0x01<<pipe)));
 }
 
 
@@ -602,12 +620,15 @@ bool com_send(int card,  uint8_t *payload, int size){
         f=com_read_reg(card,REG_FIFO_STATUS);
 //        terminal_io()->print("status is: ");
 //        terminal_io()->println(s);
-    } while (((micros()-d)<150000) && (
-                 (f&REG_FSTAT_TX_EMPTY!=0) || (((s&REG_STATUS_TX_DS)==0) && ((s&REG_STATUS_MAX_RT)==0) )));
-    if (f&REG_FSTAT_TX_EMPTY!=0) com_flush_tx(card);
-    terminal_io()->print("status is: ");
-    print_byte_as_hex(s);
-    terminal_io()->println();
+    } while (((micros()-d)<15000) && (
+                 ((f&REG_FSTAT_TX_EMPTY)!=0) || (((s&REG_STATUS_TX_DS)==0) && ((s&REG_STATUS_MAX_RT)==0) )));
+
+    if ((f&REG_FSTAT_TX_EMPTY)!=0) {
+        com_flush_tx(card);
+    }
+//    terminal_io()->print("status is: ");
+//    print_byte_as_hex(s);
+//    terminal_io()->println();
     com_clear_status(card);
     if ((s&REG_STATUS_TX_DS)!=0) return true;
     return false;
@@ -783,6 +804,7 @@ void com_ce_enable(int index)
     if (index == 0) digitalWrite(COM_CE1, HIGH);
     else if (index == 1) digitalWrite(COM_CE2, HIGH);
     else if (index == 2) digitalWrite(COM_CE3, HIGH);
+    delay_us(10);
 }
 
 void com_ce_disable(int index)
@@ -859,7 +881,8 @@ void com_init()
         com_ce_enable(k);
          // 2 bytes CRC and disable all IRQ
         com_set_config(k,CONFIG_MASK_MAX_RT|CONFIG_MASK_RX_DR|CONFIG_MASK_TX_DS|CONFIG_EN_CRC|CONFIG_CRCO);
-        com_set_retransmission(k,5,15);
+        com_set_retransmission(k,0,15);
+        //com_set_retransmission(k,0,1);
         com_set_reg(k,REG_RF_SETUP,0x21);
         com_set_reg(k,REG_RF_SETUP,0x01);
         com_set_reg(k,REG_FEATURE,0x00);
@@ -871,6 +894,8 @@ void com_init()
         com_flush_rx(k);
         com_flush_tx(k);
         com_ce_disable(k); // leave down for standby II mode
+        //com_set_rf(k,SPEED_250k,POW_18db); // low speed, low power
+        com_set_rf(k,SPEED_2M,POW_0db);
         com_power(k,false); // turn off the card
         com_current_state[k]=ComState::OFF;
     }
@@ -1323,7 +1348,9 @@ void print_addr_term(int k){
     for(int pipe=0;pipe<6;pipe++){
         terminal_io()->print("  rx(");
         terminal_io()->print(pipe);
-        terminal_io()->print("):");
+        terminal_io()->print(") - ");
+        terminal_io()->print(com_get_pipe_payload(k,pipe));
+        terminal_io()->print(" : ");
         uint8_t a[5];
         com_get_rx_addr(k,pipe,a);
         print_addr(a);
@@ -1745,6 +1772,7 @@ TERMINAL_COMMAND(st, "get or set card state: 0 off , 1 rx, 2 tx")
     for(int k=0;k<3;++k){
         terminal_io()->print(k);
         terminal_io()->print(" : ");
+        terminal_io()->print(state_change[k]);
         if (com_current_state[k]==OFF)
             terminal_io()->println(" OFF ");
         else if (com_current_state[k]==RX)

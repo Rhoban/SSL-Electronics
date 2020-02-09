@@ -23,7 +23,11 @@ SRCROOT := .
 else
 SRCROOT := $(LIB_MAPLE_HOME)
 endif
-BUILD_PATH = build
+ifeq ($(COMPILE_MASTER),yes)
+BUILD_PATH = build_master
+else
+BUILD_PATH = build_robot
+endif
 LIBMAPLE_PATH := $(SRCROOT)/libmaple
 WIRISH_PATH := $(SRCROOT)/wirish
 SUPPORT_PATH := $(SRCROOT)/support
@@ -212,7 +216,7 @@ endif
 sketch: build-check MSG_INFO $(BUILD_PATH)/$(BOARD).bin
 
 clean:
-	rm -rf build LibMaple LibRhoban LibRhock Rhock
+	rm -rf $(BUILD_PATH) LibMaple LibRhoban LibRhock Rhock
 
 mrproper: clean
 	rm -rf doxygen

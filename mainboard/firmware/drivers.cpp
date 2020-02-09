@@ -133,7 +133,7 @@ void drivers_tick()
     }
 }
 
-void drivers_init(bool fake)
+void drivers_init()
 {
   cstatic_assert(
     sizeof(driver_packet_set) > sizeof(driver_packet_ans),
@@ -149,7 +149,6 @@ void drivers_init(bool fake)
     digitalWrite(drivers_pins[k], HIGH);
   }
 
-  if (fake==false)
   for (int k=0; k<5; k++) {
     bool ret=false;
     while(!ret){
