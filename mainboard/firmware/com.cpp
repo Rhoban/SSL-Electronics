@@ -284,7 +284,9 @@ const char *reg_to_str(uint8_t reg){
 
 static void com_spi_send(int index, uint8_t *packet, size_t n)
 {
-    //pause_boost();
+#ifndef MASTER_FIRMWARE
+    pause_boost();
+#endif
   digitalWrite(com_csn_pins[index], LOW);
 //  delay_us(100);
     for (int k=0; k<n; k++) {
@@ -293,7 +295,9 @@ static void com_spi_send(int index, uint8_t *packet, size_t n)
     }
 //    delay_us(100);
     digitalWrite(com_csn_pins[index], HIGH);
-    //resume_boost();
+#ifndef MASTER_FIRMWARE
+    resume_boost();
+#endif
 }
 
 void com_set_reg(int index, uint8_t reg, uint8_t value)

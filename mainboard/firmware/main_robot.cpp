@@ -136,7 +136,7 @@ void setup()
 
     buzzer_wait_play();
     // Kicker
-    //kicker_init();
+    kicker_init();
     delay_us(800000);
 
 
@@ -147,12 +147,12 @@ void setup()
     buzzer_wait_play();
 
     // IR
-    //ir_init();
+    ir_init();
     delay_us(800000);
     // Voltage measure
 
 
-    //drivers_init();
+    drivers_init();
 
     if (com_is_all_ok() ) { // && drivers_is_all_ok()) {
       // buzzer_play(MELODY_BEETHOVEN);
@@ -234,19 +234,19 @@ void loop()
     buzzer_tick();
 
     // Drivers
-    //drivers_tick();
+    drivers_tick();
 
     // Kick
-    //kicker_tick();
+    kicker_tick();
 
     // Voltage
     voltage_tick();
 
     // Kinematic
-    //kinematic_tick();
+    kinematic_tick();
 
     // IR
-    //ir_tick();
+    ir_tick();
 
     // Ticking the terminal
     terminal_tick();

@@ -5,9 +5,11 @@
 ifeq ($(COMPILE_MASTER),yes)
 SRC_FILES = main_master.cpp com_master.cpp com.cpp buzzer.cpp \
             mux.cpp infos.cpp hardware.cpp
+CFLAGS+= -DMASTER_FIRMWARE
 else
 SRC_FILES = main_robot.cpp com_robot.cpp drivers.cpp com.cpp buzzer.cpp hardware.cpp \
         kicker.cpp voltage.cpp ir.cpp kinematic.cpp mux.cpp infos.cpp odometry.cpp
+CFLAGS+= -DROBOT_FIRMWARE
 endif
 
 ifeq ($(ENABLE_RHOCK),yes)

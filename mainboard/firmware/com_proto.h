@@ -17,6 +17,7 @@ struct packet_master {
     #define ACTION_DRIBBLE (1<<3)   // Enable/disable the dribbler
     #define ACTION_CHARGE  (1<<5)   // Enable/disable the capacitor charge
     #define ACTION_TARE_ODOM (1<<7)   // Tare Odometry
+    uint8_t rid;
     uint8_t actions;
 
     int16_t x_speed;                // Kinematic orders [mm/s]
@@ -111,7 +112,7 @@ struct icmp_order{
 #define addr_for_orders {0x8A,0x7B,0x6C,0x5D,0xA0};
 #define orders_chan 116
 #define order_payload_size sizeof(packet_master)
-#define ORDER_TIMEOUT_MS 500
+#define ORDER_TIMEOUT_MS 5000
 
 #define icmp_chan 120
 #define addr_for_icmp {0xA1,0xA3,0xB6,0xE4,0xB6};
