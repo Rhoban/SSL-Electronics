@@ -15,55 +15,11 @@
 #include "infos.h"
 #include "ir.h"
 #include "nrf24l01.h"
+#include "assert.h"
 
 //#define DEBUG_COM
 
 
-//extern int presentSince;
-
-// Only for master board
-//static bool com_master = false;
-
-// Master control packet to send to each robot
-//static uint8_t com_robots[MAX_ROBOTS][PACKET_SIZE + 1];
-//static bool com_should_transmit[MAX_ROBOTS] = {false};
-
-// Status replies from robots
-//static struct packet_robot com_statuses[MAX_ROBOTS];
-//static bool com_has_status[MAX_ROBOTS] = {false};
-
-//static struct buzzer_note note_now = {0,0};
-
-// Parmeters to send to robot
-// static struct packet_params com_master_params; //NOT USED
-
-//volatile static bool com_has_params[MAX_ROBOTS] = {false};
-
-// Timestamp of reception for each packets
-//static int com_robot_reception[MAX_ROBOTS];
-
-// Current robot we are communicating with
-//static int com_master_pos = 0;
-
-// Reception of order via USB
-//static int com_usb_reception = 0;
-//static size_t com_usb_nb_robots = 0;
-
-// Only for robot
-//static int com_master_reception = 0;
-//static bool com_has_master = false;
-//static uint8_t com_master_frame[PACKET_SIZE];
-//static volatile int com_master_packets = 0;
-//static int com_master_channel_packets[3] = {0};
-//static int com_last_init = 0;
-//static bool com_master_new = false;
-//static bool com_master_controlling = false;
-//static int my_actions = 0;
-
-//static int com_txing[3] = {0};
-
-//static bool com_module_present[3] = {true};
-//static int com_module_last_missing[3] = {0};
 
 #define VALUE_TO_STRING(x) #x
 #define VALUE(x) VALUE_TO_STRING(x)
@@ -82,8 +38,6 @@ HardwareSPI com(COM_SPI);
 
 #define PAYLOAD_SIZE    5
 
-//uint8_t com_data[3][PAYLOAD_SIZE];
-//bool com_available[3] = {false};
 
 int com_csn_pins[3] = {
    COM_CS1, COM_CS2, COM_CS3 // dont't touch this !
@@ -97,9 +51,11 @@ ComState com_current_state[3] = {
 };
 
 ComState com_get_state(int card){
+    bassert(card>=0 && card<3);
     return com_current_state[card];
 }
 bool com_check_state(int card){
+    bassert(card>=0 && card<3);
     uint8_t c=com_read_reg(card,REG_CONFIG);
     if (com_current_state[card]==OFF)
         return (c & CONFIG_PWR_UP) == 0;
@@ -114,6 +70,7 @@ bool com_check_state(int card){
 int state_change[3]={0,0,0};
 
 void com_set_state(int card, ComState state){
+    bassert(card>=0 && card<3);
     if (state==com_current_state[card]) return;
     state_change[card]+=1;
     if (state==OFF){ // turn off the card
@@ -159,6 +116,16 @@ void com_set_state(int card, ComState state){
 
 TERMINAL_PARAMETER_INT(irqed, "", 0);
 
+
+void com_self_diag(int cardA, int cardB){
+    uint8_t addr[5]={0xAF,0x1E,0x2B,0x38,0x88};
+    com_set_tx_addr(cardA,addr);
+    com_set_rx_addr(cardA,0,addr);
+    com_set_tx_addr(cardB,addr);
+    com_set_rx_addr(cardB,0,addr);
+    com_set_state(cardA,RX);
+    com_set_state(cardB,TX);
+}
 
 
 void print_byte_as_hex(uint8_t v){
@@ -282,26 +249,28 @@ const char *reg_to_str(uint8_t reg){
 
 
 
-static void com_spi_send(int index, uint8_t *packet, size_t n)
+static void com_spi_send(int card, uint8_t *packet, size_t n)
 {
+    bassert(card>=0 && card<3);
 #ifndef MASTER_FIRMWARE
     pause_boost();
 #endif
-  digitalWrite(com_csn_pins[index], LOW);
+  digitalWrite(com_csn_pins[card], LOW);
 //  delay_us(100);
     for (int k=0; k<n; k++) {
       uint8_t reply = com.send(packet[k]);
         packet[k] = reply;
     }
 //    delay_us(100);
-    digitalWrite(com_csn_pins[index], HIGH);
+    digitalWrite(com_csn_pins[card], HIGH);
 #ifndef MASTER_FIRMWARE
     resume_boost();
 #endif
 }
 
-void com_set_reg(int index, uint8_t reg, uint8_t value)
+void com_set_reg(int card, uint8_t reg, uint8_t value)
 {
+    bassert(card>=0 && card<3);
 #ifdef DEBUG_COM
     SerialUSB.print("set reg: ");
     SerialUSB.print(reg_to_str(reg));
@@ -315,12 +284,12 @@ void com_set_reg(int index, uint8_t reg, uint8_t value)
         value
     };
 
-    com_spi_send(index, packet, 2);
+    com_spi_send(card, packet, 2);
 }
 
-void com_set_reg5(int index, uint8_t reg, uint8_t value[5])
+void com_set_reg5(int card, uint8_t reg, uint8_t value[5])
 {
-
+    bassert(card>=0 && card<3);
 #ifdef DEBUG_COM
     SerialUSB.print("set reg5:");
     SerialUSB.print(reg_to_str(reg));
@@ -347,11 +316,12 @@ void com_set_reg5(int index, uint8_t reg, uint8_t value[5])
         value[4],
     };
 
-    com_spi_send(index, packet, 6);
+    com_spi_send(card, packet, 6);
 }
 
-uint8_t com_read_reg(int index, uint8_t reg)
+uint8_t com_read_reg(int card, uint8_t reg)
 {
+    bassert(card>=0 && card<3);
 #ifdef DEBUG_COM
     SerialUSB.print("read reg:");
     SerialUSB.print(reg_to_str(reg));
@@ -364,7 +334,7 @@ uint8_t com_read_reg(int index, uint8_t reg)
         0x00
     };
 
-    com_spi_send(index, packet, 2);
+    com_spi_send(card, packet, 2);
 
 #ifdef DEBUG_COM
     SerialUSB.print(" ");
@@ -374,28 +344,28 @@ uint8_t com_read_reg(int index, uint8_t reg)
     return packet[1];
 }
 
-int com_get_channel(int index){
-    return com_read_reg(index,REG_RF_CH);
+int com_get_channel(int card){
+    return com_read_reg(card,REG_RF_CH);
 }
 
-void com_set_channel(int index, int chan){
-    com_set_reg(index,REG_RF_CH, chan);
+void com_set_channel(int card, int chan){
+    com_set_reg(card,REG_RF_CH, chan);
 }
 
-int com_get_ack(int index){
-    return com_read_reg(index,REG_EN_AA);
+int com_get_ack(int card){
+    return com_read_reg(card,REG_EN_AA);
 }
-void com_set_ack(int index,bool v){
+void com_set_ack(int card,bool v){
     if (v)
-        com_set_reg(index,REG_EN_AA,REG_EN_AA_ALL);
+        com_set_reg(card,REG_EN_AA,REG_EN_AA_ALL);
     else
-        com_set_reg(index,REG_EN_AA,0x00);
+        com_set_reg(card,REG_EN_AA,0x00);
 }
-void com_set_ack(int index,int pipe,bool v){
+void com_set_ack(int card,int pipe,bool v){
     if (v)
-        com_set_reg(index,REG_EN_AA,com_read_reg(index, REG_EN_AA) | (0x01<<pipe));
+        com_set_reg(card,REG_EN_AA,com_read_reg(card, REG_EN_AA) | (0x01<<pipe));
     else
-        com_set_reg(index,REG_EN_AA,com_read_reg(index, REG_EN_AA) & (~(0x01<<pipe)));
+        com_set_reg(card,REG_EN_AA,com_read_reg(card, REG_EN_AA) & (~(0x01<<pipe)));
 }
 
 
@@ -411,12 +381,12 @@ void com_set_retransmission(int card, int delay, int count){
 }
 
 
-uint8_t com_get_config(int index){
-    return com_read_reg(index,REG_CONFIG);
+uint8_t com_get_config(int card){
+    return com_read_reg(card,REG_CONFIG);
 }
 
-uint8_t com_get_fifo_status(int index){
-    return com_read_reg(index,REG_FIFO_STATUS);
+uint8_t com_get_fifo_status(int card){
+    return com_read_reg(card,REG_FIFO_STATUS);
 }
 
 uint8_t com_get_status(int card){
@@ -426,9 +396,6 @@ uint8_t com_get_rf_setup(int card){
     return com_read_reg(card,REG_RF_SETUP);
 }
 
-void com_reset_status(int card){
-    com_set_reg(card,REG_STATUS,REG_STATUS_RX_DR | REG_STATUS_TX_DS | REG_STATUS_MAX_RT);
-}
 int com_get_pipe_payload(int card,int pipe){
     uint8_t en= com_read_reg(card,REG_EN_RXADDR);
     switch(pipe){
@@ -493,15 +460,15 @@ void com_set_pipe_payload(int card,int pipe,uint8_t pl){
     com_set_reg(card,REG_EN_RXADDR,en);
 }
 
-uint8_t com_read_status(int index)
+uint8_t com_read_status(int card)
 {
     uint8_t packet[1] = {OP_NOP};
-    com_spi_send(index, packet, 1);
+    com_spi_send(card, packet, 1);
 
     return packet[0];
 }
 
-void com_read_reg5(int index, uint8_t reg, uint8_t result[5])
+void com_read_reg5(int card, uint8_t reg, uint8_t result[5])
 {
     reg |= OP_READ;
 
@@ -510,14 +477,14 @@ void com_read_reg5(int index, uint8_t reg, uint8_t result[5])
         0x00, 0x00, 0x00, 0x00, 0x00
     };
 
-    com_spi_send(index, packet, 6);
+    com_spi_send(card, packet, 6);
 
     for (int k=1; k<6; k++) {
         result[k-1] = packet[k];
     }
 }
 
-static void com_mode(int index, bool power, bool rx)
+static void com_mode(int card, bool power, bool rx)
 {
     uint8_t value = (1<<3); // Enable CRC
 
@@ -528,10 +495,10 @@ static void com_mode(int index, bool power, bool rx)
         value |= (1);
     }
 
-    com_set_reg(index, REG_CONFIG, value);
+    com_set_reg(card, REG_CONFIG, value);
 }
 
-static void com_tx(int index, uint8_t *payload, size_t n)
+static void com_tx(int card, uint8_t *payload, size_t n)
 {
     //com_txing[index] = micros();
 
@@ -541,29 +508,29 @@ static void com_tx(int index, uint8_t *payload, size_t n)
       packet[k+1] = payload[k];
     }
 
-    com_spi_send(index, packet, n+1);
+    com_spi_send(card, packet, n+1);
 }
 
-static void com_rx(int index, uint8_t *payload, size_t n)
+static void com_rx(int card, uint8_t *payload, size_t n)
 {
     uint8_t packet[n+1] = {0};
 
     packet[0] = OP_RX;
 
-    com_spi_send(index, packet, n+1);
+    com_spi_send(card, packet, n+1);
 
     for (uint8_t k=1; k<n+1; k++) {
       payload[k-1] = packet[k];
     }
 }
 
-void com_flush_rx(int index){
+void com_flush_rx(int card){
     uint8_t packet[1] = {OP_FLUSH_RX};
-    com_spi_send(index, packet, 1);}
+    com_spi_send(card, packet, 1);}
 
-void com_flush_tx(int index){
+void com_flush_tx(int card){
     uint8_t packet[1] = {OP_FLUSH_TX};
-    com_spi_send(index, packet, 1);
+    com_spi_send(card, packet, 1);
 }
 
 void com_clear_status(int card){
@@ -638,21 +605,6 @@ bool com_send(int card,  uint8_t *payload, int size){
     return false;
 }
 
-//NOT USED??
-/*
-  static bool com_rxes_empty()
-  {
-  for (uint8_t index=0; index<3; index++) {
-  int fifo = com_read_reg(index, REG_FIFO_STATUS);
-
-  if ((fifo & RX_EMPTY) == 0) {
-  return false;
-  }
-  }
-
-  return true;
-  }
-*/
 
 
 /*
@@ -705,49 +657,7 @@ bool com_send(int card,  uint8_t *payload, int size){
 //    return false;
 //}
 
-/*
-void com_irq1()
-{
-    com_irq(0);
-}
 
-void com_irq2()
-{
-    com_irq(1);
-}
-
-void com_irq3()
-{
-    com_irq(2);
-}
-*/
-
-
-//static void com_poll()
-//{
-//    bool reinit = false;
-//    for (int k=0; k<3; k++) {
-
-//      // int safe_com_module = 1; //IT SHOULD BE CS2
-//      // if(!com_master and is_charging() and k!=safe_com_module ) continue;
-
-//      bool present = com_irq(k);
-
-//      if (!present) {
-//        com_module_last_missing[k] = millis();
-//        com_module_present[k] = false;
-//      } else {
-//        if (!com_module_present[k] && (millis() - com_module_last_missing[k] > 150)) {
-//          reinit = true;
-//          com_module_present[k] = true;
-//        }
-//      }
-//    }
-
-//    if (reinit) {
-//        com_init();
-//    }
-//}
 
 void com_get_tx_addr(int index,uint8_t addr[5]){
     com_read_reg5(index,REG_TX_ADDR,addr);
@@ -852,14 +762,6 @@ bool com_is_all_ok(){
 void com_init()
 {
     com.begin(SPI_2_25MHZ, MSBFIRST, 0);
-
-    //mux_init();
-
-//        for (uint8_t k=0; k<3; k++) { // Set CSN to 1 as it is default state
-//          pinMode(com_csn_pins[k], OUTPUT);
-//          digitalWrite(com_csn_pins[k], HIGH);
-//          delay_us(2000); // wait few
-//        }
 
 
     pinMode(COM_CS1,OUTPUT);
@@ -972,322 +874,6 @@ TERMINAL_COMMAND(ci, "CI")
 {
     com_init();
 }
-
-//TERMINAL_COMMAND(comi, "Com stats")
-//{
-//    terminal_io()->println(millis()-com_last_init);
-//}
-
-
-//void com_send_status_to_master()
-//{
-//    struct packet_robot packet;
-//    packet.id = infos_get_id();
-//    packet.status = STATUS_OK;
-
-//    if (!drivers_is_all_ok()) {
-//        packet.status |= STATUS_DRIVER_ERR;
-//    }
-    
-//    if (ir_present()) {
-//        packet.status |= STATUS_IR;
-//    }
-
-//    packet.cap_volt = kicker_cap_voltage();
-//    packet.voltage  = voltage_value()*8.0;
-//    packet.xpos     = getOdometry().xpos*1000;
-//    packet.ypos     = getOdometry().ypos*1000;
-//    packet.ang      = getOdometry().ang*1000;
-
-//    for (size_t k=0; k<3; k++) {
-//        com_ce_disable(k);
-//        com_mode(k, true, false);
-//        com_set_reg(k, REG_STATUS, 0x70);
-//        com_tx(k, (uint8_t *)&packet, sizeof(struct packet_robot));
-//        com_ce_enable(k);
-//    }
-//}
-
-TERMINAL_PARAMETER_INT(actions, "actions", 0);
-
-
-//void com_process_master()
-//{
-//    if (com_master_frame[0] == INSTRUCTION_MASTER) {
-//        // Answering with status packet
-//        com_send_status_to_master();
-
-//        // Decoding instruction packet
-//        struct packet_master *master_packet;
-//        master_packet = (struct packet_master*)(com_master_frame + 1);
-
-//        // Driving wheels
-//        if ((master_packet->actions & ACTION_ON)) {
-//            if(developer_mode == false){
-//                kicker_boost_enable(true);
-//            }
-//            if(master_packet->actions & ACTION_TARE_ODOM) {
-//                odometry_tare((master_packet->x_speed)/1000.0, (master_packet->y_speed)/1000.0, (master_packet->t_speed)/10000.0);
-//                //odometry_tare(0.0, 0.0, 0.0);
-
-//            }else{
-//            kinematic_set(master_packet->x_speed/1000.0, master_packet->y_speed/1000.0,
-//                 master_packet->t_speed/1000.0);
-//            }
-//            actions = master_packet->actions;
-
-//            // TODO !
-//            // If we want to drible only when IR is activated, we need
-//            // to uncomment
-//            // the following line
-//            //if ((master_packet->actions & ACTION_DRIBBLE) && (ir_present()) ) {
-//            if ((master_packet->actions & ACTION_DRIBBLE)) {
-//              drivers_set_safe(4, true, 1000);
-//            } else {
-//                drivers_set(4, false, 0);
-//            }
-
-//            // Charging
-//            if (master_packet->actions & ACTION_CHARGE) {
-//                kicker_boost_enable(true);
-//            } else {
-//                kicker_boost_enable(false);
-//            }
-
-
-            
-
-//            // Kicking
-//            if ((my_actions & ACTION_KICK1) || (my_actions & ACTION_KICK2) || ir_present_now()) {
-//                if(kicker_cap_voltage() > 80.0){
-//                    bool inverted = infos_kicker_inverted();
-//                    if ((master_packet->actions & ACTION_KICK1) &&
-//                        !(my_actions & ACTION_KICK1)) {
-//                        kicker_kick(inverted ? 0 : 1, master_packet->kickPower*30);
-//                    }
-
-//                    if ((master_packet->actions & ACTION_KICK2) &&
-//                        !(my_actions & ACTION_KICK2)) {
-//                        kicker_kick(inverted ? 1 : 0, master_packet->kickPower*30);
-//                    }
-
-//                    my_actions = master_packet->actions;
-//                } else {
-
-//                    my_actions = master_packet->actions;
-//                    my_actions &= ~(ACTION_KICK1 | ACTION_KICK2);
-//                }
-//            }
-//        } else {
-//            buzzer_play(MELODY_ALERT_FAST, false);
-
-//            drivers_set(0, false, 0);
-//            drivers_set(1, false, 0);
-//            drivers_set(2, false, 0);
-//            drivers_set(3, false, 0);
-//            drivers_set(4, false, 0);
-//            my_actions = 0;
-//            kicker_boost_enable(false);
-//        }
-//    }
-//    else if (com_master_frame[0] == MUSIC_PARAMS){
-//         struct packet_music *music_params;
-//         music_params = (struct packet_music*)(com_master_frame + 1);
-
-//        if(music_params->instrument & SOUND_ON){
-//            if(music_params->instrument & BEEPER){
-//                buzzer_beep(music_params->note, music_params->duration);
-//                buzzer_wait_play();
-//            }
-//            if(music_params->instrument & KICK){
-//                kicker_kick(1,1000);
-//            }
-//            if(music_params->instrument & CHIP_KICK){
-//                kicker_kick(0,1000);
-//            }
-//            if(music_params->instrument & DRIBBLER){
-//                drivers_set(4, true, 1000);
-//            }
-//            else
-//            {
-//                drivers_set(4, false, 0);
-//            }
-            
-//        }
-
-//     }
-//}
-
-//void com_tick()
-//{
-//    static int last = micros();
-
-//// Comment to debug on shell
-//#define BINARY
-
-//       // Entering master infinite loop
-//      while (com_master) {
-//        // Feed the watchdog
-//        watchdog_feed();
-
-//        // Polling com IRQs
-//        com_poll();
-
-//        // Tick the communication with USB master
-//#ifdef BINARY
-//        //com_usb_tick();
-//#else
-//        terminal_tick();
-//#endif
-
-//        // Feed the watchdog
-//        watchdog_feed();
-
-//        bool transmitting = false;
-//        while (com_master_pos < MAX_ROBOTS && !transmitting) {
-//          // Sending a packet to a robot
-//          // XXX: Using micros() in unsafe because it sometime overflow, to fix!
-//          // We either received a status from the previous robot or the timeout expired,
-//          // we should ask the next one
-//          if (com_master_pos < 0 || com_has_status[com_master_pos] || (micros() - last) > 2000) {
-//            // Asking the next
-//            com_master_pos++;
-//            last = 0;
-
-//            // Should we send a packet to this robot ?
-//            if (com_master_pos < MAX_ROBOTS && com_should_transmit[com_master_pos]) {
-//              last = micros();
-//              transmitting = true;
-
-//              // Sending the packet to the 3 modules
-//              for (size_t k=0; k<3; k++) {
-//                com_ce_disable(k);
-//                // Preparing to transmit
-//                com_mode(k, true, false);
-//                com_set_reg(k, REG_STATUS, 0x70); // 0111 0000
-//               // com_set_tx_addr(k, com_master_pos);
-
-//                // Transmitting the payload
-//                com_tx(k, com_robots[com_master_pos], PACKET_SIZE);
-//                com_ce_enable(k);
-//              }
-//              com_should_transmit[com_master_pos] = false;
-//            }
-
-//            if (com_master_pos >= MAX_ROBOTS) {
-//              // Our cycle is over, sending back the robot statuses
-//              size_t statuses = 0;
-//              for (size_t k=0; k<MAX_ROBOTS; k++) {
-//                if (com_has_status[k] ) {
-//                  statuses++;
-//                }
-//              }
-//#ifdef BINARY
-//              uint8_t answer[1+1+1+statuses*(1+sizeof(struct packet_robot))+1];
-//              // Answer header
-//              answer[0] = 0xaa;
-//              answer[1] = 0x55;
-//              // Number of robots in the packet
-//              answer[2] = statuses;
-//              size_t pos = 3;
-//              for (size_t k=0; k<MAX_ROBOTS; k++) {
-//                if (com_has_status[k]) {
-//                  // Inserting the robot #
-//                  answer[pos++] = k;
-//                  // Copying structure data
-//                  uint8_t *ptr = (uint8_t *)&com_statuses[k];
-//                  for (size_t n=0; n<sizeof(struct packet_robot); n++) {
-//                    answer[pos++] = ptr[n];
-//                  }
-//                }
-//              }
-//              // Ending with 0xff
-//              answer[pos] = 0xff;
-//              SerialUSB.write(answer, sizeof(answer));
-//#endif
-//            }
-//          } else {
-//            transmitting = true;
-//          }
-//        }
-
-//        // XXX: Led for master
-//        if ((millis() - com_usb_reception) < 100) {
-//          digitalWrite(BOARD_LED_PIN, HIGH);
-//        } else {
-//          digitalWrite(BOARD_LED_PIN, LOW);
-//        }
-//      }
-
-//      // Polling IRQs
-//      com_poll();
-
-//      // Processing a packet from the master
-//      if (!com_master && com_master_new) {
-//        last = micros();
-//        com_master_controlling = true;
-//        com_master_new = false;
-//        com_process_master();
-//      }
-
-//      // Checking the last master reception, playing melody when the reception is changing
-//      if ((millis() - com_master_reception) < 100 && com_master_reception != 0) {
-//        if (!com_has_master) {
-//          com_has_master = true;
-//          // buzzer_play(MELODY_BEGIN);
-//        }
-//        digitalWrite(BOARD_LED_PIN, HIGH);
-//      } else {
-//        if (com_has_master) {
-//          com_has_master = false;
-//          kicker_boost_enable(false); // Stopping the charge
-//          // buzzer_play(MELODY_END);
-//        }
-//        my_actions = 0;
-//        digitalWrite(BOARD_LED_PIN, LOW);
-//      }
-//}
-
-//TERMINAL_COMMAND(mp, "Master packets")
-//{
-//    terminal_io()->println(com_master_packets);
-//    terminal_io()->println(com_master_channel_packets[0]);
-//    terminal_io()->println(com_master_channel_packets[1]);
-//    terminal_io()->println(com_master_channel_packets[2]);
-//}
-
-//TERMINAL_COMMAND(ms, "Master send")
-//{
-//    for (int k=0; k<PACKET_SIZE; k++) {
-//        com_robots[3][k] = 0;
-//    }
-//    com_has_status[3] = false;
-//    com_should_transmit[3] = true;
-//    com_master_pos = -1;
-//}
-
-//TERMINAL_COMMAND(mr, "Master receive")
-//{
-//    if (com_has_status[3]) {
-//        terminal_io()->println("Got answer");
-//    } else {
-//        terminal_io()->println("Got nothing");
-//    }
-//}
-
-
-//TERMINAL_COMMAND(em, "Emergency")
-//{
-//    if (!com_master) {
-//        kinematic_stop();
-//        for (int k=0; k<5; k++) {
-//            drivers_set(k, false, 0.0);
-//        }
-//    }
-
-//    kicker_boost_enable(false);
-//}
-
 
 
 TERMINAL_COMMAND(version, "")
@@ -1448,10 +1034,10 @@ TERMINAL_COMMAND(rpd, "display rpd reg")
 TERMINAL_COMMAND(rst, "reset status rst [card]"){
     if (argc==0){
         for(int k=0;k<3;++k)
-            com_reset_status(k);
+            com_clear_status(k);
     } else {
         int c=atoi(argv[1]);
-        com_reset_status(c);
+        com_clear_status(c);
     }
 
 }
@@ -1831,8 +1417,16 @@ TERMINAL_COMMAND(dbg, "dump all informations")
     terminal_command_rpd(n,arg);
 }
 
-void com_copy_addr(uint8_t dst[], uint8_t src[])
+void com_copy_addr(uint8_t dst[5], uint8_t src[5])
 {
     for(int i=0;i<5;++i)
         dst[i]=src[i];
+}
+
+int com_cmp_addr(uint8_t dst[5], uint8_t src[5])
+{
+    for(int i=0;i<5;++i)
+        if (dst[i]!=src[i])
+            return 1;
+    return 0;
 }

@@ -199,7 +199,6 @@ void loop()
 #ifdef TIME_STATS
     // Benchmarking main loop
     static int last = micros();
-#endif
 
 
     if (n < 100) {
@@ -210,24 +209,11 @@ void loop()
         }
         n += 1;
     }
-
+#endif
     // Feeding watchdog
     watchdog_feed();
-#ifdef TIME_STATS
-    if (n<100)
-        last=micros();
-#endif
     // Com
     com_robot_tick();
-#ifdef TIME_STATS
-    if (n<100){
-        int loop = micros() - last;
-        if (n != 0) {
-            avg += loop;
-        }
-        n += 1;
-    }
-#endif
 
 
     // Buzzer

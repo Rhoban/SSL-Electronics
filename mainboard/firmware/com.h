@@ -101,7 +101,6 @@ void com_set_rf(int card, uint8_t speed, uint8_t pow);
 uint8_t com_get_config(int card);
 void com_set_config(int card,uint8_t);
 uint8_t com_get_status(int card);
-void com_reset_status(int card);
 uint8_t com_get_rf_setup(int card);
 uint8_t com_get_fifo_status(int card);
 
@@ -113,5 +112,9 @@ void com_get_rx_addr(int index,int pipe, uint8_t add[5]);
 
 void com_ce_enable(int index);
 void com_ce_disable(int index);
+
+
+
+int com_cmp_addr(uint8_t dst[5], uint8_t src[5]);
 
 #endif

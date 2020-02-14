@@ -2,7 +2,7 @@
 
 
 #include "com.h"
-
+#include "com_proto.h"
 
 
 void com_master_init();

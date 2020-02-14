@@ -9,6 +9,8 @@
 
 #include "buzzer.h"
 #include "hardware.h"
+#include "assert.h"
+
 
 //#define DEBUG_MASTER_COM
 
@@ -34,6 +36,7 @@ struct com_pipe_infos{
     packet_robot infos;
     bool new_order;
     packet_master order;
+    uint16_t current_order_id=0;
     uint32_t last_status; // last status received using millis()
     uint32_t last_order;
     com_pipe_infos():state(STATE_PIPE_FREE),last_status(millis()),new_status(false),new_order(false){}
@@ -47,7 +50,7 @@ struct icmp_send_waiting{
     uint8_t addr[5];
 };
 
-struct icmp_send_waiting icmp_to_send;
+struct icmp_send_waiting icmp_to_send; // there can be only one waiting answer reply at a time
 
 static void com_usb_tick()
 {
@@ -58,7 +61,6 @@ static void com_usb_tick()
     static char magic_term[]="term";
     static int magic_len=3;
     static char order_message[sizeof(packet_robot)+3]={0xaa,0x55,0xff};
-
 
     while (SerialUSB.available()) {
         watchdog_feed();
@@ -90,23 +92,27 @@ static void com_usb_tick()
             }
         } else if (state == STATE_ORDER) {
             if (pos<sizeof(packet_master) && (pos<sizeof(temp))){
-                temp[pos]==c;
+                temp[pos]=c;
+                pos+=1;
             } else if ((c==0xff) && pos==sizeof(packet_master)){
                 packet_master *p=(packet_master *)(temp);
+
                 for(int pipe=0;pipe<6;pipe++){
                     if ((com_pipes[pipe].state==STATE_PIPE_USED)
                             &&
                             (com_pipes[pipe].infos.id==p->rid)){
                         com_pipes[pipe].order = *p;
+                        com_pipes[pipe].order.order_id=com_pipes[pipe].current_order_id;
                         com_pipes[pipe].new_order=true;
+                        com_pipes[pipe].current_order_id+=1;
                     }
                 }
             } else { // go back to init state, ignore data
                 state=STATE_INIT;
             }
-            state = 0;
         }
     }
+
     for(int pipe=0;pipe<6;++pipe){
         if (com_pipes[pipe].new_status == true){
             uint8_t *p=(uint8_t *)(&(com_pipes[pipe].infos));
@@ -186,7 +192,7 @@ void com_master_init(){
 
 void com_master_icmp_tick(){
 
-    if (icmp_to_send.stamp>0){
+    if (icmp_to_send.stamp>0){ // first we send waiting icmp reply
 #ifdef DEBUG_MASTER_COM
         SerialUSB.print("sending icmp reply ");
         SerialUSB.print(icmp_to_send.reply.icmp_type);
@@ -212,7 +218,6 @@ void com_master_icmp_tick(){
             bool r=com_send(CARD_ICMP,(uint8_t *)&(icmp_to_send.reply),sizeof(icmp_order));
             if (r) {
                 icmp_to_send.stamp=0;
-                icmp_to_send.stamp=0;
                 uint8_t save[5]=addr_for_icmp;
                 com_set_tx_addr(CARD_ICMP,save);
                 com_set_rx_addr(CARD_ICMP,0,save);
@@ -226,17 +231,27 @@ void com_master_icmp_tick(){
     } else {
         int p=com_has_data(CARD_ICMP);
         if (p==0){ // message arriving on pipe 1 are answers, ignore them
-            struct icmp_order o;
-            com_receive(CARD_ICMP,(uint8_t *)&o,sizeof(icmp_order));
+            struct icmp_order icmp_request;
+            com_receive(CARD_ICMP,(uint8_t *)&icmp_request,sizeof(icmp_order));
 #ifdef DEBUG_MASTER_COM
             SerialUSB.print("Receive an ICMP request: ");
             SerialUSB.println(o.icmp_type);
 #endif
             com_clear_status(CARD_ICMP);
-            if (o.icmp_type == ICMP_DHCP_REQUEST){
+            if (icmp_request.icmp_type == ICMP_DHCP_REQUEST){
                 int pipe_id=0;
 
-                com_copy_addr(icmp_to_send.addr,o.icmp_addr);
+                com_copy_addr(icmp_to_send.addr,icmp_request.icmp_addr);
+
+                // check if that client doesnot already have a associated pipe!
+                for(pipe_id=0;pipe_id<6;++pipe_id){
+                    if ((com_pipes[pipe_id].state!=STATE_PIPE_FREE)
+                            &&
+                            (com_cmp_addr(com_pipes[pipe_id].order_addr,icmp_to_send.addr)==0))
+                    return; // ignore request
+
+                }
+                pipe_id=0;
 
                 while( (pipe_id<6) && (com_pipes[pipe_id].state!=STATE_PIPE_FREE))
                     pipe_id+=1;
@@ -260,10 +275,10 @@ void com_master_icmp_tick(){
                     com_copy_addr(icmp_to_send.reply.icmp_addr,com_pipes[pipe_id].addr);
                 }
                 icmp_to_send.stamp=millis();
-            } else if (o.icmp_type == ICMP_ECHO){ // send message back
-                icmp_to_send.reply = o;
+            } else if (icmp_request.icmp_type == ICMP_ECHO){ // send message back
+                icmp_to_send.reply = icmp_request;
                 icmp_to_send.stamp = millis();
-            } else if (o.icmp_type == ICMP_NOREPLY){
+            } else if (icmp_request.icmp_type == ICMP_NOREPLY){
                 com_set_state(CARD_ICMP,RX);
             }
         } else if (p!=-1){
@@ -278,14 +293,17 @@ void com_master_status_tick(){
     int pipe_error=-1;
 
     int data = com_has_data(CARD_STATUS);
+    bassert(data>=-1 && data<6);
     if (data>=0){
         com_receive(CARD_STATUS,(uint8_t *)&(com_pipes[data].infos),status_payload_size);
         if (com_pipes[data].state != STATE_PIPE_USED){
             pipe_error=data;
+#ifdef DEBUG_MASTER_COM
             SerialUSB.print("receive data on pipe ");
             SerialUSB.print(data);
             SerialUSB.print(" but pipe state is ");
             SerialUSB.println(com_pipes[data].state);
+#endif
             // we are not suppose to receive infos from this pipe!
 //            buzzer_beep(C6,500);
 //            buzzer_wait_play();
@@ -295,6 +313,8 @@ void com_master_status_tick(){
         } else {
             com_pipes[data].last_status=now;
             com_pipes[data].new_status = true;
+            if ((com_pipes[data].new_order) && (com_pipes[data].infos.last_order_id>=com_pipes[data].current_order_id))
+                com_pipes[data].new_order=false;
         }
 #ifdef DEBUG_MASTER_COM
         SerialUSB.print("receive data STATUS CARD,  pipe ");
@@ -319,6 +339,7 @@ void com_master_status_tick(){
                 ||((com_pipes[pipe].state==STATE_PIPE_USED)
                    &&((now - com_pipes[pipe].last_status) > STATUS_TIMEOUT_MS))){
             com_pipes[pipe].state=STATE_PIPE_RESET;
+            com_pipes[pipe].last_status=now;
             // disable ACK functionnality for this pipe
             // so possible connected robot to this pipe will reset
             com_set_ack(CARD_STATUS,pipe,false);
@@ -333,7 +354,11 @@ void com_master_order_tick(){
             com_set_tx_addr(CARD_ORDER,com_pipes[pipe].order_addr);
             com_set_rx_addr(CARD_ORDER,0,com_pipes[pipe].order_addr);
             if (com_send(CARD_ORDER,(uint8_t *)(&(com_pipes[pipe].order)),sizeof(packet_master))){
+                // this can lead to multiple send if robot receive order but doesnot ACK
                 com_pipes[pipe].new_order=false;
+            } else {
+                com_clear_status(CARD_ORDER);
+                com_flush_tx(CARD_ORDER);
             }
         }
     }
@@ -386,7 +411,7 @@ void com_master_tick(){
         com_usb_tick();
     else {
         terminal_tick();
-        terminal_status_infos_tick();
+//        terminal_status_infos_tick();
     }
 }
 
@@ -407,6 +432,7 @@ TERMINAL_COMMAND(order, "Send an order packet on a pipe")
     com_pipes[p].order.t_speed = atoi(argv[3]);
     com_pipes[p].order.kickPower = 0;
     com_pipes[p].new_order=true;
+    com_pipes[p].current_order_id+1;
 }
 
 TERMINAL_COMMAND(pipes, "Display pipes informations")
@@ -430,6 +456,10 @@ TERMINAL_COMMAND(pipes, "Display pipes informations")
             terminal_io()->println(com_pipes[pipe].infos.ypos);
             terminal_io()->print("  voltage: ");
             terminal_io()->println(com_pipes[pipe].infos.voltage);
+            if (com_pipes[pipe].new_order)
+                terminal_io()->println("  pending order");
+            terminal_io()->print("  order id: ");
+            terminal_io()->println(com_pipes[pipe].current_order_id);
         } else if (com_pipes[pipe].state==STATE_PIPE_RESET){
             terminal_io()->println("RESET");
         } else {

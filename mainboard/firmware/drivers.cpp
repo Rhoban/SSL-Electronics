@@ -102,9 +102,9 @@ void drivers_set_safe(int index, bool enable, float target, int16_t pwm)
 
             drivers_is_error = true;
             buzzer_play(MELODY_WARNING);
-            // terminal_io()->println("Error on driver:");
-            // terminal_io()->println(index);
-            // terminal_io()->println(driver_answers[index].status&0xf);
+            SerialUSB.println("Error on driver:");
+            SerialUSB.println(index);
+            SerialUSB.println(driver_answers[index].status&0xf);
         } else if (tmp.status == 0x55) {
             driver_answers[index] = tmp;
         }
@@ -151,12 +151,14 @@ void drivers_init()
 
   for (int k=0; k<5; k++) {
     bool ret=false;
-    while(!ret){
+    int c=0;
+    while((!ret) && (c<10)){
       digitalWrite(BOARD_LED_PIN, HIGH);
       ret=drivers_ping(k);
       delay(10);
       watchdog_feed();
       digitalWrite(BOARD_LED_PIN, LOW);
+      c+=1;
     }
     drivers_present[k] = ret;
   }

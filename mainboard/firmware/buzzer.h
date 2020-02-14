@@ -20,6 +20,7 @@
 #define MELODY_BEETHOVEN     7
 #define MELODY_BOOT_DEV       8
 #define RICKROLL       9
+#define MELODY_ASSERT 10
 
 #define A5 880
 #define A5b 830

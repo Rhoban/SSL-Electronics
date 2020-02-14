@@ -20,16 +20,18 @@
 #define WAIT_AND_INIT 3
 
 int last_status_ack;
-int last_order_received;
-int icmp_stamp;
+int last_order_received=0;
+int icmp_stamp=0;
 int state=INIT;
 int wait_init_timeout;
 
-static uint8_t my_actions;
+static uint8_t my_actions=0x01;
 
 unsigned long int status_send_ok=0;
 unsigned long int status_send_lost=0;
 unsigned long int dhcp_failure=0;
+
+uint16_t last_order_id=0;
 
 struct icmp_order dhcp_request;
 
@@ -54,13 +56,29 @@ void build_status(struct packet_robot &packet)
     packet.xpos     = getOdometry().xpos*1000;
     packet.ypos     = getOdometry().ypos*1000;
     packet.ang      = getOdometry().ang*1000;
+    packet.last_order_id = last_order_id;
 }
 
 
 void apply_order(struct packet_master &master_packet)
 {
-    if (master_packet.rid != infos_get_id())
+
+    //SerialUSB.print("0 apply order:");
+   // SerialUSB.println(master_packet.actions);
+
+    last_order_id=max(master_packet.order_id,last_order_id);
+    if (master_packet.rid != infos_get_id()){
+      //  SerialUSB.print("ID ISSUE");
+      //  SerialUSB.println(master_packet.rid);
         return;
+    }
+    // ensure there is at least 4ms between two order (250Hz order freq)
+    if ((millis()-last_order_received)<4)
+        return;
+
+
+//    SerialUSB.print("apply order:");
+//    SerialUSB.println(master_packet.actions);
 
     // Driving wheels
     if ((master_packet.actions & ACTION_ON)) {
@@ -75,7 +93,7 @@ void apply_order(struct packet_master &master_packet)
             kinematic_set(master_packet.x_speed/1000.0, master_packet.y_speed/1000.0,
                           master_packet.t_speed/1000.0);
         }
-        uint8_t actions = master_packet.actions;
+        //uint8_t actions = master_packet.actions;
 
         // TODO !
         // If we want to drible only when IR is activated, we need
@@ -120,9 +138,7 @@ void apply_order(struct packet_master &master_packet)
             }
         }
     } else {
-        buzzer_play(MELODY_ALERT_FAST, false);
-
-        SerialUSB.println("ARG!");
+       // SerialUSB.println("ARG!");
         drivers_set(0, false, 0);
         drivers_set(1, false, 0);
         drivers_set(2, false, 0);
@@ -162,6 +178,7 @@ void apply_order(struct packet_master &master_packet)
 
 
 void com_robot_tick(){
+    static bool first_order_timeout=true;
     watchdog_feed();
     switch(state){
     case INIT:
@@ -170,12 +187,12 @@ void com_robot_tick(){
             com_set_state(CARD_ICMP,RX);
             state=WAIT_DHCP;
             icmp_stamp=millis();
-            SerialUSB.println("wait for dhcp reply");
+          //  SerialUSB.println("wait for dhcp reply");
         } else {
             dhcp_failure+=1;
             com_flush_tx(CARD_ICMP);
             state=WAIT_AND_INIT;
-            wait_init_timeout=millis()+10; // wait 10ms
+            wait_init_timeout=millis()+100; // wait 1ms
         }
         break;
     case WAIT_AND_INIT:
@@ -184,21 +201,26 @@ void com_robot_tick(){
         break;
     case WAIT_DHCP:
         if ((millis()-icmp_stamp)>ICMP_TIMEOUT_MS){
-            SerialUSB.println("dhcp timeout");
+            buzzer_play(MELODY_WARNING, false);
+            //SerialUSB.println("dhcp timeout");
             state=INIT;
         } else {
             if ((com_has_data(CARD_ICMP))>=0){
                 struct icmp_order o;
                 com_receive(CARD_ICMP,(uint8_t *)&o,icmp_payload_size);
+                /*
                 SerialUSB.print("receive icmp reply type: ");
                 SerialUSB.print(o.icmp_type);
                 SerialUSB.print(" / ");
                 SerialUSB.println(o.arg);
+                */
                 if (o.icmp_type == ICMP_DHCP_REPLY){
                     if (o.arg == ICMP_FULL){
+                        buzzer_play(MELODY_WARNING, false);
                         state=WAIT_AND_INIT;
-                        wait_init_timeout=millis()+1000; // wait for 1s
+                        wait_init_timeout=millis()+2000; // wait for 2s
                     } else {
+                        buzzer_play(MELODY_BEGIN, false);
                         com_set_tx_addr(CARD_STATUS,o.icmp_addr);
                         com_set_rx_addr(CARD_STATUS,0,o.icmp_addr);
                         com_set_pipe_payload(CARD_STATUS,0,status_payload_size);
@@ -209,7 +231,7 @@ void com_robot_tick(){
                         last_status_ack=millis();
                     }
                 } else {
-                    SerialUSB.println("wrong icmp reply type");
+                    //SerialUSB.println("wrong icmp reply type");
                     state=INIT;
                 }
                 com_flush_rx(CARD_ICMP);
@@ -218,9 +240,18 @@ void com_robot_tick(){
         break;
     case RUNNING:
 
+//        static int counter=0;
+//        if (counter<10){
+//            counter+=1;
+//            return;
+//        }
+//        counter=0;
+
         if (com_has_data(CARD_ORDER)!=-1){
+            first_order_timeout=true;
             last_order_received = millis();
             com_receive(CARD_ORDER,(uint8_t *)&order,order_payload_size);
+
             SerialUSB.print("order receive: action:");
             print_byte_as_hex(order.actions);
             SerialUSB.print(" | kickpow: ");
@@ -232,6 +263,9 @@ void com_robot_tick(){
             SerialUSB.print(" | t : ");
             SerialUSB.print(order.t_speed);
             SerialUSB.println();
+            com_flush_rx(CARD_ORDER);
+            com_clear_status(CARD_ORDER);
+
         }
 
         struct packet_robot status;
@@ -242,6 +276,12 @@ void com_robot_tick(){
         } else status_send_lost+=1;
 
         if ((millis()-last_order_received)>ORDER_TIMEOUT_MS){
+            if (first_order_timeout){
+                buzzer_play(MELODY_ALERT_FAST, false);
+                first_order_timeout=false;
+            }
+            //state=INIT;
+            order.rid = infos_get_id();
             order.actions=0;
             order.t_speed=0;
             order.x_speed=0;
@@ -249,8 +289,14 @@ void com_robot_tick(){
             order.kickPower=0;
         }
         if ((millis()-last_status_ack)>STATUS_TIMEOUT_MS){
-            SerialUSB.println("status timeout");
+            //SerialUSB.println("status timeout");
+            buzzer_play(MELODY_ALERT_FAST, false);
             state=INIT;
+            order.actions=0;
+            order.t_speed=0;
+            order.x_speed=0;
+            order.y_speed=0;
+            order.kickPower=0;
         }
         apply_order(order);
         break;
@@ -322,5 +368,15 @@ TERMINAL_COMMAND(state, "Get robot state")
     terminal_io()->println(" lost!");
     terminal_io()->print("dhcp failure: ");
     terminal_io()->println(dhcp_failure);
+}
+
+TERMINAL_COMMAND(em, "Emergency")
+{
+        kinematic_stop();
+        for (int k=0; k<5; k++) {
+            drivers_set(k, false, 0.0);
+        }
+
+    kicker_boost_enable(false);
 }
 

@@ -1,11 +1,10 @@
 #pragma once
 
+#include <stdint.h>
+
 #define PACKET_SIZE                 16
 #define PACKET_INSTRUCTIONS         2
 #define MAX_ROBOTS                  8
-
-
-
 
 
 #define INSTRUCTION_MASTER          0x00
@@ -25,6 +24,7 @@ struct packet_master {
     int16_t t_speed;                // Rotation in [mrad/s]
 
     uint8_t kickPower;             // Kick power (this is a duration in [x25 uS])
+    uint16_t order_id;
 } __attribute__((packed));
 
 //#define INSTRUCTION_PARAMS          0x01
@@ -48,6 +48,7 @@ struct packet_robot {
     int16_t xpos;                     // Data planned by odometry
     int16_t ypos;                     // In mm
     int16_t ang;                      // In rad/10000
+    uint16_t last_order_id;
 
 } __attribute__((packed));
 
@@ -83,15 +84,17 @@ struct buzzer_note {
 #define CARD_STATUS 0
 #define CARD_ORDER  1
 #define CARD_ICMP   2
-bool card_status_ok=false;
-bool card_order_ok=false;
-bool card_icmp_ok=false;
+
+extern bool card_status_ok;
+extern bool card_order_ok;
+extern bool card_icmp_ok;
 
 
 struct icmp_order{
-    uint8_t icmp_type;
-    uint8_t arg;
-    uint8_t icmp_addr[5];
+    uint8_t icmp_type; // ICMP_ECHO ; ICMP_NOREPLY ; ICMP_DHCP_REQUEST ; ICMP_DHCP_REPLY
+    uint8_t arg; // ICMP_FULL or ICMP_OK
+    uint8_t icmp_addr[5]; // for DHCP_REQUEST: the address where to send the ICMP reply and orders
+    // for DHCP_REPLY: the adddress of the pipe for status
     struct icmp_order &operator=(const struct icmp_order &o){
         icmp_type = o.icmp_type;
         arg=o.arg;
