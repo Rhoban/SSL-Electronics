@@ -553,7 +553,7 @@ void com_stop_listening(int card){
 
 int com_has_data(int card)
 {
-    com_set_state(card,ComState::RX);
+    com_set_state(card,RX);
     uint8_t s=com_read_reg(card,REG_STATUS);
     uint8_t v=(s&REG_STATUS_RX_P_NO)>>1;
     if (v==7)return -1;
@@ -561,7 +561,7 @@ int com_has_data(int card)
 }
 
 void com_receive(int card, uint8_t *payload, int size){
-    com_set_state(card,ComState::RX);
+    com_set_state(card,RX);
 
     if (com_has_data(card)==-1) return;
 
@@ -579,7 +579,7 @@ void com_receive(int card, uint8_t *payload, int size){
 }
 
 bool com_send(int card,  uint8_t *payload, int size){
-    com_set_state(card,ComState::TX); // we are suppose to be in standy II mode
+    com_set_state(card,TX); // we are suppose to be in standy II mode
     com_clear_status(card);
     com_tx(card,payload,size);
 
@@ -803,7 +803,7 @@ void com_init()
         //com_set_rf(k,SPEED_250k,POW_18db); // low speed, low power
         com_set_rf(k,SPEED_2M,POW_0db);
         com_power(k,false); // turn off the card
-        com_current_state[k]=ComState::OFF;
+        com_current_state[k]=OFF;
     }
 
 

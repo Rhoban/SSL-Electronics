@@ -331,14 +331,14 @@ void com_robot_init(){
     // Set card 0 on receive mode with multiple pipe adresses
     if (card_status_ok){
         com_set_channel(CARD_STATUS,status_chan);
-        com_set_state(CARD_STATUS,ComState::OFF);
+        com_set_state(CARD_STATUS,OFF);
     }
     if (card_order_ok){
         com_set_channel(CARD_ORDER,orders_chan);
         com_set_tx_addr(CARD_ORDER,uaddr);
         com_set_rx_addr(CARD_ORDER,0,uaddr);
         com_set_pipe_payload(CARD_ORDER,0,order_payload_size);
-        com_set_state(CARD_ORDER,ComState::RX);
+        com_set_state(CARD_ORDER,RX);
     }
     if (card_icmp_ok){
         // Set card 2 on rx mode, waiting for robot dhcp request
@@ -349,7 +349,7 @@ void com_robot_init(){
         com_set_rx_addr(CARD_ICMP,1,uaddr);
         com_set_pipe_payload(CARD_ICMP,0,icmp_payload_size);
         com_set_pipe_payload(CARD_ICMP,1,icmp_payload_size);
-        com_set_state(CARD_ICMP,ComState::TX);
+        com_set_state(CARD_ICMP,TX);
     }
 
     dhcp_request.icmp_type = ICMP_DHCP_REQUEST;

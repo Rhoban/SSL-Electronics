@@ -158,7 +158,7 @@ void com_master_init(){
             com_set_rx_addr(CARD_STATUS,pipe,b);
             com_set_pipe_payload(CARD_STATUS,pipe,status_payload_size);//status_payload_size);//sizeof(struct packet_robot));
         }
-        com_set_state(CARD_STATUS,ComState::RX);
+        com_set_state(CARD_STATUS,RX);
     }
     if (card_order_ok){
         com_set_channel(CARD_ORDER,orders_chan);
@@ -166,7 +166,7 @@ void com_master_init(){
         com_set_tx_addr(CARD_ORDER,x);
         com_set_rx_addr(CARD_ORDER,0,x);
         com_set_pipe_payload(CARD_ORDER,0,order_payload_size);
-        com_set_state(CARD_ORDER,ComState::TX);
+        com_set_state(CARD_ORDER,TX);
     }
     if (card_icmp_ok){
         // Set card 2 on rx mode, waiting for robot dhcp request
@@ -185,7 +185,7 @@ void com_master_init(){
         com_set_rx_addr(CARD_ICMP,1,z);
         com_set_pipe_payload(CARD_ICMP,0,icmp_payload_size);
         com_set_pipe_payload(CARD_ICMP,1,icmp_payload_size);
-        com_set_state(CARD_ICMP,ComState::TX);
+        com_set_state(CARD_ICMP,TX);
     }
 }
 
