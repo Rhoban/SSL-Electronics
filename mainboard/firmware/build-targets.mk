@@ -4,11 +4,12 @@
 
 ifeq ($(COMPILE_MASTER),yes)
 SRC_FILES = main_master.cpp com_master.cpp com.cpp buzzer.cpp \
-            mux.cpp infos.cpp hardware.cpp
+            mux.cpp infos.cpp hardware.cpp assert.cpp com_proto.cpp
 CFLAGS+= -DMASTER_FIRMWARE
 else
 SRC_FILES = main_robot.cpp com_robot.cpp drivers.cpp com.cpp buzzer.cpp hardware.cpp \
-        kicker.cpp voltage.cpp ir.cpp kinematic.cpp mux.cpp infos.cpp odometry.cpp
+        kicker.cpp voltage.cpp ir.cpp kinematic.cpp mux.cpp infos.cpp odometry.cpp assert.cpp\
+        com_proto.cpp
 CFLAGS+= -DROBOT_FIRMWARE
 endif
 
@@ -25,7 +26,7 @@ OBJ_FILES = $(addprefix $(BUILD_PATH)/,$(OBJ_FILES_CPP:.c=.o))
 
 
 $(BUILD_PATH)/%.o: %.cpp
-	$(SILENT_CXX) $(CXX) $(CFLAGS) $(CXXFLAGS) $(LIBMAPLE_INCLUDES) $(WIRISH_INCLUDES) -o $@ -c $<
+	$(CXX) $(CFLAGS) $(CXXFLAGS) $(LIBMAPLE_INCLUDES) $(WIRISH_INCLUDES) -o $@ -c $<
 
 $(BUILD_PATH)/libmaple.a: $(BUILDDIRS) $(TGT_BIN)
 	- rm -f $@
