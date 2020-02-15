@@ -1383,7 +1383,7 @@ TERMINAL_COMMAND(st, "get or set card state: 0 off , 1 rx, 2 tx")
 TERMINAL_COMMAND(dbg, "dump all informations")
 {
     int n=0;
-    char *arg[]={nullptr,nullptr};
+    char *arg[]={0,0};
     if (argc==1){
         n+=1;
         arg[0]=argv[0];
