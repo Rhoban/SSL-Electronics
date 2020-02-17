@@ -89,7 +89,7 @@ TERMINAL_COMMAND(bl, "")
 void loop()
 {
 
-#if 1
+#if 0
     // Benchmarking main loop
     static int last = micros();
     if (n < 100) {
@@ -109,8 +109,8 @@ void loop()
     com_master_tick();
 
     // Buzzer
-    buzzer_tick();
-    terminal_tick();
+    //buzzer_tick();
+    //terminal_tick();
 }
 
 TERMINAL_COMMAND(diag, "Diagnostic")

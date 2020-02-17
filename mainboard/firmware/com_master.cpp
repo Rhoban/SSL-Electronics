@@ -21,7 +21,7 @@
 
 #define USBMODE_BIN 1
 #define USBMODE_TERM 2
-int usbcom_mode = USBMODE_TERM;
+int usbcom_mode = USBMODE_BIN;
 
 
 #define STATE_PIPE_FREE  0
@@ -60,7 +60,7 @@ static void com_usb_tick()
     static int magic_pos=0;
     static char magic_term[]="term";
     static int magic_len=3;
-    static char order_message[sizeof(packet_robot)+3]={0xaa,0x55,0xff};
+    static char order_message[sizeof(packet_robot)+3]={0x22};
 
     while (SerialUSB.available()) {
         watchdog_feed();
@@ -116,6 +116,8 @@ static void com_usb_tick()
     for(int pipe=0;pipe<6;++pipe){
         if (com_pipes[pipe].new_status == true){
             uint8_t *p=(uint8_t *)(&(com_pipes[pipe].infos));
+            order_message[0]=0xaa;
+            order_message[1]=0x55;
             for(int i=0;i<sizeof(packet_robot);++i)
                 order_message[2+i]=p[i];
             order_message[2+sizeof(packet_robot)]=0xFF;

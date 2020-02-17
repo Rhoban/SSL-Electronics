@@ -117,16 +117,6 @@ void com_set_state(int card, ComState state){
 TERMINAL_PARAMETER_INT(irqed, "", 0);
 
 
-void com_self_diag(int cardA, int cardB){
-    uint8_t addr[5]={0xAF,0x1E,0x2B,0x38,0x88};
-    com_set_tx_addr(cardA,addr);
-    com_set_rx_addr(cardA,0,addr);
-    com_set_tx_addr(cardB,addr);
-    com_set_rx_addr(cardB,0,addr);
-    com_set_state(cardA,RX);
-    com_set_state(cardB,TX);
-}
-
 
 void print_byte_as_hex(uint8_t v){
     uint8 a=(v>>4);
@@ -1430,3 +1420,80 @@ int com_cmp_addr(uint8_t dst[5], uint8_t src[5])
             return 1;
     return 0;
 }
+
+
+
+void com_self_diag(int cardA, int cardB,int &acked, int &not_acked,int &received){
+    uint8_t addr[5]={0xAF,0x1E,0x2B,0x38,0x88};
+    com_set_state(0,OFF);
+    com_set_state(1,OFF);
+    com_set_state(2,OFF);
+    com_set_tx_addr(cardA,addr);
+    com_set_rx_addr(cardA,0,addr);
+    com_set_tx_addr(cardB,addr);
+    com_set_rx_addr(cardB,0,addr);
+    com_set_pipe_payload(cardA,0,32);
+    com_set_pipe_payload(cardB,0,32);
+    com_set_ack(cardA,0,true);
+    com_set_ack(cardB,0,true);
+    com_set_channel(cardA,105);
+    com_set_channel(cardB,105);
+    com_set_state(cardA,TX);
+    com_set_state(cardB,RX);
+    uint8_t msg[32];
+    for(int i=0;i<32;++i){
+        msg[i]=i;
+    }
+    acked=0; not_acked=0; received=0;
+    for(int i=0;i<200;++i){
+        if (com_send(cardA,msg,32)){
+            acked+=1;
+        } else {
+            not_acked+=1;
+        }
+        if (com_has_data(cardB)>-1){
+            com_receive(cardB,msg,32);
+            received+=1;
+        }
+    }
+}
+
+
+TERMINAL_COMMAND(com_diag, "diag com cards")
+{
+    int acked, not_acked, received;
+    if (argc==2){
+        int cardA=atoi(argv[0]);
+        int cardB=atoi(argv[1]);
+        com_self_diag(cardA,cardB,acked,not_acked,received);
+        SerialUSB.print("diag from card ");
+        SerialUSB.print(cardA);
+        SerialUSB.print(" => ");
+        SerialUSB.print(cardB);
+        SerialUSB.print(" acked: ");
+        SerialUSB.print(acked);
+        SerialUSB.print(" not acked: ");
+        SerialUSB.print(not_acked);
+        SerialUSB.print(" received: ");
+        SerialUSB.println(received);
+    }else
+    for(int cardA=0;cardA<3;cardA++)
+        for(int cardB=0;cardB<3;cardB++){
+            if (cardA!=cardB){
+                acked=not_acked=received=0;
+                com_self_diag(cardA,cardB,acked,not_acked,received);
+                SerialUSB.print("diag from card ");
+                SerialUSB.print(cardA);
+                SerialUSB.print(" => ");
+                SerialUSB.print(cardB);
+                SerialUSB.print(" acked: ");
+                SerialUSB.print(acked);
+                SerialUSB.print(" not acked: ");
+                SerialUSB.print(not_acked);
+                SerialUSB.print(" received: ");
+                SerialUSB.println(received);
+
+            }
+        }
+}
+

@@ -3,3 +3,5 @@ Rhock
 rhock
 build
 **.pch
+firmware.*
+build_*
