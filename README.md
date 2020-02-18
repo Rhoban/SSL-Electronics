@@ -67,7 +67,7 @@ Board containing micro-controller (mainboard controller)
 * JST-ZH 5 pin connector (for hall sensor)
 * JST-ZH 6 pin connector (for encoder)
 * JST-XH 3 pin connector (for motor phases)
-
+  
 -------------------------------------------------
 
 ## Kicker board
@@ -75,6 +75,21 @@ Board containing micro-controller (mainboard controller)
 ### Power capacitor
 
 Power capacitors, current target is 2200uF / 200V (2102441)
+
+### Flash brushless driver
+first, add a udev rules in /etc/udev/rules.d/10-maple.rules 
+
+ATTRS{idProduct}=="0003", ATTRS{idVendor}=="1eaf", MODE="0666", GROUP="plugdev" SYMLINK+="maple"
+
+in brushless/firmware directory
+   make
+Then, with robot off and usb cable connected to driver (connector under the robot), enter the following command
+just after plug-in:
+
+dfu-util -a1 -d 1eaf:0003 -D build/maple.bin  -d /dev/maple
+
+This is because driver remains in dfu only a short time after power up. If it fails, try again
+
 
 ### Connectors
 

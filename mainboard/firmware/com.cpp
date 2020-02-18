@@ -753,7 +753,6 @@ void com_init()
 {
     com.begin(SPI_2_25MHZ, MSBFIRST, 0);
 
-
     pinMode(COM_CS1,OUTPUT);
     digitalWrite(COM_CS1,HIGH);
     pinMode(COM_CE1, OUTPUT);
@@ -769,7 +768,6 @@ void com_init()
     pinMode(COM_CE3, OUTPUT);
     digitalWrite(COM_CE3, LOW);
     delay_us(2000); // wait few
-
 
     // set default state for all cards:
     // this setup is a copy from arduino rf24l01+ library
@@ -832,7 +830,7 @@ void com_init()
 
     // Disable everything in robot commands
 
-
+mux_init();
 }
 
 
@@ -1456,6 +1454,35 @@ void com_self_diag(int cardA, int cardB,int &acked, int &not_acked,int &received
             received+=1;
         }
     }
+}
+
+void com_full_diag(float cards[3]){
+    // perform a full diag on card, two by two...
+    // card status after diag is undefined, dont forget
+    // to restore cards status.
+    // return value is between 0 and 1, 0 means faulty card, 1 ok
+    float err[3][3];
+    float recv[3]={0,0,0};
+    int acked, not_acked, received;
+
+    for(int cardA=0;cardA<3;cardA++)
+        for(int cardB=0;cardB<3;cardB++){
+            if (cardA!=cardB){
+                com_self_diag(cardA,cardB,acked,not_acked,received);
+                recv[cardB]+=received;
+                err[cardA][cardB]=(float )not_acked/((float )not_acked + (float )acked);
+            }
+        }
+
+    for(int card=0;card<3;card++){
+        // analysis card perf:
+        // card is in fault if err is above 0.1
+        if ((err[card][(card+1)%3]>0.1) || (err[card][(card+2)%3]>0.1))
+            cards[card]=0;
+        else
+            cards[card]=1;
+    }
+
 }
 
 

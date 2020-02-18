@@ -76,7 +76,12 @@ static void com_usb_tick()
             if (c == 0x55) {
                 state=STATE_ORDER;
                 pos=0;
-            } else {
+            } else if (c==0xaa){
+                state=STATE_MAGIC1;
+            } else if (c==magic_term[0]){
+                state=STATE_SWITCH;
+                magic_pos=1;
+            }else{
                 state = STATE_INIT;
             }
         } else if (state==STATE_SWITCH){

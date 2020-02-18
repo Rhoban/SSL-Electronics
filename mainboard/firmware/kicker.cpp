@@ -128,6 +128,11 @@ void kicker_clear()
 
 void kicker_boost_enable(bool enable)
 {
+    if (charging!=enable){
+        SerialUSB.print("kicker boost: ");
+        SerialUSB.println(enable);
+    }
+
     charging = enable;
 
     if (enable) {

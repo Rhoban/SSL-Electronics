@@ -109,7 +109,7 @@ void loop()
     com_master_tick();
 
     // Buzzer
-    //buzzer_tick();
+    buzzer_tick();
     //terminal_tick();
 }
 

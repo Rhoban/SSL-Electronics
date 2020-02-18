@@ -122,6 +122,7 @@ void apply_order(struct packet_master &master_packet)
                 bool inverted = infos_kicker_inverted();
                 if ((master_packet.actions & ACTION_KICK1) &&
                         !(my_actions & ACTION_KICK1)) {
+                    SerialUSB.println("kick1");
                     kicker_kick(inverted ? 0 : 1, master_packet.kickPower*30);
                 }
 
@@ -192,7 +193,7 @@ void com_robot_tick(){
             dhcp_failure+=1;
             com_flush_tx(CARD_ICMP);
             state=WAIT_AND_INIT;
-            wait_init_timeout=millis()+100; // wait 1ms
+            wait_init_timeout=millis()+100; // wait 100ms
         }
         break;
     case WAIT_AND_INIT:
@@ -202,6 +203,7 @@ void com_robot_tick(){
     case WAIT_DHCP:
         if ((millis()-icmp_stamp)>ICMP_TIMEOUT_MS){
             buzzer_play(MELODY_WARNING, false);
+            dhcp_failure+=1;
             //SerialUSB.println("dhcp timeout");
             state=INIT;
         } else {
@@ -252,17 +254,18 @@ void com_robot_tick(){
             last_order_received = millis();
             com_receive(CARD_ORDER,(uint8_t *)&order,order_payload_size);
 
-            SerialUSB.print("order receive: action:");
-            print_byte_as_hex(order.actions);
-            SerialUSB.print(" | kickpow: ");
-            SerialUSB.print(order.kickPower);
-            SerialUSB.print(" | x : ");
-            SerialUSB.print(order.x_speed);
-            SerialUSB.print(" | y : ");
-            SerialUSB.print(order.y_speed);
-            SerialUSB.print(" | t : ");
-            SerialUSB.print(order.t_speed);
-            SerialUSB.println();
+//            SerialUSB.print("order receive: action:");
+//            print_byte_as_hex(order.actions);
+//            SerialUSB.print(" | kickpow: ");
+//            SerialUSB.print(order.kickPower);
+//            SerialUSB.print(" | x : ");
+//            SerialUSB.print(order.x_speed);
+//            SerialUSB.print(" | y : ");
+//            SerialUSB.print(order.y_speed);
+//            SerialUSB.print(" | t : ");
+//            SerialUSB.print(order.t_speed);
+//            SerialUSB.println();
+
             com_flush_rx(CARD_ORDER);
             com_clear_status(CARD_ORDER);
 
@@ -279,6 +282,8 @@ void com_robot_tick(){
             if (first_order_timeout){
                 buzzer_play(MELODY_ALERT_FAST, false);
                 first_order_timeout=false;
+                SerialUSB.println("order timeout");
+
             }
             //state=INIT;
             order.rid = infos_get_id();
@@ -289,7 +294,7 @@ void com_robot_tick(){
             order.kickPower=0;
         }
         if ((millis()-last_status_ack)>STATUS_TIMEOUT_MS){
-            //SerialUSB.println("status timeout");
+            SerialUSB.println("status timeout");
             buzzer_play(MELODY_ALERT_FAST, false);
             state=INIT;
             order.actions=0;
@@ -379,4 +384,36 @@ TERMINAL_COMMAND(em, "Emergency")
 
     kicker_boost_enable(false);
 }
+
+TERMINAL_COMMAND(rdiag,"")
+{
+
+    com_robot_init();
+}
+
+TERMINAL_COMMAND(order,"apply order on robot: charge kick dribble x y t")
+{
+    if (argc<6){
+        terminal_io()->println("wrong args");
+        return;
+    }
+    order.rid=infos_get_id();
+    order.actions=ACTION_ON;
+    if (atoi(argv[0])==1)
+        order.actions |=ACTION_CHARGE;
+    int k=atoi(argv[1]);
+    if (k==1)
+        order.actions |= ACTION_KICK1;
+    if (k==2)
+        order.actions |= ACTION_KICK2;
+    if (atoi(argv[2])==1)
+        order.actions |= ACTION_DRIBBLE;
+    order.kickPower=100;
+    order.x_speed=atoi(argv[3]);
+    order.y_speed=atoi(argv[4]);
+    order.t_speed=atoi(argv[5]);
+    last_order_received=millis()-4;
+//    apply_order(master_packet);
+}
+
 

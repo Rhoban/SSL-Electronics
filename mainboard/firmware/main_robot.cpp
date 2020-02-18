@@ -147,35 +147,36 @@ void setup()
     buzzer_wait_play();
 
     // IR
-    ir_init();
+    //ir_init();
     delay_us(800000);
     // Voltage measure
 
 
     drivers_init();
 
-    if (com_is_all_ok() ) { // && drivers_is_all_ok()) {
+    //if (com_is_all_ok() ) { // && drivers_is_all_ok()) {
       // buzzer_play(MELODY_BEETHOVEN);
-      if(developer_mode)
-        buzzer_play(MELODY_BOOT_DEV);
-      else
-        buzzer_play(MELODY_BOOT);
-      buzzer_wait_play();
+//      if(developer_mode)
+//        buzzer_play(MELODY_BOOT_DEV);
+//      else
+//        buzzer_play(MELODY_BOOT);
+//      buzzer_wait_play();
 
-    } else {
-      buzzer_play(MELODY_WARNING);
-    }
+//    } else {
+//      buzzer_play(MELODY_WARNING);
+//    }
 
     terminal_init(&SerialUSB);
 
 
     // Starting the watchdog
     watchdog_start(WATCHDOG_58MS);
+    mux_init();
 
     // systick_init();
 }
 
-#define TIME_STATS
+//#define TIME_STATS
 
 #ifdef TIME_STATS
 // Benchmaking main loop
