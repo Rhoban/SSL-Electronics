@@ -62,6 +62,7 @@ static bool kicker_pause = true;
 
 void pause_boost(){
   kicker_pause = true;
+//  SerialUSB.println("pause");
   if (charging) {
     disable_boost();
   }
@@ -69,6 +70,7 @@ void pause_boost(){
 
 void resume_boost(){
   kicker_pause = false;
+//  SerialUSB.println("resume");
   if (charging) {
     enable_boost();
   }
@@ -128,11 +130,6 @@ void kicker_clear()
 
 void kicker_boost_enable(bool enable)
 {
-    if (charging!=enable){
-        SerialUSB.print("kicker boost: ");
-        SerialUSB.println(enable);
-    }
-
     charging = enable;
 
     if (enable) {

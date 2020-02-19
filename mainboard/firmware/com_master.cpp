@@ -31,14 +31,15 @@ int usbcom_mode = USBMODE_BIN;
 struct com_pipe_infos{
     uint8_t addr[5];
     uint8_t order_addr[5];
-    int state;
+    int state; // FREE, USED or RESET
     bool new_status;
     packet_robot infos;
     bool new_order;
     packet_master order;
-    uint16_t current_order_id=0;
+    uint16_t current_order_id=0; // incremented by one when an order is sent to robot
     uint32_t last_status; // last status received using millis()
-    uint32_t last_order;
+    uint32_t last_order; // millis() when order send
+    bool order_validated_by_status_reply=false;
     com_pipe_infos():state(STATE_PIPE_FREE),last_status(millis()),new_status(false),new_order(false){}
 };
 
@@ -106,7 +107,10 @@ static void com_usb_tick()
                     if ((com_pipes[pipe].state==STATE_PIPE_USED)
                             &&
                             (com_pipes[pipe].infos.id==p->rid)){
-                        com_pipes[pipe].order = *p;
+
+                        com_pipes[pipe].order = *p;                        
+                        com_pipes[pipe].last_order=millis();
+                        com_pipes[pipe].order_validated_by_status_reply=false;
                         com_pipes[pipe].order.order_id=com_pipes[pipe].current_order_id;
                         com_pipes[pipe].new_order=true;
                         com_pipes[pipe].current_order_id+=1;
@@ -295,6 +299,9 @@ void com_master_icmp_tick(){
 
 }
 
+uint32_t rtt=0;
+uint32_t nb_rtt=0;
+
 void com_master_status_tick(){
     uint32_t now=millis();
     int pipe_error=-1;
@@ -320,6 +327,19 @@ void com_master_status_tick(){
         } else {
             com_pipes[data].last_status=now;
             com_pipes[data].new_status = true;
+//            SerialUSB.print("status receive with last order id: ");
+//            SerialUSB.print(com_pipes[data].infos.last_order_id);
+//            SerialUSB.print(" current order id is ");
+//            SerialUSB.print(com_pipes[data].current_order_id);
+//            SerialUSB.print(" validated: ");
+//            SerialUSB.println(com_pipes[data].order_validated_by_status_reply);
+
+            if ((com_pipes[data].infos.last_order_id==(com_pipes[data].current_order_id-1))
+                && (com_pipes[data].order_validated_by_status_reply==false)){
+                rtt+=millis()-com_pipes[data].last_order;
+                nb_rtt+=1;
+                com_pipes[data].order_validated_by_status_reply=true;
+            }
             if ((com_pipes[data].new_order) && (com_pipes[data].infos.last_order_id>=com_pipes[data].current_order_id))
                 com_pipes[data].new_order=false;
         }
@@ -429,17 +449,35 @@ TERMINAL_COMMAND(umb, "Set USB com in binary mode")
     usbcom_mode =  USBMODE_BIN;
 }
 
+TERMINAL_COMMAND(rtt, "Rtt estimation")
+{
+    terminal_io()->print("nb rtt: ");
+    terminal_io()->print(nb_rtt);
+    terminal_io()->print(" avg:");
+    terminal_io()->println((float )rtt/(float )nb_rtt);
+}
+
 TERMINAL_COMMAND(order, "Send an order packet on a pipe")
 {
     int p=atoi(argv[0]);
     com_pipes[p].order.rid = com_pipes[p].infos.id;
     com_pipes[p].order.actions = ACTION_ON;
-    com_pipes[p].order.x_speed = atoi(argv[1]);
-    com_pipes[p].order.y_speed = atoi(argv[2]);
-    com_pipes[p].order.t_speed = atoi(argv[3]);
-    com_pipes[p].order.kickPower = 0;
+    if (atoi(argv[1])==1)
+        com_pipes[p].order.actions |= ACTION_CHARGE;
+    if (atoi(argv[2])==1)
+        com_pipes[p].order.actions |= ACTION_KICK1;
+    if (atoi(argv[3])==1)
+        com_pipes[p].order.actions |= ACTION_DRIBBLE;
+
+    com_pipes[p].order.x_speed = atoi(argv[4]);
+    com_pipes[p].order.y_speed = atoi(argv[5]);
+    com_pipes[p].order.t_speed = atoi(argv[6]);
+    com_pipes[p].order.kickPower = 100;
     com_pipes[p].new_order=true;
-    com_pipes[p].current_order_id+1;
+    com_pipes[p].order_validated_by_status_reply=false;
+    com_pipes[p].order.order_id = com_pipes[p].current_order_id;
+    com_pipes[p].current_order_id+=1;
+    com_pipes[p].last_order = millis();
 }
 
 TERMINAL_COMMAND(pipes, "Display pipes informations")
@@ -467,6 +505,8 @@ TERMINAL_COMMAND(pipes, "Display pipes informations")
                 terminal_io()->println("  pending order");
             terminal_io()->print("  order id: ");
             terminal_io()->println(com_pipes[pipe].current_order_id);
+            terminal_io()->print("  last order id: ");
+            terminal_io()->println(com_pipes[pipe].infos.last_order_id);
         } else if (com_pipes[pipe].state==STATE_PIPE_RESET){
             terminal_io()->println("RESET");
         } else {

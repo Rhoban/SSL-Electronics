@@ -66,7 +66,6 @@ void apply_order(struct packet_master &master_packet)
     //SerialUSB.print("0 apply order:");
    // SerialUSB.println(master_packet.actions);
 
-    last_order_id=max(master_packet.order_id,last_order_id);
     if (master_packet.rid != infos_get_id()){
       //  SerialUSB.print("ID ISSUE");
       //  SerialUSB.println(master_packet.rid);
@@ -75,6 +74,8 @@ void apply_order(struct packet_master &master_packet)
     // ensure there is at least 4ms between two order (250Hz order freq)
     if ((millis()-last_order_received)<4)
         return;
+
+    last_order_id=max(master_packet.order_id,last_order_id);
 
 
 //    SerialUSB.print("apply order:");
@@ -113,6 +114,8 @@ void apply_order(struct packet_master &master_packet)
             kicker_boost_enable(false);
         }
 
+//        if ((master_packet.actions & ACTION_KICK1) && (master_packet.actions & ACTION_CHARGE))
+//            buzzer_beep(440,500);
 
 
 
@@ -122,7 +125,6 @@ void apply_order(struct packet_master &master_packet)
                 bool inverted = infos_kicker_inverted();
                 if ((master_packet.actions & ACTION_KICK1) &&
                         !(my_actions & ACTION_KICK1)) {
-                    SerialUSB.println("kick1");
                     kicker_kick(inverted ? 0 : 1, master_packet.kickPower*30);
                 }
 
@@ -180,6 +182,18 @@ void apply_order(struct packet_master &master_packet)
 
 void com_robot_tick(){
     static bool first_order_timeout=true;
+    static uint32_t com_robot_tick_min_us=15000;
+
+    if (((order.actions&ACTION_CHARGE) != 0) && (kicker_cap_voltage()<120))
+        com_robot_tick_min_us=50000;
+    else
+        com_robot_tick_min_us=15000;
+    static uint32_t last_tick=micros();
+    if ((micros()-last_tick)<com_robot_tick_min_us)
+        return;
+    last_tick=micros();
+
+
     watchdog_feed();
     switch(state){
     case INIT:
@@ -282,8 +296,6 @@ void com_robot_tick(){
             if (first_order_timeout){
                 buzzer_play(MELODY_ALERT_FAST, false);
                 first_order_timeout=false;
-                SerialUSB.println("order timeout");
-
             }
             //state=INIT;
             order.rid = infos_get_id();
@@ -294,7 +306,6 @@ void com_robot_tick(){
             order.kickPower=0;
         }
         if ((millis()-last_status_ack)>STATUS_TIMEOUT_MS){
-            SerialUSB.println("status timeout");
             buzzer_play(MELODY_ALERT_FAST, false);
             state=INIT;
             order.actions=0;
