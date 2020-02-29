@@ -22,33 +22,32 @@
 //#define CYCLOIDE
 
 #ifdef FREE_MOTOR_GRATT
-  #define NB_POSITIVE_MAGNETS 7
+  #define NB_POSITIVE_MAGNETS 8
   #define MOTOR_VOLTAGE 24
-  //#define REVERSE_PHASE
-  //#define USE_INTERNAL_ENCODER
-  #define USE_EXTERNAL_ENCODER
+  #define REVERSE_PHASE
+  #define USE_INTERNAL_ENCODER
+  // #define USE_EXTERNAL_ENCODER
   //#define KEV_rad_per_V_S 22.46 // Electromagnetic constant
-  #define KEV_rad_per_V_S 22.46 // Electromagnetic constant
-  #define FRICTION_CONSTANT_rad_s 17.93 // Electromagnetic constant
+  #define KEV_rad_per_V_S 19.8 // Electromagnetic constant
+  #define FRICTION_CONSTANT_rad_s 25 // Electromagnetic constant
   #define MOTOR_LQ 0.0 //0.000463  // Quadrature Inductance : inductance of the virtual coil that is 
                 // perpendicular to the virtual magnet of the stator.
-  #define MOTOR_R 1.0 // 2.6  // resistance of the coil
+  #define MOTOR_R 4.6 // 2.6  // resistance of the coil
   #define MOTOR_KEM (1.0/KEV_rad_per_V_S)   // Electromagnetic constant of the motor
 
-  #define MAX_VOLTAGE_FOR_TARING_PROCESS (MAX_VOLTAGE/5.0) 
+  #define MAX_VOLTAGE_FOR_TARING_PROCESS (MAX_VOLTAGE/8.0) 
   #define MAX_CURRENT 7.0
 
-  #define SPEED_LIMIT (40*2*M_PI)
+  #define SPEED_LIMIT (30*2*M_PI)
   #define INTEGRAL_SPEED_LIMIT SPEED_LIMIT
-  #define KP_ANGLE 100.0
-  #define KI_ANGLE 0.0
+  #define KP_ANGLE 12.0
+  #define KI_ANGLE 1.0
   // PID 
-  #define KP_SPEED 0.15
-  #define KI_SPEED 0.5
+  #define KP_SPEED 0.1
+  #define KI_SPEED 0.0
   #define CURRENT_LIMIT MAX_CURRENT 
   #define INTEGRAL_CURRENT_LIMIT MAX_CURRENT 
 #endif
-
 
 #ifdef CYCLOIDE
   #define NB_POSITIVE_MAGNETS 7
@@ -98,6 +97,7 @@ _Static_assert( DRIVER_MIN_PWM_PERCENTAGE >= 6, "Minimal value to have stable cu
 // [SECURITY_MIN_PWM_PERCENTAGE, 100-SECURITY_MAX_PWM_PERCENTAGE] 
 // percent.
 //
+
 #define SECURITY_MIN_PWM_PERCENTAGE 20
 #define SECURITY_MAX_PWM_PERCENTAGE 20
 _Static_assert( SECURITY_MAX_PWM_PERCENTAGE >= 0, "" );

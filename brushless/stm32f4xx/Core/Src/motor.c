@@ -161,12 +161,12 @@ static inline void filter_current_consign_and_compute_derivate(float current_con
 
 bool direct=0;
 
-//#define COMPENSATE_FRICTION
+#define COMPENSATE_FRICTION
 static inline void compute_voltage_consign(){
   float velocity = observer_get_velocity();
   #ifdef COMPENSATE_FRICTION
     float friction;
-    if( abs(velocity) < 0.2 ){
+    if( abs(velocity) < 0.01 ){
       // TODO : We need to use the velocity consign to know 
       // which sense we need to use to remove the frictions.
       // Do we need to make the work here ?
@@ -197,15 +197,15 @@ static inline void compute_voltage_consign(){
   // We need to check there is no problem with the sign of the
   // velocity
   motor.quadrature_voltage_consign = (
-    motor.Kem * (
+    - motor.Kem * (
       velocity
       #ifdef COMPENSATE_FRICTION
       + friction
       #endif
-    ) + motor.R * motor.current + motor.Lq * motor.current_derivate
+    ) - motor.R * motor.current + motor.Lq * motor.current_derivate
   );
   motor.direct_voltage_consign = (
-    - motor.Lq * velocity * motor.current
+    + motor.Lq * velocity * motor.current
   );
 }
 

@@ -30,7 +30,8 @@
 typedef enum {
   OPEN_LOOP_CONTROL,
   ANGULAR_CONTROL,
-  SPEED_CONTROL
+  SPEED_CONTROL,
+  IDLE
 } foc_mode_t;
 
 typedef struct {
@@ -243,6 +244,10 @@ static inline void _security_check(){
       ASSERT(false);
       break;
   }
+}
+
+TERMINAL_COMMAND(stop_foc, "Stop foc in IDLE"){
+  foc.mode = IDLE;
 }
 
 float foc_update_and_get_control(){
