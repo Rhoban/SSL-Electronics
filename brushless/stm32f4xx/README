@@ -27,7 +27,12 @@ Installation commands are for Debian or Ubuntu.
 Install the following package :
 -------------------------------
 
-sudo apt-get install dfu-util cu build-essential python-serial
+sudo apt-get install dfu-util cu build-essential python-serial r-base
+
+Install R libraries : 
+---------------------
+
+./tools/logs/install.r
 
 Uninstall the modemmanager : 
 ----------------------------
