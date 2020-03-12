@@ -20,8 +20,6 @@
  * Setup function
  */
 
-bool barbu_mode = true;
-
 
 void setup()
 {
@@ -71,19 +69,16 @@ void setup()
 
     if(!h1 && !h2 && !h3 && !h4){ //no magnet
       developer_mode=true; //THIS IS A GLOBAL
-      barbu_mode = true;
     }
-    else
-      barbu_mode = false;
 
 
     if(!developer_mode)
     {
 
-    //   ///RICKroll
-    //   buzzer_play(RICKROLL);
-    //   buzzer_wait_play();
-    //   delay_us(2000000);
+      ///RICKroll
+      buzzer_play(RICKROLL);
+      buzzer_wait_play();
+      delay_us(2000000);
 
     }
 
@@ -120,9 +115,6 @@ void setup()
 
 
     delay_us(200000);
-
-
-// delay_us(3600000);
 
 // Initalizng com
     com_init();
@@ -180,6 +172,8 @@ void setup()
 
     // Starting the watchdog
     watchdog_start(WATCHDOG_58MS);
+
+    // systick_init();
 }
 
 // Benchmaking main loop
@@ -195,6 +189,7 @@ TERMINAL_COMMAND(bl, "")
 /**
  * Loop function
  */
+
 void loop()
 {
 
@@ -245,6 +240,7 @@ TERMINAL_COMMAND(diag, "Diagnostic")
     com_diagnostic();
     ir_diagnostic();
 }
+
 
 TERMINAL_COMMAND(hall, "Configuration hall")
 {
