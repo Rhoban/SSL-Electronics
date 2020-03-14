@@ -49,8 +49,22 @@ void setup()
     // Buzzer
     buzzer_init();
     delay_us(1000);
-    buzzer_beep(C6,100);
-    buzzer_wait_play();
+//    buzzer_beep(C6,100);
+//   buzzer_wait_play();
+
+    // perform a com diag:
+    for(int i=0;i<10;++i){
+        buzzer_beep(C4,100);
+        buzzer_wait_play();
+        delay_us(100);
+    }
+
+    com_init();
+
+    if (com_is_all_ok()==false){
+        buzzer_beep(C4,100);
+        buzzer_wait_play();
+    }
 
 
     com_master_init();

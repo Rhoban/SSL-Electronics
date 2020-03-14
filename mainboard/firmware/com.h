@@ -52,6 +52,8 @@ bool com_is_ok(int card);
 
 bool com_is_all_ok();
 
+void com_full_diag(float cards[3]);
+
 int com_get_channel(int card);
 void com_set_channel(int index, int chan);
 

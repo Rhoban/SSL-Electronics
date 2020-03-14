@@ -1443,7 +1443,7 @@ void com_self_diag(int cardA, int cardB,int &acked, int &not_acked,int &received
         msg[i]=i;
     }
     acked=0; not_acked=0; received=0;
-    for(int i=0;i<200;++i){
+    for(int i=0;i<50;++i){
         if (com_send(cardA,msg,32)){
             acked+=1;
         } else {
@@ -1454,6 +1454,10 @@ void com_self_diag(int cardA, int cardB,int &acked, int &not_acked,int &received
             received+=1;
         }
     }
+
+    com_set_state(0,OFF);
+    com_set_state(1,OFF);
+    com_set_state(2,OFF);
 }
 
 void com_full_diag(float cards[3]){
@@ -1461,26 +1465,31 @@ void com_full_diag(float cards[3]){
     // card status after diag is undefined, dont forget
     // to restore cards status.
     // return value is between 0 and 1, 0 means faulty card, 1 ok
-    float err[3][3];
-    float recv[3]={0,0,0};
+    float work[3]={0,0,0};
     int acked, not_acked, received;
 
     for(int cardA=0;cardA<3;cardA++)
         for(int cardB=0;cardB<3;cardB++){
             if (cardA!=cardB){
+                // check A => B connection with ACK support
                 com_self_diag(cardA,cardB,acked,not_acked,received);
-                recv[cardB]+=received;
-                err[cardA][cardB]=(float )not_acked/((float )not_acked + (float )acked);
+                // possible cases:
+                // not_acked=0 acked=received=max   => everything ok
+                // not_acked=received=max acked=0   => cardA send data, receive by cardB,
+                //                                     either cardB do not reply, either cardA does not receive (possibly both)
+                // acked=0 received=0 not_acked=max => nothing work, can be one or both of cards that are broken
+                float sent=acked+not_acked;
+                if ((not_acked<(0.1*sent)) && (received>(0.9*sent))){
+                    work[cardA]+=1.0;
+                    work[cardB]+=1.0;
+                }
             }
         }
 
     for(int card=0;card<3;card++){
         // analysis card perf:
         // card is in fault if err is above 0.1
-        if ((err[card][(card+1)%3]>0.1) || (err[card][(card+2)%3]>0.1))
-            cards[card]=0;
-        else
-            cards[card]=1;
+        cards[card] = work[card]/4.0;
     }
 
 }

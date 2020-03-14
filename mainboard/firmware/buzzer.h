@@ -25,6 +25,8 @@
 #define A5 880
 #define A5b 830
 
+#define C2 130
+#define C4 261
 #define B4 494
 #define B4b 466
 #define C5 523 //C note in Hz
