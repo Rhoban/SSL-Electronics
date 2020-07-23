@@ -162,7 +162,7 @@ UPLOAD_flash := $(SUPPORT_PATH)/scripts/reset.py && \
 endif
 
 ifeq ($(BOOTLOADER),robotis)
-UPLOAD_flash := $(SUPPORT_PATH)/scripts/robotis-loader.py $(BOOTLOADER_PORT) $(BUILD_PATH)/$(BOARD).bin
+UPLOAD_flash := python2.7 $(SUPPORT_PATH)/scripts/robotis-loader.py $(BOOTLOADER_PORT) $(BUILD_PATH)/$(BOARD).bin
 endif
 
 # Conditionally upload to whatever the last build was
@@ -196,6 +196,7 @@ else
 	$(warning "")
 	$(warning "Install target:" $(INSTALL_TARGET))
 	$(warning "SSL Version:" $(SSL_VERSION))
+	$(warning "Build MASTER:"$(COMPILE_MASTER) $(BUILD_PATH) )
 	$(shell bash -c 'read -s -p "                    /!\\ /!\\ /!\\ ARE YOU SURE? /!\\ /!\\ /!\\ "')
 	$(warning "")
 	$(UPLOAD_$(INSTALL_TARGET))
