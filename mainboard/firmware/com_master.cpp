@@ -116,6 +116,9 @@ static void com_usb_tick()
                         com_pipes[pipe].current_order_id+=1;
                     }
                 }
+                magic_pos = 0;
+                state = STATE_INIT;
+                pos = 0;
             } else { // go back to init state, ignore data
                 state=STATE_INIT;
             }
